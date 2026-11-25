@@ -53,10 +53,15 @@ in CI. Released as `v0.1.0`.
   adapted from Accord: `tools/fetch_libs.py`, `install_addon.py`, `check_addon.py`, `check_package.py`;
   `docs/RELEASING.md`, `docs/third-party.md`.
 - Done when:
-  - [ ] `check_addon.py` and `check_package.py` pass and run inside `check_docs.py`.
-  - [ ] `fetch_libs.py` downloads the pinned libraries; nothing of `Libs/` is committed.
+  - [x] `check_addon.py` and `check_package.py` pass and run inside `check_docs.py`.
+  - [x] `fetch_libs.py` downloads the pinned libraries; nothing of `Libs/` is committed.
 - Tests: the tools' own cases.
 - Real client: the addon appears in the AddOns list.
+- *Done (2026-11-25): TOC, `embeds.xml`, `Core/Locale.lua`, `Locales/`, `Core/Init.lua`, `Core/Features.lua` (every
+  switch off), the four tools with their self-tests, `docs/RELEASING.md`, `docs/third-party.md`. The Compartment
+  functions live in `Core/Init.lua` until `UI/Launcher.lua` (M1.7). **Left for later:** `## IconTexture` (M1.6, with
+  `Media/logo_64`; `check_addon.py` requires it as soon as the texture exists), the media list of `check_package.py`
+  (`REQUIRED_MEDIA`, M1.6), moving the game calls of `Init` and `Locale` behind Compat (M1.4). Not run in the game.*
 
 ### M1.3 — Offline test harness and mock client
 - Branch: `step/m1-3-test-harness`
@@ -106,7 +111,8 @@ in CI. Released as `v0.1.0`.
 - Scope: copied and adapted from Accord: `tools/make_media.py` (logo textures `logo_256`/`logo_64` from
   `assets/logo-source.webp`, NEBULA logos, shapes, icons including state icons), `tools/make_fonts.py`,
   `UI/Assets.lua`, `UI/Theme.lua` (Nebula, Aurora, Warden; state tokens), `UI/Motion.lua`, `UI/Widgets/`;
-  `docs/third-party.md` updated.
+  `docs/third-party.md` updated; `## IconTexture` in the TOC (left out by M1.2); `REQUIRED_MEDIA` of
+  `tools/check_package.py`.
 - Done when:
   - [ ] Every media file is in `Assets.lua` and `third-party.md`; fonts have their OFL texts.
   - [ ] No colour outside `UI/Theme.lua` (`check_addon.py`).

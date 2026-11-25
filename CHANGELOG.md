@@ -5,6 +5,18 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Added
+
+- M1.2: the addon skeleton `AzerothThreatwarden/` — TOC for Interface 16001 with the two SavedVariables, the Addon
+  Compartment functions, licence and credits; `embeds.xml` with LibStub, CallbackHandler, AceAddon, AceEvent,
+  AceConsole, LibDataBroker and LibDBIcon; `Core/Init.lua` (addon object, Forever check, lifecycle, combat start and
+  end, debug sections, Compartment entry points), `Core/Locale.lua` (own language tables, English as fallback),
+  `Locales/enUS.lua` and `itIT.lua`, `Core/Features.lua` with every later part switched off. It shows only its entry in
+  the AddOns list and in the Addon Compartment; no window, command or saved setting yet. Not run in the game.
+- M1.2: tools copied from Azeroth Accord: `fetch_libs.py`, `install_addon.py`, `check_addon.py` (TOC, embeds, locales,
+  colours, media) and `check_package.py` (what the release zip holds; never the probe or `assets/`), both run by
+  `check_docs.py`; [docs/RELEASING.md](docs/RELEASING.md) and [docs/third-party.md](docs/third-party.md).
+
 ### Documentation
 
 - M0.0: repository bootstrap. The owner's original specification (`docs/specs/source-specification.md`) and the

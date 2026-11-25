@@ -1,0 +1,25 @@
+## Interface: 16001
+## Title: Azeroth Threatwarden
+## Notes: Threat monitor, alerts, coaching and combat analysis for WoW Forever. Client-only, nothing leaves your computer.
+## Notes-itIT: Monitor della threat, avvisi, consigli e analisi dei combattimenti per WoW Forever. Solo client, nulla esce dal tuo computer.
+## Author: Finland6738
+## Version: @project-version@
+## SavedVariables: AzerothThreatwardenDB
+## SavedVariablesPerCharacter: AzerothThreatwardenCharDB
+## AddonCompartmentFunc: AzerothThreatwarden_OnAddonCompartmentClick
+## AddonCompartmentFuncOnEnter: AzerothThreatwarden_OnAddonCompartmentEnter
+## AddonCompartmentFuncOnLeave: AzerothThreatwarden_OnAddonCompartmentLeave
+## X-Website: https://github.com/Finland6738/azeroth-threatwarden
+## X-Credits: Created and designed by Finland. Made with the Italian guild NEBULA.
+## X-License: GPL-3.0
+# CurseForge project ID (the number on the project's About page). The packager reads it from the line below, which
+# has to start with two # signs to count: replace "# ## X-Curse-Project-ID: 0" with "## X-Curse-Project-ID: 12345".
+# Until then the release workflow skips the CurseForge upload (docs/RELEASING.md, SPEC-09 Q6).
+# ## X-Curse-Project-ID: 0
+
+embeds.xml
+Core\Locale.lua
+Locales\enUS.lua
+Locales\itIT.lua
+Core\Init.lua
+Core\Features.lua

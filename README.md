@@ -7,8 +7,8 @@ threat coaching and combat analysis addon for **World of Warcraft: Forever**. It
 which mob, warns you before you pull aggro, records your fights and explains what happened, always telling what is
 **known** from what is **estimated**.
 
-> **Status: design phase.** The specification, the decisions and the plan are written; there is nothing to install
-> yet. The first step is a probe in the real client (milestone M0): it checks which threat data WoW Forever gives an
+> **Status: early development.** The specification, the decisions and the plan are written and the addon has its
+> skeleton, which does nothing visible yet; there is no release to install. The first step is a probe in the real client (milestone M0): it checks which threat data WoW Forever gives an
 > addon, because the client may hide threat values from addons in some situations. That
 > [probe](docs/spike/README.md) (a development tool, never distributed) can now check the client and the threat
 > functions, including whether their values are secret (P1–P4), which units and mobs answer, the threat events, GUIDs
@@ -50,6 +50,16 @@ you can delete them ([ADR 0001](docs/adr/0001-local-only-addon-no-network.md)).
 - The look of the owner's addon family (Finland Dragon Credit Points, Azeroth Accord), with a **Warden** theme drawn
   from the logo ([ADR 0015](docs/adr/0015-interface-follows-the-ecosystem-style.md)).
 - Offline tests with a mock client and scripted fights ([ADR 0010](docs/adr/0010-offline-tests-with-lupa-and-a-mock-client.md)).
+
+## Development
+
+```bash
+python -I -X utf8 tools/fetch_libs.py
+python -I -X utf8 tools/check_docs.py
+```
+
+The first downloads the embedded libraries (never committed), the second checks documentation, addon and package.
+[Releasing](docs/RELEASING.md) and [third-party material](docs/third-party.md).
 
 ## Contributing
 

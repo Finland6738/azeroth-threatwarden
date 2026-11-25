@@ -7,7 +7,7 @@
 **Know your threat. Understand your mistakes. Prevent aggro loss.** Azeroth Threatwarden is a threat monitor, threat
 coach and combat analysis addon for World of Warcraft: Forever.
 
-> **Status: design phase, nothing to install yet.** The first step checks in the real client which threat data the
+> **Status: early development, nothing to install yet.** The addon's skeleton shows nothing in the game so far. The first step checks in the real client which threat data the
 > game gives an addon. The first version, `v0.1.0`, comes after milestone M1; the MVP (threat monitor, alerts, Coach,
 > recording and combat report) is `v0.4.0`. This manual grows with each version.
 

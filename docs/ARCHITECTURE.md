@@ -2,8 +2,9 @@
 
 This document describes how the addon is built and where each later milestone plugs in. It follows the model of
 Azeroth Unspoken's `docs/ARCHITECTURE.md` ([ADR 0012](adr/0012-reuse-accord-and-unspoken-foundations.md)). It was
-written in step **M1.1**, before any addon code is on `main` (only the M0 probe, `tools/probe/AzTw_Probe/`, exists):
-everything below is the design that M1 builds and later milestones extend. Parts that are not there yet are marked
+written in step **M1.1**; since **M1.2** the addon has its skeleton (TOC, libraries, `Core/Init.lua`,
+`Core/Features.lua`, `Core/Locale.lua`, `Locales/`), and everything else below is the design that M1 builds and later
+milestones extend. Parts that are not there yet are marked
 *planned*; parts whose behaviour depends on the M0 probe results are marked **[probe Pn]**. The detailed specification
 is in Italian: [SPEC-01](specs/SPEC-01-platform-architecture.md) (modules, Bus events, Compat), [SPEC-02](specs/SPEC-02-data-model-storage.md)
 (data), [SPEC-03](specs/SPEC-03-threat-monitor-ui.md) (window and commands) and [ui-style](specs/ui-style.md) (look).
@@ -103,7 +104,7 @@ Principles everything else rests on:
 
 ## 2. Modules and responsibilities
 
-Files are loaded in the order of the TOC (`AzerothThreatwarden/AzerothThreatwarden.toc`, from M1.2). Every file
+Files are loaded in the order of the TOC (`AzerothThreatwarden/AzerothThreatwarden.toc`). Every file
 receives `ADDON_NAME, ns = ...`; modules attach to `ns` (`ns.Compat`, `ns.Config`…) and, for tests, to the addon object
 `AzerothThreatwarden`, the only global besides the SavedVariables, the three Addon Compartment functions, the key
 binding names and the frames named `AzerothThreatwarden…` that the game needs (ARC-04). Most of `Core/` and `UI/` is
@@ -271,8 +272,8 @@ One more file in `Locales/` that calls `ns.Locale.Register("<code>", { … })`, 
 
 ## 6. What is planned and not there yet
 
-From the [roadmap](roadmap/README.md). At the time of writing `main` has the specification, the ADRs and the M0 probe;
-M1 builds everything in the `Core/` and `UI/` rows of §2.
+From the [roadmap](roadmap/README.md). `main` has the specification, the ADRs, the M0 probe and, since M1.2, the addon
+skeleton; M1 builds the rest of the `Core/` and `UI/` rows of §2.
 
 | Milestone | What it adds | Where it hooks in |
 |---|---|---|
