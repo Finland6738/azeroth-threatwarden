@@ -1,7 +1,9 @@
 # SPEC-01: Piattaforma e architettura
 
-> Fonte: [specifiche originali](source-specification.md) §1.3, §7, §9–§11. Da completare in **M1.1** con l'esito del
-> probe M0.
+> Fonte: [specifiche originali](source-specification.md) §1.3, §7, §9–§11. Completata in **M1.1** (2026-11-25)
+> **prima** dell'esito del probe M0: ciò che dipende da una risposta del probe è marcato **[probe Pn]** e lo rivede
+> M0.7 ([SPEC-08 §1](SPEC-08-quality-probe-release.md#1-probe-m0)). La panoramica in inglese, con i diagrammi, è
+> [docs/ARCHITECTURE.md](../ARCHITECTURE.md).
 
 ## 1. Il client
 
@@ -14,6 +16,12 @@
 
 **ARC-01** MUST: all'avvio l'addon controlla interfaccia e progetto; su un client diverso si carica in modalità
 diagnostica e lo dice in `/atw debug` invece di dare numeri.
+
+- Il controllo è quello di Accord: `WOW_PROJECT_ID == WOW_PROJECT_CAMELOT` quando il client ha le due costanti (non sono
+  nel dump: si cercano a runtime), altrimenti il quarto valore di `GetBuildInfo()` fra 16001 e 19999. Il valore di
+  `WOW_PROJECT_ID` su Forever lo dice P1 **[probe P1]**.
+- In modalità diagnostica la finestra, le impostazioni, i crediti e `/atw debug` funzionano; il monitor (M2) resta
+  spento e la barra del titolo dice *Unsupported client*.
 
 ## 2. API rilevanti dal dump (build 70170)
 
@@ -33,6 +41,8 @@ diagnostica e lo dice in `/atw debug` invece di dare numeri.
 | `UnitGUID`, `UnitGroupRolesAssigned`, `IsInGroup`, `IsInRaid`, `GetNumGroupMembers` | presenti | identità, ruolo, gruppo | **[verificare]** valori segreti in istanza, P5 |
 | `PLAYER_REGEN_DISABLED/ENABLED`, `UNIT_TARGET`, `PLAYER_TARGET_CHANGED`, `ENCOUNTER_START/END` | presenti | inizio e fine combattimento, cambi di target | **[verificare]** P7 |
 
+L'elenco completo delle API che l'addon usa, con lo stato nel dump, è la tabella delle capacità di Compat (§8).
+
 **ARC-02** MUST: ogni chiamata passa da `Core/Compat.lua` (l'*API Adapter* della fonte §7.2), che dice per ogni
 funzione `available`, `missing`, `restricted` (segreta) o `error`, normalizza i risultati e fa da unico punto di
 ripiego. Nessun modulo di `UI/` chiama le API del gioco direttamente (un test lo verifica da M1.4).
@@ -48,27 +58,121 @@ grafica, testabile offline), `UI/` (viste), `Locales/`.
 | Bootstrap, Events, Scheduler | `Core/Init.lua`, `Core/Bus.lua` (eventi interni), `Core/Scheduler.lua` (tick limitati) | M1 |
 | Compatibility, APIAdapter | `Core/Compat.lua` | M1 |
 | Diagnostics | `Core/Diagnostics.lua`, `UI/DiagnosticsBox.lua` (`/atw debug`) | M1 |
-| — | `Core/Config.lua` (SavedVariables, schema), `Core/Features.lua` (interruttori) | M1 |
+| — | `Core/Config.lua` (SavedVariables, schema), `Core/Features.lua` (interruttori), `Core/Locale.lua` (lingua), `Core/Commands.lua` (comandi) | M1 |
 | ThreatScanner, TargetTracker | `Data/ThreatScanner.lua`, `Data/TargetTracker.lua` | M2 |
 | ThreatModel, ThreatCalculator, ThreatState | `Data/ThreatModel.lua`, `Data/ThreatCalc.lua`, `Data/ThreatState.lua` | M2 |
 | Rules, Recommendations, AlertManager | `Data/CoachRules.lua`, `Data/Coach.lua`, `Data/Alerts.lua` | M3 |
 | Recorder, Session, Storage | `Data/Recorder.lua`, `Data/Session.lua`, `Data/Storage.lua` | M4 |
 | Replay | `Data/Replay.lua` | M5 |
 | Metrics, Reports | `Data/Report.lua` (M4), `Data/Metrics.lua`, `Data/Export.lua` (M6) | M4, M6 |
-| UI | `UI/Theme.lua`, `Assets.lua`, `Motion.lua`, `Widgets/`, `Window.lua`, `ThreatList.lua`, `Timeline.lua`, `ReplayWindow.lua`, `Settings.lua`, `About.lua` | M1… |
+| UI | `UI/Theme.lua`, `Assets.lua`, `Motion.lua`, `Widgets/`, `Window.lua`, `Launcher.lua`, `ThreatList.lua`, `Timeline.lua`, `ReplayWindow.lua`, `Settings.lua`, `About.lua` | M1… |
 | Localization | `Locales/enUS.lua`, `Locales/itIT.lua` | M1 |
 
 **ARC-03** MUST: i moduli comunicano con il Bus interno (`THREAT_UPDATED`, `STATE_CHANGED`, `COMBAT_STARTED`,
-`COMBAT_ENDED`, `CONFIG_CHANGED`…), non chiamandosi a vicenda dall'interfaccia ai dati.
+`COMBAT_ENDED`, `CONFIG_CHANGED`…, elenco completo in §3.3), non chiamandosi a vicenda dall'interfaccia ai dati.
 
 **ARC-04** MUST: nessuna variabile globale tranne `AzerothThreatwarden`, le SavedVariables, le funzioni del
-Compartment e i binding.
+Compartment e i binding, più i frame con nome che il gioco richiede, tutti con il prefisso `AzerothThreatwarden`
+(la finestra, per chiuderla con Esc; il tooltip dell'addon; gli oggetti font `AzerothThreatwardenFont<Id>`).
+
+### 3.1 I moduli di M1
+
+Ogni file riceve `ADDON_NAME, ns = ...`; i moduli si appendono a `ns` (`ns.Compat`, `ns.Config`…) e, per i test,
+all'oggetto dell'addon (`AzerothThreatwarden.Compat`…), come in Accord. Ordine di caricamento nel TOC: librerie
+(`embeds.xml`), `Core/Locale.lua`, `Locales/enUS.lua`, `Locales/itIT.lua`, `Core/Init.lua`, `Core/Features.lua`,
+`Core/Bus.lua`, `Core/Compat.lua`, `Core/Scheduler.lua`, `Core/Config.lua`, `Core/Diagnostics.lua`,
+`Core/Commands.lua`, poi `UI/Assets.lua`, `UI/Theme.lua`, `UI/Motion.lua`, `UI/Widgets/*.lua`,
+`UI/DiagnosticsBox.lua`, `UI/Window.lua`, `UI/Launcher.lua`, `UI/Settings.lua`, `UI/About.lua`. Un modulo non usa un
+altro modulo caricato dopo di lui al caricamento del file, solo nei suoi gestori.
+
+| File | Responsabilità | Bus: emette / ascolta | Test | Step |
+|---|---|---|---|---|
+| `Core/Locale.lua` | tabelle delle lingue registrate dai file di `Locales/`; `ns.L`, una tabella che risponde nella lingua attiva con ripiego sull'inglese; `Locale.Apply(code)` al caricamento (§10) | — | `test_locales.lua`, `test_language.lua` | M1.2, M1.5 |
+| `Core/Init.lua` | oggetto AceAddon `AzerothThreatwarden`; controllo Forever (ARC-01); ciclo di vita: `ADDON_LOADED` → `Config:Load`, `Locale.Apply`, `Compat:Probe`; `PLAYER_LOGIN` → interfaccia; `PLAYER_LOGOUT`; stato del combattimento da `PLAYER_REGEN_DISABLED/ENABLED`; sezioni di `/atw debug` (`AddDebugSection`) | emette `ADDON_READY`, `COMBAT_STARTED`, `COMBAT_ENDED` | `test_init.lua` (avvio, client non Forever, `/reload`) | M1.2, M1.3 |
+| `Core/Features.lua` | interruttori delle parti non finite (§3.4); `Features.On(name)` si chiede quando si agisce, mai una volta sola al caricamento | — | `test_features.lua` | M1.2 |
+| `Core/Bus.lua` | publish/subscribe interno, copiato da Accord: `On`, `Off`, `Emit`; un ascoltatore che solleva un errore non ferma gli altri (l'errore va nell'anello degli errori) | — | `test_bus.lua` | M1.4 |
+| `Core/Compat.lua` | unica porta verso le API del gioco: `Resolve`, `Call` sotto `pcall`, `IsSecret`/`Readable`, tabella delle API e delle capacità (§8), lettura normalizzata della threat (§8.3), timer, restrizioni | emette `CAPABILITY_CHANGED`; ascolta (dal gioco) `ADDON_RESTRICTION_STATE_CHANGED` | `test_compat.lua`, `test_api_boundary.lua` (nessun file di `UI/` chiama il gioco) | M1.4 |
+| `Core/Scheduler.lua` | tick limitati con nome (ARC-09): avvio, arresto, frequenza, misura del costo | ascolta `COMBAT_ENDED` (ferma i tick legati al combattimento) | `test_scheduler.lua` | M1.4 |
+| `Core/Config.lua` | SavedVariables, schema 1, regole tipizzate, predefiniti, migrazioni, sola lettura, `corrupt` ([SPEC-02 §3](SPEC-02-data-model-storage.md#3-savedvariables)); `Config:Get(path)`, `Config:Set(path, value)` | emette `CONFIG_LOADED`, `CONFIG_CHANGED(path)` | `test_config.lua` | M1.5 |
+| `Core/Diagnostics.lua` | anello degli errori dell'addon (10, ripuliti dai percorsi), testo del rapporto (§9), mai nomi | — (legge Bus, Compat, Config, Scheduler) | `test_diagnostics.lua` | M1.4 |
+| `Core/Commands.lua` | `/threatwarden` e `/atw` ([SPEC-03 §5](SPEC-03-threat-monitor-ui.md#5-comandi-e-configurazione)); un comando di una parte spenta in `Features` risponde *coming in vX* | — (chiama le funzioni pubbliche di Window, Settings, About, Diagnostics) | `test_commands.lua` | M1.7 |
+| `UI/Assets.lua` | tabella unica di texture e font dell'addon (`Media/`), come in Accord | — | `test_theme.lua` (ogni file in tabella) | M1.6 |
+| `UI/Theme.lua` | token di Nebula, Aurora e Warden e i token di stato ([ui-style](ui-style.md)); registro delle regioni tinte; oggetti font `AzerothThreatwardenFont<Id>`; `Px()`; forme 9-slice | emette `THEME_CHANGED(themeId)`; ascolta `CONFIG_LOADED`, `CONFIG_CHANGED` | `test_theme.lua` (parità dei token, contrasti, nessun colore fuori dal tema) | M1.6 |
+| `UI/Motion.lua` | animazioni del tema (durate 120/200/320 ms), spente con `settings.animations` | — | `test_theme.lua` | M1.6 |
+| `UI/Widgets/` | il kit di Accord (`Core.lua`, `Controls.lua`, `Tooltip.lua`, `ThinBar.lua`), più `ThreatBar` e `StateBadge` (vuoti di dati fino a M2) | — | `test_widgets.lua` | M1.6 |
+| `UI/DiagnosticsBox.lua` | la finestra da cui copiare il rapporto di `/atw debug` (un `Widgets.Dialog`) | — | `test_diagnostics.lua` | M1.4 |
+| `UI/Window.lua` | finestra principale ([SPEC-03 §4](SPEC-03-threat-monitor-ui.md#4-finestra)): barra del titolo, schede, spostamento, blocco, ridimensionamento, scala, posizione per personaggio, Esc | emette `WINDOW_SHOWN(shown)`, `TAB_CHANGED(tabId)`; ascolta `THEME_CHANGED`, `COMBAT_STARTED`, `COMBAT_ENDED`, `CAPABILITY_CHANGED` | `test_window.lua` | M1.7 |
+| `UI/Launcher.lua` | pulsante della minimappa (LibDataBroker + LibDBIcon, nascondibile) e voce dell'Addon Compartment (le tre funzioni globali del TOC) | ascolta `CONFIG_CHANGED` (`settings.minimap.hide`) | `test_launcher.lua` | M1.7 |
+| `UI/Settings.lua` | pagina Settings (Aspetto, Lingua, Finestra, ripristino) nella scheda e nel pannello Impostazioni del gioco | emette `SETTINGS_CHANGED(key)` | `test_settings.lua`, `test_ui_texts.lua` | M1.8 |
+| `UI/About.lua` | pagina Info: logo, versione, crediti NEBULA, link da copiare, licenza | — | `test_about.lua` | M1.8 |
+
+### 3.2 I moduli delle milestone successive (previsti)
+
+| File | Responsabilità | Bus | Milestone |
+|---|---|---|---|
+| `Data/TargetTracker.lua` | mob monitorato (target o target del target), cambi, morte, scomparsa, cambio di GUID | emette `TARGET_CHANGED(mobKey)` | M2 |
+| `Data/ThreatScanner.lua` | letture da eventi della threat più tick limitato in combattimento, record dal pool | emette `THREAT_SCANNED(mobKey)` | M2 |
+| `Data/ThreatModel.lua`, `Data/ThreatCalc.lua` | `ThreatRecord`, categorie, freschezza; margine, trend, tempo al superamento | emette `THREAT_UPDATED(mobKey)` | M2 |
+| `Data/ThreatState.lua` | SAFE / WARNING / DANGER / UNKNOWN con isteresi; modalità di lettura | emette `STATE_CHANGED(unitKey, mobKey, old, new)`, `THREAT_MODE_CHANGED(mode, reason)` | M2 |
+| `Data/Alerts.lua`, `Data/Coach.lua`, `Data/CoachRules.lua` | avvisi con cooldown; regole con motivazione e confidenza | emette `ALERT_RAISED(alert)`, `COACH_TIP(tip)` | M3 |
+| `Data/Recorder.lua`, `Data/Session.lua`, `Data/Storage.lua`, `Data/Report.lua` | sessioni, campioni, eventi, limiti, report | emette `SESSION_STARTED(id)`, `SESSION_ENDED(id, complete)`, `SESSIONS_CHANGED()` | M4 |
+| `Data/Replay.lua`, `UI/Timeline.lua`, `UI/ReplayWindow.lua` | timeline e riproduzione | emette `REPLAY_POSITION(t)` | M5 |
+| `Data/Metrics.lua`, `Data/Export.lua` | metriche descrittive, esportazione | — | M6 |
+| `UI/ThreatList.lua` | elenco della threat nella scheda Monitor | ascolta `THREAT_UPDATED`, `STATE_CHANGED`, `THREAT_MODE_CHANGED` | M2 |
+
+Ogni M<N>.1 completa la riga dei propri moduli (eventi esatti e test) come questa sezione fa per M1.
+
+### 3.3 Eventi del Bus
+
+Gli eventi sono stringhe maiuscole; gli argomenti non contengono mai un valore segreto né un nome di giocatore
+(per i dati della threat passano solo chiavi: `unitKey`, `mobKey`). `Core/Bus.lua` li elenca in testa al file, come in
+Accord.
+
+| Evento | Argomenti | Chi lo emette | Chi lo ascolta | Da |
+|---|---|---|---|---|
+| `ADDON_READY` | — | `Core/Init.lua`, dopo Config, Locale e Compat all'`ADDON_LOADED` | i moduli che preparano lo stato | M1.2 |
+| `CONFIG_LOADED` | — | `Core/Config.lua`, dati caricati, migrati e ripuliti | Theme, Window, Launcher | M1.5 |
+| `CONFIG_CHANGED` | `path` (per esempio `"account.settings.theme"`) | `Config:Set` | Theme, Launcher, Window | M1.5 |
+| `SETTINGS_CHANGED` | `key` | `UI/Settings.lua`, quando il giocatore cambia un'opzione | Window, Diagnostics | M1.8 |
+| `THEME_CHANGED` | `themeId` | `UI/Theme.lua` dopo `Theme.Apply` | le viste con elementi non registrati | M1.6 |
+| `CAPABILITY_CHANGED` | `id`, `state` | `Core/Compat.lua` (`Compat:SetCapability`, cambio di una restrizione) | Window (stato del modulo), ThreatState (M2) | M1.4 |
+| `COMBAT_STARTED` / `COMBAT_ENDED` | — | `Core/Init.lua` da `PLAYER_REGEN_DISABLED/ENABLED` | Scheduler, Window, Scanner (M2), Recorder (M4) | M1.2 |
+| `WINDOW_SHOWN` | `shown` (bool) | `UI/Window.lua` | Launcher (tooltip), Scanner (M2: legge solo se serve) | M1.7 |
+| `TAB_CHANGED` | `tabId` | `UI/Window.lua` | le schede | M1.7 |
+| `TARGET_CHANGED`, `THREAT_SCANNED`, `THREAT_UPDATED`, `STATE_CHANGED`, `THREAT_MODE_CHANGED` | vedi §3.2 | `Data/` | UI, Alerts, Recorder | M2 |
+| `ALERT_RAISED`, `COACH_TIP` | vedi §3.2 | `Data/` | Window, Recorder | M3 |
+| `SESSION_STARTED`, `SESSION_ENDED`, `SESSIONS_CHANGED` | vedi §3.2 | `Data/Recorder.lua`, `Data/Storage.lua` | Reports | M4 |
+
+`/atw debug` mostra per ogni evento il numero di ascoltatori e gli ultimi errori degli ascoltatori.
+
+### 3.4 Interruttori (`Core/Features.lua`)
+
+Un interruttore per ogni parte di una milestone successiva ([ADR 0014](../adr/0014-one-version-per-milestone-and-feature-switches.md));
+in `v0.1.0` sono tutti spenti. Spento vuol dire: nulla di visibile, nessun evento del gioco registrato, nessun dato
+scritto; un comando di quella parte risponde che arriva in una versione successiva.
+
+| Nome | Parte | Si accende in |
+|---|---|---|
+| `monitor` | lettura della threat, elenco, stati, `/atw demo` | M2.R |
+| `alerts`, `coach` | avvisi; Threat Coach | M3.R |
+| `recording`, `reports` | registrazione; report e scheda *Reports* | M4.R |
+| `timeline`, `replay` | timeline; replay | M5.R |
+| `analytics`, `export` | metriche e confronto; esportazione | M6.R |
+| `multitarget` | più mob e dungeon focus (solo se P5 lo consente) | M7.R |
+| `profiles`, `heatmap` | profili per ruolo; heatmap | M8.R |
 
 ## 4. Librerie
 
-Ace3 incorporato (AceAddon, AceEvent, AceTimer, AceConsole, AceLocale, AceDB, AceConfig), LibDataBroker e LibDBIcon,
-fissati in `.pkgmeta` e mai nel repository ([ADR 0005](../adr/0005-embedded-ace3-savedvariables-and-schema-versions.md)).
-Niente AceComm ([ADR 0001](../adr/0001-local-only-addon-no-network.md)).
+Incorporate, fissate in `.pkgmeta` e mai nel repository: LibStub, CallbackHandler, **AceAddon**, **AceEvent**,
+**AceConsole** (comandi), LibDataBroker e LibDBIcon (pulsante della minimappa).
+([ADR 0005](../adr/0005-embedded-ace3-savedvariables-and-schema-versions.md), aggiornamento di M1.1).
+
+Non incorporate, come in Accord: AceComm (nessun messaggio, [ADR 0001](../adr/0001-local-only-addon-no-network.md));
+AceDB (Config gestisce le tabelle salvate direttamente, per le regole di schema e di sola lettura); AceTimer (i timer
+del client passano da Compat); AceConfig (Settings è una pagina nello stile dell'ecosistema). Nuovo rispetto ad Accord:
+nemmeno **AceLocale**, perché la sua scelta della lingua è globale (la variabile `GAME_LOCALE` cambierebbe la lingua di
+ogni addon Ace) e non permette l'impostazione *Language* ([ADR 0009](../adr/0009-interface-and-documentation-languages.md),
+aggiornamento di M1.1; §10).
 
 ## 5. Prestazioni (fonte §9)
 
@@ -79,6 +183,11 @@ Niente AceComm ([ADR 0001](../adr/0001-local-only-addon-no-network.md)).
 - **ARC-07** MUST: analisi e serializzazioni pesanti fuori dal combattimento o spezzate su più frame.
 - **ARC-08** SHOULD: la frequenza predefinita la decide la misura del probe (P10), non una scelta arbitraria
   ([Q14](SPEC-09-risks-open-questions.md)).
+- **ARC-09** MUST: ogni lavoro periodico passa da `Core/Scheduler.lua`: tick con nome (`Scheduler.Start(name, hz, fn)`,
+  `Stop(name)`), frequenza fra 1 e 10 Hz, un solo ticker del client per nome, ogni tick sotto `pcall` (un errore ferma
+  quel tick e va nell'anello degli errori), tempo per tick misurato con `debugprofilestop` attraverso Compat (mediana e
+  massimo degli ultimi 100, in `/atw debug`). Un tick legato al combattimento si ferma da solo a `COMBAT_ENDED`;
+  nessun `OnUpdate` fisso. In M1 nessun tick è attivo.
 - Target che scompaiono, muoiono o cambiano GUID, dati mancanti, ritardati o incoerenti: gestiti dal modello
   ([SPEC-02](SPEC-02-data-model-storage.md)) e coperti da test.
 
@@ -92,3 +201,192 @@ le restrizioni (i valori segreti restano segreti); nessuna lettura della memoria
 
 L'addon funziona da solo; nessuna dipendenza obbligatoria. Con le UI personalizzate più comuni la finestra resta
 utilizzabile (verifica nelle checklist). Nessuna integrazione con gli altri addon del proprietario (Q4).
+
+## 8. Compat: API, capacità e lettura della threat
+
+### 8.1 Stati e regole
+
+All'`ADDON_LOADED` `Compat:Probe()` riempie due tabelle, come in Accord:
+
+- **API**: per ogni voce di §8.2 `available`, `missing` (non esiste nel client), `restricted` (risponde con un valore
+  segreto, o un errore che parla di restrizioni, o una restrizione è attiva) o `error` (un altro errore, testo
+  ripulito). Le funzioni senza effetti collaterali e poco costose si **chiamano** una volta; le altre si controllano solo
+  come esistenza.
+- **Capacità** (§8.4): cosa l'addon può fare davvero, `available`, `missing`, `restricted` o `unknown`.
+
+- **ARC-10** MUST: una voce mancante, in errore o segreta spegne la funzione che ne dipende, mai l'addon; nessun errore
+  arriva al giocatore (`pcall` intorno a ogni chiamata).
+- **ARC-11** MUST: un valore restituito si controlla con `Compat.IsSecret` (`issecretvalue`, `canaccessvalue`,
+  `issecrettable`) **prima** di qualsiasi altra operazione; un valore segreto diventa `nil` con motivo `secret` e non è
+  mai confrontato, sommato, formattato, concatenato, stampato o salvato (stesse regole del probe, PRB-02).
+- **ARC-12** MUST: una capacità non si dà per buona finché un dato non la dimostra: resta `unknown` (la API c'è ma
+  nessuna lettura l'ha ancora confermata) e i moduli la precisano con `Compat:SetCapability(id, state, detail)`, che
+  emette `CAPABILITY_CHANGED`.
+- Le funzioni dell'interfaccia del gioco che il dump non elenca (FrameXML: `Settings`, `SlashCmdList`, `UIParent`,
+  `Enum`) si cercano a runtime con `Compat.Resolve`; "assente" è una risposta, come nel probe (PRB-05).
+
+### 8.2 Tabella delle API
+
+Dal dump di Forever (build 70170, `../WoW-Addons/docs/api.json`, consultato il 2026-11-25; mai copiato,
+[ADR 0002](../adr/0002-wow-forever-target-and-api-dump.md)). *Chiamata*: Probe la chiama all'avvio; *esistenza*: solo
+controllata. *Dump*: **firma** (sistema documentato con argomenti e risultati), **globale** (nell'elenco dei globali
+senza firma), **assente** (si cerca a runtime). In grassetto le voci il cui comportamento lo dice il probe.
+
+| Id | Percorso | Probe | Dump | Uso | Da | Probe M0 |
+|---|---|---|---|---|---|---|
+| `client.GetBuildInfo` | `GetBuildInfo` | chiamata | firma (6 valori) | ARC-01, `/atw debug` | M1 | P1 |
+| `client.GetLocale` | `GetLocale` | chiamata | firma | lingua `auto` (§10) | M1 | P1 |
+| `client.ProjectID` | `WOW_PROJECT_ID`, `WOW_PROJECT_CAMELOT` | lettura | assente | ARC-01 | M1 | **P1** |
+| `secret.issecretvalue` | `issecretvalue` | esistenza | firma | ARC-11 | M1 | P3 |
+| `secret.issecrettable` | `issecrettable` | esistenza | firma | ARC-11 | M1 | P3 |
+| `secret.canaccessvalue` | `canaccessvalue` | esistenza | firma | ARC-11 | M1 | P3 |
+| `secret.HasSecretRestrictions` | `C_Secrets.HasSecretRestrictions` | chiamata | firma | se `false`, nessun valore segreto in questa build | M1 | **P1, P3** |
+| `secret.ThreatValues` | `C_Secrets.ShouldUnitThreatValuesBeSecret` | esistenza | firma `(unit, mobUnit)` | previsione prima della lettura (§8.3) | M1 | **P3** |
+| `secret.ThreatState` | `C_Secrets.ShouldUnitThreatStateBeSecret` | esistenza | firma `(unit [, mobUnit])` | previsione prima della lettura | M1 | **P3** |
+| `secret.Identity` | `C_Secrets.ShouldUnitIdentityBeSecret` | esistenza | firma | GUID e nomi in istanza | M2 | **P9** |
+| `secret.Comparison` | `C_Secrets.ShouldUnitComparisonBeSecret` | esistenza | firma | `UnitIsUnit` in istanza | M2 | **P9** |
+| `threat.Detailed` | `UnitDetailedThreatSituation` | esistenza | firma `(unit, mobGUID: UnitToken)` | valori del monitor | M1 (lettura M2) | **P2–P5** |
+| `threat.Situation` | `UnitThreatSituation` | esistenza | firma, risultato nilable | modalità *state only* | M1 (lettura M2) | **P2, P3** |
+| `threat.PercentageOfLead` | `UnitThreatPercentageOfLead` | esistenza | firma, nilable | margine del tank | M1 (lettura M2) | **P2** |
+| `threat.LeadSituation` | `UnitThreatLeadSituation` | esistenza | firma, nilable | margine del tank (stato) | M1 (lettura M2) | **P2** |
+| `threat.StatusColor` | `GetThreatStatusColor` | esistenza | firma | solo confronto, mai usato per disegnare | M1 | P2 |
+| `threat.WarningEnabled` | `IsThreatWarningEnabled` | chiamata | firma | non duplicare l'avviso nativo (M3) | M1 | — |
+| `unit.Exists` | `UnitExists` | esistenza | firma | target presente | M2 | P2 |
+| `unit.GUID` | `UnitGUID` | chiamata (`"player"`) | firma, nilable, argomento `UnitTokenPvPRestrictedForAddOns` | chiavi di unità e mob | M2 | **P9** |
+| `unit.TokenFromGUID` | `UnitTokenFromGUID` | esistenza | firma, nilable | ritrovare un mob | M7 | **P5, P9** |
+| `unit.Name` | `UnitName` | esistenza | firma | nome mostrato (mai salvato fuori dalle sessioni) | M2 | P9 |
+| `unit.Class` | `UnitClass` | esistenza | firma | colore di classe | M2 | — |
+| `unit.Classification` | `UnitClassification` | esistenza | firma | élite, boss | M2 | P5 |
+| `unit.CanAttack` | `UnitCanAttack` | esistenza | firma | mob ostile | M2 | P2 |
+| `unit.IsDead` | `UnitIsDead` | esistenza | firma | mob morto | M2 | P7 |
+| `unit.IsUnit` | `UnitIsUnit` | esistenza | firma | target del target, "me" | M2 | **P9** |
+| `unit.AffectingCombat` | `UnitAffectingCombat` | chiamata (`"player"`) | firma | stato del combattimento | M1 | P7 |
+| `unit.Role` | `UnitGroupRolesAssigned` | esistenza | firma | ruolo (tank) | M2 | **P9** |
+| `group.InGroup` | `IsInGroup` | chiamata | globale | unità da leggere | M2 | P5 |
+| `group.InRaid` | `IsInRaid` | chiamata | globale | unità da leggere | M2 | P5 |
+| `group.Size` | `GetNumGroupMembers` | chiamata | globale | unità da leggere | M2 | P5 |
+| `instance.InInstance` | `IsInInstance` | chiamata | firma | contesto in `/atw debug` e nelle sessioni | M1 | P3 |
+| `instance.Info` | `GetInstanceInfo` | esistenza | firma | tipo e difficoltà (mai il nome nel rapporto) | M4 | P3 |
+| `restriction.InCombatLockdown` | `C_RestrictedActions.InCombatLockdown` (o il globale `InCombatLockdown`) | chiamata | firma / globale | nessuna azione protetta in combattimento | M1 | P11 |
+| `restriction.IsActive` | `C_RestrictedActions.IsAddOnRestrictionActive` | per ogni tipo | firma | restrizioni attive (una voce `restriction.<Tipo>`) | M1 | **P11** |
+| `restriction.Types` | `Enum.AddOnRestrictionType` | lettura | assente (FrameXML) | i tipi di restrizione | M1 | **P11** |
+| `combatlog.Restricted` | `C_CombatLog.IsCombatLogRestricted` | chiamata | firma | solo per il rapporto; il combat log non si usa ([ADR 0004](../adr/0004-threat-from-the-unit-threat-api-sampled-in-combat.md)) | M1 | **P7** |
+| `damagemeter.Available` | `C_DamageMeter.IsDamageMeterAvailable` | chiamata | firma | morti e durata (forse, M4) | M4 | **P8** |
+| `time.GetTime` | `GetTime` | chiamata | firma | tempo dei campioni | M1 | — |
+| `time.ServerTime` | `GetServerTime` | chiamata | firma | data delle sessioni | M4 | P12 |
+| `time.After`, `time.NewTicker`, `time.NewTimer` | `C_Timer.After`, `NewTicker`, `NewTimer` | esistenza | firma | Scheduler | M1 | P11 |
+| `time.ProfileStop` | `debugprofilestop` | esistenza | firma | costo dei tick (ARC-09) | M1 | P10 |
+| `addon.Metadata` | `C_AddOns.GetAddOnMetadata` | chiamata | firma | versione nel rapporto e in Info | M1 | — |
+| `addon.Memory` | `UpdateAddOnMemoryUsage`, `GetAddOnMemoryUsage` | esistenza | firma | memoria in `/atw debug` | M1 | P10 |
+| `addon.Framerate` | `GetFramerate` | esistenza | firma | rapporto | M1 | P10 |
+| `ui.Reload` | `C_UI.Reload` (o il globale `ReloadUI`) | esistenza | firma / globale | pulsante "Reload now" dopo il cambio di lingua | M1 | — |
+| `ui.CreateFrame`, `ui.CreateFont` | `CreateFrame`, `CreateFont` | esistenza | globale | tutta l'interfaccia (solo da `UI/` attraverso il kit e il tema) | M1 | — |
+| `ui.ScreenSize` | `GetPhysicalScreenSize`, `GetScreenWidth`, `GetScreenHeight` | chiamata | firma | tenere la finestra nello schermo | M1 | — |
+| `ui.SettingsPanel` | `Settings.RegisterCanvasLayoutCategory`, `Settings.RegisterAddOnCategory`, `Settings.OpenToCategory` | esistenza | assente (FrameXML) | voce nel pannello Impostazioni del gioco (M1.8); se manca resta la scheda della finestra | M1 | da provare in gioco |
+| `ui.SpecialFrames` | `UISpecialFrames` | esistenza | assente (FrameXML) | Esc chiude la finestra ([SPEC-03 §4.5](SPEC-03-threat-monitor-ui.md#45-comportamento)) | M1 | da provare in gioco |
+| `ui.SlashCmdList` | `SlashCmdList` (attraverso AceConsole) | esistenza | assente (FrameXML) | comandi | M1 | da provare in gioco |
+| `ui.ClassColor` | `C_ClassColor.GetClassColor` | esistenza | firma | colore di classe nell'elenco | M2 | — |
+| `ui.PlaySound` | `PlaySound` | esistenza | globale | avviso sonoro (spento di predefinito) | M3 | — |
+
+Eventi del gioco (tutti nel dump con il loro payload), registrati solo attraverso `Core/Init.lua` e i moduli `Data/`
+con AceEvent: `ADDON_LOADED`, `PLAYER_LOGIN`, `PLAYER_ENTERING_WORLD` (`isInitialLogin`, `isReloadingUi`),
+`PLAYER_LOGOUT`, `PLAYER_REGEN_DISABLED`, `PLAYER_REGEN_ENABLED`, `ADDON_RESTRICTION_STATE_CHANGED` (`type`, `state`),
+`UI_SCALE_CHANGED`, `DISPLAY_SIZE_CHANGED` (M1); `UNIT_THREAT_LIST_UPDATE`, `UNIT_THREAT_SITUATION_UPDATE`
+(`unitTarget`), `PLAYER_TARGET_CHANGED`, `UNIT_TARGET`, `GROUP_ROSTER_UPDATE` (M2, **[probe P6, P7]**);
+`ENCOUNTER_START`, `ENCOUNTER_END` (M4, **[probe P7]**).
+
+### 8.3 Lettura normalizzata della threat (M1.4, usata da M2)
+
+`Compat.Threat.Read(unit, mob, record)` riempie una tabella riusata (nessuna allocazione) con i campi di
+[SPEC-02 §1](SPEC-02-data-model-storage.md#1-threatrecord-in-memoria) e restituisce la **modalità** della lettura:
+
+1. Se `C_Secrets.ShouldUnitThreatStateBeSecret(unit, mob)` è vero → nessuna chiamata, modalità `none`, `reason =
+   "secret"`.
+2. Se `C_Secrets.ShouldUnitThreatValuesBeSecret(unit, mob)` è vero → solo `UnitThreatSituation(unit, mob)`, modalità
+   `state` (*state only*, MON-02).
+3. Altrimenti `UnitDetailedThreatSituation(unit, mob)` → modalità `values`; ogni valore passa da ARC-11 (un valore
+   segreto inatteso diventa `nil` con `reason = "secret"` e la lettura scende a `state` o `none`).
+4. Una funzione assente o in errore dà `reason = "missing"` o `"error"`; nessun risultato dà `reason = "nil"`.
+
+La forma degli argomenti (token del mob, come nel dump, o GUID) e quale previsione `Should…` è affidabile li dice il
+probe **[probe P2, P3]**: cambiano in questa sola funzione. Se `C_Secrets` manca, la lettura procede e conta solo il
+controllo dei valori (ARC-11).
+
+### 8.4 Capacità
+
+| Capacità | Significato | All'avvio (M1.4) | La precisa | Probe M0 |
+|---|---|---|---|---|
+| `threatValues` | percentuali e valori leggibili sul target in combattimento | `missing` se `UnitDetailedThreatSituation` manca, altrimenti `unknown` | Scanner alla prima lettura in combattimento (M2) | **P2, P3** |
+| `threatState` | solo lo stato 0–3 leggibile | come sopra, con `UnitThreatSituation` | Scanner (M2) | **P2, P3** |
+| `threatLead` | margine del tank (`UnitThreatPercentageOfLead`) | come sopra | Scanner (M2) | **P2** |
+| `threatEvents` | gli eventi `UNIT_THREAT_*` arrivano | `unknown` | Scanner (M2) | **P6** |
+| `groupThreat` | la threat dei membri del gruppo sul mob | `unknown` | Scanner in gruppo (M2) | **P5** |
+| `otherMobs` | la threat su mob diversi dal target | `unknown` | M7 | **P5** |
+| `mobIdentity` | GUID dei mob leggibili e stabili | `unknown` | TargetTracker (M2) | **P9** |
+| `roles` | ruoli del gruppo leggibili | `unknown` | M2 | **P9** |
+| `combatLog` | il combat log è leggibile da un addon | `missing` se `CombatLogGetCurrentEventInfo` manca (atteso) | — | **P7** |
+| `damageMeter` | `C_DamageMeter` utilizzabile | dal suo `IsDamageMeterAvailable` | M4 | **P8** |
+| `restricted.<Tipo>` | una restrizione del client è attiva ora | da `IsAddOnRestrictionActive` | `ADDON_RESTRICTION_STATE_CHANGED` | **P11** |
+
+M0.7 sostituisce gli `unknown` con ciò che il probe ha dimostrato (per esempio `threatValues` `restricted` in istanza)
+e scrive in questa tabella le conseguenze per contesto.
+
+## 9. Diagnostica (`/atw debug`)
+
+**ARC-13** MUST: il rapporto si apre in `UI/DiagnosticsBox.lua` già selezionato da copiare; è in inglese (si incolla
+nelle segnalazioni, [ADR 0009](../adr/0009-interface-and-documentation-languages.md) regola 5); non contiene mai nomi di
+giocatori, gilde, reami, GUID di giocatori o percorsi del computer.
+
+Sezioni, in ordine: intestazione (addon, versione, build di sviluppo sì/no); client (versione, build, interfaccia,
+Forever sì/no, lingua del client, lingua scelta e attiva); interruttori di `Features`; API di §8.2 con stato e
+dettaglio; capacità di §8.4; restrizioni attive; dati salvati (schema per variabile, sola lettura, problemi corretti
+all'ultimo caricamento, voci in `corrupt`, dimensione stimata in KB); memoria dell'addon; Bus (eventi con ascoltatori,
+errori degli ascoltatori); Scheduler (tick attivi, ms per tick); ultimi errori (fino a 10, ripuliti da
+`Diagnostics.CleanError`). Un modulo aggiunge la sua sezione con `AddDebugSection(title, linesFn)`.
+
+## 10. Lingue (`Core/Locale.lua`)
+
+- **ARC-14** MUST: i file di `Locales/` registrano la loro tabella con `ns.Locale.Register(code, strings)` qualunque sia
+  la lingua del client; `Locales/enUS.lua` è la base. All'`ADDON_LOADED`, letti i dati salvati, `Locale.Apply` sceglie
+  la lingua attiva da `account.settings.language` ([SPEC-09 Q5](SPEC-09-risks-open-questions.md)): `auto` segue
+  `GetLocale()` (`enGB` vale `enUS`; una lingua senza file vale inglese), `enUS` e `itIT` la forzano.
+- `ns.L[key]` risponde nella lingua attiva, poi in inglese; una chiave che manca anche in inglese restituisce la chiave
+  stessa (così si vede) e lo conta per `/atw debug`. I moduli tengono `local L = ns.L` al caricamento del file: la
+  tabella è la stessa prima e dopo la scelta.
+- Il cambio di lingua dalle impostazioni vale dopo `/reload`: Settings lo dice e offre *Reload now* (`ui.Reload`). Prima
+  dell'`ADDON_LOADED` (nomi dei binding) vale la lingua del client.
+- I test di [ADR 0009](../adr/0009-interface-and-documentation-languages.md) regola 3 leggono le stesse tabelle.
+
+## 11. Test per modulo
+
+Tutti offline con lupa e il client finto ([ADR 0010](../adr/0010-offline-tests-with-lupa-and-a-mock-client.md));
+ogni file di test cita i requisiti che prova.
+
+| File di test | Modulo | Cosa prova | Step |
+|---|---|---|---|
+| `test_init.lua` | Init | avvio nel mock, client non Forever (ARC-01), `/reload` simulato, `ADDON_READY`, combattimento | M1.3 |
+| `test_features.lua` | Features | tutti spenti in `v0.1.0`; un comando di una parte spenta non agisce | M1.3 |
+| `test_locales.lua` | Locales | ADR 0009 regola 3 (chiavi, segnaposti, stringhe vuote o uguali) | M1.3 |
+| `test_bus.lua` | Bus | ordine, duplicati, `Off` durante un `Emit`, errori isolati | M1.4 |
+| `test_compat.lua` | Compat | ogni voce di §8.2 `available`/`missing`/`restricted`/`error` nel mock; valori segreti mai letti; §8.3 con risposte scriptate (valori, solo stato, segreto, `nil`, errore) | M1.4 |
+| `test_api_boundary.lua` | tutti i file di `UI/` | nessuna chiamata diretta a un'API del gioco (ARC-02) | M1.4 |
+| `test_scheduler.lua` | Scheduler | un ticker per nome, limiti di frequenza, arresto a `COMBAT_ENDED`, errore in un tick | M1.4 |
+| `test_diagnostics.lua` | Diagnostics, DiagnosticsBox | sezioni del rapporto, nessun nome, errori ripuliti e contati | M1.4 |
+| `test_config.lua` | Config | DAT-20–DAT-25 di [SPEC-02 §3](SPEC-02-data-model-storage.md#3-savedvariables) | M1.5 |
+| `test_language.lua` | Locale | `auto`, `enUS`, `itIT`, lingua del client senza file, cambio dopo `/reload` | M1.5 |
+| `test_theme.lua` | Theme, Assets, Motion | parità dei token, contrasti di [ui-style §4](ui-style.md#4-il-tema-warden-e-i-token-di-stato), ogni file media in tabella | M1.6 |
+| `test_widgets.lua` | Widgets | componenti del kit, `ThreatBar` e `StateBadge` in ogni stato | M1.6 |
+| `test_window.lua` | Window | posizione, dimensioni, scala, blocco dopo `/reload`; Esc; schermo più piccolo | M1.7 |
+| `test_commands.lua` | Commands | ogni comando nelle due lingue, argomenti sbagliati | M1.7 |
+| `test_launcher.lua` | Launcher | minimappa nascosta e mostrata, Compartment, tooltip | M1.7 |
+| `test_settings.lua` | Settings | ogni impostazione si applica subito (tranne font e lingua) | M1.8 |
+| `test_about.lua` | About | crediti, logo NEBULA per tema, link | M1.8 |
+| `test_ui_texts.lua` | tutta `UI/` | nulla a schermo senza chiave di lingua; in italiano solo testi italiani | M1.8 |
+
+## 12. Cosa aspetta il probe
+
+Questa specifica non legge la threat e vale qualunque sia l'esito del probe; cambiano soltanto le righe marcate
+**[probe Pn]**: il valore di `WOW_PROJECT_ID` (P1), la forma degli argomenti e le previsioni di §8.3 (P2, P3), lo stato
+iniziale delle capacità di §8.4 (P2–P9, P11), gli eventi di M2 (P6, P7), la frequenza dei tick (P10, ARC-08). M0.7
+aggiorna queste righe; se P3 dice che anche lo stato è segreto in gruppo, la scheda Monitor e le capacità `threat*`
+cambiano con la decisione del proprietario, non le fondamenta di M1.

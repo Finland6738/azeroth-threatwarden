@@ -27,6 +27,21 @@ All notable changes to this project are documented here. The format follows
   install (`tools/install_probe.py`, `tools/local.ini`), the planned `/atwp` commands and the in-game procedure per
   context. SPEC-01 §2: the threat secrecy checks live in `C_Secrets`.
 
+- M1.1: specification of architecture, data, window and look, written before the probe results (what waits for the
+  probe is marked **[probe Pn]**). [SPEC-01](docs/specs/SPEC-01-platform-architecture.md): every M1 module with its
+  responsibility, Bus events and tests; the Bus event table up to M4; the feature switches; the Compat API table drawn
+  from the Forever dump, the capabilities (`threatValues`, `threatState`, `groupThreat`…) and the normalized threat
+  read that asks `C_Secrets` before each call; the `/atw debug` report; languages. [SPEC-02 §3](docs/specs/SPEC-02-data-model-storage.md#3-savedvariables):
+  schema 1 of both SavedVariables (keys, types, defaults, enums, `settings.language` for Q5) and the load, migration
+  and corruption rules (DAT-24, DAT-25). [SPEC-03 §4–§5](docs/specs/SPEC-03-threat-monitor-ui.md#4-finestra): one window
+  with a compact layout (Monitor) and a wide one (Settings, Info, Reports), the module state, tabs, minimap button and
+  Addon Compartment, commands and Settings cards. New [ui-style.md](docs/specs/ui-style.md): the differences from
+  Accord, the compact combat density, the threat bar and state badge, the **Warden** theme drawn from the logo and the
+  four state tokens SAFE / WARNING / DANGER / UNKNOWN, identical in every theme, with icon and word and their contrast
+  ratios. New [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) on the Azeroth Unspoken model. ADR 0005 and ADR 0009
+  updated: the language is chosen by the addon's own tables (AceLocale's choice is global), and only AceAddon,
+  AceEvent, AceConsole, LibDataBroker and LibDBIcon are embedded.
+
 ### Added
 
 - M0.2: probe skeleton (development only, never distributed). `tools/probe/AzTw_Probe/` (`## Interface: 16001`,

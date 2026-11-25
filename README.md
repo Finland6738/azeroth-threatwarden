@@ -17,7 +17,8 @@ which mob, warns you before you pull aggro, records your fights and explains wha
 > milestone M1; the MVP (monitor, alerts, Coach, recording and combat report) is `v0.4.0`.
 
 [Italiano](README.it.md) · [Roadmap](ROADMAP.md) · [Specification (Italian)](docs/specs/README.md) ·
-[Decisions](docs/adr/README.md) · [User manual](docs/wiki/Home.md) ([Italiano](docs/wiki/Home-it.md))
+[Architecture](docs/ARCHITECTURE.md) · [Decisions](docs/adr/README.md) · [User manual](docs/wiki/Home.md)
+([Italiano](docs/wiki/Home-it.md))
 
 ## Planned features
 

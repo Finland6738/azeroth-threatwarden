@@ -31,10 +31,16 @@ in CI. Released as `v0.1.0`.
   the logo's palette with contrast ratios); `docs/ARCHITECTURE.md` (English, the Unspoken model: overview, modules, flow
   of a threat update, data, extension points, what is planned).
 - Done when:
-  - [ ] Every module of M1 has its responsibility, events and tests named.
-  - [ ] `ui-style.md` lists every token of the Warden theme and the four state tokens with their contrast.
-  - [ ] `check_docs.py` passes.
+  - [x] Every module of M1 has its responsibility, events and tests named.
+  - [x] `ui-style.md` lists every token of the Warden theme and the four state tokens with their contrast.
+  - [x] `check_docs.py` passes.
 - Real client: nothing.
+- *Done (2026-11-25, before the probe results): SPEC-01 (M1 modules with responsibility, Bus events and tests; Bus
+  event table; feature switches; Compat API table from the dump, capabilities and the normalized threat read; `/atw
+  debug`; languages), SPEC-02 §3 (schema 1 keys, types, defaults, enums; load, migration and corruption rules), SPEC-03
+  §4–§5 (compact and wide layouts, module state, tabs, minimap and Compartment, commands, Settings cards),
+  `docs/specs/ui-style.md` (Warden theme and the four state tokens with contrast), `docs/ARCHITECTURE.md`; ADR 0005 and
+  0009 updated (own language tables instead of AceLocale). What waits for the probe is marked **[probe Pn]**.*
 
 ### M1.2 — Skeleton, TOC, libraries and addon tools
 - Branch: `step/m1-2-skeleton`
@@ -42,7 +48,8 @@ in CI. Released as `v0.1.0`.
 - Spec: SPEC-01 §3–§4
 - Scope: `AzerothThreatwarden/AzerothThreatwarden.toc` (Interface 16001, `## Version: @project-version@`, Title, Notes
   and `Notes-itIT`, SavedVariables, Compartment functions, `IconTexture`, `X-License`, CurseForge line commented),
-  `embeds.xml`, `Core/Init.lua`, `Core/Features.lua`, `Locales/enUS.lua` and `itIT.lua` (first keys); copied and
+  `embeds.xml` (SPEC-01 §4), `Core/Init.lua`, `Core/Features.lua`, `Core/Locale.lua`, `Locales/enUS.lua` and `itIT.lua`
+  (first keys); copied and
   adapted from Accord: `tools/fetch_libs.py`, `install_addon.py`, `check_addon.py`, `check_package.py`;
   `docs/RELEASING.md`, `docs/third-party.md`.
 - Done when:
@@ -58,7 +65,7 @@ in CI. Released as `v0.1.0`.
 - Scope: `Tests/run_tests.py` (lupa 2.8, TOC order, `--long`, name filter, `-v`), `Tests/lib/` (assert, harness),
   `Tests/mock/` (core, clock and timers, frames and events, units and groups, combat state, **threat API with scripted
   answers, secret values and nil**, each file citing the dump), `/reload` simulation, `Tests/test_locales.lua`,
-  `Tests/test_features.lua`; CI and Long tests run them.
+  `Tests/test_features.lua`, `Tests/test_init.lua`; CI and Long tests run them.
 - Done when:
   - [ ] The addon boots in the mock and survives a simulated `/reload`.
   - [ ] The locale test enforces ADR 0009 rule 3.
@@ -76,7 +83,7 @@ in CI. Released as `v0.1.0`.
 - Done when:
   - [ ] Every API of SPEC-01 §2 is in the capability table; a missing or secret one is reported, never raised.
   - [ ] `/atw debug` produces the report (header, client, locale, features, APIs, saved data, memory, errors).
-- Tests: `test_compat.lua`, `test_diagnostics.lua`, `test_bus.lua`, `test_scheduler.lua`.
+- Tests: `test_compat.lua`, `test_api_boundary.lua`, `test_diagnostics.lua`, `test_bus.lua`, `test_scheduler.lua`.
 - Real client: the capability states and the report text.
 
 ### M1.5 — Config, schema and migrations, language setting
@@ -85,7 +92,7 @@ in CI. Released as `v0.1.0`.
 - Spec: SPEC-02 §3 (DAT-20–DAT-23), SPEC-09 Q5, [ADR 0005](../adr/0005-embedded-ace3-savedvariables-and-schema-versions.md)
 - Scope: `Core/Config.lua` (schema 1 for account and character, typed rules with enums and ranges, defaults, migration
   framework, read-only on a newer schema, damaged tables kept under `corrupt`, `CONFIG_CHANGED` on the Bus),
-  `settings.language` (`auto`, `enUS`, `itIT`) applied through AceLocale at load.
+  `settings.language` (`auto`, `enUS`, `itIT`) applied by `Core/Locale.lua` at load (SPEC-01 §10, ADR 0009 update).
 - Done when:
   - [ ] A wrong value falls back to its default; a newer schema is left untouched and read-only.
   - [ ] The language setting picks the locale after `/reload`; `auto` follows the client.
@@ -111,13 +118,14 @@ in CI. Released as `v0.1.0`.
 - Depends on: M1.6
 - Spec: SPEC-03 §4–§5
 - Scope: `UI/Window.lua` (title bar with the logo and the module state, tabs *Monitor*, *Settings*, move, lock,
-  resize, scale, position per character, Esc closes), an empty Monitor tab saying "Threat monitoring arrives in
-  v0.2.0", `/threatwarden` and `/atw` (`show`, `hide`, `lock`, `unlock`, `reset`, `debug`, `about`, `help`), LibDBIcon
-  button (hideable) and Addon Compartment.
+  resize, scale, position per character, Esc closes; compact and wide layouts of SPEC-03 §4.2), an empty Monitor tab
+  saying "Threat monitoring arrives in v0.2.0", `Core/Commands.lua` with `/threatwarden` and `/atw` (no argument
+  toggles; `show`, `hide`, `lock`, `unlock`, `reset`, `settings`, `debug`, `about`, `help`), `UI/Launcher.lua` with the
+  LibDBIcon button (hideable) and the Addon Compartment.
 - Done when:
   - [ ] The window keeps position, size, scale and lock after `/reload`.
   - [ ] Every command answers in both languages.
-- Tests: `test_window.lua`, `test_commands.lua`.
+- Tests: `test_window.lua`, `test_commands.lua`, `test_launcher.lua`.
 - Real client: moving, resizing and scaling; the window in combat.
 
 ### M1.8 — Settings, Info and credits, first design previews

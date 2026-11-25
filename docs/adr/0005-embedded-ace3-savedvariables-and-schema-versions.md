@@ -24,3 +24,14 @@ change over the milestones.
 
 - Positive: proven libraries, safe upgrades, recordings that cannot grow without end.
 - Negative: a few hundred KB of libraries in the package.
+
+## Update (2026-11-25, M1.1)
+
+The architecture specification ([SPEC-01 §4](../specs/SPEC-01-platform-architecture.md#4-librerie)) narrows point 1 to
+what the addon uses, as Azeroth Accord does: **LibStub, CallbackHandler, AceAddon, AceEvent, AceConsole, LibDataBroker
+and LibDBIcon** are embedded. Not embedded: **AceDB** (`Core/Config.lua` manages the two variables directly, because
+the schema, read-only and `corrupt` rules of point 3 need the raw tables), **AceTimer** (the client's timers go through
+Compat and the Scheduler), **AceConfig** (Settings is a page in the ecosystem style, [ADR 0015](0015-interface-follows-the-ecosystem-style.md))
+and **AceLocale** (its language choice is global, see the update of [ADR 0009](0009-interface-and-documentation-languages.md)).
+Points 2–4 are unchanged; the keys, defaults and rules of schema 1 are in
+[SPEC-02 §3](../specs/SPEC-02-data-model-storage.md#3-savedvariables).

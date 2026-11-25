@@ -30,3 +30,15 @@ owner asked for a real multilingual design, with English as the default and Ital
 
 - Positive: usable in Italian from the first release; other languages are cheap to add.
 - Negative: two READMEs, two wiki pages per topic and two locale files to keep in step (checked by tools).
+
+## Update (2026-11-25, M1.1)
+
+Point 2 (a setting that forces the language) cannot be built on AceLocale: AceLocale registers only the table of the
+client's language, and the only way to change that choice is the global `GAME_LOCALE`, which would change the language
+of every Ace addon of the player. So the language tables are the addon's own: each file in `Locales/` registers its
+strings with `ns.Locale.Register(code, strings)` whatever the client's language, and at `ADDON_LOADED`, once the saved
+data is read, `Core/Locale.lua` picks the active one from `account.settings.language` (`auto` follows `GetLocale()`,
+`enUS` and `itIT` force it); `ns.L` answers in that language with English as the fallback. A change in Settings takes
+effect after `/reload`, and Settings offers *Reload now*. Point 1 reads "every visible string is a key of
+`Locales/enUS.lua`"; points 3–5 are unchanged ([SPEC-01 §10](../specs/SPEC-01-platform-architecture.md#10-lingue-corelocalelua)).
+AceLocale is not embedded ([ADR 0005](0005-embedded-ace3-savedvariables-and-schema-versions.md), update).

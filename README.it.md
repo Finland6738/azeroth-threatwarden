@@ -16,8 +16,9 @@ ciò che è **noto** da ciò che è **stimato**.
 > ricaricamento (P10–P12); resta da eseguirla in gioco. La prima versione, `v0.1.0`, arriva dopo la milestone M1;
 > l'MVP (monitor, avvisi, Coach, registrazione e report di combattimento) è la `v0.4.0`.
 
-[English](README.md) · [Roadmap](ROADMAP.md) · [Specifiche](docs/specs/README.md) · [Decisioni](docs/adr/README.md) ·
-[Manuale](docs/wiki/Home-it.md) ([English](docs/wiki/Home.md))
+[English](README.md) · [Roadmap](ROADMAP.md) · [Specifiche](docs/specs/README.md) ·
+[Architettura (in inglese)](docs/ARCHITECTURE.md) · [Decisioni](docs/adr/README.md) · [Manuale](docs/wiki/Home-it.md)
+([English](docs/wiki/Home.md))
 
 ## Funzioni previste
 

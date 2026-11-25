@@ -39,7 +39,8 @@ specification in `docs/specs/` is in Italian; the user manual in `docs/wiki/` is
 - The addon lives in `AzerothThreatwarden/` (Lua 5.1 only, from M1.2): `Core/` infrastructure, `Data/` logic without
   graphics, `UI/` views, `Locales/` texts. Modules talk through the internal event bus.
 - Every game API call goes through `Core/Compat.lua`; a secret value is never read.
-- Every visible string goes through AceLocale (`L["KEY"]`) and exists in `enUS` and `itIT`.
+- Every visible string goes through the addon's language table (`L["KEY"]`, `Core/Locale.lua`) and exists in `enUS`
+  and `itIT`. The architecture is described in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 - Saved data changes need a schema migration ([ADR 0005](docs/adr/0005-embedded-ace3-savedvariables-and-schema-versions.md)).
 - Libraries are never committed: they are pinned in `.pkgmeta`.
 
