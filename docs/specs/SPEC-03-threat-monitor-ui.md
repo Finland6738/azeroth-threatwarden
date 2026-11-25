@@ -262,7 +262,9 @@ margine = `100 − s`:
 - `STATE_CHANGED(unitKey, mobKey, old, new)` si emette solo per lo stato **mostrato**, dopo isteresi e permanenza: gli
   avvisi di M3 non ereditano oscillazioni. `old = nil`: l'unità entra nella lista della threat; `new = nil`: ne esce
   (morte, `drop`); entrare e uscire non sono cambi di stato e non aspettano la permanenza. A un nuovo mob o a un nuovo
-  combattimento gli stati ripartono senza evento per la coppia vecchia (M2.4).
+  combattimento gli stati ripartono senza evento per la coppia vecchia (M2.4). Da M3.2 `ThreatState` emette anche
+  `AGGRO_CHANGED(mobKey, unitKey, oldUnitKey)` quando cambia chi tiene il mob, perché un passaggio di aggro non sempre
+  cambia lo stato mostrato ([SPEC-04 §1.1](SPEC-04-alerts-coach.md#11-quando-scatta-un-avviso)).
 - Una discesa trattenuta dalla permanenza si ricontrolla con un solo timer (`Compat.After`): avviene anche quando non
   arrivano più scansioni, per esempio a `COMBAT_ENDED` (righe `stale` → UNKNOWN) (M2.4).
 - Il motivo dello stato (`row.stateReason`): nessuno per una soglia; `predicted`, `aggro` (un non tank tiene il mob),
@@ -379,7 +381,7 @@ ricordano ciascuna la propria dimensione (`char.ui.size.compact` e `.wide`, [SPE
 | Minimo / massimo | 220 × 140 / 600 × 800 | 480 × 420 / 900 × 900 |
 | Barra del titolo | 28 pt: logo 18 pt, `THREATWARDEN` (Orbitron, 12 pt), stato del modulo, blocco, chiusura | 52 pt (come il kit di M1.6): logo 24 pt, `AZEROTH THREATWARDEN` (Orbitron, font `Display`), stato del modulo come sottotitolo mono, blocco, chiusura |
 | Schede | 24 pt, solo testo, indicatore da 2 pt | 36 pt, indicatore da 2 pt (come Accord) |
-| Contenuto | intestazione del mob, righe da 20 pt, piede da 16 pt con la qualità dei dati (M2) | colonna di card larga fino a 520 pt, con il selettore a pillole *Settings · Info* in Settings |
+| Contenuto | intestazione del mob, striscia del Coach da 18 pt (M3, [SPEC-04 §3](SPEC-04-alerts-coach.md#3-la-striscia-del-coach-e-leffetto-visivo-uicoachstriplua-uiwindowlua-m34)), righe da 20 pt, piede da 16 pt con la qualità dei dati (M2) | colonna di card larga fino a 520 pt, con il selettore a pillole *Settings · Info* in Settings |
 
 - Passando da una disposizione all'altra l'angolo in alto a sinistra resta fermo e la finestra resta nello schermo.
 - Se nella compatta nome e stato non ci stanno insieme (finestra stretta, parola lunga), sparisce il nome: resta il
@@ -468,7 +470,7 @@ inglese.
 | `debug` | apre il rapporto diagnostico da copiare ([SPEC-01 §9](SPEC-01-platform-architecture.md#9-diagnostica-atw-debug)) | M1 |
 | `help` | elenca i comandi disponibili, con una riga ciascuno | M1 |
 | `demo` | combattimento inventato per provare il monitor | M2 |
-| `mute` | silenzia gli avvisi fino alla fine del combattimento | M3 |
+| `mute` | silenzia gli avvisi fino alla fine del combattimento (fuori dal combattimento, del prossimo); di nuovo li riaccende ([SPEC-04 §1.5](SPEC-04-alerts-coach.md#15-opzioni-esclusioni-e-silenzio)) | M3 |
 | `reports` | apre la scheda Reports | M4 |
 
 Un comando sconosciuto risponde *Unknown command: <x>. Type /atw help.*; un comando di una parte spenta in `Features`
@@ -488,7 +490,7 @@ si applica subito, tranne il font (al riavvio del client) e la lingua (dopo `/re
 | **Window** | blocco (interruttore), scala (cursore 50–200 %, salvata al rilascio perché la finestra si scala sotto il mouse), *Show minimap button* (interruttore), *Reset window* | `char.ui.locked`, `scale`, `account.settings.minimap.hide` | M1.8 |
 | **Reset** | *Reset settings* con conferma: un secondo clic entro 8 s, o la prima è annullata anche cambiando pagina (riporta ai predefiniti `account.settings`, [SPEC-02 §3.4](SPEC-02-data-model-storage.md#34-caricamento-migrazioni-e-dati-danneggiati)) | — | M1.8 |
 | **Monitor** (solo con l'interruttore `monitor`, prima di *Reset*) | soglie (cursori *Warning threshold* 50–95 % e *Danger threshold* 60–100 %; spostandone uno l'altro si sposta per tenere `danger ≥ warning + 5`, quindi oltre 95 % la soglia WARNING non è utile), frequenza (cursore 2–10 Hz), unità massime (cursore 5–40), quando mostrare la finestra (segmentato *In group or combat · Always · Manually*), ordinamento (menu a tendina, §3), *Pin me on top*, *Follow the target of a friend*, pulsante *Start the demo* / *Stop the demo*; i cursori si salvano al rilascio | `account.settings.monitor.*`, schema 2 ([SPEC-02 §3.5](SPEC-02-data-model-storage.md#35-schema-2-m2-le-impostazioni-del-monitor)) | M2.6 |
-| **Alerts** | canali, cooldown, silenzio | M3.1 | M3 |
+| **Alerts** (solo con l'interruttore `alerts`, dopo *Monitor*) | avvisi, canali (finestra, effetto, suono), cooldown (cursore 3–30 s), avvisi su altre unità, famiglio, riga delle soglie con il collegamento a *Monitor*, nota dell'avviso nativo, Threat Coach ([SPEC-04 §4.2](SPEC-04-alerts-coach.md#42-la-card-alerts-m35)) | `account.settings.alerts.*`, `account.settings.coach.enabled`, schema 3 ([SPEC-02 §3.6](SPEC-02-data-model-storage.md#36-schema-3-m3-avvisi-e-coach)) | M3.5 |
 | **Recording** | durata e limite delle registrazioni | M4.1 | M4 |
 
 *Reload now* è attivo solo quando la lingua scelta è diversa da quella a schermo. Con dati in sola lettura la pagina
@@ -543,7 +545,8 @@ configurata) e `DEMO_CHANGED(active)`.
   non riconosciuto, e non sopravvive a un `/reload`.
 - Si vede che è una demo: pastiglia *Demo*, piede *DEMO · invented fight, not the game*, tooltip *Demo: invented values*,
   mob *Demo golem*; la propria riga dice *You* (il nome del personaggio non si legge).
-- Avvisi (M3) e registrazione (M4) ignorano gli eventi durante `Demo.IsActive()`.
+- La registrazione (M4) ignora gli eventi durante `Demo.IsActive()`; avvisi e Coach (M3) li usano solo nella finestra,
+  marcati come demo e mai con il suono ([SPEC-04 §1.4](SPEC-04-alerts-coach.md#14-canali)).
 
 ## 6. Piano di M2: moduli, eventi e test per step
 

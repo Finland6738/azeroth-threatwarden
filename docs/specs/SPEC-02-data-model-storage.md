@@ -107,8 +107,8 @@ lo **schema 1** qui sotto è quello che M1.5 realizza; nessuna chiave dipende da
 
 | Chiave | Contenuto | Da |
 |---|---|---|
-| `db.schema` | numero di versione dello schema | M1 (schema 1), M2 (schema 2, §3.5) |
-| `db.settings` | lingua, aspetto, minimappa (M1); soglie, frequenza, quando mostrare la finestra, ordinamento (M2); avvisi e Coach (M3); limiti delle registrazioni (M4) | M1 → |
+| `db.schema` | numero di versione dello schema | M1 (schema 1), M2 (schema 2, §3.5), M3 (schema 3, §3.6) |
+| `db.settings` | lingua, aspetto, minimappa (M1); soglie, frequenza, quando mostrare la finestra, ordinamento (M2); avvisi e Coach (M3, §3.6); limiti delle registrazioni (M4) | M1 → |
 | `db.sessions` | registrazioni (§4) | M4 |
 | `db.profiles` | preset per ruolo | M8 |
 | `db.corrupt` | tabelle danneggiate messe da parte (§3.4) | M1 |
@@ -228,6 +228,32 @@ rifiuta un valore che la violerebbe e `Config:SetThresholds(warning, danger)` le
 
 Sono per **account** come l'aspetto: i profili per ruolo (M8) le renderanno per personaggio o per ruolo con una
 migrazione propria.
+
+### 3.6 Schema 3 (M3): avvisi e Coach
+
+Fissato in **M3.1**, realizzato da **M3.2** (`settings.alerts`, la migrazione) e **M3.3** (`settings.coach`); la card è
+di M3.5 ([SPEC-04 §4](SPEC-04-alerts-coach.md#4-configurazione-e-interruttori)). Lo schema dell'account passa a **3**;
+quello del personaggio resta 1. La migrazione `Config.migrations.account[3]` non fa nulla (i predefiniti aggiungono le
+chiavi che mancano), ma esiste e ha il suo test (DAT-20), che parte dai dati dello schema 2. I predefiniti hanno un
+solo posto, `Config.ALERTS_DEFAULTS` e `Config.COACH_DEFAULTS` (intervalli `Config.ALERTS`, enumerazione
+`Config.ALERT_OTHERS`): sono le risposte proposte di [Q12](SPEC-09-risks-open-questions.md) e
+[Q11](SPEC-09-risks-open-questions.md).
+
+| Percorso | Tipo | Predefinito | Regola | Uso |
+|---|---|---|---|---|
+| `settings.alerts` | tabella | `{}` | — | |
+| `settings.alerts.enabled` | booleano | `true` | — | avvisi accesi; spento = *nessun avviso* ([SPEC-04 §1.4](SPEC-04-alerts-coach.md#14-canali)) |
+| `settings.alerts.window` | booleano | `true` | — | messaggio nella striscia del Coach |
+| `settings.alerts.visual` | booleano | `true` | — | effetto del bordo |
+| `settings.alerts.sound` | booleano | `false` | — | suono del gioco per DANGER e aggro |
+| `settings.alerts.cooldown` | intero | `8` | 3–30 (s) | cooldown per tipo e unità ([SPEC-04 §1.3](SPEC-04-alerts-coach.md#13-cooldown-e-raffiche)) |
+| `settings.alerts.others` | stringa | `"tank"` | enum `tank`, `always`, `never` | avvisi su altre unità ([SPEC-04 §1.5](SPEC-04-alerts-coach.md#15-opzioni-esclusioni-e-silenzio)) |
+| `settings.alerts.pet` | booleano | `true` | — | avviso quando il proprio famiglio prende il mob |
+| `settings.coach` | tabella | `{}` | — | |
+| `settings.coach.enabled` | booleano | `true` | — | Threat Coach acceso |
+
+Il silenzio di `/atw mute`, l'esclusione di un'unità per la sessione e i cooldown in corso **non** si salvano; nessun
+nome di giocatore nelle impostazioni (§3.3): l'esclusione per sessione si tiene in memoria per `unitKey`.
 
 ## 4. Sessioni registrate **[da completare in M4.1]**
 

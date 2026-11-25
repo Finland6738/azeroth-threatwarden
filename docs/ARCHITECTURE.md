@@ -131,7 +131,7 @@ copied from Azeroth Accord and renamed; each copied file says so in its header.
 | `Data/ThreatModel.lua`, `Data/ThreatCalc.lua`, `Data/ThreatState.lua` | records, categories, staleness; margin, trend, time to overtake; states with hysteresis | M2 (switch `monitor`, on since `v0.2.0`) |
 | `UI/ThreatList.lua` | the threat list in the Monitor tab | M2 (switch `monitor`, on since `v0.2.0`) |
 | `Core/Demo.lua`, `Data/Demo.lua` | demo mode: an invented fight through the same model, states and list, nothing read or saved | M2 (switch `monitor`, on since `v0.2.0`) |
-| `Data/Alerts.lua`, `Data/Coach.lua`, `Data/CoachRules.lua` | alerts with cooldowns; rule-based tips with reason and confidence | *planned*, M3 |
+| `Data/Alerts.lua`, `Data/Coach.lua`, `Data/CoachRules.lua`, `UI/CoachStrip.lua` | alerts when a state or the aggro holder changes, with a cooldown per kind and unit, channels and mute; rule-based tips with reason and confidence; the Coach strip ([SPEC-04](specs/SPEC-04-alerts-coach.md), Italian) | *planned*, M3 |
 | `Data/Recorder.lua`, `Data/Session.lua`, `Data/Storage.lua`, `Data/Report.lua` | sessions, samples, events, limits, the combat report | *planned*, M4 |
 | `Data/Replay.lua`, `UI/Timeline.lua`, `UI/ReplayWindow.lua` | timeline and replay | *planned*, M5 |
 | `Data/Metrics.lua`, `Data/Export.lua` | descriptive metrics, comparison, text and CSV export | *planned*, M6 |
@@ -150,7 +150,8 @@ copied from Azeroth Accord and renamed; each copied file says so in its header.
 | `WINDOW_SHOWN(shown)`, `TAB_CHANGED(tabId)` | Window | Scanner, Demo, tabs | M1 |
 | `GROUP_CHANGED(inGroup)`, `DEMO_CHANGED(active)` | Init, Demo | Window; ThreatList and Settings for the demo | M2 (switch `monitor`, on since `v0.2.0`) |
 | `TARGET_CHANGED`, `TARGET_STATUS`, `THREAT_SCANNED`, `THREAT_UPDATED`, `STATE_CHANGED`, `THREAT_MODE_CHANGED` | Data | ThreatList, Window; Alerts and Recorder later | M2 (switch `monitor`, on since `v0.2.0`) |
-| `ALERT_RAISED`, `COACH_TIP` | Alerts, Coach | Window, Recorder | *planned*, M3 |
+| `AGGRO_CHANGED` | ThreatState | Alerts, Coach | *planned*, M3.2 |
+| `ALERT_RAISED`, `COACH_TIP`, `MUTE_CHANGED` | Alerts, Coach | Window, Coach strip, Recorder | *planned*, M3 |
 | `SESSION_STARTED`, `SESSION_ENDED`, `SESSIONS_CHANGED` | Recorder, Storage | Reports | *planned*, M4 |
 
 Event arguments never hold a secret value or a player name: threat events pass keys (`unitKey`, `mobKey`) into the
@@ -288,7 +289,7 @@ skeleton and since M1.3 the offline tests; M1 builds the rest of the `Core/` and
 |---|---|---|
 | M1 (`v0.1.0`) | skeleton, tests, Compat, Config, languages, look, window, settings, credits, `/atw debug` | everything above marked M1 |
 | M2 (`v0.2.0`) | threat on the target, tank, percentages, states, trend, threat list, demo mode | `Data/` scanner, model, state; `UI/ThreatList.lua`; switch `monitor` |
-| M3 (`v0.3.0`) | thresholds, alert channels, cooldowns, rule-based Coach | listens to `STATE_CHANGED`; switches `alerts`, `coach` |
+| M3 (`v0.3.0`) | thresholds, alert channels, cooldowns, rule-based Coach | listens to `STATE_CHANGED` and the new `AGGRO_CHANGED`; account schema 3; switches `alerts`, `coach` |
 | M4 (`v0.4.0`, MVP) | recorder, sessions, storage limits, combat report | listens to the model and `COMBAT_*`; `db.sessions`; Reports tab |
 | M5–M6 | timeline, replay, metrics, export | read sessions only |
 | M7 | several mobs and dungeon focus, **only if the probe allows it** | Scanner and TargetTracker; capability `otherMobs` |

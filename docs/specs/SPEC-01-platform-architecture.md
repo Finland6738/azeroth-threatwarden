@@ -118,7 +118,7 @@ altro modulo caricato dopo di lui al caricamento del file, solo nei suoi gestori
 | `Data/ThreatScanner.lua` | unità osservate e limite, letture da eventi della threat più tick limitato in combattimento, consumatori (`Want`), record dal pool ([SPEC-03 §1.3–§1.4](SPEC-03-threat-monitor-ui.md#13-unità-osservate-e-limite-datathreatscannerlua)) | emette `THREAT_SCANNED(mobKey)`; ascolta `TARGET_CHANGED`, `COMBAT_STARTED`, `COMBAT_ENDED`, `WINDOW_SHOWN`, `TAB_CHANGED`, `CONFIG_CHANGED`; dal gioco `UNIT_THREAT_LIST_UPDATE`, `UNIT_THREAT_SITUATION_UPDATE`, `GROUP_ROSTER_UPDATE`, `UNIT_PET` | M2.2 |
 | `Data/ThreatModel.lua`, `Data/ThreatCalc.lua` | `ThreatRecord` e `ThreatRow`, categorie, freschezza; margine, trend, tempo al superamento ([SPEC-02 §1–§2](SPEC-02-data-model-storage.md#1-threatrecord-in-memoria), [SPEC-03 §1.5, §2.5](SPEC-03-threat-monitor-ui.md#25-trend-e-tempo-al-superamento-datathreatcalclua)) | emette `THREAT_UPDATED(mobKey)`; ascolta `THREAT_SCANNED`, `TARGET_CHANGED`, `COMBAT_STARTED`, `COMBAT_ENDED` | M2.3 |
 | `Data/ThreatState.lua` | SAFE / WARNING / DANGER / UNKNOWN con isteresi e permanenza; tank designati; modalità del monitor ([SPEC-03 §2](SPEC-03-threat-monitor-ui.md#2-stati-e-soglie)) | emette `STATE_CHANGED(unitKey, mobKey, old, new)`, `THREAT_MODE_CHANGED(mode, reason)`; ascolta `THREAT_UPDATED`, `CONFIG_CHANGED` | M2.4 |
-| `Data/Alerts.lua`, `Data/Coach.lua`, `Data/CoachRules.lua` | avvisi con cooldown; regole con motivazione e confidenza | emette `ALERT_RAISED(alert)`, `COACH_TIP(tip)` | M3 |
+| `Data/Alerts.lua`, `Data/Coach.lua`, `Data/CoachRules.lua`; `UI/CoachStrip.lua` | avvisi alle entrate di stato e di aggro, con cooldown per tipo e unità, canali e silenzio; regole del Coach con motivazione e confidenza; la striscia del Coach ([SPEC-04](SPEC-04-alerts-coach.md), moduli e test per step in §5–§6) | Alerts emette `ALERT_RAISED(alert)`, `MUTE_CHANGED(muted)`, ascolta `STATE_CHANGED`, `AGGRO_CHANGED`, `COMBAT_STARTED`, `COMBAT_ENDED`, `CONFIG_CHANGED`, `DEMO_CHANGED`; Coach emette `COACH_TIP(tip)`, ascolta `THREAT_UPDATED`, `STATE_CHANGED`, `AGGRO_CHANGED`, `TARGET_CHANGED`, `COMBAT_*`, `CONFIG_CHANGED`; ThreatState emette `AGGRO_CHANGED(mobKey, unitKey, oldUnitKey)` (M3.2) | M3 |
 | `Data/Recorder.lua`, `Data/Session.lua`, `Data/Storage.lua`, `Data/Report.lua` | sessioni, campioni, eventi, limiti, report | emette `SESSION_STARTED(id)`, `SESSION_ENDED(id, complete)`, `SESSIONS_CHANGED()` | M4 |
 | `Data/Replay.lua`, `UI/Timeline.lua`, `UI/ReplayWindow.lua` | timeline e riproduzione | emette `REPLAY_POSITION(t)` | M5 |
 | `Data/Metrics.lua`, `Data/Export.lua` | metriche descrittive, esportazione | — | M6 |
@@ -146,7 +146,8 @@ Accord.
 | `WINDOW_SHOWN` | `shown` (bool) | `UI/Window.lua` | Scanner (M2: legge solo se serve) | M1.7 |
 | `TAB_CHANGED` | `tabId` | `UI/Window.lua` | le schede | M1.7 |
 | `TARGET_CHANGED`, `THREAT_SCANNED`, `THREAT_UPDATED`, `STATE_CHANGED`, `THREAT_MODE_CHANGED` | vedi §3.2 | `Data/` | UI, Alerts, Recorder | M2 |
-| `ALERT_RAISED`, `COACH_TIP` | vedi §3.2 | `Data/` | Window, Recorder | M3 |
+| `AGGRO_CHANGED` | `mobKey`, `unitKey`, `oldUnitKey` (chi tiene il mob, prima e dopo; mai il motivo) | `Data/ThreatState.lua` | Alerts, Coach | M3.2 |
+| `ALERT_RAISED`, `COACH_TIP`, `MUTE_CHANGED` | vedi §3.2 e [SPEC-04 §5](SPEC-04-alerts-coach.md#5-moduli-eventi-e-diagnostica) | `Data/` | Window, striscia del Coach, Recorder (M4) | M3 |
 | `SESSION_STARTED`, `SESSION_ENDED`, `SESSIONS_CHANGED` | vedi §3.2 | `Data/Recorder.lua`, `Data/Storage.lua` | Reports | M4 |
 
 `/atw debug` mostra per ogni evento il numero di ascoltatori e gli ultimi errori degli ascoltatori.
@@ -338,7 +339,7 @@ senza firma), **assente** (si cerca a runtime). In grassetto le voci il cui comp
 | `ui.SpecialFrames` | `UISpecialFrames` | esistenza | assente (FrameXML) | Esc chiude la finestra ([SPEC-03 §4.5](SPEC-03-threat-monitor-ui.md#45-comportamento)) | M1 | da provare in gioco |
 | `ui.SlashCmdList` | `SlashCmdList` (attraverso AceConsole) | esistenza | assente (FrameXML) | comandi | M1 | da provare in gioco |
 | `ui.ClassColor` | `C_ClassColor.GetClassColor` | esistenza | firma | colore di classe nell'elenco | M2 | — |
-| `ui.PlaySound` | `PlaySound` | esistenza | globale | avviso sonoro (spento di predefinito) | M3 | — |
+| `ui.PlaySound` | `PlaySound` | esistenza | firma `(soundKitID, uiSoundSubType, …)` (sistema `Sound`) | avviso sonoro (spento di predefinito, [SPEC-04 §1.4](SPEC-04-alerts-coach.md#14-canali)) | M3 | — |
 
 Eventi del gioco (tutti nel dump con il loro payload), registrati solo attraverso `Core/Init.lua` e i moduli `Data/`
 con AceEvent: `ADDON_LOADED`, `PLAYER_LOGIN`, `PLAYER_ENTERING_WORLD` (`isInitialLogin`, `isReloadingUi`),

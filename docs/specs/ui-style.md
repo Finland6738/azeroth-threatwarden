@@ -73,7 +73,7 @@ La finestra ha due disposizioni ([SPEC-03 §4.2](SPEC-03-threat-monitor-ui.md#42
 | Interno | 20 pt, card distanziate 14–16 | 8 pt, nessuna card: le righe stanno direttamente su `surface-1` |
 | Raggio e ombra | 12, ombra morbida | 8, ombra più leggera (la finestra sta sopra il mondo, non sopra altre finestre) |
 | Testo minimo | 10 pt | 10 pt (`Badge`, Outfit SemiBold 9 pt maiuscolo, solo dentro il distintivo di stato) |
-| Effetti | un elemento neon per vista | nessun neon e nessun bagliore nella compatta: niente distrae dal combattimento; il bagliore del logo resta nella ampia |
+| Effetti | un elemento neon per vista | nessun neon e nessun bagliore nella compatta: niente distrae dal combattimento; il bagliore del logo resta nella ampia. L'effetto visivo degli avvisi (M3) è il bordo colorato una volta, non un bagliore ([SPEC-04 §3.2](SPEC-04-alerts-coach.md#32-leffetto-visivo)) |
 
 ### 3.2 La barra della threat (`Widgets.ThreatBar`, M1.6; dati da M2)
 
@@ -111,6 +111,7 @@ Nel foglio di icone (bianco, celle di 16 px, generato da `tools/make_media.py`, 
 | `trend-up`, `trend-down`, `trend-flat` | trend (stimato) |
 | `predict` | valore previsto |
 | `stale` | dato vecchio |
+| `coach` (un fumetto con un punto), `mute` (una campana barrata) | striscia del Coach e silenzio degli avvisi (M3.4, [SPEC-04 §3.1](SPEC-04-alerts-coach.md#31-la-striscia)) |
 
 ## 4. Il tema Warden e i token di stato
 
@@ -226,6 +227,7 @@ Il nome pubblico è solo "Finland": nessun nome reale, e-mail o percorso persona
 | **M1.7** finestra, schede, minimappa | §3 (finestra autonoma, schede) | §3.1, §5; [SPEC-03 §4](SPEC-03-threat-monitor-ui.md#4-finestra) |
 | **M1.8** Settings, Info, anteprime | §3 (Settings), §5, §8 | §2, §5; anteprime in Nebula, Aurora e Warden, in inglese e italiano ([ADR 0013](../adr/0013-design-previews-original-art-invented-data.md)) |
 | **M2.5** elenco della threat | §3 (tabella, righe da pool) | §3.2, §3.3, §4.2 |
+| **M3.4** striscia del Coach, effetto degli avvisi | — | §3.1, §3.3, §3.4, §4.2; [SPEC-04 §3](SPEC-04-alerts-coach.md#3-la-striscia-del-coach-e-leffetto-visivo-uicoachstriplua-uiwindowlua-m34) |
 
 ## 7. Cosa non è verificato nel client
 

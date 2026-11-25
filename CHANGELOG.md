@@ -7,6 +7,16 @@ All notable changes to this project are documented here. The format follows
 
 ### Documentation
 
+- M3.1: specification of alerts and the Threat Coach (SPEC-04, Italian), written before the in-game M0 probe like M2.
+  Alerts fire only when a risk **enters** (a state rises, or the unit holding the mob changes: a new `AGGRO_CHANGED`
+  event of the monitor), never on every update, with a cooldown of 8 s per kind and unit, on three channels (a message
+  in the window, a one-time tint of the window border, a game sound for Danger and aggro, off by default), never in
+  chat and never opening the window; `/atw mute` and a key binding mute them until the end of the fight. The Coach
+  picks one tip at a time from a rule table per role (tank, DPS, healer), each with its reason, its data category and,
+  for predictions, a confidence (only medium or high); it never names a cause or an ability, and says *Not enough data
+  for advice* with the reason when the data is unknown or *state only*. Also: the Coach strip in the window, account
+  schema 3 (`settings.alerts`, `settings.coach`), the *Alerts* settings card, the tests per step, SPEC-09 Q11–Q12
+  refined, and the M3 steps detailed in the milestone file. Nothing changes in the addon yet.
 - M2.R: `v0.2.0` released on GitHub; the release step is ticked in the M2 milestone file.
 
 ## [0.2.0] - 2026-11-26
