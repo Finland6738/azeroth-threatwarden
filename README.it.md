@@ -14,7 +14,9 @@ ciò che è **noto** da ciò che è **stimato**.
 > dell'ecosistema, una finestra spostabile (la scheda Monitor è ancora vuota) con le Impostazioni (temi, lingua,
 > finestra) e la pagina Info con i crediti, i [comandi](docs/wiki/Commands-it.md) `/atw` e `/threatwarden`, il pulsante
 > della minimappa e la voce nell'Addon Compartment. È controllata solo da test offline: la
-> [verifica in gioco della M1](docs/checklists/M1.md) (in inglese) e i risultati della sonda M0 sono ancora aperti. La
+> [verifica in gioco della M1](docs/checklists/M1.md) (in inglese) e i risultati della sonda M0 sono ancora aperti.
+> **Il monitor della threat (M2) è completo nel codice** su `main`, ancora spento fino alla `v0.2.0`: la sua
+> [verifica in gioco](docs/checklists/M2.md) (in inglese) e la sonda sono aperte. La
 > [sonda](docs/spike/README.md) (uno strumento di sviluppo, mai distribuito) verifica nel client vero quali dati di
 > threat WoW Forever dà a un addon, perché in alcune situazioni il client può nascondere i valori agli addon: il client e
 > le funzioni della threat, compreso se i loro valori sono segreti (P1–P4), quali unità e mob rispondono, gli eventi

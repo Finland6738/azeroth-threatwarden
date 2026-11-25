@@ -5,6 +5,13 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Documentation
+
+- M2.8: the [in-game checklist of M2](docs/checklists/M2.md): the monitor solo, in a party, a dungeon and a raid, the
+  tank line and margin, Warning and Danger without flicker, target changes and deaths, *state only* and unknown values,
+  sorting, the settings, demo mode, CPU and frame rate in a raid at 2, 5 and 10 Hz, and the threshold tuning notes
+  (Q7). README status updated: M2 is complete in code; the in-game check and the probe are open.
+
 ### Added
 
 - M2.7: performance budget and long tests of the threat monitor. Long scenarios (`Tests/long/test_monitor_raid.lua`,

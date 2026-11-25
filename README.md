@@ -14,7 +14,8 @@ which mob, warns you before you pull aggro, records your fights and explains wha
 > a movable window (its Monitor tab is still empty) with Settings (themes, language, window) and an Info page with the
 > credits, the [commands](docs/wiki/Commands.md) `/atw` and `/threatwarden`, a minimap button and the Addon Compartment
 > entry. It is checked by offline tests only: the [in-game check of M1](docs/checklists/M1.md) and the results of the M0
-> probe are still open. The [probe](docs/spike/README.md) (a development tool, never distributed) checks in the real
+> probe are still open. **The threat monitor (M2) is complete in code** on `main`, still switched off until `v0.2.0`:
+> its [in-game check](docs/checklists/M2.md) and the probe are open. The [probe](docs/spike/README.md) (a development tool, never distributed) checks in the real
 > client which threat data WoW Forever gives an addon, because the client may hide threat values from addons in some
 > situations: the client and the threat functions, including whether their values are secret (P1–P4), which units and
 > mobs answer, the threat events, GUIDs and roles (P5, P6, P9), the combat events and the damage meter (P7, P8), the

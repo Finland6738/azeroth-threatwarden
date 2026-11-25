@@ -8,3 +8,4 @@ before `v1.0.0`. Results are reported with the *In-game test report* issue form.
 | Checklist | Milestone | State |
 |---|---|---|
 | [M1.md](M1.md) | M1 Foundations | written, **not run yet** |
+| [M2.md](M2.md) | M2 Threat Monitor | written, **not run yet** (run it with the [M0 probe](../spike/README.md)) |

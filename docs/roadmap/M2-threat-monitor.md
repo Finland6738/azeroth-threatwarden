@@ -144,6 +144,13 @@ closing on the tank goes WARNING then DANGER, and a target with no data shows UN
 - Branch: `step/m2-8-checklist`
 - Scope: `docs/checklists/M2.md` (solo, party, dungeon, raid; tank and DPS; target changes and deaths; thresholds to
   tune Q7; CPU); README status.
+- Done when:
+  - [x] The checklist exists and links the *In-game test report* form.
+- Real client: the checklist itself, run by the owner.
+- *Done (2026-11-26): [checklists/M2.md](../checklists/M2.md) (before the fight, solo, party with the tank line and
+  margin, target changes, dungeon and raid, list, demo, settings, CPU at 2, 5 and 10 Hz, threshold notes for Q7), to be
+  run with the [M0 probe](../spike/README.md) on a copy with `monitor` on; checklist index and README status updated.
+  Nothing was run in the game.*
 
 ### M2.R — Release preparation `v0.2.0`
 - Branch: `chore/release-v0.2.0`
