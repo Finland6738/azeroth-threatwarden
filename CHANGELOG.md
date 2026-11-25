@@ -5,6 +5,19 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+## [0.1.0] - 2026-11-25
+
+The **first test version**: the foundations of the addon (milestone M1). It is built for WoW Forever (Interface 16001)
+and has saved settings with migrations, English and Italian, three themes, a movable window, Settings and an Info page with
+the credits, the commands `/atw` and `/threatwarden`, a minimap button, the Addon Compartment entry and the diagnostic
+report `/atw debug`. **It reads no threat yet**: the threat monitor arrives in v0.2.0, and every part of a later
+milestone is switched off.
+
+It has been checked by offline tests only. The in-game check of M1
+([checklist](https://github.com/Finland6738/azeroth-threatwarden/blob/v0.1.0/docs/checklists/M1.md)) and the results of
+the M0 probe (which threat data the client gives an addon) are **still open**, so nothing below has been verified in the
+real client. The probe is a development tool in the repository and is not part of this package.
+
 ### Added
 
 - M1.8: the **Settings** page (`UI/Settings.lua`): Appearance (theme Nebula, Aurora or Warden, neon effects,

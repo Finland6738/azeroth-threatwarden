@@ -7,15 +7,19 @@ threat coaching and combat analysis addon for **World of Warcraft: Forever**. It
 which mob, warns you before you pull aggro, records your fights and explains what happened, always telling what is
 **known** from what is **estimated**.
 
-> **Status: early development. M1 (foundations) is complete in code; its
-> [in-game check](docs/checklists/M1.md) is still open.** The specification, the decisions and the plan are written and
-> the addon has its foundations: saved settings (versioned, with migrations), the ecosystem look, a movable window (its Monitor tab is still empty) with Settings (themes, language, window) and an Info page with the credits, the [commands](docs/wiki/Commands.md) `/atw` and `/threatwarden`, a minimap button and the Addon Compartment entry; it reads no threat yet and there is no release to install. The first step is a probe in the real client (milestone M0): it checks which threat data WoW Forever gives an
-> addon, because the client may hide threat values from addons in some situations. That
-> [probe](docs/spike/README.md) (a development tool, never distributed) can now check the client and the threat
-> functions, including whether their values are secret (P1–P4), which units and mobs answer, the threat events, GUIDs
-> and roles (P5, P6, P9), the combat events and the damage meter (P7, P8), the cost of sampling, the restrictions and
-> what survives a reload (P10–P12); it still has to be run in the game. The first version, `v0.1.0`, comes after
-> milestone M1; the MVP (monitor, alerts, Coach, recording and combat report) is `v0.4.0`.
+> **Status: early development. [`v0.1.0`](https://github.com/Finland6738/azeroth-threatwarden/releases/tag/v0.1.0) is
+> the first test version: foundations only, no threat yet.** Download it from
+> [GitHub Releases](https://github.com/Finland6738/azeroth-threatwarden/releases)
+> ([how to install](docs/wiki/Installation.md)). It has saved settings (versioned, with migrations), the ecosystem look,
+> a movable window (its Monitor tab is still empty) with Settings (themes, language, window) and an Info page with the
+> credits, the [commands](docs/wiki/Commands.md) `/atw` and `/threatwarden`, a minimap button and the Addon Compartment
+> entry. It is checked by offline tests only: the [in-game check of M1](docs/checklists/M1.md) and the results of the M0
+> probe are still open. The [probe](docs/spike/README.md) (a development tool, never distributed) checks in the real
+> client which threat data WoW Forever gives an addon, because the client may hide threat values from addons in some
+> situations: the client and the threat functions, including whether their values are secret (P1–P4), which units and
+> mobs answer, the threat events, GUIDs and roles (P5, P6, P9), the combat events and the damage meter (P7, P8), the
+> cost of sampling, the restrictions and what survives a reload (P10–P12). The MVP (monitor, alerts, Coach, recording
+> and combat report) is `v0.4.0`.
 
 [Italiano](README.it.md) · [Roadmap](ROADMAP.md) · [Specification (Italian)](docs/specs/README.md) ·
 [Architecture](docs/ARCHITECTURE.md) · [Decisions](docs/adr/README.md) · [User manual](docs/wiki/Home.md)

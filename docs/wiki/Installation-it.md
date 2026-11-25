@@ -2,12 +2,13 @@
 
 *English: [[Installation|Installation]]*
 
-> **Ancora nessuna versione pubblicata.** La prima è la `v0.1.0`. Fino ad allora l'addon si installa solo dal codice
-> sorgente, per provarlo, e nulla è stato verificato nel client vero.
+> **La `v0.1.0` è la prima versione di prova: solo le fondamenta, ancora nessuna threat.** Non è ancora stata
+> verificata nel client vero.
 
-## Da una versione pubblicata (dalla `v0.1.0`)
+## Da una versione pubblicata
 
-1. Scarica lo zip dell'ultima versione dalla pagina *Releases* del repository.
+1. Scarica lo zip dell'ultima versione (`AzerothThreatwarden-….zip`, non gli archivi *Source code*) da
+   [GitHub Releases](https://github.com/Finland6738/azeroth-threatwarden/releases).
 2. Estrai la cartella `AzerothThreatwarden` in `<WoW folder>/_forever_/Interface/AddOns/`.
 3. Avvia il gioco; nella schermata del personaggio apri *AddOns* e controlla che Azeroth Threatwarden sia attivo.
 4. In gioco scrivi `/atw`. Al primo accesso la finestra si apre da sola.

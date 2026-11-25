@@ -6,8 +6,8 @@
 How a version of Azeroth Threatwarden is built and published. The workflow is
 [release.yml](../.github/workflows/release.yml); the decisions are in
 [ADR 0014](adr/0014-one-version-per-milestone-and-feature-switches.md) (versions and switches) and
-[ADR 0005](adr/0005-embedded-ace3-savedvariables-and-schema-versions.md) (embedded libraries). **No version has been
-released yet.** The milestone tags `v0.<N>.0` have the owner's standing approval; any other tag (a fix, a pre-release)
+[ADR 0005](adr/0005-embedded-ace3-savedvariables-and-schema-versions.md) (embedded libraries). The first release
+is `v0.1.0`. The milestone tags `v0.<N>.0` have the owner's standing approval; any other tag (a fix, a pre-release)
 is asked first, and only the owner adds secrets. Development steps create no tags.
 
 ## The versions

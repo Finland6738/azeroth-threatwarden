@@ -7,18 +7,20 @@ della threat, di coaching e di analisi dei combattimenti per **World of Warcraft
 quale mob, ti avvisa prima che tu prenda l'aggro, registra i combattimenti e spiega cosa è successo, distinguendo sempre
 ciò che è **noto** da ciò che è **stimato**.
 
-> **Stato: sviluppo iniziale. La M1 (fondamenta) è completa nel codice; la sua
-> [verifica in gioco](docs/checklists/M1.md) (in inglese) è ancora aperta.** Specifiche, decisioni e piano sono scritti e l'addon ha le sue
-> fondamenta: impostazioni salvate (con versione e migrazioni), l'aspetto dell'ecosistema, una finestra spostabile (la
-> scheda Monitor è ancora vuota) con le Impostazioni (temi, lingua, finestra) e la pagina Info con i crediti, i [comandi](docs/wiki/Commands-it.md) `/atw` e `/threatwarden`, il pulsante della
-> minimappa e la voce nell'Addon Compartment; non legge ancora la threat e non c'è una versione da installare. Il primo
-> passo è una sonda nel client vero (milestone M0): verifica quali dati di threat WoW Forever dà a un addon, perché in
-> alcune situazioni il client può nascondere i valori agli addon. La [sonda](docs/spike/README.md) (uno strumento di
-> sviluppo, mai distribuito) ora verifica il client e le funzioni della threat, compreso se i loro valori sono segreti
-> (P1–P4), quali unità e mob rispondono, gli eventi della threat, i GUID e i ruoli (P5, P6, P9), gli eventi di
-> combattimento e il damage meter (P7, P8), il costo del campionamento, le restrizioni e cosa sopravvive a un
-> ricaricamento (P10–P12); resta da eseguirla in gioco. La prima versione, `v0.1.0`, arriva dopo la milestone M1;
-> l'MVP (monitor, avvisi, Coach, registrazione e report di combattimento) è la `v0.4.0`.
+> **Stato: sviluppo iniziale. La [`v0.1.0`](https://github.com/Finland6738/azeroth-threatwarden/releases/tag/v0.1.0) è
+> la prima versione di prova: solo le fondamenta, ancora nessuna threat.** Si scarica da
+> [GitHub Releases](https://github.com/Finland6738/azeroth-threatwarden/releases)
+> ([come installarla](docs/wiki/Installation-it.md)). Ha le impostazioni salvate (con versione e migrazioni), l'aspetto
+> dell'ecosistema, una finestra spostabile (la scheda Monitor è ancora vuota) con le Impostazioni (temi, lingua,
+> finestra) e la pagina Info con i crediti, i [comandi](docs/wiki/Commands-it.md) `/atw` e `/threatwarden`, il pulsante
+> della minimappa e la voce nell'Addon Compartment. È controllata solo da test offline: la
+> [verifica in gioco della M1](docs/checklists/M1.md) (in inglese) e i risultati della sonda M0 sono ancora aperti. La
+> [sonda](docs/spike/README.md) (uno strumento di sviluppo, mai distribuito) verifica nel client vero quali dati di
+> threat WoW Forever dà a un addon, perché in alcune situazioni il client può nascondere i valori agli addon: il client e
+> le funzioni della threat, compreso se i loro valori sono segreti (P1–P4), quali unità e mob rispondono, gli eventi
+> della threat, i GUID e i ruoli (P5, P6, P9), gli eventi di combattimento e il damage meter (P7, P8), il costo del
+> campionamento, le restrizioni e cosa sopravvive a un ricaricamento (P10–P12). L'MVP (monitor, avvisi, Coach,
+> registrazione e report di combattimento) è la `v0.4.0`.
 
 [English](README.md) · [Roadmap](ROADMAP.md) · [Specifiche](docs/specs/README.md) ·
 [Architettura (in inglese)](docs/ARCHITECTURE.md) · [Decisioni](docs/adr/README.md) · [Manuale](docs/wiki/Home-it.md)
