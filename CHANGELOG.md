@@ -5,6 +5,20 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Added
+
+- M2.2: the threat scanner and the target tracker, behind the `monitor` switch (off until v0.2.0).
+  `Data/TargetTracker.lua` picks the monitored mob (the hostile target, or the target of a friendly target), keys it by
+  GUID or by a counter when the GUID is secret, and sees target changes, a death, a disappearance and a new creature
+  behind the same token (`TARGET_CHANGED`). `Data/ThreatScanner.lua` reads the threat of the player, the pet and the
+  party or raid only in combat, with a mob and a consumer (the window on the Monitor tab): threat events gathered to at
+  most one full scan every 100 ms plus a 5 Hz tick that stops at the end of combat, a cap of units read per scan with a
+  round robin, one pooled record per unit and no allocation per scan; nil, error, missing and secret answers are kept
+  as their reason, never as a value (`THREAT_SCANNED`, the threat capabilities). Compat gains allocation-free unit and
+  group reads (`Compat.Unit`, `Compat.Group`, the new API entry `group.RaidIndex` for `UnitInRaid`) and the lead of the
+  unit holding the mob (`Compat.Threat.ReadLead`). After a `/reload` in combat the combat starts again from the
+  player's combat flag at `PLAYER_ENTERING_WORLD` [probe P12].
+
 ### Changed
 
 - M2.1: the test fight scripts (`Tests/lib/fight.lua`) gain the verbs `outcome` (the three probe outcomes,

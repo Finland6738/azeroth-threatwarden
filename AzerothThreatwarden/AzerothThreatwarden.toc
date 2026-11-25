@@ -30,6 +30,8 @@ Core\Scheduler.lua
 Core\Config.lua
 Core\Diagnostics.lua
 Core\Commands.lua
+Data\TargetTracker.lua
+Data\ThreatScanner.lua
 UI\Assets.lua
 UI\Theme.lua
 UI\Motion.lua

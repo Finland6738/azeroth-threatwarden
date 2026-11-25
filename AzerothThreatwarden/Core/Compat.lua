@@ -194,6 +194,7 @@ Compat.APIS = {
 	{ id = "group.InGroup", paths = { "IsInGroup" }, check = "call", show = true, since = "M2", probe = "P5" },
 	{ id = "group.InRaid", paths = { "IsInRaid" }, check = "call", show = true, since = "M2", probe = "P5" },
 	{ id = "group.Size", paths = { "GetNumGroupMembers" }, check = "call", show = true, since = "M2", probe = "P5" },
+	{ id = "group.RaidIndex", paths = { "UnitInRaid" }, check = "exists", since = "M2", probe = "P5" },
 	{ id = "instance.InInstance", paths = { "IsInInstance" }, check = "call", show = true, since = "M1", probe = "P3" },
 	{ id = "instance.Info", paths = { "GetInstanceInfo" }, check = "exists", since = "M4", probe = "P3" },
 	{ id = "restriction.InCombatLockdown", paths = { "C_RestrictedActions.InCombatLockdown", "InCombatLockdown" },
@@ -634,6 +635,99 @@ function Compat.CloseOnEscape(frameName)
 end
 
 ---------------------------------------------------------------------------------------------------------------------
+-- Units and the group (M2.2: Data/TargetTracker.lua, Data/ThreatScanner.lua). Allocation-free, unlike Call and First:
+-- they run on every scan of the threat tick (ARC-06). Each answers the value, or nil and why it is missing ("missing",
+-- "error", "secret"); a secret answer is never kept (ARC-11). An argument that is a secret or not a string is
+-- "no-unit", without a call.
+---------------------------------------------------------------------------------------------------------------------
+local Unit = {}
+Compat.Unit = Unit
+
+local function unitArg(unit) return type(unit) == "string" and not IsSecret(unit) end
+
+-- The first value of path(a, b) under pcall, checked for secrecy.
+local function one(path, a, b)
+	local fn = Resolve(path)
+	if type(fn) ~= "function" then return nil, "missing" end
+	local ok, value = pcall(fn, a, b)
+	if not ok then return nil, "error" end
+	if IsSecret(value) then return nil, "secret" end
+	return value, nil
+end
+
+-- A boolean question about one or two units: true, false, or nil and the reason.
+local function ask(path, a, b)
+	if not unitArg(a) or (b ~= nil and not unitArg(b)) then return nil, "no-unit" end
+	local value, reason = one(path, a, b)
+	if reason then return nil, reason end
+	return value == true or (value ~= nil and value ~= false and value ~= 0), nil
+end
+
+function Unit.Exists(unit) return ask("UnitExists", unit) end
+function Unit.IsDead(unit) return ask("UnitIsDead", unit) end
+function Unit.CanAttack(unit, other) return ask("UnitCanAttack", unit, other) end
+function Unit.IsUnit(unit, other) return ask("UnitIsUnit", unit, other) end
+function Unit.AffectingCombat(unit) return ask("UnitAffectingCombat", unit) end
+
+-- A non-empty string answer (GUID, name, role), or nil and the reason ("nil" when the client gave none).
+local function text(path, unit)
+	if not unitArg(unit) then return nil, "no-unit" end
+	local value, reason = one(path, unit)
+	if reason then return nil, reason end
+	value = plainString(value)
+	if value == nil then return nil, "nil" end
+	return value, nil
+end
+
+-- The GUID of a unit [probe P9: readable and stable in instances?].
+function Unit.GUID(unit) return text("UnitGUID", unit) end
+-- The name shown for a unit (never stored outside the sessions, SPEC-02 §1) [probe P9].
+function Unit.Name(unit) return text("UnitName", unit) end
+
+-- The class file ("WARRIOR"...), the second value of UnitClass.
+function Unit.Class(unit)
+	if not unitArg(unit) then return nil, "no-unit" end
+	local fn = Resolve("UnitClass")
+	if type(fn) ~= "function" then return nil, "missing" end
+	local ok, _, classFile = pcall(fn, unit)
+	if not ok then return nil, "error" end
+	if IsSecret(classFile) then return nil, "secret" end
+	classFile = plainString(classFile)
+	if classFile == nil then return nil, "nil" end
+	return classFile, nil
+end
+
+local ROLES = { TANK = "TANK", HEALER = "HEALER", DAMAGER = "DAMAGER" }
+-- The assigned role: "TANK", "HEALER", "DAMAGER"; nil for NONE (reason "none") or when unknown [probe P9].
+function Unit.Role(unit)
+	local role, reason = text("UnitGroupRolesAssigned", unit)
+	if reason then return nil, reason end
+	if ROLES[role] then return ROLES[role], nil end
+	return nil, "none"
+end
+
+local Group = {}
+Compat.Group = Group
+
+-- true / false (false when the client cannot say).
+function Group.InGroup() return (one("IsInGroup")) == true end
+function Group.InRaid() return (one("IsInRaid")) == true end
+
+-- How many members, the player included (0 when not in a group or unknown).
+function Group.Size()
+	local n = plainNumber((one("GetNumGroupMembers")))
+	if n and n > 0 then return math.floor(n) end
+	return 0
+end
+
+-- The player's own raidN index (UnitInRaid("player")), nil when not in a raid or unknown.
+function Group.RaidIndex()
+	local n = plainNumber((one("UnitInRaid", "player")))
+	if n and n >= 1 then return math.floor(n) end
+	return nil
+end
+
+---------------------------------------------------------------------------------------------------------------------
 -- The normalized threat read (SPEC-01 §8.3), used from M2. Allocation-free: it fills the caller's record.
 ---------------------------------------------------------------------------------------------------------------------
 local Threat = {}
@@ -654,6 +748,7 @@ end
 local function clear(record)
 	record.isTanking, record.situation, record.scaledPercent, record.rawPercent, record.rawThreat =
 		nil, nil, nil, nil, nil
+	record.leadPercent, record.leadSituation, record.leadReason = nil, nil, nil
 end
 
 local function finish(record, mode, reason)
@@ -715,6 +810,46 @@ function Threat.Read(unit, mob, record)
 	if type(tanking) == "boolean" then record.isTanking = tanking end
 	record.scaledPercent, record.rawPercent, record.rawThreat = plainNumber(scaled), plainNumber(raw), plainNumber(threat)
 	return finish(record, "values", nil)
+end
+
+-- One number of a lead function (UnitThreatPercentageOfLead, UnitThreatLeadSituation): the value or nil, and the
+-- reason it is missing ("missing", "error", "secret", "nil").
+local function leadValue(path, holder, mob)
+	local fn = Resolve(path)
+	if type(fn) ~= "function" then return nil, "missing" end
+	local ok, value = pcall(fn, holder, mob)
+	if not ok then return nil, "error" end
+	if IsSecret(value) then return nil, "secret" end
+	value = plainNumber(value)
+	if value == nil then return nil, "nil" end
+	return value, nil
+end
+
+-- Compat.Threat.ReadLead(holder, mob, record) -> the record, with leadPercent (UnitThreatPercentageOfLead) and
+-- leadSituation (UnitThreatLeadSituation) of the unit that holds the mob, nil when unknown, and leadReason (why the
+-- percentage, or failing that the situation, is missing). Called once per scan for the holder only (SPEC-03 §1.6,
+-- §2.2); the meaning of the percentage is [probe P2]. Allocation-free; a Read of the same record clears these fields.
+-- With the values predicted secret the percentage is not asked; with the state predicted secret neither is.
+function Threat.ReadLead(holder, mob, record)
+	record.leadPercent, record.leadSituation, record.leadReason = nil, nil, nil
+	if IsSecret(holder) or IsSecret(mob) or type(holder) ~= "string" or type(mob) ~= "string" then
+		record.leadReason = "no-unit"
+		return record
+	end
+	if predicts("C_Secrets.ShouldUnitThreatStateBeSecret", holder, mob) then
+		record.leadReason = "secret"
+		return record
+	end
+	local percentReason
+	if predicts("C_Secrets.ShouldUnitThreatValuesBeSecret", holder, mob) then
+		percentReason = "secret"
+	else
+		record.leadPercent, percentReason = leadValue("UnitThreatPercentageOfLead", holder, mob)
+	end
+	local situationReason
+	record.leadSituation, situationReason = leadValue("UnitThreatLeadSituation", holder, mob)
+	record.leadReason = percentReason or situationReason
+	return record
 end
 
 -- A record with every field of SPEC-02 §1 (the pool of M2 makes them; tests and the report use this one).

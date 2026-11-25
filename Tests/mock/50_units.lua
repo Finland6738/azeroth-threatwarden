@@ -1,12 +1,13 @@
 -- Mock client, part 7: units, unit tokens and the party or raid.
 --
 -- Imitates: UnitExists, UnitGUID, UnitTokenFromGUID, UnitName, UnitClass, UnitClassification, UnitCanAttack,
--- UnitIsDead, UnitIsUnit, UnitIsPlayer, UnitAffectingCombat, UnitGroupRolesAssigned, IsInGroup, IsInRaid,
+-- UnitIsDead, UnitIsUnit, UnitIsPlayer, UnitAffectingCombat, UnitGroupRolesAssigned, UnitInRaid, IsInGroup, IsInRaid,
 -- GetNumGroupMembers.
 -- Dump (../WoW-Addons/docs/api.json, build 70170): system Unit (the Unit* functions, UnitGUID with a nilable result
 -- and the argument type UnitTokenPvPRestrictedForAddOns); IsInGroup, IsInRaid and GetNumGroupMembers are in `globals`
--- without a signature. Events: PLAYER_TARGET_CHANGED, UNIT_TARGET, PLAYER_FOCUS_CHANGED, NAME_PLATE_UNIT_ADDED,
--- NAME_PLATE_UNIT_REMOVED, INSTANCE_ENCOUNTER_ENGAGE_UNIT, GROUP_ROSTER_UPDATE.
+-- without a signature; UnitInRaid(unit [, partyIndex]) -> luaIndex, nilable. Events: PLAYER_TARGET_CHANGED,
+-- UNIT_TARGET, PLAYER_FOCUS_CHANGED, NAME_PLATE_UNIT_ADDED, NAME_PLATE_UNIT_REMOVED, INSTANCE_ENCOUNTER_ENGAGE_UNIT,
+-- GROUP_ROSTER_UPDATE, UNIT_PET (fired by hand: the mock has no pets of its own, "pet" is a token set by a test).
 -- GUID and name secrecy inside instances is P9: Mock.secrets.Set{ identity = true } (05_secrets.lua).
 --
 -- A unit is an entity with a short key ("player", "tank", "boss"); a token ("party1", "target", "boss1targettarget")
@@ -265,6 +266,18 @@ end
 function UnitGroupRolesAssigned(unit)
 	local e = unit and entityOf(unit, "UnitGroupRolesAssigned")
 	return e and e.role or "NONE"
+end
+
+-- The raidN index of a unit, nil outside a raid (the player is last, as memberKey says).
+function UnitInRaid(unit)
+	if unit == nil or not group.raid or #group.members == 0 then return nil end
+	local e = entityOf(unit, "UnitInRaid")
+	if not e then return nil end
+	if e.key == "player" then return #group.members + 1 end
+	for i, member in ipairs(group.members) do
+		if member == e.key then return i end
+	end
+	return nil
 end
 
 function IsInGroup() return #group.members > 0 end

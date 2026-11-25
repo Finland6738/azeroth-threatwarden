@@ -14,6 +14,7 @@ local SPEC_IDS = {
 	"threat.PercentageOfLead", "threat.LeadSituation", "threat.StatusColor", "threat.WarningEnabled", "unit.Exists",
 	"unit.GUID", "unit.TokenFromGUID", "unit.Name", "unit.Class", "unit.Classification", "unit.CanAttack",
 	"unit.IsDead", "unit.IsUnit", "unit.AffectingCombat", "unit.Role", "group.InGroup", "group.InRaid", "group.Size",
+	"group.RaidIndex",
 	"instance.InInstance", "instance.Info", "restriction.InCombatLockdown", "restriction.IsActive",
 	"restriction.Types", "combatlog.Restricted", "damagemeter.Available", "time.GetTime", "time.ServerTime",
 	"time.After", "time.NewTicker", "time.NewTimer", "time.ProfileStop", "addon.Metadata", "addon.Memory",
@@ -492,5 +493,98 @@ describe("the threat read (SPEC-01 §8.3)", function()
 		collectgarbage("restart")
 		truthy(grown < 1, "grew by " .. grown .. " KB")
 		eq(r.rawThreat, 5000)
+	end)
+end)
+
+describe("the lead of the holder (M2.2, SPEC-03 §2.2)", function()
+	before_boot(fight)
+
+	it("reads the percentage and the situation of the lead, and a Read clears them", function()
+		local r = C().Threat.NewRecord()
+		C().Threat.ReadLead("player", "target", r)
+		near(r.leadPercent, 1000 / 650 * 100, 1e-9)
+		eq(r.leadSituation, 0)
+		isNil(r.leadReason)
+		read("player", "target", r)
+		isNil(r.leadPercent)
+		isNil(r.leadSituation)
+	end)
+
+	it("keeps no secret: values secret leaves the situation, state secret leaves nothing", function()
+		local r = C().Threat.NewRecord()
+		Mock.secrets.Set{ values = true }
+		local before = calls("UnitThreatPercentageOfLead")
+		C().Threat.ReadLead("player", "target", r)
+		eq(calls("UnitThreatPercentageOfLead"), before, "predicted secret: not asked")
+		isNil(r.leadPercent)
+		eq(r.leadSituation, 0)
+		eq(r.leadReason, "secret")
+		Mock.secrets.Set{ values = true, state = true }
+		C().Threat.ReadLead("player", "target", r)
+		isNil(r.leadSituation)
+		eq(r.leadReason, "secret")
+		noSecret(r)
+	end)
+
+	it("says missing, error or no-unit", function()
+		local r = C().Threat.NewRecord()
+		Mock.Remove("UnitThreatPercentageOfLead")
+		C().Threat.ReadLead("player", "target", r)
+		eq(r.leadReason, "missing")
+		eq(r.leadSituation, 0)
+		Mock.threat.Answer("UnitThreatLeadSituation", "*", "*", Mock.threat.ERROR)
+		C().Threat.ReadLead("player", "target", r)
+		eq(r.leadReason, "missing")
+		isNil(r.leadSituation)
+		C().Threat.ReadLead(Mock.Secret("string"), "target", r)
+		eq(r.leadReason, "no-unit")
+		eq(#Mock.errors, 0)
+	end)
+end)
+
+describe("units and the group (M2.2)", function()
+	before_boot(fight)
+
+	it("answers existence, death, hostility, identity and role without keeping a secret", function()
+		local U = C().Unit
+		eq(U.Exists("target"), true)
+		eq(U.Exists("party3"), false)
+		eq(U.IsDead("target"), false)
+		eq(U.CanAttack("player", "target"), true)
+		eq(U.CanAttack("player", "party1"), false)
+		eq(U.IsUnit("party1", "party1"), true)
+		eq(U.GUID("target"), Mock.units.Get("boss").guid)
+		eq(U.Class("party1"), "MAGE")
+		eq(U.Name("party1"), "Mage")
+		eq(U.AffectingCombat("player"), false)
+		local role, why = U.Role("party1")
+		isNil(role)
+		eq(why, "none")
+		Mock.units.Get("mage").role = "TANK"
+		eq(U.Role("party1"), "TANK")
+		Mock.secrets.Set{ identity = true, comparison = true }
+		local guid, reason = U.GUID("target")
+		isNil(guid)
+		eq(reason, "secret")
+		eq(select(2, U.Name("party1")), "secret")
+		eq(select(2, U.IsUnit("party1", "target")), "secret")
+		eq(select(2, U.Exists(Mock.Secret("string"))), "no-unit")
+		eq(select(2, U.Exists(nil)), "no-unit")
+		eq(#Mock.errors, 0)
+	end)
+
+	it("knows the party, the raid and the player's raidN", function()
+		local G = C().Group
+		truthy(G.InGroup())
+		falsy(G.InRaid())
+		eq(G.Size(), 2)
+		isNil(G.RaidIndex())
+		Mock.group.Set{ raid = true, members = { "mage" } }
+		truthy(G.InRaid())
+		eq(G.RaidIndex(), 2)
+		Mock.group.Leave()
+		eq(G.Size(), 0)
+		Mock.Remove("UnitInRaid")
+		isNil(G.RaidIndex())
 	end)
 end)

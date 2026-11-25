@@ -68,6 +68,7 @@ function ATW:OnEnable()   -- PLAYER_LOGIN
 	self:RegisterEvent("ADDON_RESTRICTION_STATE_CHANGED", "OnRestrictionChanged")
 	self:RegisterEvent("DISPLAY_SIZE_CHANGED", "OnDisplayChanged")
 	self:RegisterEvent("UI_SCALE_CHANGED", "OnDisplayChanged")
+	self:RegisterEvent("PLAYER_ENTERING_WORLD", "OnEnteringWorld")
 	for _, module in ipairs(ns.onEnable or {}) do
 		local ok, err = pcall(module)
 		if not ok then Compat.ReportError(err) end
@@ -82,6 +83,12 @@ end
 -- The screen or the interface scale changed: the window brings itself back inside.
 function ATW:OnDisplayChanged()
 	emit("DISPLAY_CHANGED")
+end
+
+-- After a /reload in combat the client may send no PLAYER_REGEN_DISABLED [probe P12]: the player's own combat flag
+-- starts the combat here instead (SPEC-03 §1.4, M2.2).
+function ATW:OnEnteringWorld()
+	if not self.inCombat and Compat.Unit.AffectingCombat("player") == true then self:OnCombatStart() end
 end
 
 function ATW:OnCombatStart()

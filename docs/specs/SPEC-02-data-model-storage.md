@@ -30,11 +30,13 @@ ThreatRecord = {
     rawThreat = nil,
     leadPercent = nil,       -- UnitThreatPercentageOfLead, solo per chi tiene il mob (significato [probe P2])
     leadSituation = nil,     -- UnitThreatLeadSituation 0..3, solo per chi tiene il mob
+    leadReason = nil,        -- perché manca la percentuale (o la situazione) del vantaggio: "secret", "nil", "missing"…
     observedAt = 0,          -- GetTime() della lettura
     source = "detected",     -- detected | calculated | estimated | predicted | hypothesis | unknown
     confidence = "unknown",  -- high | medium | low | unknown
     reason = nil,            -- perché manca: "secret", "nil" (non è nella lista), "error", "missing", "no-unit", "stale"
-    stale = false,           -- SPEC-03 §1.5
+    stale = false,           -- SPEC-03 §1.5; lo Scanner lo mette a true a COMBAT_ENDED
+    interval = 0.2,          -- intervallo atteso fra due letture (Scanner, SPEC-03 §1.3); nil se la riga non ha posto
 }
 ```
 

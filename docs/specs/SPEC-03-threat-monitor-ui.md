@@ -50,7 +50,8 @@ progettato per **tutti e tre gli esiti**, che `Compat.Threat.Read` dà già **pe
 ### 1.2 Il mob monitorato (`Data/TargetTracker.lua`)
 
 Una sola regola, rivalutata a ogni `PLAYER_TARGET_CHANGED`, a ogni `UNIT_TARGET` con payload `target`, a
-`COMBAT_STARTED` e quando una scansione trova il mob cambiato:
+`COMBAT_STARTED` e `COMBAT_ENDED` (un mob che muore chiude spesso il combattimento) e quando una scansione trova il mob
+cambiato (`TargetTracker.Check()`):
 
 1. il **target** (`mobToken = "target"`) se esiste (`UnitExists`), è ostile (`UnitCanAttack("player", "target")`) e
    non è morto (`UnitIsDead`);
@@ -69,6 +70,11 @@ con `n` un contatore che cresce a ogni cambio visto **[probe P9]**. Il GUID legg
 | Il mob muore | `UnitIsDead(mobToken)` vero a una scansione o a un evento | `TARGET_CHANGED(nil)`; intestazione *Target died*, elenco vuoto finché il target non cambia |
 | Il mob scompare | `UnitExists(mobToken)` falso | `TARGET_CHANGED(nil)`; intestazione *Target lost* |
 | Il target diventa amico o non attaccabile | regola sopra | target del target (passo 2) o *No target* |
+
+Il perché manca un mob lo dice `TargetTracker.status`: `none` (nessun target ostile), `died`, `lost` (il token non
+nomina più nessuno: il mob è sparito, o il giocatore ha tolto il target, che il client non distingue); `died` e `lost`
+restano finché il target non cambia (M2.2). Con un GUID non leggibile un nuovo `tgt:n` nasce solo da un evento che
+dice che l'unità del token è cambiata; senza evento si tiene la chiave.
 
 Il TargetTracker legge solo esistenza, ostilità, morte e GUID, su eventi: non legge la threat e funziona anche fuori
 dal combattimento (l'intestazione mostra il mob anche prima del pull). Un mob alla volta: i mob non selezionati e la
@@ -90,7 +96,9 @@ il nome del suo target (`UnitName(mobToken .. "target")`) con *(not in the list)
 quante unità si leggono per scansione. Se il roster è più grande: `player`, `pet`, i tank designati (§2.1) e chi tiene
 il mob si leggono sempre; i posti rimasti vanno **a turno** (round-robin) agli altri, nell'ordine del roster. Con il
 predefinito un raid da 40 si legge tutto a ogni scansione e il turno non serve. Una riga letta a turno ha la sua
-freschezza (§1.5).
+freschezza (§1.5): ogni record porta `interval`, l'intervallo atteso fra due letture (1 / `rate` per chi si legge
+sempre, moltiplicato per i turni per gli altri). Chi tiene il mob è quello dell'ultima scansione: se non era fra le
+righe lette, si scopre alla sua lettura a turno e da lì si legge sempre (M2.2).
 
 Ruolo (`UnitGroupRolesAssigned`) e classe (`UnitClass`) si leggono a `GROUP_ROSTER_UPDATE` e a `COMBAT_STARTED`, non a
 ogni scansione; un ruolo segreto o `NONE` vale "nessun ruolo" **[probe P9]**.
@@ -104,8 +112,8 @@ registrati gli eventi della threat (ARC-05, M2.2 *Done when*):
 - il giocatore è in combattimento (`COMBAT_STARTED` … `COMBAT_ENDED`);
 - c'è un mob monitorato (§1.2);
 - almeno un **consumatore** lo vuole: `ThreatScanner.Want(name, on)`. In M2 l'unico è la finestra, quando è aperta
-  sulla scheda Monitor (`WINDOW_SHOWN`, `TAB_CHANGED`); gli avvisi (M3) e la registrazione (M4) si aggiungono senza
-  cambiare lo Scanner.
+  sulla scheda Monitor (`WINDOW_SHOWN`, `TAB_CHANGED`; prima del primo `TAB_CHANGED` vale `char.ui.lastTab`); gli
+  avvisi (M3) e la registrazione (M4) si aggiungono senza cambiare lo Scanner.
 
 | Fonte | Cosa fa |
 |---|---|
@@ -115,8 +123,10 @@ registrati gli eventi della threat (ARC-05, M2.2 *Done when*):
 | `GROUP_ROSTER_UPDATE`, `UNIT_PET` | ricostruisce l'elenco delle unità (§1.3) |
 
 - **MON-07** MUST: le richieste degli eventi si **raccolgono**: al massimo una scansione completa ogni 100 ms (quella in
-  attesa parte alla fine dell'intervallo, con un solo timer creato una volta); la lettura di una sola unità si fonde
-  con una scansione in attesa. Un evento duplicato costa al più una lettura in più, mai un dato sbagliato: ogni
+  attesa parte alla fine dell'intervallo, con una sola funzione di richiamo creata una volta e al più un timer del
+  client in attesa); la lettura di una sola unità si fonde
+  con una scansione in attesa. Il tick non aspetta l'intervallo: una scansione in attesa che arriva meno di 100 ms dopo
+  una del tick non si fa. Un evento duplicato costa al più una lettura in più, mai un dato sbagliato: ogni
   lettura legge lo stato **attuale** e porta il proprio `observedAt` (`GetTime`), e un campione più vecchio non
   sostituisce mai uno più nuovo. Un evento fuori ordine o per un'unità non osservata si ignora; un payload segreto si
   ignora (ARC-11).
@@ -127,9 +137,9 @@ registrati gli eventi della threat (ARC-05, M2.2 *Done when*):
 - **[probe P6]**: se gli eventi arrivano puntuali (ritardo ≤ un tick), M0.7 può abbassare il tick a rete di sicurezza
   (una costante, `ThreatScanner.SAFETY_HZ`); se arrivano radi o mai, resta il tick configurato. **[probe P10]** fissa il
   predefinito di `rate` e di `maxUnits`.
-- **[probe P12]**: dopo un `/reload` in combattimento `Core/Init.lua` considera il giocatore fuori combattimento finché
-  non arriva un `PLAYER_REGEN_*`; M2.2 aggiunge il controllo di `UnitAffectingCombat("player")` a
-  `PLAYER_ENTERING_WORLD`, così il monitor riparte anche se il client non manda l'evento.
+- **[probe P12]**: dopo un `/reload` in combattimento `Core/Init.lua` considerava il giocatore fuori combattimento
+  finché non arrivava un `PLAYER_REGEN_*`; da M2.2 controlla `UnitAffectingCombat("player")` a
+  `PLAYER_ENTERING_WORLD` ed emette `COMBAT_STARTED`, così il monitor riparte anche se il client non manda l'evento.
 - A `COMBAT_ENDED` le righe restano com'erano, tutte `stale`, con l'intestazione *Combat ended*; si svuotano al
   `COMBAT_STARTED` successivo o al cambio di mob.
 

@@ -84,9 +84,9 @@ all'oggetto dell'addon (`AzerothThreatwarden.Compat`…), come in Accord. Ordine
 (`embeds.xml`), `Core/Bus.lua`, `Core/Compat.lua` (prima della lingua, perché `Locale` chiede la lingua del client
 mentre si caricano i file di `Locales/`, M1.4), `Core/Locale.lua`, `Locales/enUS.lua`, `Locales/itIT.lua`,
 `Core/Init.lua` (che aggancia Bus, Compat e Locale all'oggetto dell'addon), `Core/Features.lua`,
-`Core/Scheduler.lua`, `Core/Config.lua`, `Core/Diagnostics.lua`,
-`Core/Commands.lua`, poi `UI/Assets.lua`, `UI/Theme.lua`, `UI/Motion.lua`, `UI/Widgets/*.lua`,
-`UI/DiagnosticsBox.lua`, `UI/Window.lua`, `UI/Launcher.lua`, `UI/Settings.lua`, `UI/About.lua`. Un modulo non usa un
+`Core/Scheduler.lua`, `Core/Config.lua`, `Core/Diagnostics.lua`, `Core/Commands.lua`, poi (da M2.2)
+`Data/TargetTracker.lua`, `Data/ThreatScanner.lua`, poi `UI/Assets.lua`, `UI/Theme.lua`, `UI/Motion.lua`,
+`UI/Widgets/*.lua`, `UI/DiagnosticsBox.lua`, `UI/Window.lua`, `UI/Launcher.lua`, `UI/Settings.lua`, `UI/About.lua`. Un modulo non usa un
 altro modulo caricato dopo di lui al caricamento del file, solo nei suoi gestori.
 
 | File | Responsabilità | Bus: emette / ascolta | Test | Step |
@@ -114,7 +114,7 @@ altro modulo caricato dopo di lui al caricamento del file, solo nei suoi gestori
 
 | File | Responsabilità | Bus | Milestone |
 |---|---|---|---|
-| `Data/TargetTracker.lua` | mob monitorato (target o target del target), cambi, morte, scomparsa, cambio di GUID ([SPEC-03 §1.2](SPEC-03-threat-monitor-ui.md#12-il-mob-monitorato-datatargettrackerlua)) | emette `TARGET_CHANGED(mobKey)` (`nil` = nessun mob); ascolta `COMBAT_STARTED`; dal gioco `PLAYER_TARGET_CHANGED`, `UNIT_TARGET` | M2.2 |
+| `Data/TargetTracker.lua` | mob monitorato (target o target del target), cambi, morte, scomparsa, cambio di GUID ([SPEC-03 §1.2](SPEC-03-threat-monitor-ui.md#12-il-mob-monitorato-datatargettrackerlua)) | emette `TARGET_CHANGED(mobKey)` (`nil` = nessun mob); ascolta `COMBAT_STARTED`, `COMBAT_ENDED`, `CONFIG_CHANGED`; dal gioco `PLAYER_TARGET_CHANGED`, `UNIT_TARGET` | M2.2 |
 | `Data/ThreatScanner.lua` | unità osservate e limite, letture da eventi della threat più tick limitato in combattimento, consumatori (`Want`), record dal pool ([SPEC-03 §1.3–§1.4](SPEC-03-threat-monitor-ui.md#13-unità-osservate-e-limite-datathreatscannerlua)) | emette `THREAT_SCANNED(mobKey)`; ascolta `TARGET_CHANGED`, `COMBAT_STARTED`, `COMBAT_ENDED`, `WINDOW_SHOWN`, `TAB_CHANGED`, `CONFIG_CHANGED`; dal gioco `UNIT_THREAT_LIST_UPDATE`, `UNIT_THREAT_SITUATION_UPDATE`, `GROUP_ROSTER_UPDATE`, `UNIT_PET` | M2.2 |
 | `Data/ThreatModel.lua`, `Data/ThreatCalc.lua` | `ThreatRecord` e `ThreatRow`, categorie, freschezza; margine, trend, tempo al superamento ([SPEC-02 §1–§2](SPEC-02-data-model-storage.md#1-threatrecord-in-memoria), [SPEC-03 §1.5, §2.5](SPEC-03-threat-monitor-ui.md#25-trend-e-tempo-al-superamento-datathreatcalclua)) | emette `THREAT_UPDATED(mobKey)`; ascolta `THREAT_SCANNED`, `TARGET_CHANGED` | M2.3 |
 | `Data/ThreatState.lua` | SAFE / WARNING / DANGER / UNKNOWN con isteresi e permanenza; tank designati; modalità del monitor ([SPEC-03 §2](SPEC-03-threat-monitor-ui.md#2-stati-e-soglie)) | emette `STATE_CHANGED(unitKey, mobKey, old, new)`, `THREAT_MODE_CHANGED(mode, reason)`; ascolta `THREAT_UPDATED`, `CONFIG_CHANGED` | M2.4 |
@@ -337,6 +337,13 @@ La forma degli argomenti (token del mob, come nel dump, o GUID) e quale previsio
 probe **[probe P2, P3]**: cambiano in questa sola funzione. Se `C_Secrets` manca, la lettura procede e conta solo il
 controllo dei valori (ARC-11).
 
+`Compat.Threat.ReadLead(holder, mob, record)` (M2.2) riempie `leadPercent` (`UnitThreatPercentageOfLead`, non chiesto
+se la previsione dice i valori segreti) e `leadSituation` (`UnitThreatLeadSituation`) per chi tiene il mob, una volta
+per scansione, con `leadReason` se mancano; una `Read` dello stesso record li azzera. Per lo Scanner e il TargetTracker,
+che leggono a ogni scansione, Compat ha anche letture senza allocazione: `Compat.Unit` (`Exists`, `IsDead`,
+`CanAttack`, `IsUnit`, `AffectingCombat`, `GUID`, `Name`, `Class`, `Role`) e `Compat.Group` (`InGroup`, `InRaid`,
+`Size`, `RaidIndex`), che rispondono il valore oppure `nil` e il motivo (`secret`, `missing`, `error`, `no-unit`).
+
 ### 8.4 Capacità
 
 | Capacità | Significato | All'avvio (M1.4) | La precisa | Probe M0 |
@@ -409,6 +416,8 @@ ogni file di test cita i requisiti che prova.
 | `test_settings.lua` | Settings | ogni impostazione si applica subito (tranne font e lingua) | M1.8 |
 | `test_about.lua` | About | crediti, logo NEBULA per tema, link | M1.8 |
 | `test_ui_texts.lua` | tutta `UI/` | nulla a schermo senza chiave di lingua; in italiano solo testi italiani | M1.8 |
+| `test_target_tracker.lua` | TargetTracker | la regola del mob, cambi, morte, scomparsa, GUID nuovo senza evento, GUID segreto, `UNIT_TARGET`, interruttore spento ([SPEC-03 §6](SPEC-03-threat-monitor-ui.md#6-piano-di-m2-moduli-eventi-e-test-per-step)) | M2.2 |
+| `test_scanner.lua` | ThreatScanner | nessuna lettura fuori dal combattimento, senza mob o senza consumatore; tick e arresto; eventi raccolti, duplicati, fuori ordine, persi; risposte `nil`, errore, mancanti, segrete; i tre esiti; limite e turno; famiglio; roster; `/reload` in combattimento; nessuna allocazione per scansione | M2.2 |
 
 ## 12. Cosa aspetta il probe
 

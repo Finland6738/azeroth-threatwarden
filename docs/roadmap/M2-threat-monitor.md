@@ -48,9 +48,14 @@ closing on the tank goes WARNING then DANGER, and a target with no data shows UN
   change), `Data/ThreatScanner.lua` (threat events plus a bounded combat tick, unit list from the group, pooled records,
   stops out of combat).
 - Done when:
-  - [ ] No reads out of combat or with no monitored mob; no allocation per tick after warm-up.
+  - [x] No reads out of combat or with no monitored mob; no allocation per tick after warm-up.
 - Tests: `test_target_tracker.lua`, `test_scanner.lua` on fight scripts (target change, mob dies, mob vanishes, secret
   values, nil answers, duplicate and out-of-order events).
+- *Done (2026-11-25, before M0.7): `Data/TargetTracker.lua` and `Data/ThreatScanner.lua` behind the `monitor` switch;
+  `Compat.Unit`, `Compat.Group` (new entry `group.RaidIndex`), `Compat.Threat.ReadLead`; the combat check at
+  `PLAYER_ENTERING_WORLD` in `Core/Init.lua`; `test_target_tracker.lua` (14 tests) and `test_scanner.lua` (35, the
+  three probe outcomes included), plus Compat cases. Events and tick in a real party wait for M2.8 and the probe
+  (P2–P6, P9, P10, P12).*
 - Real client: events and tick in a party.
 
 ### M2.3 — Threat model and calculator
