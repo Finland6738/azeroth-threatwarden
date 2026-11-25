@@ -28,6 +28,10 @@ describe("loading the addon", function()
 			"AzerothThreatwarden/Locales/itIT.lua", "AzerothThreatwarden/Core/Init.lua",
 			"AzerothThreatwarden/Core/Features.lua", "AzerothThreatwarden/Core/Scheduler.lua",
 			"AzerothThreatwarden/Core/Config.lua", "AzerothThreatwarden/Core/Diagnostics.lua",
+			"AzerothThreatwarden/UI/Assets.lua", "AzerothThreatwarden/UI/Theme.lua",
+			"AzerothThreatwarden/UI/Motion.lua", "AzerothThreatwarden/UI/Widgets/Core.lua",
+			"AzerothThreatwarden/UI/Widgets/Controls.lua", "AzerothThreatwarden/UI/Widgets/ThinBar.lua",
+			"AzerothThreatwarden/UI/Widgets/Tooltip.lua", "AzerothThreatwarden/UI/Widgets/Threat.lua",
 			"AzerothThreatwarden/UI/DiagnosticsBox.lua",
 		})
 	end)
@@ -35,7 +39,13 @@ describe("loading the addon", function()
 	-- SLASH_ACECONSOLE_ATW1 is the name AceConsole gives the /atw command (the client finds commands by global name).
 	it("defines no global but the addon object, the saved data, the Compartment functions and the command (ARC-04)",
 		function()
-		deepEq(Mock.NewGlobals(), {
+		-- the font objects of the theme are named AzerothThreatwardenFont<Id> (ARC-04)
+		local names, fonts = {}, 0
+		for _, name in ipairs(Mock.NewGlobals()) do
+			if name:find("^AzerothThreatwardenFont") then fonts = fonts + 1 else names[#names + 1] = name end
+		end
+		eq(fonts, 18)
+		deepEq(names, {
 			"AzerothThreatwarden", "AzerothThreatwardenCharDB", "AzerothThreatwardenDB",
 			"AzerothThreatwarden_OnAddonCompartmentClick",
 			"AzerothThreatwarden_OnAddonCompartmentEnter", "AzerothThreatwarden_OnAddonCompartmentLeave",

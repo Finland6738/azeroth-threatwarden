@@ -7,6 +7,15 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
+- M1.6: the look of the addon. `AzerothThreatwarden/Media/` with the textures and icons drawn by
+  `tools/make_media.py` (rounded shapes, shadow, glows, the icon sheet with four state icons of different shapes), the
+  logo from the owner's picture (also the AddOns list icon), the NEBULA logos for the credits and the fonts Outfit,
+  JetBrains Mono and Orbitron with their OFL texts (`tools/make_fonts.py`). `UI/Assets.lua`, `UI/Theme.lua` (Nebula,
+  Aurora and **Warden**; the SAFE, WARNING, DANGER and UNKNOWN colours identical in every theme; a theme changes without
+  `/reload`; fonts fall back to the game's), `UI/Motion.lua` and the widget kit `UI/Widgets/` (buttons, cards, tabs,
+  title bar, dialog, fields, switch, slider, select, tooltip, and the threat bar, state badge and stripe, with no data
+  until v0.2.0). The `/atw debug` box now has this look, and the report gains a *Look* section. `check_addon.py` also
+  requires every media file in `UI/Assets.lua`, `check_package.py` every media file in the package. Not run in the game.
 - M1.5: `Core/Config.lua` keeps the two SavedVariables (`AzerothThreatwardenDB` per account, `AzerothThreatwardenCharDB`
   per character) at schema 1 of SPEC-02 §3: typed rules with enumerations and ranges, defaults added without
   overwriting, one idempotent migration step per version run on a copy, **read-only** when the saved schema is newer

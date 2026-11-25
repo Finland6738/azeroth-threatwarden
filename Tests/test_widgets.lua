@@ -1,0 +1,442 @@
+-- UI/Widgets/ (docs/specs/ui-style.md 3 and 4.2): every component of the kit, the threat bar and the state badge in
+-- every state, in both languages, and the diagnostic box drawn with them.
+
+local function A() return AzerothThreatwarden end
+local function W() return A().Widgets end
+local function Th() return A().Theme end
+local function C() return Mock.ns.Config end
+local function parent() return CreateFrame("Frame") end
+
+local function tinted(region, token)
+	local r, g, b = region:GetVertexColor()
+	local er, eg, eb = Th().Color(token)
+	near(r, er, 1e-6, token); near(g, eg, 1e-6, token); near(b, eb, 1e-6, token)
+end
+local function inked(fs, token)
+	local r, g, b = fs:GetTextColor()
+	local er, eg, eb = Th().Color(token)
+	near(r, er, 1e-6, token); near(g, eg, 1e-6, token); near(b, eb, 1e-6, token)
+end
+-- the theme and animations off, so that a value is read where it ends
+local function still() C():Set("account.settings.animations", false) end
+
+describe("button", function()
+	it("takes the tokens of its style and only the primary and neon ones glow", function()
+		local primary = W().Button(parent(), { text = "Go", style = "primary" })
+		tinted(primary.fill, "accent"); inked(primary.label, "on-accent"); truthy(primary.glow)
+		local neon = W().Button(parent(), { style = "neon" })
+		tinted(neon.ring, "neon"); truthy(neon.glow)
+		falsy(W().Button(parent(), { style = "secondary" }).glow)
+		local ghost = W().Button(parent(), { style = "ghost" })
+		falsy(ghost.fill); falsy(ghost.ring)
+	end)
+
+	it("fits its text unless given a width, runs onClick, and a disabled one dims", function()
+		local n = 0
+		local b = W().Button(parent(), { text = "A longer label", onClick = function() n = n + 1 end })
+		eq(b:GetWidth(), #"A longer label" * 6 + 32)
+		b:SetLabel("Hi"); eq(b:GetWidth(), 64); eq(b:GetLabel(), "Hi")
+		b:Click(); eq(n, 1)
+		b:SetEnabled(false); near(b:GetAlpha(), 0.45, 1e-9)
+		b:Click(); eq(n, 1)
+		eq(W().Button(parent(), { width = 150, text = "x" }):GetWidth(), 150)
+	end)
+
+	it("hover and press lay white over the shape", function()
+		still()
+		local b = W().Button(parent(), { text = "Go" })
+		Mock.RunScript(b, "OnEnter"); near(b.over:GetAlpha(), 0.08, 1e-9)
+		Mock.RunScript(b, "OnMouseDown"); near(b.over:GetAlpha(), 0.12, 1e-9)
+		Mock.RunScript(b, "OnMouseUp"); near(b.over:GetAlpha(), 0.08, 1e-9)
+		Mock.RunScript(b, "OnLeave"); eq(b.over:GetAlpha(), 0)
+	end)
+end)
+
+describe("card and badge", function()
+	it("a card with hover takes the strong border", function()
+		local c = W().Card(parent(), { hover = true })
+		Mock.RunScript(c, "OnEnter"); tinted(c.parts.ring, "border-strong")
+		Mock.RunScript(c, "OnLeave"); tinted(c.parts.ring, "border-subtle")
+	end)
+
+	it("a badge fits its text and takes its tone", function()
+		local b = W().Badge(parent(), "QZ1", "ok")
+		eq(b:GetWidth(), #"QZ1" * 6 + 20)
+		b:SetBadge("A longer badge text", "warn")
+		eq(b:GetWidth(), #"A longer badge text" * 6 + 20); inked(b.label, "warn")
+	end)
+end)
+
+describe("tabs and segmented", function()
+	local function tabs(opts, seen)
+		return W().Tabs(parent(), { { id = "monitor", text = "Monitor" }, { id = "settings", text = "Settings" },
+			{ id = "reports", text = "Reports" } }, function(id) if seen then seen[#seen + 1] = id end end, opts)
+	end
+
+	it("are 36 pt wide and 24 pt compact, with their own font", function()
+		eq(tabs():GetHeight(), 36)
+		local compact = tabs({ compact = true })
+		eq(compact:GetHeight(), 24)
+		eq(compact.buttons.monitor.label:GetFontObject(), Th().Font("TabCompact"))
+		eq(tabs().buttons.monitor.label:GetFontObject(), Th().Font("Tab"))
+	end)
+
+	it("select a tab once per change, put the 2 pt indicator under it and hide a tab", function()
+		still()
+		local seen = {}
+		local bar = tabs(nil, seen)
+		truthy(bar:Select("monitor")); truthy(bar:Select("monitor")); truthy(bar:Select("settings"))
+		deepEq(seen, { "monitor", "settings" })
+		eq(bar.indicator:GetHeight(), 2)
+		local _, _, _, x = bar.indicator:GetPoint(1)
+		eq(x, bar.buttons.settings.x + 4)
+		inked(bar.buttons.settings.label, "text-1"); inked(bar.buttons.monitor.label, "text-3")
+		falsy(bar:Select("nope"))
+		bar:SetTabShown("settings", false)
+		eq(bar:Active(), "monitor"); falsy(bar:Select("settings"))
+		eq(bar.buttons.reports.x, bar.buttons.monitor.w + 4, "the tabs close the gap")
+		bar:SetTabText("reports", "Rapporti combattimento")
+		eq(bar.buttons.reports.w, #"Rapporti combattimento" * 6 + 32)
+	end)
+
+	it("a segmented selector selects one, clears and locks", function()
+		local seen = {}
+		local seg = W().Segmented(parent(), { { id = "a", text = "Nebula" }, { id = "b", text = "Warden" } },
+			function(id) seen[#seen + 1] = id end)
+		truthy(seg:Select("a")); truthy(seg:Select("b")); truthy(seg:Select("b"))
+		deepEq(seen, { "a", "b" })
+		inked(seg.buttons.b.label, "text-1")
+		seg:Clear(); falsy(seg:Active())
+		seg:SetEnabled(false); falsy(seg.buttons.a:IsEnabled())
+	end)
+end)
+
+describe("title bar", function()
+	it("wide: 52 pt, the logo at 24 pt, the title in the display face and the neon glow", function()
+		local closed = 0
+		local bar = W().TitleBar(parent(), { title = "Threatwarden", subtitle = "v1", onClose = function() closed = closed + 1 end })
+		eq(bar:GetHeight(), 52); eq(bar.logo:GetWidth(), 24)
+		eq(bar.logo:GetTexture(), A().Assets.logos.logo_64.path)
+		eq(bar.title:GetFontObject(), Th().Font("Display")); eq(bar.subtitle:GetText(), "v1")
+		truthy(bar.logoGlow)
+		bar.close:Click(); eq(closed, 1)
+	end)
+
+	it("compact: 28 pt, the logo at 18 pt, DisplaySmall and no glow", function()
+		local bar = W().TitleBar(parent(), { compact = true, title = "THREATWARDEN", closeLabel = "Close" })
+		eq(bar:GetHeight(), 28); eq(bar.logo:GetWidth(), 18)
+		eq(bar.title:GetFontObject(), Th().Font("DisplaySmall"))
+		isNil(bar.logoGlow); isNil(bar.subtitle)
+		Mock.RunScript(bar.close, "OnEnter")
+		deepEq(W().Tooltip.Lines(), { "Close" })
+	end)
+end)
+
+describe("dialog", function()
+	it("is modal with a veil, and closes with Esc", function()
+		local d = W().Dialog(nil, "AzerothThreatwardenTestDialog")
+		truthy(d.veil); ne(d.card, d); falsy(d:IsShown())
+		d:Open(); truthy(d:IsShown())
+		contains(UISpecialFrames, "AzerothThreatwardenTestDialog")
+		d:Close(); falsy(d:IsShown())
+	end)
+
+	it("without a veil it is the card itself, which can be moved", function()
+		local d = W().Dialog(nil, "AzerothThreatwardenMovable", { veil = false, width = 300, height = 200 })
+		eq(d.card, d); isNil(d.veil); eq(d:GetWidth(), 300)
+		d:Open()
+		Mock.RunScript(d, "OnDragStart"); truthy(d._moving)
+		Mock.RunScript(d, "OnDragStop"); falsy(d._moving)
+	end)
+end)
+
+describe("fields and controls", function()
+	it("a switch flips on click and reports it", function()
+		still()
+		local seen = {}
+		local s = W().Switch(parent(), { onChange = function(on) seen[#seen + 1] = on end })
+		falsy(s:IsOn())
+		s:Click(); truthy(s:IsOn()); tinted(s.track, "accent")
+		s:Click(); falsy(s:IsOn())
+		s:SetOn(true, true)
+		deepEq(seen, { true, false })
+		s:SetEnabled(false); s:Click(); truthy(s:IsOn())
+	end)
+
+	it("a slider rounds to its step, clamps and tells the player's changes", function()
+		local seen = {}
+		local s = W().Slider(parent(), { min = 50, max = 200, step = 5, value = 100,
+			onChange = function(v) seen[#seen + 1] = v end })
+		s:Set(123); eq(s:GetValue(), 125)
+		s:Set(999); eq(s:GetValue(), 200)
+		s:Set(1); eq(s:GetValue(), 50)
+		truthy(#seen >= 3)
+	end)
+
+	it("a select opens its list, chooses one and closes", function()
+		still()
+		local got
+		local sel = W().Select(parent(), { placeholder = "?", choices = { { id = "a", text = "One" }, { id = "b", text = "Two" } },
+			onSelect = function(id) got = id end })
+		eq(sel.label:GetText(), "?")
+		sel:Click(); truthy(sel:IsOpen())
+		sel.list.rows[2]:Click()
+		eq(got, "b"); eq(sel:Selected(), "b"); eq(sel.label:GetText(), "Two"); falsy(sel:IsOpen())
+		sel:Open(); sel.catcher:Click(); falsy(sel:IsOpen())
+		falsy(sel:Select("zzz"))
+	end)
+
+	it("a choice list scrolls the rows that do not fit", function()
+		local choices = {}
+		for i = 1, 10 do choices[i] = { id = i, text = "c" .. i } end
+		local list = W().ChoiceList(parent(), { rows = 4 })
+		list:SetChoices(choices); eq(list:Count(), 10)
+		list:Scroll(100); eq(list.rows[4].label:GetText(), "c10")
+		list:Scroll(-100); eq(list.rows[1].label:GetText(), "c1")
+	end)
+
+	it("an edit box shows its placeholder while empty and reports the edits", function()
+		local got
+		local e = W().EditBox(parent(), { placeholder = "Search", onChange = function(t) got = t end })
+		truthy(e.placeholder:IsShown())
+		e:SetText("mob"); eq(got, "mob"); falsy(e.placeholder:IsShown())
+		e:SetFocus(); tinted(e.ring, "accent")
+		e:ClearFocus(); tinted(e.ring, "border")
+		e:Clear(); truthy(e.placeholder:IsShown())
+	end)
+
+	it("a thin bar keeps its fraction between 0 and 1", function()
+		local bar = W().ThinBar(parent(), { width = 100 })
+		eq(bar:GetFraction(), 0); falsy(bar.fill:IsShown())
+		bar:SetFraction(0.5); eq(bar.fill:GetWidth(), 50)
+		bar:SetFraction(7); eq(bar:GetFraction(), 1)
+		bar:SetFraction("x"); eq(bar:GetFraction(), 0)
+	end)
+
+	it("a row hover keeps the row's own scripts", function()
+		local n = 0
+		local row = CreateFrame("Button")
+		row:SetScript("OnEnter", function() n = n + 1 end)
+		W().RowHover(row)
+		Mock.RunScript(row, "OnEnter"); eq(n, 1); near(row.hover._texture[4], 1, 1e-9)
+		Mock.RunScript(row, "OnLeave"); near(row.hover._texture[4], 0, 1e-9)
+	end)
+end)
+
+describe("tooltip", function()
+	it("is the addon's own frame, inverted, and shows the lines of the caller", function()
+		local owner = parent()
+		local f = W().Tooltip.Show(owner, { "Title", { text = "ok", token = "ok" } })
+		eq(f:GetName(), "AzerothThreatwardenTooltip")
+		deepEq(W().Tooltip.Lines(), { "Title", "ok" })
+		tinted(f.parts.fill, "text-1"); inked(f.lines[1], "bg")
+		W().Tooltip.Hide(); falsy(W().Tooltip.IsShown())
+		isNil(W().Tooltip.Show(owner, nil))
+	end)
+end)
+
+describe("state badge", function()
+	local STATES = { safe = "SAFE", warning = "WARNING", danger = "DANGER", unknown = "UNKNOWN" }
+
+	it("shows the icon and the word of every state, in on-state on the state's fill (ST-02)", function()
+		for state, word in pairs(STATES) do
+			local b = W().StateBadge(parent(), { state = state })
+			eq(b:GetState(), state); eq(b.label:GetText(), word)
+			tinted(b.fill, "state-" .. state); tinted(b.icon, "on-state"); inked(b.label, "on-state")
+			deepEq(b.icon._texCoord, { A().Assets.IconCoords("state-" .. state) })
+			truthy(b.icon:IsShown())
+			truthy(b:GetWidth() >= #word * 6 + 25)
+		end
+	end)
+
+	it("is 14 pt in a row and 18 pt in the header; anything unknown is UNKNOWN", function()
+		eq(W().StateBadge(parent()):GetHeight(), 14)
+		eq(W().StateBadge(parent(), { large = true }):GetHeight(), 18)
+		local b = W().StateBadge(parent(), { state = "panic" })
+		eq(b:GetState(), "unknown"); eq(b.label:GetText(), "UNKNOWN")
+		b:SetState("danger"); eq(b.label:GetText(), "DANGER")
+		b:SetState(nil); eq(b:GetState(), "unknown")
+	end)
+
+	it("keeps its colours when the theme changes", function()
+		local b = W().StateBadge(parent(), { state = "warning" })
+		local before = { b.fill:GetVertexColor() }
+		Th().Apply("aurora")
+		deepEq({ b.fill:GetVertexColor() }, before)
+	end)
+
+	it("speaks Italian on an Italian client", function()
+		boot(function(M) M.player.locale = "itIT" end)
+		eq(W().StateBadge(parent(), { state = "danger" }).label:GetText(), "PERICOLO")
+		eq(W().StateBadge(parent()).label:GetText(), "SCONOSCIUTO")
+	end)
+
+	it("a stripe repeats the colour of the state", function()
+		local s = W().StateStripe(parent())
+		eq(s:GetWidth(), 3); eq(s:GetState(), "unknown")
+		s:SetState("safe")
+		near(s.fill._texture[2], (select(2, Th().Color("state-safe"))), 1e-6)
+		s:SetState("nonsense"); eq(s:GetState(), "unknown")
+	end)
+end)
+
+describe("threat bar", function()
+	local function bar(opts)
+		opts = opts or {}
+		opts.width = opts.width or 154   -- a track of 100 pt: 154 - 40 (number) - 14 (icon and gap)
+		local b = W().ThreatBar(parent(), opts)
+		b.track:SetWidth(100)
+		return b
+	end
+
+	local function dashes(b, shown)
+		for i, d in ipairs(b.dashes) do eq(d:IsShown(), shown, "dash " .. i) end
+	end
+
+	it("starts unknown: no fill, a dashed outline and a question mark, never an empty bar", function()
+		local b = bar()
+		eq(b:GetState(), "unknown"); isNil(b:GetPercent())
+		falsy(b.fill:IsShown()); eq(b.number:GetText(), "?"); inked(b.number, "text-2")
+		dashes(b, true)
+		tinted(b.dashes[1], "state-unknown")
+		eq(b.track:GetHeight(), 10)
+	end)
+
+	it("fills in the colour of the state, with the number at the right in text-1", function()
+		still()
+		for _, state in ipairs({ "safe", "warning", "danger" }) do
+			local b = bar()
+			b:Set(87, state)
+			truthy(b.fill:IsShown()); near(b.fill:GetWidth(), 87, 1e-9)
+			tinted(b.fill, "state-" .. state)
+			eq(b.number:GetText(), "87 %"); inked(b.number, "text-1")
+			dashes(b, false)
+		end
+	end)
+
+	it("past 100 % the track is full and a mark says so", function()
+		still()
+		local b = bar()
+		b:Set(100, "danger"); falsy(b.over:IsShown())
+		b:Set(132.4, "danger")
+		near(b.fill:GetWidth(), 100, 1e-9); truthy(b.over:IsShown()); eq(b.number:GetText(), "132 %")
+		eq(b.over:GetWidth(), 2)
+	end)
+
+	it("an estimated value has a tilde in text-2; a predicted one shows the predict icon", function()
+		still()
+		local b = bar()
+		b:Set(55, "safe", true)
+		eq(b.number:GetText(), "~55 %"); inked(b.number, "text-2"); falsy(b.predict:IsShown())
+		b:Set(55, "safe", false, true)
+		eq(b.number:GetText(), "55 %"); truthy(b.predict:IsShown())
+		deepEq(b.predict._texCoord, { A().Assets.IconCoords("predict") })
+	end)
+
+	it("a value that is not a number, or a state that is unknown or invalid, is drawn as unknown", function()
+		still()
+		local b = bar()
+		for _, case in ipairs({ { nil, "safe" }, { 50, "unknown" }, { 50, nil }, { 50, "panic" }, { "50", "safe" },
+			{ -1, "safe" }, { 0 / 0, "safe" }, { math.huge, "danger" } }) do
+			b:Set(80, "warning")
+			b:Set(case[1], case[2], false, true)
+			eq(b:GetState(), "unknown", tostring(case[1]) .. " " .. tostring(case[2]))
+			falsy(b.fill:IsShown()); eq(b.number:GetText(), "?"); falsy(b.predict:IsShown()); falsy(b.over:IsShown())
+			dashes(b, true)
+		end
+	end)
+
+	it("0 % known is not unknown: the number says it and there is no dashed outline", function()
+		still()
+		local b = bar()
+		b:Set(0, "safe")
+		eq(b.number:GetText(), "0 %"); falsy(b.fill:IsShown()); dashes(b, false)
+	end)
+
+	it("draws the ticks at the thresholds", function()
+		local b = bar({ thresholds = { 80, 95 } })
+		truthy(b.ticks[1]:IsShown()); truthy(b.ticks[2]:IsShown())
+		b:SetThresholds(80, 95)
+		local _, _, _, x1 = b.ticks[1]:GetPoint(1)
+		local _, _, _, x2 = b.ticks[2]:GetPoint(1)
+		near(x1, 80, 1e-9); near(x2, 95, 1e-9)
+		b:SetThresholds(nil, 100)
+		falsy(b.ticks[1]:IsShown()); falsy(b.ticks[2]:IsShown())
+	end)
+
+	it("the width slides in 120 ms and the colour fades; never a blink", function()
+		local b = bar()
+		b:Set(20, "safe")
+		falsy(b.fill:IsShown(), "from unknown the width grows from zero")
+		tinted(b.fill, "state-safe")
+		Mock.RunScript(b, "OnUpdate", 0.13)
+		near(b.fill:GetWidth(), 20, 1e-9)
+		still()
+		b:Set(20.5, "safe")
+		C():Set("account.settings.animations", true)
+		b:Set(90, "danger")
+		Mock.RunScript(b, "OnUpdate", 0.06)
+		local w = b.fill:GetWidth()
+		truthy(w > 20.5 and w < 90, "on the way: " .. w)
+		local r = b.fill:GetVertexColor()
+		local from = Th().Color("state-safe")
+		local to = Th().Color("state-danger")
+		truthy(r > from and r < to, "the colour is between the two")
+		Mock.RunScript(b, "OnUpdate", 0.07)
+		near(b.fill:GetWidth(), 90, 1e-9); tinted(b.fill, "state-danger")
+		isNil(b:GetScript("OnUpdate"))
+	end)
+
+	it("becoming unknown in the middle of a slide leaves nothing of the old value", function()
+		local b = bar()
+		b:Set(20, "safe"); Mock.RunScript(b, "OnUpdate", 0.2)
+		b:Set(90, "danger"); Mock.RunScript(b, "OnUpdate", 0.03)
+		b:Set(nil)
+		falsy(b.fill:IsShown()); isNil(b:GetScript("OnUpdate"))
+	end)
+
+	it("does no work when it is given what it already shows", function()
+		still()
+		local b = bar()
+		b:Set(40, "safe")
+		b.number:SetText("untouched")
+		b:Set(40, "safe")
+		eq(b.number:GetText(), "untouched")
+	end)
+
+	it("shows the caller's reason in the tooltip, and follows it while the mouse is over", function()
+		still()
+		local b = bar()
+		b:Set(nil, "unknown", false, false, "Secret value")
+		Mock.RunScript(b, "OnEnter")
+		deepEq(W().Tooltip.Lines(), { "Secret value" })
+		b:Set(nil, "unknown", false, false, "Stale")
+		deepEq(W().Tooltip.Lines(), { "Stale" })
+		b:Set(10, "safe")
+		falsy(W().Tooltip.IsShown())
+	end)
+
+	it("keeps the state colours in every theme", function()
+		still()
+		local b = bar()
+		b:Set(87, "warning")
+		for _, id in ipairs({ "aurora", "warden", "nebula" }) do
+			Th().Apply(id)
+			tinted(b.fill, "state-warning")
+		end
+	end)
+end)
+
+describe("the diagnostic box in the look of the addon", function()
+	it("is a movable dialog with the kit's buttons and fonts", function()
+		Mock.ns.Diagnostics.Show()
+		local f = Mock.ns.DiagnosticsBox:Frame()
+		eq(f:GetName(), "AzerothThreatwardenDiagnosticsBox")
+		isNil(f.veil)
+		eq(f.title:GetFontObject(), Th().Font("H1"))
+		eq(f.edit:GetFontObject(), Th().Font("MonoSmall"))
+		eq(f.close:GetLabel(), "Close"); eq(f.selectAll:GetLabel(), "Select all")
+		Th().Apply("warden")
+		tinted(f.parts.fill, "surface-1")
+	end)
+end)

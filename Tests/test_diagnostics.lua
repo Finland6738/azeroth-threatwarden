@@ -12,7 +12,7 @@ local function titles(text)
 end
 
 local SECTIONS = { "Client", "Features", "APIs", "Capabilities", "Restrictions", "Saved data", "Memory", "Bus",
-	"Scheduler", "Last errors" }
+	"Scheduler", "Look", "Last errors" }
 
 describe("the report (SPEC-01 §9)", function()
 	it("has the header and the sections in order", function()
@@ -38,7 +38,7 @@ describe("the report (SPEC-01 §9)", function()
 
 	it("lists what Compat found: every API, the capabilities and the restrictions", function()
 		local text = D().Report()
-		contains(text, "53 available, 5 missing, 0 restricted, 0 error")
+		contains(text, "55 available, 4 missing, 0 restricted, 0 error")
 		contains(text, "threat.Detailed: available")
 		contains(text, "ui.Reload: missing")
 		contains(text, "secret.HasSecretRestrictions: available = false")
@@ -211,7 +211,7 @@ describe("the copy box (UI/DiagnosticsBox.lua)", function()
 		D().Show()
 		local f = Box():Frame()
 		eq(f.title:GetText(), "Rapporto diagnostico")
-		eq(f.close:GetText(), "Chiudi")
+		eq(f.close:GetLabel(), "Chiudi")
 		matches(f.size:GetText(), "^%d+ righe, %d+ caratteri$")
 		matches(Box():GetText(), "^Azeroth Threatwarden diagnostics")
 	end)

@@ -198,6 +198,7 @@ def main(argv):
 
     cfg = lua.table_from({
         b"addonName": b(ADDON_NAME),
+        b"root": b(ROOT),
         b"assertPath": b(os.path.join(HERE, "lib", "assert.lua")),
         b"fightPath": b(os.path.join(HERE, "lib", "fight.lua")),
         b"tocFields": lua.table_from({b(k): b(v) for k, v in fields.items()}),

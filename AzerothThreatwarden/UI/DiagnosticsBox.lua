@@ -2,8 +2,7 @@
 -- selected, so the player presses Ctrl+C and pastes it into a bug report (addons cannot reach the clipboard). Esc
 -- closes it (SPEC-01 §9, ARC-13). Lua 5.1.
 -- Adapted from Azeroth Accord (UI/DiagnosticsBox.lua and the read-only field of UI/CopyBox.lua), same owner, GPL-3.0
--- (ADR 0012). Until the widget kit and the theme exist (M1.6) the box is drawn with the client's own dialog textures
--- and font objects, without a colour of its own; M1.6 turns it into a Widgets.Dialog in the Warden look.
+-- (ADR 0012). Since M1.6 it is a Widgets.Dialog without a veil (it can be moved) in the look of the addon.
 -- No game API is called from here (ARC-02, Tests/test_api_boundary.lua): frames are made with CreateFrame, everything
 -- else of the client comes through Core/Compat.lua.
 local ADDON_NAME, ns = ...
@@ -13,54 +12,34 @@ ns.modules = ns.modules or {}
 local Box = {}
 ns.DiagnosticsBox, ns.modules.DiagnosticsBox = Box, Box
 
-local L, Compat = ns.L, ns.Compat
+local L = ns.L
 Box.NAME = "AzerothThreatwardenDiagnosticsBox"   -- a name, so that Esc closes it (UISpecialFrames)
 Box.WIDTH, Box.HEIGHT = 640, 460
 Box.WHEEL_STEP = 40
-Box.BACKGROUND = "Interface\\DialogFrame\\UI-DialogBox-Background"
-Box.BUTTON_TEMPLATE = "UIPanelButtonTemplate"
-
-local function button(parent, text, onClick)
-	local b = CreateFrame("Button", nil, parent, Box.BUTTON_TEMPLATE)
-	b:SetSize(120, 24)
-	b:SetText(text)
-	b:SetScript("OnClick", onClick)
-	return b
-end
 
 local function build()
-	local f = CreateFrame("Frame", Box.NAME, Compat.UIParent())
-	f:Hide()
-	f:SetSize(Box.WIDTH, Box.HEIGHT)
-	f:SetPoint("CENTER")
-	f:SetFrameStrata("DIALOG")
-	f:SetToplevel(true)
-	f:SetClampedToScreen(true)
-	f:EnableMouse(true)
-	f:SetMovable(true)
-	f:RegisterForDrag("LeftButton")
-	f:SetScript("OnDragStart", function(self) self:StartMoving() end)
-	f:SetScript("OnDragStop", function(self) self:StopMovingOrSizing() end)
-	f.bg = f:CreateTexture(nil, "BACKGROUND")
-	f.bg:SetTexture(Box.BACKGROUND)
-	f.bg:SetAllPoints(f)
+	local Widgets, Theme = ns.Widgets, ns.Theme
+	local f = Widgets.Dialog(nil, Box.NAME, { width = Box.WIDTH, height = Box.HEIGHT, veil = false })
 
-	f.title = f:CreateFontString(nil, "OVERLAY")
-	f.title:SetFontObject("GameFontNormalLarge")
+	f.title = Theme.NewText(f, "H1", "text-1")
 	f.title:SetJustifyH("LEFT")
 	f.title:SetPoint("TOPLEFT", f, "TOPLEFT", 20, -18)
 	f.title:SetText(L["DIAG_TITLE"])
-	f.hint = f:CreateFontString(nil, "OVERLAY")
-	f.hint:SetFontObject("GameFontHighlightSmall")
+	f.hint = Theme.NewText(f, "Small", "text-2")
 	f.hint:SetJustifyH("LEFT")
 	f.hint:SetPoint("TOPLEFT", f.title, "BOTTOMLEFT", 0, -6)
 	f.hint:SetPoint("RIGHT", f, "RIGHT", -20, 0)
 	f.hint:SetText(L["DIAG_HINT"])
 
 	-- the report: a multi-line edit box in a frame that scrolls with the wheel
-	local scroll = CreateFrame("ScrollFrame", nil, f)
-	scroll:SetPoint("TOPLEFT", f, "TOPLEFT", 20, -64)
-	scroll:SetPoint("BOTTOMRIGHT", f, "BOTTOMRIGHT", -20, 52)
+	local field = CreateFrame("Frame", nil, f)
+	field:SetPoint("TOPLEFT", f, "TOPLEFT", 16, -60)
+	field:SetPoint("BOTTOMRIGHT", f, "BOTTOMRIGHT", -16, 56)
+	f.field = field
+	f.fieldParts = Theme.Panel(field, { radius = 8, fill = "surface-2", border = "border" })
+	local scroll = CreateFrame("ScrollFrame", nil, field)
+	scroll:SetPoint("TOPLEFT", field, "TOPLEFT", 8, -8)
+	scroll:SetPoint("BOTTOMRIGHT", field, "BOTTOMRIGHT", -8, 8)
 	scroll:EnableMouseWheel(true)
 	scroll:SetScript("OnMouseWheel", function(self, delta)
 		local range = self.GetVerticalScrollRange and self:GetVerticalScrollRange() or 0
@@ -71,7 +50,8 @@ local function build()
 	edit:SetMultiLine(true)
 	edit:SetAutoFocus(false)
 	edit:SetMaxLetters(0)
-	edit:SetFontObject("GameFontHighlightSmall")
+	edit:SetFontObject(Theme.Font("MonoSmall"))
+	Theme.Text(edit, "text-1")
 	edit:SetWidth(Box.WIDTH - 48)
 	scroll:SetScrollChild(edit)
 	f.scroll, f.edit = scroll, edit
@@ -89,15 +69,12 @@ local function build()
 		Box:Hide()
 	end)
 
-	f.selectAll = button(f, L["DIAG_SELECT"], function() Box:SelectAll() end)
-	f.selectAll:SetPoint("BOTTOMLEFT", f, "BOTTOMLEFT", 20, 16)
-	f.size = f:CreateFontString(nil, "OVERLAY")
-	f.size:SetFontObject("GameFontDisableSmall")
-	f.size:SetPoint("BOTTOM", f, "BOTTOM", 0, 22)
-	f.close = button(f, L["DIAG_CLOSE"], function() Box:Hide() end)
-	f.close:SetPoint("BOTTOMRIGHT", f, "BOTTOMRIGHT", -20, 16)
-
-	Compat.CloseOnEscape(Box.NAME)
+	f.selectAll = Widgets.Button(f, { text = L["DIAG_SELECT"], width = 140, onClick = function() Box:SelectAll() end })
+	f.selectAll:SetPoint("BOTTOMLEFT", f, "BOTTOMLEFT", 16, 14)
+	f.size = Theme.NewText(f, "Small", "text-3")
+	f.size:SetPoint("BOTTOM", f, "BOTTOM", 0, 24)
+	f.close = Widgets.Button(f, { text = L["DIAG_CLOSE"], width = 120, style = "primary", onClick = function() Box:Hide() end })
+	f.close:SetPoint("BOTTOMRIGHT", f, "BOTTOMRIGHT", -16, 14)
 	return f
 end
 
@@ -116,7 +93,7 @@ function Box:Open(text)
 	f.edit:SetText(text)
 	f.edit:SetCursorPosition(0)
 	f.scroll:SetVerticalScroll(0)
-	f:Show()
+	f:Open()
 	self:SelectAll()
 	return text
 end

@@ -28,7 +28,7 @@ barre della threat e quattro **token di stato** uguali in ogni tema (§4.2).
 |---|---|---|
 | Cartella dell'addon e percorso dei media | `AzerothAccord/Media/` | `AzerothThreatwarden/Media/` (`Interface\AddOns\AzerothThreatwarden\Media\`) |
 | Dati salvati | `AzerothAccordDB`, `AzerothAccordCharDB` | `AzerothThreatwardenDB` (account), `AzerothThreatwardenCharDB` (personaggio), [SPEC-02 §3](SPEC-02-data-model-storage.md#3-savedvariables) |
-| Oggetti font (`CreateFont`) | `AzerothAccordFont<Id>` | `AzerothThreatwardenFont<Id>`: gli `<Id>` di Accord (`Display`, `DisplaySmall`, `H1`, `H2`, `Body`, `BodyMedium`, `Small`, `Eyebrow`, `Th`, `Tab`, `Button`, `Mono`, `MonoMedium`, `MonoSmall`) più `Row`, `RowMono` e `Badge` (§3.1) |
+| Oggetti font (`CreateFont`) | `AzerothAccordFont<Id>` | `AzerothThreatwardenFont<Id>`: gli `<Id>` di Accord (`Display`, `DisplaySmall`, `H1`, `H2`, `Body`, `BodyMedium`, `Small`, `Eyebrow`, `Th`, `Tab`, `Button`, `Mono`, `MonoMedium`, `MonoSmall`) più `TabCompact`, `Row`, `RowMono` e `Badge` (§3.1) |
 | Spazio dei nomi del codice | `ns.Theme`, `ns.Assets`, `ns.Motion`, `ns.Widgets` | gli stessi (`AzerothThreatwarden.Theme`… nei test) |
 | Frame con nome | `AzerothAccord…` | `AzerothThreatwarden…` (`AzerothThreatwardenWindow`, `AzerothThreatwardenTooltip`), [SPEC-01](SPEC-01-platform-architecture.md) ARC-04 |
 | Chiavi di lingua | `Locale/enUS.lua`, `itIT.lua` | `Locales/enUS.lua`, `itIT.lua`, registrate con `ns.Locale.Register` ([SPEC-01 §10](SPEC-01-platform-architecture.md#10-lingue-corelocalelua)) |
@@ -36,7 +36,9 @@ barre della threat e quattro **token di stato** uguali in ogni tema (§4.2).
 | Temi | Nebula, Aurora, **Accord** | Nebula, Aurora, **Warden** (non c'è un tema Accord) |
 
 I file media hanno i nomi di Accord (`rr_fill_8`, `rr_ring_12`, `shadow`, `glow_s`, `logo_256`, `logo_64`, `icons`…)
-più i loghi NEBULA; il foglio di icone aggiunge le icone di §3.4. `UI/Assets.lua` resta la tabella unica di texture e
+più i loghi NEBULA e, dal M1.6, `rr_fill_4` e `rr_ring_4` (la barra della threat) e `dash` (il tratteggio dello stato
+sconosciuto, ripetuto in orizzontale); il foglio di icone aggiunge le icone di §3.4. `logo_256` è il logo intero,
+`logo_64` il riquadro intorno allo scudo, perché a 18 pt si legga. `UI/Assets.lua` resta la tabella unica di texture e
 font.
 
 ## 2. Impostazioni dell'aspetto
@@ -66,7 +68,7 @@ La finestra ha due disposizioni ([SPEC-03 §4.2](SPEC-03-threat-monitor-ui.md#42
 | Elemento | Accord / FDCP | Compatta di Threatwarden |
 |---|---|---|
 | Barra del titolo | 52 pt, logo, nome in Orbitron 20–26 pt | 28 pt, logo 18 pt, `THREATWARDEN` in `DisplaySmall` (Orbitron 12 pt), pastiglia dello stato del modulo |
-| Schede | 44 pt | 24 pt, testo `Tab` 11 pt, indicatore da 2 pt |
+| Schede | 44 pt (36 pt nella ampia di Threatwarden, font `Tab` 14 pt) | 24 pt, testo `TabCompact` (Outfit Medium 11 pt), indicatore da 2 pt |
 | Righe | 36–40 pt, testo 13 pt | **20 pt**, testo `Row` (Outfit Medium 11 pt), numeri `RowMono` (JetBrains Mono Medium 11 pt) |
 | Interno | 20 pt, card distanziate 14–16 | 8 pt, nessuna card: le righe stanno direttamente su `surface-1` |
 | Raggio e ombra | 12, ombra morbida | 8, ombra più leggera (la finestra sta sopra il mondo, non sopra altre finestre) |
@@ -75,7 +77,7 @@ La finestra ha due disposizioni ([SPEC-03 §4.2](SPEC-03-threat-monitor-ui.md#42
 
 ### 3.2 La barra della threat (`Widgets.ThreatBar`, M1.6; dati da M2)
 
-- Binario `surface-3`, alto 10 pt nella riga da 20 pt, raggio 4 (9-slice `rr_fill_8`).
+- Binario `surface-3`, alto 10 pt nella riga da 20 pt, raggio 4 (9-slice `rr_fill_4`, aggiunta in M1.6).
 - Riempimento nel **token di stato** della riga (§4.2), largo `min(scaledPercent, 100) %`; oltre 100 % il binario è
   pieno e una tacca di 2 pt `text-1` segna il superamento.
 - Tacche di soglia: 1 pt `border-strong` alle soglie WARNING e DANGER (le soglie di
@@ -103,7 +105,7 @@ Nel foglio di icone (bianco, celle di 16 px, generato da `tools/make_media.py`, 
 
 | Icona | Uso |
 |---|---|
-| `state-safe` (scudo con spunta), `state-warning` (triangolo con `!`), `state-danger` (ottagono con `!!`), `state-unknown` (cerchio con `?`) | distintivo di stato; forme diverse perché i quattro colori hanno la stessa luminanza (§4.2) |
+| `state-safe` (scudo con spunta), `state-warning` (triangolo con `!`), `state-danger` (ottagono con `!!`), `state-unknown` (cerchio vuoto con `?`: gli altri tre sono pieni, M1.6) | distintivo di stato; forme diverse perché i quattro colori hanno la stessa luminanza (§4.2) |
 | `lock`, `unlock` | blocco della finestra |
 | `tank` | chi tiene il mob |
 | `trend-up`, `trend-down`, `trend-flat` | trend (stimato) |
@@ -227,7 +229,7 @@ Il nome pubblico è solo "Finland": nessun nome reale, e-mail o percorso persona
 
 ## 7. Cosa non è verificato nel client
 
-Questa specifica è solo documentazione: **nulla è stato provato nel client vero**. Oltre a ciò che Accord §7 e FDCP §7
+I media, il tema e il kit esistono dal M1.6 e sono provati solo offline: **nulla è stato provato nel client vero**. Oltre a ciò che Accord §7 e FDCP §7
 elencano (TGA e font su Forever, 9-slice a scala frazionaria, fusione `ADD`, colore degli oggetti font, menu senza
 `UIDropDownMenu`), per Threatwarden:
 
@@ -236,5 +238,6 @@ elencano (TGA e font su Forever, 9-slice a scala frazionaria, fusione `ADD`, col
   movimento, alle scale dell'interfaccia comuni e con le UI personalizzate;
 - i quattro colori di stato con la stessa luminanza: distinguibili in combattimento grazie a icone e parole?
 - le icone di stato a 10 pt;
+- il tratteggio della barra sconosciuta (texture ripetuta alta 1 pt) e il raggio 4 della barra;
 - il logo come icona del Compartment e della minimappa;
 - la larghezza delle schede compatte e dei distintivi in italiano (*ATTENZIONE*, *SCONOSCIUTO*).

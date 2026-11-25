@@ -261,6 +261,14 @@ local testEnv = setmetatable({ T = T, Mock = Mock }, {
 	__newindex = function(_, key, value) E[key] = value end,
 })
 
+-- The bytes of a file of the repository ("AzerothThreatwarden/Media/dash.tga"), nil when it is not there: for the
+-- checks on files that are not Lua (the textures and fonts, the specification).
+T.readFile = function(path)
+	local ok, data = pcall(cfg.readfile, cfg.root .. "/" .. path)
+	if ok then return data end
+	return nil
+end
+
 -- true when the long scenarios run too (run_tests.py --long, or AZTW_LONG=1; the "Long tests" workflow).
 T.long = cfg.long == true
 

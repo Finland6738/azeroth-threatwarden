@@ -8,7 +8,7 @@ which mob, warns you before you pull aggro, records your fights and explains wha
 **known** from what is **estimated**.
 
 > **Status: early development.** The specification, the decisions and the plan are written and the addon has its
-> skeleton, which keeps its saved settings (versioned, with migrations) and only answers `/atw debug` with a diagnostic report; there is no release to install. The first step is a probe in the real client (milestone M0): it checks which threat data WoW Forever gives an
+> skeleton, which keeps its saved settings (versioned, with migrations) and only answers `/atw debug` with a diagnostic report; its look (themes, fonts, icons and widgets) is ready for the window, which does not exist yet; there is no release to install. The first step is a probe in the real client (milestone M0): it checks which threat data WoW Forever gives an
 > addon, because the client may hide threat values from addons in some situations. That
 > [probe](docs/spike/README.md) (a development tool, never distributed) can now check the client and the threat
 > functions, including whether their values are secret (P1–P4), which units and mobs answer, the threat events, GUIDs

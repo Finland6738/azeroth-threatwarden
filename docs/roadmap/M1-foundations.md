@@ -137,10 +137,16 @@ in CI. Released as `v0.1.0`.
   `docs/third-party.md` updated; `## IconTexture` in the TOC (left out by M1.2); `REQUIRED_MEDIA` of
   `tools/check_package.py`.
 - Done when:
-  - [ ] Every media file is in `Assets.lua` and `third-party.md`; fonts have their OFL texts.
-  - [ ] No colour outside `UI/Theme.lua` (`check_addon.py`).
-- Tests: `test_theme.lua`, `test_widgets.lua`.
+  - [x] Every media file is in `Assets.lua` and `third-party.md`; fonts have their OFL texts.
+  - [x] No colour outside `UI/Theme.lua` (`check_addon.py`).
+- Tests: `test_theme.lua`, `test_widgets.lua`, `test_assets.lua`.
 - Real client: fonts and textures render.
+- *Done (2026-11-25): `tools/make_media.py` (20 textures, among them `rr_*_4` and `dash` for the threat bar, the icon
+  sheet with the new icons, `logo_256`, `logo_64`, NEBULA logos), `tools/make_fonts.py` (copied from FDCP), `UI/Assets.lua`,
+  `UI/Theme.lua` (three themes, `Theme.STATE`, compact fonts, the *Look* section of `/atw debug`), `UI/Motion.lua` (with
+  `Motion.Tween`), `UI/Widgets/` (Core, Controls, ThinBar, Tooltip, Threat), `DiagnosticsBox` in the new look, `## IconTexture`,
+  `REQUIRED_MEDIA`, `ui.CreateColor` in the Compat table. 337 tests with `--long`. Not run in the game: TGA and fonts,
+  9-slice, glows, the three themes on screen, the dashed outline, the icons at 10 pt, the logo as an icon.*
 
 ### M1.7 — Main window, commands, minimap and Compartment
 - Branch: `step/m1-7-window`

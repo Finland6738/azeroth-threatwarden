@@ -37,8 +37,15 @@ import fetch_libs  # noqa: E402  (the one parser of the externals block)
 
 PKGMETA = os.path.join(ROOT, ".pkgmeta")
 
-# Media the package must carry: M1.6 lists here the textures, fonts and font licences it adds (docs/third-party.md).
-REQUIRED_MEDIA = []
+# Media the package must carry: every texture, font and font licence of Media/ (docs/third-party.md).
+REQUIRED_MEDIA = ["Media/" + n + ".tga" for n in (
+    "blob_radial", "circle", "dash", "glow_l", "glow_s", "icons", "logo_256",
+    "logo_64", "nebula_dark_256", "nebula_light_256", "pill", "rr_fill_12", "rr_fill_18", "rr_fill_4",
+    "rr_fill_8", "rr_ring_12", "rr_ring_18", "rr_ring_4", "rr_ring_8", "shadow")]
+REQUIRED_MEDIA += ["Media/Fonts/" + n for n in (
+    "JetBrainsMono-Medium.ttf", "JetBrainsMono-OFL.txt", "JetBrainsMono-Regular.ttf",
+    "Orbitron-Bold.ttf", "Orbitron-OFL.txt", "Outfit-Medium.ttf",
+    "Outfit-OFL.txt", "Outfit-Regular.ttf", "Outfit-SemiBold.ttf")]
 LICENSE_FIRST_LINE = "GNU GENERAL PUBLIC LICENSE"
 
 # Never in a package, whatever .pkgmeta says (matched on the path inside the package, folder by folder).
@@ -364,8 +371,9 @@ def self_test(problems):
         "an unfilled version": ({**GOOD, toc: GOOD[toc].replace("v1.0.0", "@project-version@")}, "did not fill it in"),
         "development mode left on": ({**GOOD, "AzerothThreatwarden/Core/Config.lua": "Config.DEV = true\n"}, "DEV = true"),
         "a Lua file nothing loads": ({**GOOD, "AzerothThreatwarden/Extra.lua": ""}, "nothing loads it"),
-        "a missing icon": ({**GOOD, toc: GOOD[toc] + "## IconTexture: Interface\\AddOns\\AzerothThreatwarden\\Media\\logo_64\n"},
+        "a missing icon": ({**without("/Media/logo_64.tga"), toc: GOOD[toc] + "## IconTexture: Interface\\AddOns\\AzerothThreatwarden\\Media\\logo_64\n"},
                            "TOC icon"),
+        "a missing font": (without("/Fonts/Outfit-Regular.ttf"), "Outfit-Regular.ttf is not in the package"),
         "no Libs": ({k: v for k, v in GOOD.items() if "/Libs/" not in k}, "Libs"),
     }
     for label, (files, expect) in cases.items():

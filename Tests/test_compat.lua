@@ -17,12 +17,13 @@ local SPEC_IDS = {
 	"instance.InInstance", "instance.Info", "restriction.InCombatLockdown", "restriction.IsActive",
 	"restriction.Types", "combatlog.Restricted", "damagemeter.Available", "time.GetTime", "time.ServerTime",
 	"time.After", "time.NewTicker", "time.NewTimer", "time.ProfileStop", "addon.Metadata", "addon.Memory",
-	"addon.Framerate", "addon.ErrorHandler", "ui.Reload", "ui.CreateFrame", "ui.CreateFont", "ui.ScreenSize",
+	"addon.Framerate", "addon.ErrorHandler", "ui.Reload", "ui.CreateFrame", "ui.CreateFont", "ui.CreateColor",
+	"ui.ScreenSize",
 	"ui.SettingsPanel", "ui.SpecialFrames", "ui.SlashCmdList", "ui.ClassColor", "ui.PlaySound",
 }
 
 -- What the mock client does not imitate yet (Tests/mock headers): reported missing, never raised.
-local NOT_MOCKED = { ["ui.Reload"] = true, ["ui.ScreenSize"] = true, ["ui.SettingsPanel"] = true,
+local NOT_MOCKED = { ["ui.Reload"] = true, ["ui.SettingsPanel"] = true,
 	["ui.ClassColor"] = true, ["ui.PlaySound"] = true }
 
 describe("the API table (SPEC-01 §8.2, ARC-02)", function()

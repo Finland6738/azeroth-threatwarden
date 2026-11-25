@@ -9,6 +9,7 @@
 ## AddonCompartmentFunc: AzerothThreatwarden_OnAddonCompartmentClick
 ## AddonCompartmentFuncOnEnter: AzerothThreatwarden_OnAddonCompartmentEnter
 ## AddonCompartmentFuncOnLeave: AzerothThreatwarden_OnAddonCompartmentLeave
+## IconTexture: Interface\AddOns\AzerothThreatwarden\Media\logo_64
 ## X-Website: https://github.com/Finland6738/azeroth-threatwarden
 ## X-Credits: Created and designed by Finland. Made with the Italian guild NEBULA.
 ## X-License: GPL-3.0
@@ -28,4 +29,12 @@ Core\Features.lua
 Core\Scheduler.lua
 Core\Config.lua
 Core\Diagnostics.lua
+UI\Assets.lua
+UI\Theme.lua
+UI\Motion.lua
+UI\Widgets\Core.lua
+UI\Widgets\Controls.lua
+UI\Widgets\ThinBar.lua
+UI\Widgets\Tooltip.lua
+UI\Widgets\Threat.lua
 UI\DiagnosticsBox.lua

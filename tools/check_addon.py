@@ -9,8 +9,9 @@ Adapted from Azeroth Accord (tools/check_addon.py), same owner, GPL-3.0 (ADR 001
   * Locales (ADR 0009): every file of Locales/ registers the table of its own language, one `KEY = "text"` per line,
     with exactly the keys of enUS; every L["KEY"] or L.KEY used in the code exists in enUS.
   * No colour outside UI/Theme.lua (a line that must write one says `theme-ok`).
-  * Media: every media path used exists, every file of Media/ is described in docs/third-party.md, every font folder has
-    its licence text, and once the logo texture exists (M1.6) the TOC shows it as IconTexture.
+  * Media: every media path used exists, every file of Media/ is described in docs/third-party.md and (but the font
+    licences) listed in UI/Assets.lua, every font folder has its licence text, and once the logo texture exists the TOC
+    shows it as IconTexture.
 
 Usage: python -I -X utf8 tools/check_addon.py (also called by tools/check_docs.py, with a self-test on made-up addons)
 """
@@ -244,6 +245,13 @@ def check_media(addon, meta, problems):
             rel = os.path.splitext(re.sub(r"[\\/]+", "/", m.group(1)).strip("/"))[0]
             if rel and rel not in have:
                 problems.append(f"{addon.rel(path)} uses Media/{rel} but the file is missing")
+    assets = os.path.join(addon.dir, "UI", "Assets.lua")
+    table = _read(assets) if os.path.isfile(assets) else ""
+    for rel in files:
+        # as Lua writes the path: two backslashes between the folders, the closing quote after the name
+        written = "Media" + "".join("\\\\" + part for part in rel.split("/")) + '"'
+        if not rel.endswith("-OFL.txt") and written not in table:
+            problems.append(f"Media/{rel} is not listed in UI/Assets.lua (the one table of textures and fonts)")
     third = os.path.join(addon.root, "docs", "third-party.md")
     if not os.path.isfile(third):
         problems.append("docs/third-party.md is missing")
@@ -308,6 +316,13 @@ def self_test(problems):
     if found:
         problems.append(f"tools/check_addon.py: the good test addon was refused: {found}")
         return
+    table = "local x = 'Interface' .. " + '"Media\\\\Fonts\\\\Foo-Bar.ttf"\n'
+    listed = {**good, f"{NAME}/UI/Assets.lua": table, f"{NAME}/Media/Fonts/Foo-Bar.ttf": "",
+              f"{NAME}/Media/Fonts/Foo-OFL.txt": "", "docs/third-party.md": "Foo-Bar.ttf Foo-OFL.txt",
+              f"{NAME}/{NAME}.toc": good[f"{NAME}/{NAME}.toc"] + "UI\\Assets.lua\n"}
+    found = _run_files(listed)
+    if found:
+        problems.append(f"tools/check_addon.py: listed media were refused: {found}")
     toc, init, it = f"{NAME}/{NAME}.toc", f"{NAME}/Core/Init.lua", f"{NAME}/Locales/itIT.lua"
 
     def change(name, old, new):
@@ -329,6 +344,10 @@ def self_test(problems):
         "a colour escape": (change(init, "print(", 'print("|cff00ff00", '), "colour escape"),
         "missing media": (change(init, "print(", 'print("Media\\\\gone", '), "file is missing"),
         "undescribed media": ({**good, f"{NAME}/Media/dot.tga": ""}, "not described"),
+        "media outside the table": ({**good, f"{NAME}/Media/dot.tga": "", "docs/third-party.md": "dot.tga"},
+                                    "not listed in UI/Assets.lua"),
+        "a font without its licence": ({**good, f"{NAME}/Media/Fonts/Foo-Bar.ttf": "", "docs/third-party.md": "Foo-Bar.ttf"},
+                                       "Foo-OFL.txt"),
         "a logo without IconTexture": ({**good, f"{NAME}/Media/logo_64.tga": "",
                                         "docs/third-party.md": "logo_64.tga"}, "IconTexture"),
     }

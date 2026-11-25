@@ -12,6 +12,12 @@ ns.Locale.Register("enUS", {
 	-- Commands (the full set arrives with the window, M1.7)
 	COMMANDS_SOON = "More commands arrive with the next development steps. Type /atw debug for the diagnostic report.",
 
+	-- The four states of the threat: always shown with their icon (ui-style 4.2)
+	STATE_SAFE = "SAFE",
+	STATE_WARNING = "WARNING",
+	STATE_DANGER = "DANGER",
+	STATE_UNKNOWN = "UNKNOWN",
+
 	-- /atw debug: the copy box (the report itself stays in English, ADR 0009)
 	DIAG_TITLE = "Diagnostic report",
 	DIAG_HINT = "The text is selected: press Ctrl+C to copy it, then paste it into your bug report. It has no player names.",

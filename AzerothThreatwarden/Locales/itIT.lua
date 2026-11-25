@@ -11,6 +11,11 @@ ns.Locale.Register("itIT", {
 	-- Comandi (l'insieme completo arriva con la finestra, M1.7)
 	COMMANDS_SOON = "Altri comandi arrivano con i prossimi passi di sviluppo. Scrivi /atw debug per il rapporto diagnostico.",
 
+	STATE_SAFE = "SICURO",
+	STATE_WARNING = "ATTENZIONE",
+	STATE_DANGER = "PERICOLO",
+	STATE_UNKNOWN = "SCONOSCIUTO",
+
 	-- /atw debug: la finestra da cui copiare (il rapporto resta in inglese, ADR 0009)
 	DIAG_TITLE = "Rapporto diagnostico",
 	DIAG_HINT = "Il testo è già selezionato: premi Ctrl+C per copiarlo, poi incollalo nella segnalazione. Non contiene nomi di giocatori.",

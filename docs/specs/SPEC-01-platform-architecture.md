@@ -100,11 +100,11 @@ altro modulo caricato dopo di lui al caricamento del file, solo nei suoi gestori
 | `Core/Config.lua` | SavedVariables, schema 1, regole tipizzate, predefiniti, migrazioni, sola lettura, `corrupt` ([SPEC-02 §3](SPEC-02-data-model-storage.md#3-savedvariables)); `Config:Get(path)`, `Config:Set(path, value)`, `Config:ResetSettings()`, `Config:ResetWindow()`, `Config:DebugLines()` (sezione *Saved data* di §9); `Config.LANGUAGES`, l'elenco delle lingue (§10) | emette `CONFIG_LOADED`, `CONFIG_CHANGED(path)` | `test_config.lua`, `test_language.lua` | M1.5 |
 | `Core/Diagnostics.lua` | anello degli errori dell'addon (10, ripuliti dai percorsi), testo del rapporto (§9), mai nomi | — (legge Bus, Compat, Config, Scheduler) | `test_diagnostics.lua` | M1.4 |
 | `Core/Commands.lua` | `/threatwarden` e `/atw` ([SPEC-03 §5](SPEC-03-threat-monitor-ui.md#5-comandi-e-configurazione)); un comando di una parte spenta in `Features` risponde *coming in vX* | — (chiama le funzioni pubbliche di Window, Settings, About, Diagnostics) | `test_commands.lua` | M1.7 |
-| `UI/Assets.lua` | tabella unica di texture e font dell'addon (`Media/`), come in Accord | — | `test_theme.lua` (ogni file in tabella) | M1.6 |
+| `UI/Assets.lua` | tabella unica di texture e font dell'addon (`Media/`), come in Accord | — | `test_assets.lua` (ogni file in tabella, formato TGA, icone, licenze) | M1.6 |
 | `UI/Theme.lua` | token di Nebula, Aurora e Warden e i token di stato ([ui-style](ui-style.md)); registro delle regioni tinte; oggetti font `AzerothThreatwardenFont<Id>`; `Px()`; forme 9-slice | emette `THEME_CHANGED(themeId)`; ascolta `CONFIG_LOADED`, `CONFIG_CHANGED` | `test_theme.lua` (parità dei token, contrasti, nessun colore fuori dal tema) | M1.6 |
 | `UI/Motion.lua` | animazioni del tema (durate 120/200/320 ms), spente con `settings.animations` | — | `test_theme.lua` | M1.6 |
-| `UI/Widgets/` | il kit di Accord (`Core.lua`, `Controls.lua`, `Tooltip.lua`, `ThinBar.lua`), più `ThreatBar` e `StateBadge` (vuoti di dati fino a M2) | — | `test_widgets.lua` | M1.6 |
-| `UI/DiagnosticsBox.lua` | la finestra da cui copiare il rapporto di `/atw debug`: fino a M1.6 con le texture e i font del client, poi un `Widgets.Dialog` | — | `test_diagnostics.lua` | M1.4 |
+| `UI/Widgets/` | il kit di Accord (`Core.lua`: Button, Card, Badge, Tabs, Segmented, TitleBar, Dialog, EditBox, ChoiceList; `Controls.lua`: Switch, Slider, Select; `ThinBar.lua`; `Tooltip.lua`), più `Threat.lua` con `ThreatBar`, `StateBadge` e `StateStripe` (vuoti di dati fino a M2) | — | `test_widgets.lua` | M1.6 |
+| `UI/DiagnosticsBox.lua` | la finestra da cui copiare il rapporto di `/atw debug`: dal M1.6 un `Widgets.Dialog` senza velo, spostabile | — | `test_diagnostics.lua` | M1.4 |
 | `UI/Window.lua` | finestra principale ([SPEC-03 §4](SPEC-03-threat-monitor-ui.md#4-finestra)): barra del titolo, schede, spostamento, blocco, ridimensionamento, scala, posizione per personaggio, Esc | emette `WINDOW_SHOWN(shown)`, `TAB_CHANGED(tabId)`; ascolta `THEME_CHANGED`, `COMBAT_STARTED`, `COMBAT_ENDED`, `CAPABILITY_CHANGED` | `test_window.lua` | M1.7 |
 | `UI/Launcher.lua` | pulsante della minimappa (LibDataBroker + LibDBIcon, nascondibile) e voce dell'Addon Compartment (le tre funzioni globali del TOC) | ascolta `CONFIG_CHANGED` (`settings.minimap.hide`) | `test_launcher.lua` | M1.7 |
 | `UI/Settings.lua` | pagina Settings (Aspetto, Lingua, Finestra, ripristino) nella scheda e nel pannello Impostazioni del gioco | emette `SETTINGS_CHANGED(key)` | `test_settings.lua`, `test_ui_texts.lua` | M1.8 |
@@ -294,6 +294,7 @@ senza firma), **assente** (si cerca a runtime). In grassetto le voci il cui comp
 | `addon.ErrorHandler` | `geterrorhandler`, `seterrorhandler` | esistenza | globale | anello degli errori dell'addon (§9) | M1 | — |
 | `ui.Reload` | `C_UI.Reload` (o il globale `ReloadUI`) | esistenza | firma / globale | pulsante "Reload now" dopo il cambio di lingua | M1 | — |
 | `ui.CreateFrame`, `ui.CreateFont` | `CreateFrame`, `CreateFont` | esistenza | globale | tutta l'interfaccia (solo da `UI/` attraverso il kit e il tema) | M1 | — |
+| `ui.CreateColor` | `CreateColor` | esistenza | globale | sfumature (`SetGradient`) del tema; senza, un colore semplice (M1.6) | M1 | — |
 | `ui.ScreenSize` | `GetPhysicalScreenSize`, `GetScreenWidth`, `GetScreenHeight` | chiamata | firma | tenere la finestra nello schermo | M1 | — |
 | `ui.SettingsPanel` | `Settings.RegisterCanvasLayoutCategory`, `Settings.RegisterAddOnCategory`, `Settings.OpenToCategory` | esistenza | assente (FrameXML) | voce nel pannello Impostazioni del gioco (M1.8); se manca resta la scheda della finestra | M1 | da provare in gioco |
 | `ui.SpecialFrames` | `UISpecialFrames` | esistenza | assente (FrameXML) | Esc chiude la finestra ([SPEC-03 §4.5](SPEC-03-threat-monitor-ui.md#45-comportamento)) | M1 | da provare in gioco |
@@ -362,7 +363,8 @@ Sezioni, in ordine: intestazione (addon, versione, build di sviluppo sì/no); cl
 Forever sì/no, lingua del client, lingua scelta e attiva); interruttori di `Features`; API di §8.2 con stato e
 dettaglio; capacità di §8.4; restrizioni attive; dati salvati (schema per variabile, sola lettura, problemi corretti
 all'ultimo caricamento, voci in `corrupt`, dimensione stimata in KB); memoria dell'addon; Bus (eventi con ascoltatori,
-errori degli ascoltatori); Scheduler (tick attivi, ms per tick); ultimi errori (fino a 10, ripuliti da
+errori degli ascoltatori); Scheduler (tick attivi, ms per tick); poi le sezioni dei moduli, come *Look* di `UI/Theme.lua`
+(tema, effetti, font caduti sul font del gioco, texture rifiutate dal client, M1.6); ultimi errori (fino a 10, ripuliti da
 `Diagnostics.CleanError`). Un modulo aggiunge la sua sezione con `AddDebugSection(title, linesFn)`.
 
 ## 10. Lingue (`Core/Locale.lua`)
@@ -395,7 +397,8 @@ ogni file di test cita i requisiti che prova.
 | `test_diagnostics.lua` | Diagnostics, DiagnosticsBox | sezioni del rapporto, nessun nome, errori ripuliti e contati | M1.4 |
 | `test_config.lua` | Config | DAT-20–DAT-25 di [SPEC-02 §3](SPEC-02-data-model-storage.md#3-savedvariables) | M1.5 |
 | `test_language.lua` | Locale | `auto`, `enUS`, `itIT`, lingua del client senza file, cambio dopo `/reload` | M1.5 |
-| `test_theme.lua` | Theme, Assets, Motion | parità dei token, contrasti di [ui-style §4](ui-style.md#4-il-tema-warden-e-i-token-di-stato), ogni file media in tabella | M1.6 |
+| `test_theme.lua` | Theme, Motion | parità dei token, contrasti di [ui-style §4](ui-style.md#4-il-tema-warden-e-i-token-di-stato), token di stato (ST-01–ST-05), cambio di tema senza `/reload`, font, animazioni | M1.6 |
+| `test_assets.lua` | Assets, `Media/` | ogni file in tabella esiste (TGA 32 bit, dimensioni), foglio di icone uguale a `tools/make_media.py`, font con licenza, `IconTexture` | M1.6 |
 | `test_widgets.lua` | Widgets | componenti del kit, `ThreatBar` e `StateBadge` in ogni stato | M1.6 |
 | `test_window.lua` | Window | posizione, dimensioni, scala, blocco dopo `/reload`; Esc; schermo più piccolo | M1.7 |
 | `test_commands.lua` | Commands | ogni comando nelle due lingue, argomenti sbagliati | M1.7 |

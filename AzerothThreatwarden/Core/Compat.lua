@@ -92,6 +92,9 @@ local function cleanText(text)
 	return text
 end
 
+-- An error message made safe to show or keep: one line, no paths, cut short (Core/Diagnostics.lua when loaded).
+function Compat.CleanText(text) return cleanText(text) end
+
 -- An error that talks about restrictions is "restricted", any other "error" [probe P11: the client's wording].
 local function restrictedMessage(message)
 	message = message:lower()
@@ -218,6 +221,7 @@ Compat.APIS = {
 	{ id = "ui.Reload", paths = { "C_UI.Reload", "ReloadUI" }, check = "exists", since = "M1", probe = "-" },
 	{ id = "ui.CreateFrame", paths = { "CreateFrame" }, check = "exists", since = "M1", probe = "-" },
 	{ id = "ui.CreateFont", paths = { "CreateFont" }, check = "exists", since = "M1", probe = "-" },
+	{ id = "ui.CreateColor", paths = { "CreateColor" }, check = "exists", since = "M1", probe = "-" },
 	{ id = "ui.ScreenSize", paths = { "GetPhysicalScreenSize", "GetScreenWidth", "GetScreenHeight" }, all = true,
 		check = "exists", since = "M1", probe = "-" },
 	{ id = "ui.SettingsPanel", paths = { "Settings.RegisterCanvasLayoutCategory", "Settings.RegisterAddOnCategory",
@@ -554,6 +558,38 @@ end
 function Compat.UIParent()
 	local parent = Resolve("UIParent")
 	return type(parent) == "table" and parent or nil
+end
+
+-- The height of the physical screen in pixels (UI/Theme.lua, one physical pixel), nil when the client cannot say.
+function Compat.PhysicalScreenHeight()
+	local fn = Resolve("GetPhysicalScreenSize")
+	if type(fn) ~= "function" then return nil end
+	local ok, _, height = pcall(fn)
+	if ok and not Compat.IsSecret(height) and type(height) == "number" and height > 0 then return height end
+	return nil
+end
+
+-- A colour object for the widget methods that want one (SetGradient); a plain table when the client has no CreateColor.
+function Compat.CreateColor(r, g, b, a)
+	local fn = Resolve("CreateColor")
+	if type(fn) == "function" then
+		local ok, colour = pcall(fn, r, g, b, a)
+		if ok and colour then return colour end
+	end
+	return { r = r, g = g, b = b, a = a }
+end
+
+-- The path of a font of the game, the fallback of an addon font: "FRIZQT" for the display face, anything else for text.
+-- Interface globals the dump does not list.
+function Compat.GameFontPath(key)
+	local path = Resolve(key == "FRIZQT" and "UNIT_NAME_FONT" or "STANDARD_TEXT_FONT")
+	return type(path) == "string" and path or "Fonts\\FRIZQT__.TTF"
+end
+
+-- The 9-slice mode of a texture (Enum.UITextureSliceMode.Stretched), 0 when the client does not name it.
+function Compat.SliceModeStretched()
+	local mode = Resolve("Enum.UITextureSliceMode.Stretched")
+	return type(mode) == "number" and mode or 0
 end
 
 -- Esc closes the named frame (UISpecialFrames). False when the client has no such list.
