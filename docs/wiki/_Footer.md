@@ -1,0 +1,1 @@
+Azeroth Threatwarden · fan-made addon for World of Warcraft: Forever, not affiliated with Blizzard Entertainment · addon fatto dai fan, non affiliato a Blizzard Entertainment · [Repository](https://github.com/Finland6738/azeroth-threatwarden) · [Feedback](https://github.com/Finland6738/azeroth-threatwarden/discussions/categories/feedback)

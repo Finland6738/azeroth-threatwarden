@@ -1,0 +1,40 @@
+{
+  "$schema": "https://raw.githubusercontent.com/LuaLS/vscode-lua/master/setting/schema.json",
+  "runtime.version": "Lua 5.1",
+  "workspace.library": [
+    "../WoW-Addons/types"
+  ],
+  "workspace.ignoreDir": [
+    "AzerothThreatwarden/Libs",
+    "docs",
+    ".idea",
+    "tools/probe"
+  ],
+  "diagnostics.globals": [
+    "AzerothThreatwarden",
+    "AzerothThreatwardenDB",
+    "AzerothThreatwardenCharDB",
+    "AzerothThreatwarden_OnAddonCompartmentClick",
+    "AzerothThreatwarden_OnAddonCompartmentEnter",
+    "AzerothThreatwarden_OnAddonCompartmentLeave",
+    "LibStub",
+    "SlashCmdList",
+    "Mock",
+    "T",
+    "describe",
+    "it",
+    "before_boot",
+    "eq",
+    "ne",
+    "truthy",
+    "falsy",
+    "isNil",
+    "notNil",
+    "deepEq",
+    "near",
+    "contains",
+    "matches",
+    "raises",
+    "fail"
+  ]
+}

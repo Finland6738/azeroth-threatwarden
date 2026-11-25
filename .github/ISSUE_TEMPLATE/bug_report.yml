@@ -1,0 +1,74 @@
+name: Bug report
+description: Something in Azeroth Threatwarden does not work as expected.
+title: "[Bug] "
+labels: ["bug", "needs-triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for helping improve Azeroth Threatwarden.
+        **Privacy:** do not paste other players' names, whispers, chat logs, account names or folder paths from your PC. Replace them with placeholders such as `<player>`, `<tank>` or `<account>`.
+        Not sure it is a bug, or just want to share feedback? Use the [Feedback discussions](https://github.com/Finland6738/azeroth-threatwarden/discussions/categories/feedback) instead.
+  - type: input
+    id: version
+    attributes:
+      label: Addon version
+      description: The `addon:` line at the top of the `/atw debug` report, or the AddOns list at the character screen.
+      placeholder: "0.x.y"
+    validations:
+      required: true
+  - type: input
+    id: client
+    attributes:
+      label: Game client
+      description: The `client:` and `locale:` lines of the `/atw debug` report. WoW Forever build and game language.
+      placeholder: "1.60.1 (build 70170), enUS"
+    validations:
+      required: true
+  - type: dropdown
+    id: role
+    attributes:
+      label: Your role when it happened
+      options:
+        - Tank
+        - Damage dealer
+        - Healer
+        - Solo, no role
+    validations:
+      required: true
+  - type: dropdown
+    id: group
+    attributes:
+      label: Where it happened
+      description: Threat data can differ between solo play, groups and instances.
+      options:
+        - Solo, open world
+        - Party, open world
+        - Dungeon
+        - Raid
+        - Battleground or other
+    validations:
+      required: true
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened?
+      description: What you did, what you expected and what you saw instead.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: How to reproduce
+      placeholder: |
+        1. Join a party and target a mob
+        2. ...
+    validations:
+      required: true
+  - type: textarea
+    id: report
+    attributes:
+      label: The /atw debug report (please paste it whole)
+      description: |
+        Type `/atw debug` in the game: the report opens in a box, already selected. Press Ctrl+C and paste it here, whole: it holds the version, client, language, the capabilities the game gave the addon, the sizes of the saved data, the memory and the last addon errors. It contains no player names, and names in an error text are replaced by placeholders. If the game also showed a Lua error box, paste its text too. Remove anything else you do not want to share.
+      render: text

@@ -1,0 +1,33 @@
+# Adapted from Azeroth Accord (.pkgmeta), same owner, GPL-3.0 (ADR 0012).
+package-as: AzerothThreatwarden
+
+# One source of truth for library versions: tools/fetch_libs.py reads this block for local development and CI (from
+# M1.2); the BigWigs packager reads it for releases. Each entry is a whole repository at a tag (ADR 0005).
+externals:
+  AzerothThreatwarden/Libs/Ace3:
+    url: https://github.com/WoWUIDev/Ace3
+    tag: Release-r1403
+  AzerothThreatwarden/Libs/LibDataBroker-1.1:
+    url: https://github.com/tekkub/libdatabroker-1-1
+    tag: v1.1.4
+  AzerothThreatwarden/Libs/LibDBIcon-1.0:
+    url: https://github.com/wowace-clone/LibDBIcon-1.0
+    tag: v8.0.4
+
+# The addon lives in a subfolder of the repository: the packager moves it to the top level of the package.
+move-folders:
+  AzerothThreatwarden/AzerothThreatwarden: AzerothThreatwarden
+
+# What stays out of the package. The packager skips every dotfile and dot-folder and every file git does not track.
+# LICENSE (the GPL-3.0 text) is not listed on purpose: it must ship. tools/check_package.py (from M1.2) reads this file
+# and fails if the licence would be left out or a development file would ship.
+ignore:
+  - Tests
+  - docs
+  - tools
+  - assets
+  - .github
+  - .gitignore
+  - .luarc.json
+  - "*.md"
+  - prompt.txt
