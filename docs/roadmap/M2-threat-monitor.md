@@ -65,8 +65,14 @@ closing on the tank goes WARNING then DANGER, and a target with no data shows UN
 - Scope: `Data/ThreatModel.lua` (`ThreatRecord`, categories, `reason`, staleness), `Data/ThreatCalc.lua` (margin,
   trend over N valid samples with confidence, time to overtake as a prediction).
 - Done when:
-  - [ ] Every value has its category; a trend with fewer than 3 valid samples is "Insufficient data".
+  - [x] Every value has its category; a trend with fewer than 3 valid samples is "Insufficient data".
 - Tests: `test_threat_model.lua`, `test_threat_calc.lua` (known series, gaps, noise).
+- *Done (2026-11-25, before M0.7): `Data/ThreatCalc.lua` (margin, tank margin, least-squares trend with confidence,
+  time to overtake, predicted WARNING, freshness) and `Data/ThreatModel.lua` (one pooled row per watched unit, with the
+  category and reason of every value, staleness, samples reset at a new mob, combat or holder; `THREAT_UPDATED`) behind
+  the `monitor` switch; `test_threat_calc.lua` (29 tests) and `test_threat_model.lua` (22, the three probe outcomes
+  included). The meaning of `UnitThreatPercentageOfLead` (`ThreatCalc.USE_LEAD`, P2) and the 110 %/130 % rule (P4)
+  wait for the probe.*
 
 ### M2.4 — Threat states, thresholds and tank detection
 - Branch: `step/m2-4-states`

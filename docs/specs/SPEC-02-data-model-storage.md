@@ -33,7 +33,8 @@ ThreatRecord = {
     leadReason = nil,        -- perché manca la percentuale (o la situazione) del vantaggio: "secret", "nil", "missing"…
     observedAt = 0,          -- GetTime() della lettura
     source = "detected",     -- detected | calculated | estimated | predicted | hypothesis | unknown
-    confidence = "unknown",  -- high | medium | low | unknown
+    confidence = "unknown",  -- high | medium | low | unknown: il modello (M2.3) mette high a una lettura fresca
+                             -- values o state, low se stale, unknown in none
     reason = nil,            -- perché manca: "secret", "nil" (non è nella lista), "error", "missing", "no-unit", "stale"
     stale = false,           -- SPEC-03 §1.5; lo Scanner lo mette a true a COMBAT_ENDED
     interval = 0.2,          -- intervallo atteso fra due letture (Scanner, SPEC-03 §1.3); nil se la riga non ha posto
@@ -46,11 +47,18 @@ Per ogni unità osservata il modello (`Data/ThreatModel.lua`) tiene anche una **
 ThreatRow = {
     record = ThreatRecord,   -- l'ultima lettura
     samples = { t = {}, p = {}, head = 0, count = 0 },  -- anello di 32 campioni (observedAt, scaledPercent), SPEC-03 §2.5
+    present = false,         -- letta e nella lista del mob (reason ~= "nil", MON-05: altrimenti la riga non c'è)
+    stale = false,           -- DAT-12: lettura più vecchia di max(2 · I, 0,5 s), o fine del combattimento
+    reason = nil,            -- perché i valori non si mostrano: il reason del record, oppure "stale"
+    isHolder = false,        -- è il record che tiene il mob (ThreatScanner.holder)
     trend = nil,             -- punti al secondo (stimato) o nil = "Insufficient data"
     trendConfidence = "unknown",
     trendSamples = 0,
+    trendReason = "insufficient",  -- perché trend è nil: "insufficient", "state-only" o il reason della riga
     margin = nil,            -- punti (calcolato, §2), nil se non calcolabile
-    overtakeIn = nil,        -- secondi (previsto), nil se le condizioni di SPEC-03 §2.5 non valgono
+    marginReason = nil,      -- "alone" (nessun altro nella lista), "state-only", "missing" o il reason della riga
+    overtakeIn = nil,        -- secondi interi, per eccesso (previsto), nil se le condizioni di SPEC-03 §2.5 non valgono
+    overtakeReason = nil,    -- "insufficient", "not-rising", "low-confidence", "beyond" (> 10 s), "has-aggro", "holder"…
     isTank = false,          -- tank designato o trattato da tank (SPEC-03 §2.1)
     state = "UNKNOWN",       -- SAFE | WARNING | DANGER | UNKNOWN, mostrato (dopo isteresi e permanenza)
     stateReason = nil,       -- "lost-aggro", "has-aggro", "predicted", "margin-unknown" o il reason del record
@@ -66,6 +74,13 @@ ThreatRow = {
   mostra.
 - **DAT-13** MUST: chiavi e campi del record non contengono mai un valore segreto: un GUID, un nome o una classe
   segreti restano `nil` e la chiave passa al token.
+
+La categoria di ogni campo è fissa (`ThreatModel.CATEGORY`): rilevata per i campi della lettura, calcolata per il
+margine, stimata per il trend, prevista per il tempo al superamento; `ThreatModel.Category(row, field)` la dà, oppure
+`unknown` se il valore è `nil`, e `ThreatModel.Reason(row, field)` dice perché manca (`not-holder` per il vantaggio di
+chi non tiene il mob). Il modello si aggiorna a `THREAT_SCANNED`, `TARGET_CHANGED`, `COMBAT_STARTED` e `COMBAT_ENDED` ed
+emette `THREAT_UPDATED(mobKey)`; un nuovo mob o un nuovo combattimento azzerano i campioni anche quando lo Scanner
+legge dentro il proprio gestore dello stesso evento (M2.3).
 
 ## 2. Valori calcolati
 

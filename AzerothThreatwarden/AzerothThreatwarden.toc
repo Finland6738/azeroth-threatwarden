@@ -32,6 +32,8 @@ Core\Diagnostics.lua
 Core\Commands.lua
 Data\TargetTracker.lua
 Data\ThreatScanner.lua
+Data\ThreatCalc.lua
+Data\ThreatModel.lua
 UI\Assets.lua
 UI\Theme.lua
 UI\Motion.lua

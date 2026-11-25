@@ -19,6 +19,16 @@ All notable changes to this project are documented here. The format follows
   unit holding the mob (`Compat.Threat.ReadLead`). After a `/reload` in combat the combat starts again from the
   player's combat flag at `PLAYER_ENTERING_WORLD` [probe P12].
 
+- M2.3: the threat model and calculator, behind the `monitor` switch. `Data/ThreatModel.lua` keeps one pooled row per
+  watched unit: whether it is on the mob's threat list, stale (older than twice its read interval, at least 0.5 s, or
+  after the fight), why its values are missing, and every value with its reliability category (detected, calculated,
+  estimated, predicted; unknown with a reason when missing). `Data/ThreatCalc.lua` computes the margin (100 minus the
+  percentage, or for the tank 100 minus the second highest), the trend (least squares over the valid samples of the
+  last 3 s, at least 3 samples over 0.5 s, with a high, medium or low confidence, otherwise *Insufficient data*) and
+  the time to overtake (only with a rising trend of at least medium confidence, within 10 s). Samples start again at a
+  new mob, a new fight, a new holder of the mob and after a gap of more than 1 s. Each update publishes
+  `THREAT_UPDATED` and allocates nothing.
+
 ### Changed
 
 - M2.1: the test fight scripts (`Tests/lib/fight.lua`) gain the verbs `outcome` (the three probe outcomes,
