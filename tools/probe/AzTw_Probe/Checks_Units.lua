@@ -1474,6 +1474,13 @@ table.insert(Probe.exportHooks, function()
     return lines
 end)
 
+-- Helpers shared with Checks_Events.lua (M0.5), so that P7 and P8 count and key their readings the same way.
+for name, fn in pairs({ tokenKind = tokenKind, guidOf = guidOf, bump = bump, statsFor = statsFor,
+    sortedKeys = sortedKeys, countsText = countsText, clock = clock, currentContext = currentContext,
+    invalidateContext = invalidateContext }) do
+    Probe.helpers[name] = fn
+end
+
 table.insert(Probe.resetHooks, function()
     local d = Probe.DB()
     d.p5, d.p6, d.p9 = nil, nil, nil

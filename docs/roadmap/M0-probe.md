@@ -111,9 +111,16 @@ prints or stores player or guild names.
   (`UNIT_HEALTH`, `UNIT_FLAGS`, `UnitIsDead`), taunts seen through `UNIT_SPELLCAST_SUCCEEDED` on group units;
   `C_DamageMeter.IsDamageMeterAvailable`, sessions and deaths.
 - Done when:
-  - [ ] Offline: the checks exist; `check_docs.py` passes.
+  - [x] Offline: the checks exist; `check_docs.py` passes.
   - [ ] P7 and P8 answered. *(in game)*
 - Real client: everything.
+- *Done (offline, 2026-11-25): `Checks_Events.lua` with P7 (the three combat log events registered at login on a frame
+  of their own, deliveries and argument kinds, the readers found at run time, blocked or forbidden actions;
+  `PLAYER_REGEN_*` against `UnitAffectingCombat`, `UNIT_TARGET`, encounters, deaths per source, the group's casts with
+  whether the mob turned to the caster within 0.5 s, `/atwp note P7 taunt`) and P8 (`C_DamageMeter` availability, enum
+  values, sessions and durations against each measured fight, death and secret fields, its events); each proposes its
+  verdict from SPEC-08 §1; smoke-tested against a throwaway mock client (readable, secret and forbidden, raid, damage
+  meter off; no secret, name or GUID saved or exported). The in-game box waits for the owner.*
 
 ### M0.6 — Cost, restrictions and reload (P10–P12)
 - Branch: `step/m0-6-cost-restrictions`

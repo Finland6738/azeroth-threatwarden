@@ -212,13 +212,18 @@ senza verdetto e M0.7 lo dice.
 
 ### P7 — Eventi di combattimento
 
-- **Chiamate**: registrazione (in `pcall`) di `COMBAT_LOG_EVENT_UNFILTERED` e `COMBAT_LOG_EVENT` e conteggio delle
-  consegne; ricerca a runtime di `CombatLogGetCurrentEventInfo` (assente dal dump) e `C_CombatLog.IsCombatLogRestricted()`;
-  degli argomenti dell'evento solo numero e genere, mai il contenuto. Poi: `PLAYER_REGEN_DISABLED/ENABLED` confrontati
+- **Chiamate**: registrazione (in `pcall`, su un frame del probe dedicato) di `COMBAT_LOG_EVENT_UNFILTERED`,
+  `COMBAT_LOG_EVENT` e `COMBAT_LOG_EVENT_INTERNAL_UNFILTERED` e conteggio delle consegne, con gli
+  `ADDON_ACTION_BLOCKED`/`FORBIDDEN` che ne seguono; ricerca a runtime di `CombatLogGetCurrentEventInfo` (assente dal
+  dump), `C_CombatLogInternal.GetCurrentEventInfo` e `C_CombatLogSecure.GetCurrentEventInfo` (namespace che il dump non
+  elenca tra i globali), chiamate solo sulle prime consegne e una volta per combattimento, e
+  `C_CombatLog.IsCombatLogRestricted()`; degli argomenti dell'evento e dei valori restituiti solo numero e genere, mai
+  il contenuto. Poi: `PLAYER_REGEN_DISABLED/ENABLED` confrontati
   con `UnitAffectingCombat("player")`; `UNIT_TARGET` per `target`, `nameplateN` e `bossN`; `PLAYER_TARGET_CHANGED`;
   `ENCOUNTER_START/END` (si salvano encounterID, difficoltà, dimensione del gruppo, esito; il nome no); morti da
   `UNIT_HEALTH`, `UNIT_FLAGS`, `UnitIsDead`/`UnitIsDeadOrGhost` su membri e mob, con `issecretvalue` su
-  `UnitHealth`/`UnitHealthMax`; taunt da `UNIT_SPELLCAST_SUCCEEDED` su `player`, `party1–4`, `raid1–40`
+  `UnitHealth`/`UnitHealthMax`, più `UNIT_DIED` e `PARTY_KILL` (dal GUID del payload solo il genere e il tipo, confronto
+  solo in memoria), `PLAYER_DEAD` e un controllo ogni secondo; taunt da `UNIT_SPELLCAST_SUCCEEDED` su `player`, `party1–4`, `raid1–40`
   (`issecretvalue` sullo `spellID`; si salvano gli id degli incantesimi, che non sono dati personali, e se il target del
   mob cambia entro 0,5 s).
 - **Contesti**: `party`, `dungeon` (con un boss), `raid`.

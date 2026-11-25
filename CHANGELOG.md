@@ -63,6 +63,26 @@ All notable changes to this project are documented here. The format follows
   `C_Secrets.ShouldUnitComparisonBeSecret` with `UnitIsUnit`, and checks that a token keeps the same mob GUID until the
   token changes. Each proposes its verdict from SPEC-08 §1. P1's census now has 53 APIs. Nothing verified in game yet.
 
+- M0.5: probe checks P7 and P8 (`tools/probe/AzTw_Probe/Checks_Events.lua`, development only). P7: at login the probe
+  tries to register `COMBAT_LOG_EVENT_UNFILTERED`, `COMBAT_LOG_EVENT` and `COMBAT_LOG_EVENT_INTERNAL_UNFILTERED` on a
+  frame of its own (inside `pcall`), records whether the client accepted them and any `ADDON_ACTION_BLOCKED` or
+  `ADDON_ACTION_FORBIDDEN` (function and whether the probe was blamed), counts every delivery with the number and kind
+  of its arguments, never their content, and calls the readers it finds at run time (`CombatLogGetCurrentEventInfo`,
+  `C_CombatLogInternal.GetCurrentEventInfo`, `C_CombatLogSecure.GetCurrentEventInfo`) only on the first deliveries and
+  once per fight, recording the kinds of what came back; it reads `C_CombatLog.IsCombatLogRestricted()`. With
+  `/atwp watch on` it counts `PLAYER_REGEN_*` against `UnitAffectingCombat` (with the delay), `UNIT_TARGET` per payload
+  kind and what the mob targets, `PLAYER_TARGET_CHANGED`, encounters (id, difficulty, size, result; never the name),
+  deaths of members and mobs with the source that saw them (`UNIT_HEALTH`, `UNIT_FLAGS`, `UNIT_DIED`, `PARTY_KILL`,
+  `PLAYER_DEAD`, a poll every second; `UnitIsDead`, `UnitIsDeadOrGhost`, health 0) and the kinds of `UnitHealth` and
+  `UnitHealthMax`, and the spells cast by the group (`UNIT_SPELLCAST_SUCCEEDED`, spell id or `secret`) with whether the
+  mob the caster targets turned to the caster within 0.5 s; `/atwp note P7 taunt` logs the group's casts of the last
+  10 s. P8: after every fight (2 s after its end) and at `/atwp run P8`, `C_DamageMeter.IsDamageMeterAvailable`, the
+  values of `Enum.DamageMeterSessionType` and `Enum.DamageMeterType` found at run time (a threat type would be flagged),
+  `GetAvailableCombatSessions` and `GetSessionDurationSeconds` against the measured length of the fight,
+  `GetCombatSessionFromType` for every pair of values with, of each source, only the kind of every field, the deaths
+  and the local player flag (never `name` or `sourceGUID`), and the three damage meter events with their delay after
+  `PLAYER_REGEN_*`. Each proposes its verdict from SPEC-08 §1. Nothing verified in game yet.
+
 - The owner's logo (`assets/logo-source.webp`) and the NEBULA logos for the credits (`assets/`).
 - Repository tooling adapted from Azeroth Accord: `tools/check_docs.py` (links, wiki twins, ADR index, privacy scan, LF
   endings), `tools/check_pr_docs.py`, `tools/ship_step.py`, `tools/release_notes.py`, `tools/sync_wiki.py`; the

@@ -6,10 +6,10 @@ P1–P12, with their exact calls, contexts, recorded fields and the consequence 
 [SPEC-08 §1](../specs/SPEC-08-quality-probe-release.md#1-probe-m0) (in Italian); the steps are in
 [M0-probe.md](../roadmap/M0-probe.md).
 
-> **Status: P1–P6 and P9 written (M0.4).** The probe installs and loads, lists P1–P12, stores notes and exports; P1–P4
-> (client, threat functions, secret values, the tank and DPS trial) and P5, P6, P9 (units and mobs, threat events,
-> GUIDs and roles) work, with `/atwp ctx` and `/atwp watch`. P7, P8 and P10–P12 still answer `todo`, "not implemented
-> yet, step M0.x"; they arrive in M0.5 and M0.6. Nothing has been verified in the real client yet.
+> **Status: P1–P9 written (M0.5).** The probe installs and loads, lists P1–P12, stores notes and exports; P1–P4
+> (client, threat functions, secret values, the tank and DPS trial), P5, P6, P9 (units and mobs, threat events, GUIDs
+> and roles) and P7, P8 (combat events, the damage meter) work, with `/atwp ctx` and `/atwp watch`. P10–P12 still
+> answer `todo`, "not implemented yet, step M0.6". Nothing has been verified in the real client yet.
 
 ## What the probe is
 
@@ -46,7 +46,8 @@ update. To remove the probe after M0, delete the `AzTw_Probe` folder from the Ad
 
 ## Commands
 
-Commands of M0.2 and M0.3 exist now (M0.4 adds no command: P5, P6 and P9 read through `/atwp watch` and `/atwp run`); `/atwp perf` arrives with M0.6.
+Commands of M0.2 and M0.3 exist now (M0.4 and M0.5 add no command: P5–P9 read through `/atwp watch`, `/atwp run`
+and, for the taunt of P7, `/atwp note P7 taunt`); `/atwp perf` arrives with M0.6.
 
 | Command | Step | What it does |
 |---|---|---|
@@ -125,6 +126,33 @@ What to expect and what to send back:
   the threat values are secret, P6 cannot measure the delay and stays `todo`; it still counts the events.
 - `/atwp export` adds the P5 matrix per context, the P6 counters per context and the P9 counters per context, plus
   the logs `P5`, `P6` and `P9`.
+
+## P7 and P8 (M0.5)
+
+P7 counts the unit events only while `/atwp watch on` is set; its combat log part and P8 work by themselves. Keep the
+watch on in a party, a dungeon (with a boss) and, if you can, a raid; `/atwp run P7` and `/atwp run P8` print the
+proposed verdict, `todo` while the evidence is incomplete.
+
+| Check | What you do | What it records |
+|---|---|---|
+| P7 | Nothing at login. In a party and in a dungeon, the tank uses a taunt at least once and, right after it, you write `/atwp note P7 taunt`; fight a boss in the dungeon; let a few mobs die. Then `/atwp run P7` | **Combat log**: at login the probe tries to register `COMBAT_LOG_EVENT_UNFILTERED`, `COMBAT_LOG_EVENT` and `COMBAT_LOG_EVENT_INTERNAL_UNFILTERED` on a frame of its own: whether the client accepted each one, and any blocked or forbidden action that followed (the game may show its "blocked" message once: that is the answer, not a fault). How many events arrived, with the number and the kind of their arguments (never their content), and what the readers found at run time returned (`CombatLogGetCurrentEventInfo`, `C_CombatLogInternal.GetCurrentEventInfo`, `C_CombatLogSecure.GetCurrentEventInfo`: only the kinds), called on the first events and once per fight; `C_CombatLog.IsCombatLogRestricted()`. **Unit events** (watch on): whether `UnitAffectingCombat` agrees with `PLAYER_REGEN_DISABLED`/`ENABLED` at once or how late; `UNIT_TARGET` per kind of unit and what the mob targets after it (you, the group, another player, an NPC, nothing); `PLAYER_TARGET_CHANGED`; encounters (id, difficulty, size, result, never the name); deaths of members and mobs and which source saw each one first (`UNIT_HEALTH`, `UNIT_FLAGS`, `UNIT_DIED`, `PARTY_KILL`, `PLAYER_DEAD`, a check every second), with whether `UnitHealth` and `UnitHealthMax` were readable or secret; the spells cast by you, your pet and the members (spell id, or `secret`) and, when the caster had a hostile target, whether that mob turned to the caster within 0.5 s. Your note logs the group's casts of the last 10 s with their result, so the taunt's spell id can be read |
+| P8 | Fight alone (a few mobs) and in a dungeon; the probe reads by itself 2 s after every fight. Then `/atwp run P8` | Whether `C_DamageMeter.IsDamageMeterAvailable()` says yes (and the reason when it says no); the names and values of `Enum.DamageMeterSessionType` and `Enum.DamageMeterType` (a type named like "threat" is flagged at the top of the verdict); the sessions of `GetAvailableCombatSessions` and the durations of `GetSessionDurationSeconds` against the length of the fight measured by the probe; for every session type and meter type, the kind of every field of every source (never its name or GUID), how many sources are you, how many have a death time; the three damage meter events and how long after the start or the end of the fight they came |
+
+What to expect and what to send back:
+
+- The proposed verdicts: P7 `partial` (the expected case) when the combat log gave nothing readable and the unit
+  events worked (`UNIT_TARGET` on mobs, readable spell ids, the combat start, a death, a boss in a dungeon and a taunt
+  followed by a turn of the mob), `supported` when, in addition, a reader returned readable values; `not supported`
+  when `UNIT_TARGET` never came for a mob (or always secret), the group's spell ids were secret in instances, or
+  `UnitAffectingCombat` never agreed with the combat events. P8 `not supported` when the damage meter is missing or
+  not available (the reason is saved), `partial` when fields were secret in instances, a group showed only your own
+  data, death times were secret or the durations were more than 1 s off the fights, `supported` after a fight alone
+  and one in a dungeon with everything readable and aligned.
+- P7 never treats a taunt as identified by itself: M0.7 reads the spell ids followed by a turn of the mob, and your
+  notes, to decide which ones are taunts.
+- `/atwp export` adds the combat log registration and counters, the P7 counters per context (combat start, targets,
+  casts per spell id, deaths), the encounters, and the P8 counters per context (availability, durations and their
+  differences from the fights, the fields per session, the events), plus the logs `P7` and `P8`.
 
 ## In-game procedure per context
 

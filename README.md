@@ -12,7 +12,7 @@ which mob, warns you before you pull aggro, records your fights and explains wha
 > addon, because the client may hide threat values from addons in some situations. That
 > [probe](docs/spike/README.md) (a development tool, never distributed) can now check the client and the threat
 > functions, including whether their values are secret (P1–P4), which units and mobs answer, the threat events, GUIDs
-> and roles (P5, P6, P9); the other checks come next. The first version, `v0.1.0`, comes after milestone M1; the MVP (monitor, alerts, Coach, recording and combat report) is `v0.4.0`.
+> and roles (P5, P6, P9), the combat events and the damage meter (P7, P8); the other checks come next. The first version, `v0.1.0`, comes after milestone M1; the MVP (monitor, alerts, Coach, recording and combat report) is `v0.4.0`.
 
 [Italiano](README.it.md) · [Roadmap](ROADMAP.md) · [Specification (Italian)](docs/specs/README.md) ·
 [Decisions](docs/adr/README.md) · [User manual](docs/wiki/Home.md) ([Italiano](docs/wiki/Home-it.md))
