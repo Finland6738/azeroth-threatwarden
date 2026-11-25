@@ -6,10 +6,10 @@ P1–P12, with their exact calls, contexts, recorded fields and the consequence 
 [SPEC-08 §1](../specs/SPEC-08-quality-probe-release.md#1-probe-m0) (in Italian); the steps are in
 [M0-probe.md](../roadmap/M0-probe.md).
 
-> **Status: P1–P9 written (M0.5).** The probe installs and loads, lists P1–P12, stores notes and exports; P1–P4
+> **Status: P1–P12 written (M0.6).** The probe installs and loads, lists P1–P12, stores notes and exports; P1–P4
 > (client, threat functions, secret values, the tank and DPS trial), P5, P6, P9 (units and mobs, threat events, GUIDs
-> and roles) and P7, P8 (combat events, the damage meter) work, with `/atwp ctx` and `/atwp watch`. P10–P12 still
-> answer `todo`, "not implemented yet, step M0.6". Nothing has been verified in the real client yet.
+> and roles), P7, P8 (combat events, the damage meter) and P10–P12 (cost of sampling, restrictions, reload and
+> logout) work, with `/atwp ctx`, `/atwp watch` and `/atwp perf`. Nothing has been verified in the real client yet.
 
 ## What the probe is
 
@@ -46,8 +46,8 @@ update. To remove the probe after M0, delete the `AzTw_Probe` folder from the Ad
 
 ## Commands
 
-Commands of M0.2 and M0.3 exist now (M0.4 and M0.5 add no command: P5–P9 read through `/atwp watch`, `/atwp run`
-and, for the taunt of P7, `/atwp note P7 taunt`); `/atwp perf` arrives with M0.6.
+All these commands exist (M0.4 and M0.5 add none: P5–P9 read through `/atwp watch`, `/atwp run` and, for the taunt of
+P7, `/atwp note P7 taunt`).
 
 | Command | Step | What it does |
 |---|---|---|
@@ -55,11 +55,11 @@ and, for the taunt of P7, `/atwp note P7 taunt`); `/atwp perf` arrives with M0.6
 | `/atwp run <id>` | M0.2 | Runs one check now, for example `/atwp run P2`; checks that need a fight start their readings by themselves while active |
 | `/atwp export` | M0.2 | Opens a movable frame with all results and logs as plain text, already selected: press Ctrl+C and paste it back |
 | `/atwp note <id> <text>` | M0.2 | Stores a free-text observation, for example `/atwp note P4 melee`; never write player or guild names in it |
-| `/atwp reset` | M0.2 | Clears the stored results and logs (not during P12) |
+| `/atwp reset` | M0.2 | Clears the stored results and logs and stops a `/atwp perf` run; an armed P12 buffer is kept (do not reset in the middle of a P12 trial) |
 | `/atwp help` | M0.2 | Prints the commands your version has |
 | `/atwp ctx <label>` | M0.3 | Labels the current context (`solo`, `party`, `dungeon`, `raid`, `bg`…); every reading also carries the context the probe detects by itself. `/atwp ctx` alone prints the current stamp, `/atwp ctx clear` removes the label |
 | `/atwp watch on\|off` | M0.3 | Automatic readings in combat (at combat start, every second, at encounter start, at combat end and 2 s later): used by P3–P7 and P9. It stays on across `/reload` until `/atwp watch off` |
-| `/atwp perf [hz] [units]` | M0.6 | P10: times the threat reading at 2, 5 and 10 Hz with 5, 10 and 40 units (or the given ones), 30 seconds each |
+| `/atwp perf [hz] [units] [mobs]` | M0.6 | P10: times the threat reading at 2, 5 and 10 Hz with 5, 10 and 40 units on 1 mob (or the given rate, units and mobs), 30 seconds each; it stops by itself. `/atwp perf stop` stops it earlier |
 
 Later steps may add commands; the usage line printed by `/atwp help` (and by any unknown command) always lists the
 ones your version has.
@@ -154,6 +154,38 @@ What to expect and what to send back:
   casts per spell id, deaths), the encounters, and the P8 counters per context (availability, durations and their
   differences from the fights, the fields per session, the events), plus the logs `P7` and `P8`.
 
+## P10, P11 and P12 (M0.6)
+
+| Check | What you do | What it records |
+|---|---|---|
+| P10 | In a raid, in a fight (best); otherwise anywhere, in and out of combat. Keep a hostile mob targeted, `/atwp watch off`, then `/atwp perf` and play normally for about 5 minutes. For one configuration only: `/atwp perf 5 40` (rate, units); a third number reads several mobs (`/atwp perf 5 40 8`). `/atwp run P10` only summarises | For each configuration (rate × units × mobs, 30 s): milliseconds per tick (median, 95th percentile, maximum, from `debugprofilestop`) and per second; kilobytes of compact samples per minute (retained: measured with the samples and without them; gross: before the cleanup, so it includes temporary garbage), for the addon and for the whole Lua memory; FPS before and during; how many readings gave a number, `nil`, a secret or an error; whether it was a `raid fight` (40 different units were there) or `simulated` (the available units read again and again) |
+| P11 | The log is always on from the login. In **each** context (solo in a fight, party, dungeon, raid and, if you like, battleground), during a fight with a hostile mob targeted and not during a boss: `/atwp run P11`, wait 15 s | Per context: `ADDON_ACTION_BLOCKED` and `ADDON_ACTION_FORBIDDEN` (function, and whether the probe was blamed), restriction state changes and the restrictions active, the combat lockdown, every failed game call of the probe (counts and scrubbed texts). `/atwp run P11` adds 1000 threat readings in one frame (how many answered, `nil`, secret or errored, and whether the answers changed), registers and unregisters the two threat events, and starts a ticker of 10 ticks to see that it keeps running in combat |
+| P12 | Alone: `/atwp run P12` (arms a buffer), pull a mob, `/reload` in the middle of the fight, wait 10 s, `/atwp run P12`. Then again for the logout: `/atwp run P12`, pull a mob and log out in the fight (or, if the client does not allow it, right after), log in, wait 10 s, `/atwp run P12` | One compact sample a second in combat in the saved variables, with a final stamp at logout; at the next load: samples found against samples written, whether the final stamp is there, the time since the last sample, combat state and lockdown right after, whether `PLAYER_REGEN_DISABLED` came again, and when the threat on the target answered again |
+
+What to expect:
+
+- A `/atwp perf` run is silent while it measures, prints one line per configuration and ends with the P10 verdict. At
+  the end of each configuration there is a short stutter: the probe cleans up the Lua memory to measure it. Nothing
+  keeps running afterwards, and a `/reload` cancels the run. The samples themselves are not saved, only the figures.
+- The proposed P10 verdict: `supported` when 40 units at 5 Hz stay within the proposed budget (at most 1 ms per tick
+  at the 95th percentile and 5 ms per second), `partial` when only fewer units or 2 Hz do, `not supported` when even 5
+  units at 2 Hz do not. A `raid fight` result is preferred to a `simulated` one.
+- The proposed P11 verdict: `supported` when the bursts answered in a fight alone, in a party, in a dungeon and in a
+  raid, with nothing blocked and no limit; `partial` when something was secret or `nil` under a restriction, or the
+  ticker or the event registration failed; `not supported` when a threat call or the registration of a threat event was
+  blocked or errored where it matters. Blocked actions of other addons, and the refusal of the combat log (P7), are
+  counted but do not change it.
+- P12: the first `/atwp run P12` arms, the one after the reload reports, the next one arms again. If the run after a
+  reload says it armed a **new** buffer, the reload did not save the old one: write `/atwp note P12 lost`. The proposed
+  verdict is `supported` after a reload in a fight and a logout with everything found, `partial` when samples or the
+  final stamp were missing or the fight was not readable after.
+
+**Numbers to send back.** The whole `/atwp export`. It contains, for P10, one line per configuration (above all
+`5Hz x 40 units` and `2Hz x 5 units`: p95 and ms per second, retained KB per minute, FPS before and during, `raid fight`
+or `simulated`); for P11 the counters per context, the bursts, tickers and error texts; for P12 each trial with the
+samples found, the final stamp and the readings after the load. Say also how many players were in the raid, whether the
+watch was on, and anything you saw on screen (a "blocked" message, a freeze).
+
 ## In-game procedure per context
 
 Do the contexts in this order; each one assumes the probe is installed and `/atwp watch on` was run once. At the end of
@@ -166,8 +198,9 @@ each session in game, `/atwp export` and send the text back. Do not run `/atwp r
 | 1 | Log in, `/atwp run P1` | P1 |
 | 2 | `/atwp ctx solo`; with no target, then a friendly target, then a hostile mob not engaged: `/atwp run P2` each time | P2, P3 |
 | 3 | Fight a mob of your level (an elite with many hit points is better); after it dies, `/atwp run P2` with the corpse targeted | P2, P3, P8 |
-| 4 | `/atwp run P12`, pull a mob, `/reload` in the middle of the fight, then `/atwp run P12` again; repeat with a logout | P12 |
-| 5 | `/atwp run P11`, `/atwp run P8`, `/atwp perf` out of combat (simulated) | P8, P10, P11 |
+| 4 | `/atwp run P12`, pull a mob, `/reload` in the middle of the fight, wait 10 s, then `/atwp run P12` again; repeat with a logout | P12 |
+| 5 | In another fight: `/atwp run P11` | P11 |
+| 6 | `/atwp run P8`, `/atwp watch off`, `/atwp perf` out of combat (simulated); then `/atwp watch on` again | P8, P10 |
 
 ### Party (open world, 2–5 players)
 
@@ -176,7 +209,8 @@ each session in game, `/atwp export` and send the text back. Do not run `/atwp r
 | 1 | `/atwp ctx party`; fight a few single mobs | P3, P6 |
 | 2 | With a tank: the tank builds threat for about 10 s, you (DPS) `/atwp note P4 melee` and deal damage until you take aggro; three times in melee, three at range (`/atwp note P4 ranged`); then `/atwp run P4` | P4 |
 | 3 | Pull 3 or more mobs, with one that nobody targets, with enemy nameplates shown and then hidden; `/atwp run P5` | P5 |
-| 4 | The tank uses a taunt at least once and you write `/atwp note P7 taunt`; `/atwp run P6`, `/atwp run P7`, `/atwp run P11` | P6, P7, P11 |
+| 4 | The tank uses a taunt at least once and you write `/atwp note P7 taunt`; `/atwp run P6`, `/atwp run P7` | P6, P7 |
+| 5 | During a fight: `/atwp run P11` | P11 |
 
 ### Dungeon (5-player instance)
 
@@ -185,7 +219,8 @@ each session in game, `/atwp export` and send the text back. Do not run `/atwp r
 | 1 | Entering: `/atwp ctx dungeon`, `/atwp run P9` | P9 |
 | 2 | Play trash packs normally (3 or more mobs per pull when possible) | P3, P5, P6 |
 | 3 | A boss: let the probe record the fight; after the kill `/atwp run P9` again | P3, P7, P9 |
-| 4 | At the end: `/atwp run P3`, `P5`, `P6`, `P7`, `P8`, `P11` | all of them |
+| 4 | During a trash fight: `/atwp run P11` | P11 |
+| 5 | At the end: `/atwp run P3`, `P5`, `P6`, `P7`, `P8` | all of them |
 
 ### Raid
 
@@ -193,14 +228,14 @@ each session in game, `/atwp export` and send the text back. Do not run `/atwp r
 |---|---|---|
 | 1 | In a raid group (a converted party is enough): `/atwp ctx raid`, `/atwp run P9` | P9 |
 | 2 | Fight in the raid (a raid instance boss if possible) | P3, P5, P7 |
-| 3 | During a fight with as many players as possible: `/atwp perf` | P10 |
-| 4 | `/atwp run P3`, `/atwp run P11` | P3, P11 |
+| 3 | During a long fight with as many players as possible: `/atwp watch off`, `/atwp perf`; then `/atwp watch on` again | P10 |
+| 4 | During a fight, after the perf run ended: `/atwp run P11`; then `/atwp run P3` | P3, P11 |
 
 ### Battleground (optional)
 
 | # | Do | Checks |
 |---|---|---|
-| 1 | `/atwp ctx bg`; play a match; `/atwp run P11` and `/atwp run P3` | P3, P11 |
+| 1 | `/atwp ctx bg`; play a match; `/atwp run P11` during a fight, `/atwp run P3` at the end | P3, P11 |
 
 ## Results
 

@@ -76,11 +76,23 @@ local function errorText(err)
     return Probe.Scrub(tostring(err))
 end
 
-local function afterCall(ok, ...)
+-- Functions(fn, text): every failed game API call (fn is the function) and every line of the "errors" log (fn is nil).
+-- P11 counts them (M0.6).
+Probe.errorHooks = {}
+
+local function reportError(fn, text)
+    for _, hook in ipairs(Probe.errorHooks) do
+        pcall(hook, fn, text)
+    end
+end
+
+local function afterCall(fn, ok, ...)
     if ok then
         return true, ...
     end
-    return false, errorText((...))
+    local text = errorText((...))
+    reportError(fn, text)
+    return false, text
 end
 
 --- Safe call of a game API: returns ok, ...results (never raises). The error text is already scrubbed.
@@ -88,7 +100,7 @@ function Probe.Call(fn, ...)
     if type(fn) ~= "function" then
         return false, "API missing"
     end
-    return afterCall(pcall(fn, ...))
+    return afterCall(fn, pcall(fn, ...))
 end
 
 --- Field `name` of a global namespace table (looked up at run time, PRB-05); nil when absent.
@@ -442,6 +454,9 @@ function Probe:Log(name, line)
     l[#l + 1] = timeString("%H:%M:%S") .. " " .. tostring(line)
     while #l > LOG_LIMIT do
         table.remove(l, 1)
+    end
+    if name == "errors" then
+        reportError(nil, tostring(line))
     end
 end
 

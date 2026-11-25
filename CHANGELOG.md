@@ -83,6 +83,20 @@ All notable changes to this project are documented here. The format follows
   and the local player flag (never `name` or `sourceGUID`), and the three damage meter events with their delay after
   `PLAYER_REGEN_*`. Each proposes its verdict from SPEC-08 §1. Nothing verified in game yet.
 
+- M0.6: probe checks P10–P12 (`tools/probe/AzTw_Probe/Checks_Cost.lua`, development only). P10: `/atwp perf [hz]
+  [units] [mobs]` times, with `debugprofilestop` and a `C_Timer` ticker, a tick that reads the threat, the state and
+  the secrecy predictions of N units on M mobs, at 2, 5 and 10 Hz with 5, 10 and 40 units, 30 s each; it records
+  median, 95th percentile and maximum per tick, milliseconds per second, kilobytes of compact samples per minute
+  (retained and gross, `GetAddOnMemoryUsage` and `collectgarbage`), FPS before and during, and whether the units were
+  real (a raid fight) or simulated; it runs only when asked, stops by itself (or with `/atwp perf stop`) and proposes
+  the default sampling rate of Q14. P11: always on, per context, `ADDON_ACTION_BLOCKED` and `ADDON_ACTION_FORBIDDEN`,
+  restriction states, the combat lockdown and the probe's failed calls; `/atwp run P11` adds a burst of 1000 threat
+  readings in one frame (not during an encounter), a register and unregister round of the threat events and a 10-tick
+  ticker. P12: `/atwp run P12` arms a buffer of one compact sample a second in combat in the saved variables, with a
+  final stamp at `PLAYER_LOGOUT`; the next load compares it and reads the combat state and the threat again
+  (`/atwp note P12 lost` records a reload that saved nothing). Each proposes its verdict from SPEC-08 §1. P1's census
+  now has 57 APIs. Nothing verified in game yet.
+
 - The owner's logo (`assets/logo-source.webp`) and the NEBULA logos for the credits (`assets/`).
 - Repository tooling adapted from Azeroth Accord: `tools/check_docs.py` (links, wiki twins, ADR index, privacy scan, LF
   endings), `tools/check_pr_docs.py`, `tools/ship_step.py`, `tools/release_notes.py`, `tools/sync_wiki.py`; the

@@ -290,7 +290,14 @@ senza verdetto e M0.7 lo dice.
   campioni, FPS prima e durante.
 - **Budget proposto** (vale finché il proprietario non decide, Q14): ≤ 1 ms per tick al p95 e ≤ 5 ms al secondo in
   totale; la memoria si misura e la soglia la fissa M4.1 con Q8.
-- **Come**: `/atwp perf` (tutte le configurazioni) o `/atwp perf <hz> <unità>`; si gioca normalmente durante la misura.
+- **Come**: `/atwp perf` (tutte le configurazioni) o `/atwp perf <hz> <unità> [mob]`; `/atwp perf stop` interrompe; si
+  gioca normalmente durante la misura. La misura parte solo su richiesta, si ferma da sola e non riprende dopo un
+  `/reload`. `/atwp run P10` riassume soltanto.
+- **Misura**: per default M = 1 mob (il `target`); prima di ogni configurazione 3 s di pausa (FPS "prima"). La memoria
+  **trattenuta** dai campioni si ottiene con una garbage collection completa alla fine della configurazione, con e senza
+  i campioni (un breve scatto, fuori dai tick misurati); quella **lorda** è la differenza senza pulizia. I campioni
+  restano in memoria: si salvano solo i numeri. Una configurazione è "in raid" solo se ogni tick ha letto unità distinte
+  in combattimento in raid, altrimenti è `simulato`; quelle interrotte non contano per il verdetto.
 
 | Verdetto | Quando | Conseguenza |
 |---|---|---|
@@ -309,7 +316,12 @@ senza verdetto e M0.7 lo dice.
 - **Contesti**: tutti: `solo`, `solo-combat`, `party`, `dungeon`, `raid`, `bg`.
 - **Registrato**: per contesto blocchi, divieti, stati di restrizione, errori, esito della raffica, esito di
   registrazione e ticker.
-- **Come**: il registro è sempre acceso dal login; `/atwp run P11` in ogni contesto (la raffica solo fuori da un boss).
+- **Come**: il registro è sempre acceso dal login; `/atwp run P11` in ogni contesto, durante un combattimento con un mob
+  ostile selezionato (la raffica solo fuori da un boss); il ticker di prova dura 10 s e si ferma da solo.
+- **Proposta del verdetto**: contano per "non supportato" le chiamate e le registrazioni della threat bloccate o in
+  errore nella raffica (i blocchi di altri addon e il rifiuto del combat log di P7 si contano soltanto); errori delle
+  funzioni della threat visti da altri controlli (P2 prova anche il GUID) lasciano `todo` per M0.7; "supportato" richiede
+  una raffica con risposte in combattimento da soli, in party, in dungeon e in raid.
 
 | Verdetto | Quando | Conseguenza |
 |---|---|---|
@@ -327,8 +339,11 @@ senza verdetto e M0.7 lo dice.
 - **Contesti**: `solo-combat`.
 - **Registrato**: campioni scritti prima e trovati dopo, distanza tra l'ultimo campione e il ricaricamento, timbro
   finale sì/no, stato del combattimento e della lettura dopo.
-- **Come**: `/atwp run P12` (arma il buffer), ingaggiare un mob, `/reload` a metà combattimento, poi `/atwp run P12`
-  di nuovo; la stessa prova con un logout (se il client lo permette in combattimento, altrimenti appena finito).
+- **Come**: `/atwp run P12` (arma il buffer), ingaggiare un mob, `/reload` a metà combattimento, poi dopo 10 s
+  `/atwp run P12` di nuovo (riporta la prova; il lancio seguente ne arma un'altra); la stessa prova con un logout (se il
+  client lo permette in combattimento, altrimenti appena finito). Se le SavedVariables non sono state scritte il probe
+  non può accorgersene (dopo il ricaricamento arma un buffer nuovo): il proprietario lo segnala con
+  `/atwp note P12 lost`. Il buffer tiene al massimo 600 campioni; `/atwp reset` non toglie un buffer armato.
 
 | Verdetto | Quando | Conseguenza |
 |---|---|---|

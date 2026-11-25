@@ -12,8 +12,9 @@ ciò che è **noto** da ciò che è **stimato**.
 > alcune situazioni il client può nascondere i valori agli addon. La [sonda](docs/spike/README.md) (uno strumento di
 > sviluppo, mai distribuito) ora verifica il client e le funzioni della threat, compreso se i loro valori sono segreti
 > (P1–P4), quali unità e mob rispondono, gli eventi della threat, i GUID e i ruoli (P5, P6, P9), gli eventi di
-> combattimento e il damage meter (P7, P8); gli altri controlli arrivano nei prossimi step. La prima versione,
-> `v0.1.0`, arriva dopo la milestone M1; l'MVP (monitor, avvisi, Coach, registrazione e report di combattimento) è la `v0.4.0`.
+> combattimento e il damage meter (P7, P8), il costo del campionamento, le restrizioni e cosa sopravvive a un
+> ricaricamento (P10–P12); resta da eseguirla in gioco. La prima versione, `v0.1.0`, arriva dopo la milestone M1;
+> l'MVP (monitor, avvisi, Coach, registrazione e report di combattimento) è la `v0.4.0`.
 
 [English](README.md) · [Roadmap](ROADMAP.md) · [Specifiche](docs/specs/README.md) · [Decisioni](docs/adr/README.md) ·
 [Manuale](docs/wiki/Home-it.md) ([English](docs/wiki/Home.md))

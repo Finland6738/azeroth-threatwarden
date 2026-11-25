@@ -130,9 +130,16 @@ prints or stores player or guild names.
   (`debugprofilestop`) and memory per minute of compact samples; blocked-action and error log in and out of combat and
   in a battleground; `/reload` and logout in the middle of a fight with a stamped sample buffer.
 - Done when:
-  - [ ] Offline: `/atwp perf`, the blocked-action log and the reload stamps exist; `check_docs.py` passes.
+  - [x] Offline: `/atwp perf`, the blocked-action log and the reload stamps exist; `check_docs.py` passes.
   - [ ] P10–P12 answered; a default sampling rate is proposed with its numbers. *(in game)*
 - Real client: everything.
+- *Done (offline, 2026-11-25): `Checks_Cost.lua` with P10 (`/atwp perf [hz] [units] [mobs]`, `stop`; 30 s per
+  configuration, stops by itself; ms per tick and per second, retained and gross KB per minute, FPS; proposes the
+  default rate), P11 (blocked and forbidden actions, restriction states, the probe's failed calls per context; burst of
+  1000 readings, event registration and ticker on `/atwp run P11`) and P12 (armed buffer in the saved variables, final
+  stamp at logout, comparison and readings after the next load); each proposes its verdict from SPEC-08 §1;
+  smoke-tested against a throwaway mock client (fast, medium, slow and raid timings, restrictions, blocked and failing
+  calls, reload and logout; no secret, name or GUID saved or exported). The in-game box waits for the owner.*
 
 ### M0.7 — Results and decisions
 - Branch: `step/m0-7-results`

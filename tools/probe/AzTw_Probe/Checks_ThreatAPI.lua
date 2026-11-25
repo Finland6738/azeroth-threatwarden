@@ -613,7 +613,7 @@ local CENSUS = {
     "C_Secrets.ShouldUnitIdentityBeSecret", "C_Secrets.ShouldUnitComparisonBeSecret", "UnitClassification", "UnitExists", "UnitIsDead", "UnitCanAttack", "UnitIsUnit",
     "UnitAffectingCombat", "IsInInstance", "GetInstanceInfo", "IsInGroup", "IsInRaid", "GetNumGroupMembers", "GetTime",
     "debugprofilestop", "UpdateAddOnMemoryUsage", "GetAddOnMemoryUsage", "C_Timer.After", "C_Timer.NewTicker",
-    "CreateFrame",
+    "CreateFrame", "GetFramerate", "collectgarbage", "GetServerTime", "Enum.AddOnRestrictionState",
 }
 
 local function censusEntry(path)

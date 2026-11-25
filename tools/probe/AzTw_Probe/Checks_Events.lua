@@ -1645,6 +1645,11 @@ table.insert(Probe.exportHooks, function()
     return lines
 end)
 
+-- Helpers shared with Checks_Cost.lua (M0.6).
+for name, fn in pairs({ keep = keep, bumpCapped = bumpCapped, sub = sub, number = number }) do
+    Probe.helpers[name] = fn
+end
+
 table.insert(Probe.resetHooks, function()
     local d = Probe.DB()
     -- The registration happens once per session: its record survives a reset, the counters do not.
