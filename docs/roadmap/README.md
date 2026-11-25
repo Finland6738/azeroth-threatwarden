@@ -25,7 +25,9 @@ flowchart LR
 
 M0 can change the plan: each probe check names the specs and ADRs it may revise, and M0.7 rewrites the milestones the
 results contradict (above all M2 if threat values are secret, M7 if other mobs cannot be queried). M1 may start while
-the owner runs the probe, because it does not read threat yet.
+the owner runs the probe, because it does not read threat yet. **M2 also starts before M0.7**, by the owner's decision
+of 2026-11-25 ("Parti con M2"): its specification (M2.1) is designed for every probe outcome, and M0.7 revises M2 where
+the results contradict it.
 
 ## Rules every step follows
 

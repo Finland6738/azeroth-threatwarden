@@ -377,6 +377,49 @@ Com'è fatto il banco di prova (M1.3, in `Tests/`, mai nel pacchetto):
   da tank: lo dice lo script del combattimento (`lib/fight.lua`: threat, aggro, taunt, morti, mob che spariscono o
   cambiano GUID, secondo il tempo del client).
 
+
+### 2.1 Gli script dei combattimenti (`Tests/lib/fight.lua`)
+
+Il linguaggio di [ADR 0010](../adr/0010-offline-tests-with-lupa-and-a-mock-client.md) punto 4, costruito in M1.3 ed
+esteso in M2.1 per i test del monitor ([SPEC-03 §6](SPEC-03-threat-monitor-ui.md#6-piano-di-m2-moduli-eventi-e-test-per-step)).
+Un test lo vede come la globale `Fight`; guida solo il client finto.
+
+```lua
+local pull = Fight.new{
+  player = { class = "MAGE", role = "DAMAGER", ranged = true },
+  party  = { { key = "tank", class = "WARRIOR", role = "TANK" }, { key = "healer", class = "PRIEST" } },
+  mobs   = { { key = "boss", tokens = { "target", "boss1" }, classification = "worldboss" } },
+  raid   = false,
+}
+pull:at(0):outcome("state"):start():threat("boss", "tank", 1000)
+pull:at(1.5):add("boss", "player", 400)
+pull:to(1)       -- suona fino al secondo 1 (i timer del client girano nel frattempo)
+pull:finish()    -- suona il resto
+```
+
+| Verbo | Effetto | Da |
+|---|---|---|
+| `start()`, `stop()` | inizio del combattimento; fine con le liste della threat svuotate | M1.3 |
+| `threat(mob, unit, raw)`, `add(mob, unit, delta)`, `drop(mob, unit)` | threat raw di un'unità (o una tabella che fissa ogni valore restituito), aggiunta, uscita dalla lista; la prima unità con threat tiene il mob | M1.3 |
+| `aggro(mob, unit)`, `taunt(mob, unit)` | il mob si gira; taunt = almeno la threat più alta, poi aggro | M1.3 |
+| `die(key)`, `vanish(mob)`, `newGUID(mob [, guid])` | morte (lista svuotata o uscita dalle liste, `UNIT_DIED`); mob che scompare; stessa creatura dietro altri token senza evento | M1.3 |
+| `token(token, key)`, `target(unit, key)` | token che nomina un'unità (`nameplate2`, `focus`, `boss2`); chi seleziona chi | M1.3 |
+| `role(unit, role)` | ruolo assegnato (`TANK`, `HEALER`, `DAMAGER`, `NONE`) | M2.1 |
+| `outcome(name)` | l'esito del probe da quel momento: `values` (nulla segreto), `state` (valori segreti, stato leggibile), `none` (anche lo stato segreto) | M2.1 |
+| `secrets(changes)` | segretezza più fine (`Mock.secrets.Set`: per unità, previsioni che sbagliano, identità, confronti) | M2.1 |
+| `answer(api, unit, mob, a)`, `clearAnswers()` | risposta scriptata di una funzione della threat (`Mock.threat.NIL`, `NOTHING`, `SECRET`, `ERROR`, `Returns(...)`); ritorno alle risposte calcolate | M2.1 |
+| `silent(on)` | gli eventi della threat smettono di arrivare (eventi persi) o riprendono | M2.1 |
+| `event(name, ...)` | un evento del gioco a mano: duplicato, in ritardo, fuori ordine | M2.1 |
+| `call(fn)` | qualsiasi altra cosa, `fn(pull)` | M1.3 |
+
+- `pull:at(t)` registra i passi (anche fuori ordine nel testo: si suonano in ordine di tempo, a pari tempo
+  nell'ordine scritto); un tempo nel passato o un verbo sconosciuto sollevano un errore. Ogni verbo vale anche
+  subito, senza `at`.
+- `Fight.OUTCOMES` = `{ "values", "state", "none" }`: un test del monitor che deve valere qualunque sia l'esito del
+  probe gira in un ciclo su questa lista e comincia lo scontro con `outcome(name)`; le risposte attese per esito sono
+  in [SPEC-03 §1.1 e §2](SPEC-03-threat-monitor-ui.md#11-tre-esiti-del-probe-tre-modalità).
+- Le regole del "server" sono quelle dello script e del mock (`Tests/mock/70_threat.lua`), **ipotesi** fino al probe.
+
 ## 3. Test lunghi
 
 `Tests/run_tests.py --long` (workflow *Long tests*, scenari in `Tests/long/`): raid di 40 con molti mob per ore;

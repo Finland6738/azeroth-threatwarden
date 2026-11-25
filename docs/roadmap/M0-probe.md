@@ -148,7 +148,8 @@ prints or stores player or guild names.
 - Scope: `docs/spike/M0-results.md` (one row per check: evidence, verdict, consequence); the **feature support matrix**
   (monitor values or state only, per context; multi-target; events for the recorder); the MVP scope decision with the
   owner when R2 bites; updates to SPEC-01–SPEC-09, ADR 0002 and 0004 (or new ADRs), the milestone files, ROADMAP and
-  the READMEs.
+  the READMEs. M2 started before M0.7 (owner's decision of 2026-11-25): M0.7 also **revises M2** (SPEC-03 §1–§3, the
+  `[probe Pn]` marks, the code already shipped and its defaults) where the results contradict it.
 - Done when:
   - [ ] Every check P1–P12 has a result and a consequence; go / revise per area written.
   - [ ] The roadmap reflects the results; the owner's decisions are recorded in SPEC-09.

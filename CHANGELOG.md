@@ -5,8 +5,21 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Changed
+
+- M2.1: the test fight scripts (`Tests/lib/fight.lua`) gain the verbs `outcome` (the three probe outcomes,
+  `Fight.OUTCOMES`), `role`, `secrets`, `answer`, `clearAnswers`, `silent` and `event`, for the monitor's tests.
+
 ### Documentation
 
+- M2.1: specification of the threat monitor, written before the M0 probe results by the owner's decision of
+  2026-11-25 and designed for every probe outcome (threat values readable, *state only*, nothing readable). SPEC-03
+  §1–§3: per-row reading modes, the monitored mob (target or target of target), units watched and their cap, threat
+  events plus a 5 Hz combat tick (provisional), freshness, hysteresis and a 1 s dwell, the tank margin, trend and time
+  to overtake with confidence, sorting, and what each state looks like; §5.1 when the window shows itself (Q13); §6 the
+  modules, Bus events and tests of each step M2.2–M2.7. SPEC-02: `ThreatRecord` and `ThreatRow` fields, calculated
+  values, schema 2 (`settings.monitor`). SPEC-08 §2.1: the fight-script format. The decision is recorded in SPEC-00 §7
+  (D7), the roadmap and M0.7's scope.
 - M1.R: `v0.1.0` released on GitHub; the release step is ticked in the M1 milestone file.
 
 ## [0.1.0] - 2026-11-25

@@ -100,3 +100,4 @@ milestone ([ADR 0014](../adr/0014-one-version-per-milestone-and-feature-switches
 | D4 | Addon autonomo, nessuna integrazione in gioco con gli altri addon; crediti NEBULA | 2026-11-25 | Q4, [ADR 0012](../adr/0012-reuse-accord-and-unspoken-foundations.md) |
 | D5 | Interfaccia multilingua: inglese predefinito, italiano dalla prima versione | 2026-11-25 | [ADR 0009](../adr/0009-interface-and-documentation-languages.md) |
 | D6 | Logo definitivo fornito dal proprietario | 2026-11-25 | §6 |
+| D7 | M2 (Threat Monitor) parte **prima** di M0.7, sulle ipotesi della specifica e progettato per i tre esiti del probe; M0.7 rivede M2 dove i risultati lo contraddicono (*"Parti con M2"*) | 2026-11-25 | [M2](../roadmap/M2-threat-monitor.md), [SPEC-03 §1.1](SPEC-03-threat-monitor-ui.md#11-tre-esiti-del-probe-tre-modalità) |

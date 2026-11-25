@@ -29,7 +29,18 @@
 --   newGUID(mob [, guid])      the same tokens now name a different creature, without any event
 --   token(token, key)          gives or clears (nil) a token ("nameplate2", "focus", "boss2", "target")
 --   target(unit, key)          the unit targets someone else
+--   role(unit, role)           the unit's assigned role ("TANK", "HEALER", "DAMAGER", "NONE")
+--   outcome(name)              the probe outcome from now on (SPEC-03 §1.1): "values" (nothing secret), "state" (the
+--                              values are secret, the state is readable) or "none" (the state is secret too)
+--   secrets(changes)           Mock.secrets.Set(changes): finer secrecy (per unit, predictions that lie)
+--   answer(api, unit, mob, a)  Mock.threat.Answer: a scripted answer (Mock.threat.NIL, ERROR, NOTHING, SECRET...)
+--   clearAnswers()             back to the computed answers
+--   silent(on)                 true: the threat events stop firing (missed events); false: they fire again
+--   event(name, ...)           fires a game event by hand (a duplicate, a late or out-of-order event)
 --   call(fn)                   fn(pull)
+--
+-- Fight.OUTCOMES lists the three probe outcomes in order ("values", "state", "none"): a test of M2 that must hold
+-- whatever the probe finds loops over them and starts its pull with outcome(name).
 local Mock = ...
 
 local Fight = {}
@@ -37,7 +48,15 @@ local Pull = {}
 Pull.__index = Pull
 
 local VERBS = { "start", "stop", "threat", "add", "drop", "aggro", "taunt", "die", "vanish", "newGUID", "token",
-	"target", "call" }
+	"target", "role", "outcome", "secrets", "answer", "clearAnswers", "silent", "event", "call" }
+
+-- The three probe outcomes of SPEC-03 §1.1, as the secrecy of the mock client (Tests/mock/05_secrets.lua).
+Fight.OUTCOMES = { "values", "state", "none" }
+local OUTCOME_SECRETS = {
+	values = { values = false, state = false },
+	state = { values = true, state = false },
+	none = { values = true, state = true },
+}
 
 function Fight.new(def)
 	def = def or {}
@@ -132,6 +151,27 @@ end
 
 function Pull:token(token, key) Mock.units.SetToken(token, key) return self end
 function Pull:target(unit, key) Mock.units.Target(unit, key) return self end
+function Pull:role(unit, role)
+	entityOf(unit).role = role
+	return self
+end
+
+function Pull:outcome(name)
+	local changes = OUTCOME_SECRETS[name] or error("fight script: no outcome " .. tostring(name), 3)
+	Mock.secrets.Set(changes)
+	return self
+end
+
+function Pull:secrets(changes) Mock.secrets.Set(changes) return self end
+function Pull:answer(api, unit, mob, answer) Mock.threat.Answer(api, unit, mob, answer) return self end
+function Pull:clearAnswers() Mock.threat.ClearAnswers() return self end
+
+function Pull:silent(on)
+	Mock.threat.silent = on and true or false
+	return self
+end
+
+function Pull:event(name, ...) Mock.Fire(name, ...) return self end
 function Pull:call(fn) fn(self) return self end
 
 -- The timeline: pull:at(seconds):verb(...):verb(...) records steps; pull:to(seconds) plays them.

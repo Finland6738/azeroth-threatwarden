@@ -114,17 +114,18 @@ altro modulo caricato dopo di lui al caricamento del file, solo nei suoi gestori
 
 | File | Responsabilità | Bus | Milestone |
 |---|---|---|---|
-| `Data/TargetTracker.lua` | mob monitorato (target o target del target), cambi, morte, scomparsa, cambio di GUID | emette `TARGET_CHANGED(mobKey)` | M2 |
-| `Data/ThreatScanner.lua` | letture da eventi della threat più tick limitato in combattimento, record dal pool | emette `THREAT_SCANNED(mobKey)` | M2 |
-| `Data/ThreatModel.lua`, `Data/ThreatCalc.lua` | `ThreatRecord`, categorie, freschezza; margine, trend, tempo al superamento | emette `THREAT_UPDATED(mobKey)` | M2 |
-| `Data/ThreatState.lua` | SAFE / WARNING / DANGER / UNKNOWN con isteresi; modalità di lettura | emette `STATE_CHANGED(unitKey, mobKey, old, new)`, `THREAT_MODE_CHANGED(mode, reason)` | M2 |
+| `Data/TargetTracker.lua` | mob monitorato (target o target del target), cambi, morte, scomparsa, cambio di GUID ([SPEC-03 §1.2](SPEC-03-threat-monitor-ui.md#12-il-mob-monitorato-datatargettrackerlua)) | emette `TARGET_CHANGED(mobKey)` (`nil` = nessun mob); ascolta `COMBAT_STARTED`; dal gioco `PLAYER_TARGET_CHANGED`, `UNIT_TARGET` | M2.2 |
+| `Data/ThreatScanner.lua` | unità osservate e limite, letture da eventi della threat più tick limitato in combattimento, consumatori (`Want`), record dal pool ([SPEC-03 §1.3–§1.4](SPEC-03-threat-monitor-ui.md#13-unità-osservate-e-limite-datathreatscannerlua)) | emette `THREAT_SCANNED(mobKey)`; ascolta `TARGET_CHANGED`, `COMBAT_STARTED`, `COMBAT_ENDED`, `WINDOW_SHOWN`, `TAB_CHANGED`, `CONFIG_CHANGED`; dal gioco `UNIT_THREAT_LIST_UPDATE`, `UNIT_THREAT_SITUATION_UPDATE`, `GROUP_ROSTER_UPDATE`, `UNIT_PET` | M2.2 |
+| `Data/ThreatModel.lua`, `Data/ThreatCalc.lua` | `ThreatRecord` e `ThreatRow`, categorie, freschezza; margine, trend, tempo al superamento ([SPEC-02 §1–§2](SPEC-02-data-model-storage.md#1-threatrecord-in-memoria), [SPEC-03 §1.5, §2.5](SPEC-03-threat-monitor-ui.md#25-trend-e-tempo-al-superamento-datathreatcalclua)) | emette `THREAT_UPDATED(mobKey)`; ascolta `THREAT_SCANNED`, `TARGET_CHANGED` | M2.3 |
+| `Data/ThreatState.lua` | SAFE / WARNING / DANGER / UNKNOWN con isteresi e permanenza; tank designati; modalità del monitor ([SPEC-03 §2](SPEC-03-threat-monitor-ui.md#2-stati-e-soglie)) | emette `STATE_CHANGED(unitKey, mobKey, old, new)`, `THREAT_MODE_CHANGED(mode, reason)`; ascolta `THREAT_UPDATED`, `CONFIG_CHANGED` | M2.4 |
 | `Data/Alerts.lua`, `Data/Coach.lua`, `Data/CoachRules.lua` | avvisi con cooldown; regole con motivazione e confidenza | emette `ALERT_RAISED(alert)`, `COACH_TIP(tip)` | M3 |
 | `Data/Recorder.lua`, `Data/Session.lua`, `Data/Storage.lua`, `Data/Report.lua` | sessioni, campioni, eventi, limiti, report | emette `SESSION_STARTED(id)`, `SESSION_ENDED(id, complete)`, `SESSIONS_CHANGED()` | M4 |
 | `Data/Replay.lua`, `UI/Timeline.lua`, `UI/ReplayWindow.lua` | timeline e riproduzione | emette `REPLAY_POSITION(t)` | M5 |
 | `Data/Metrics.lua`, `Data/Export.lua` | metriche descrittive, esportazione | — | M6 |
-| `UI/ThreatList.lua` | elenco della threat nella scheda Monitor | ascolta `THREAT_UPDATED`, `STATE_CHANGED`, `THREAT_MODE_CHANGED` | M2 |
+| `UI/ThreatList.lua` | elenco della threat nella scheda Monitor ([SPEC-03 §2.6, §3](SPEC-03-threat-monitor-ui.md#26-cosa-si-vede-in-ogni-stato)) | ascolta `THREAT_UPDATED`, `STATE_CHANGED`, `THREAT_MODE_CHANGED`, `TARGET_CHANGED`, `CONFIG_CHANGED`, `THEME_CHANGED` | M2.5 |
 
-Ogni M<N>.1 completa la riga dei propri moduli (eventi esatti e test) come questa sezione fa per M1.
+Ogni M<N>.1 completa la riga dei propri moduli (eventi esatti e test) come questa sezione fa per M1: le righe di M2
+le ha completate M2.1, con i test per step in [SPEC-03 §6](SPEC-03-threat-monitor-ui.md#6-piano-di-m2-moduli-eventi-e-test-per-step).
 
 ### 3.3 Eventi del Bus
 
@@ -278,6 +279,7 @@ senza firma), **assente** (si cerca a runtime). In grassetto le voci il cui comp
 | `group.InGroup` | `IsInGroup` | chiamata | globale | unità da leggere | M2 | P5 |
 | `group.InRaid` | `IsInRaid` | chiamata | globale | unità da leggere | M2 | P5 |
 | `group.Size` | `GetNumGroupMembers` | chiamata | globale | unità da leggere | M2 | P5 |
+| `group.RaidIndex` | `UnitInRaid` | esistenza | firma, risultato nilable | l'indice `raidN` del giocatore, da saltare ([SPEC-03 §1.3](SPEC-03-threat-monitor-ui.md#13-unità-osservate-e-limite-datathreatscannerlua)) | M2 | P5 |
 | `instance.InInstance` | `IsInInstance` | chiamata | firma | contesto in `/atw debug` e nelle sessioni | M1 | P3 |
 | `instance.Info` | `GetInstanceInfo` | esistenza | firma | tipo e difficoltà (mai il nome nel rapporto) | M4 | P3 |
 | `restriction.InCombatLockdown` | `C_RestrictedActions.InCombatLockdown` (o il globale `InCombatLockdown`) | chiamata | firma / globale | nessuna azione protetta in combattimento | M1 | P11 |
@@ -307,7 +309,7 @@ Eventi del gioco (tutti nel dump con il loro payload), registrati solo attravers
 con AceEvent: `ADDON_LOADED`, `PLAYER_LOGIN`, `PLAYER_ENTERING_WORLD` (`isInitialLogin`, `isReloadingUi`),
 `PLAYER_LOGOUT`, `PLAYER_REGEN_DISABLED`, `PLAYER_REGEN_ENABLED`, `ADDON_RESTRICTION_STATE_CHANGED` (`type`, `state`),
 `UI_SCALE_CHANGED`, `DISPLAY_SIZE_CHANGED` (M1); `UNIT_THREAT_LIST_UPDATE`, `UNIT_THREAT_SITUATION_UPDATE`
-(`unitTarget`), `PLAYER_TARGET_CHANGED`, `UNIT_TARGET`, `GROUP_ROSTER_UPDATE` (M2, **[probe P6, P7]**);
+(`unitTarget`), `PLAYER_TARGET_CHANGED`, `UNIT_TARGET`, `GROUP_ROSTER_UPDATE`, `UNIT_PET` (M2, **[probe P6, P7]**);
 `ENCOUNTER_START`, `ENCOUNTER_END` (M4, **[probe P7]**).
 
 ### 8.3 Lettura normalizzata della threat (M1.4, usata da M2)

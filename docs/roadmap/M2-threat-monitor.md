@@ -4,6 +4,11 @@
 percentage, the margin, the state and the trend, with honest UNKNOWN and *state only* modes
 ([SPEC-03](../specs/SPEC-03-threat-monitor-ui.md)).
 
+> **Started before M0.7 (owner's decision, 2026-11-25: "Parti con M2").** M2 is built on the specification's
+> assumptions while the owner has not yet run the M0 probe in game, as Azeroth Accord did with its M1. The monitor is
+> designed for every probe outcome (values readable, *state only*, nothing readable: SPEC-03 §1.1), so no step waits
+> for the probe; M0.7 revises M2 where the results contradict it ([SPEC-00 §7](../specs/SPEC-00-vision-scope.md#7-registro-delle-decisioni) D7).
+
 **Exit criterion:** in a party in game, the list shows the tank and every member's percentage on the target, a DPS
 closing on the tank goes WARNING then DANGER, and a target with no data shows UNKNOWN with its reason. Released as
 `v0.2.0`.
@@ -22,12 +27,18 @@ closing on the tank goes WARNING then DANGER, and a target with no data shows UN
 
 ### M2.1 — Specification of the monitor
 - Branch: `step/m2-1-spec`
-- Depends on: M0.7
+- Depends on: M0.7 when available; started before it by the owner's decision of 2026-11-25
 - Spec: SPEC-03 §1–§3, SPEC-02 §1–§2
 - Scope: SPEC-03 completed with the probe results (values or state only per context, units watched, events vs ticks,
   freshness, hysteresis, tank margin), the fight-script format for tests, previews of every state.
 - Done when:
-  - [ ] Every row of SPEC-03 §1 says its source API, category and fallback; `check_docs.py` passes.
+  - [x] Every row of SPEC-03 §1 says its source API, category and fallback; `check_docs.py` passes.
+- *Done (2026-11-25, before M0.7): SPEC-03 §1–§3 for the three probe outcomes (per-row modes `values`, `state`,
+  `none`), monitored mob, units watched and cap, events vs the 5 Hz tick, freshness, hysteresis and 1 s dwell, tank
+  margin, trend and time to overtake, sorting, what each state looks like; §5.1 (Q13) and §6 (modules, Bus events and
+  tests per step M2.2–M2.7); SPEC-02 §1–§2 (`ThreatRecord`, `ThreatRow`) and §3.5 (schema 2); SPEC-08 §2.1 fight
+  scripts with the new verbs (`outcome`, `role`, `secrets`, `answer`, `silent`, `event`). Previews moved to M2.5 (they
+  need its locale keys and view).*
 
 ### M2.2 — Threat scanner and target tracker
 - Branch: `step/m2-2-scanner`
