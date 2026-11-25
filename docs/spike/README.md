@@ -6,9 +6,10 @@ P1–P12, with their exact calls, contexts, recorded fields and the consequence 
 [SPEC-08 §1](../specs/SPEC-08-quality-probe-release.md#1-probe-m0) (in Italian); the steps are in
 [M0-probe.md](../roadmap/M0-probe.md).
 
-> **Status: P1–P4 written (M0.3).** The probe installs and loads, lists P1–P12, stores notes and exports; P1–P4 (client,
-> threat functions, secret values, the tank and DPS trial) work, with `/atwp ctx` and `/atwp watch`. P5–P12 still answer
-> `todo`, "not implemented yet, step M0.x"; they arrive in M0.4–M0.6. Nothing has been verified in the real client yet.
+> **Status: P1–P6 and P9 written (M0.4).** The probe installs and loads, lists P1–P12, stores notes and exports; P1–P4
+> (client, threat functions, secret values, the tank and DPS trial) and P5, P6, P9 (units and mobs, threat events,
+> GUIDs and roles) work, with `/atwp ctx` and `/atwp watch`. P7, P8 and P10–P12 still answer `todo`, "not implemented
+> yet, step M0.x"; they arrive in M0.5 and M0.6. Nothing has been verified in the real client yet.
 
 ## What the probe is
 
@@ -45,7 +46,7 @@ update. To remove the probe after M0, delete the `AzTw_Probe` folder from the Ad
 
 ## Commands
 
-Commands of M0.2 and M0.3 exist now; `/atwp perf` arrives with M0.6.
+Commands of M0.2 and M0.3 exist now (M0.4 adds no command: P5, P6 and P9 read through `/atwp watch` and `/atwp run`); `/atwp perf` arrives with M0.6.
 
 | Command | Step | What it does |
 |---|---|---|
@@ -97,6 +98,33 @@ What to expect and what to send back:
   companion as the tank (the probe uses `pet` when you have no group), or leave it without a verdict.
 - `/atwp export` contains the per-case counters of P2, the per-context counters of P3, the P4 trials and the logs of
   every reading; send the whole text. A secret value appears only as `S` (or `secret`), never as a number.
+
+## P5, P6 and P9 (M0.4)
+
+The three checks read by themselves while `/atwp watch on` is set: keep it on for every fight in a party, a dungeon
+and a raid, and label the context with `/atwp ctx <label>` when you enter it. `/atwp run P5`, `/atwp run P6` and
+`/atwp run P9` print the proposed verdict; like P1–P4 it stays `todo` while the evidence is incomplete.
+
+| Check | What you do | What it records |
+|---|---|---|
+| P5 | In a party or a dungeon, pull 3 or more mobs, at least one that nobody targets; once with the enemy nameplates shown and once hidden (the game's key; the probe never changes a setting). Then `/atwp run P5` | Every second in combat (every third second in a raid): which hostile mobs `target`, `focus`, `mouseover`, `targettarget`, `pettarget`, `boss1–5`, the members' targets and `nameplate1–40` reach (one mob counted once, by GUID in memory), and for each mob token kind × unit kind (you, your pet, the party or raid members) how many readings came back with a number, only a state, secret, `nil` or an error. Per fight: the mobs nobody targets and those seen only on a nameplate, and whether they answered; for mobs no token reaches any more, whether `UnitTokenFromGUID` gives them one; whether the target can be compared with the other tokens (`C_Secrets.CanCompareUnitTokens`); the nameplate events and the time a sweep takes |
+| P6 | At least three fights in a party and three in a dungeon, keeping a hostile mob targeted; then `/atwp run P6` | Per context, how many `UNIT_THREAT_LIST_UPDATE` and `UNIT_THREAT_SITUATION_UPDATE` arrived, the kind of unit in their payload (`target`, `nameplate`, `player`, `party`…, or `secret`), the average and the peak per second. In combat the probe also samples the threat on your target ten times a second (you, your pet and up to four members) and measures the delay from a change it sees to the next event (negative when the event came first), the changes with no event within 1 s and the events with no change. The first 20 events of each fight are in the log |
+| P9 | `/atwp run P9` when you enter a dungeon (a group from the finder and, if you can, one made by hand) and a raid, again after a pull and after a boss | For every unit (you, the members, target, focus, `targettarget`, nameplates, bosses): whether `UnitGUID` is readable, secret or `nil`, and whether `C_Secrets.ShouldUnitIdentityBeSecret` predicted it; GUID types and creature ids (never a player GUID); whether `UnitTokenFromGUID` leads back to the same GUID; the roles (`TANK`, `HEALER`, `DAMAGER`, `NONE` or secret); whether the target can be compared with each member's target. While watching, it also checks that the target, the focus, the bosses and the nameplates keep the same mob GUID until the token changes, and logs any mob whose GUID changed |
+
+What to expect and what to send back:
+
+- The proposed verdicts: P5 `supported` when you and the members answered on the target, the nameplates and the
+  members' targets (and the bosses, if any), and a mob seen only on a nameplate answered too; `partial` when some of
+  those never answered; `not supported` when only you on your target answered. P6 `supported` after three fights in a
+  party or a dungeon when both events arrived, also for mobs, with a median delay of 200 ms or less and few changes
+  without an event; `partial` when they are rare, late or only for you; `not supported` when none arrived or their
+  payload was always secret. P9 `supported` when GUIDs and roles were readable in a dungeon and no mob GUID changed;
+  `partial` when player GUIDs or roles were secret, or roles were always `NONE`; `not supported` when mob GUIDs were
+  secret or changed.
+- P5 counts a secret answer as an answer and says how many there were: whether they are usable is P3's question. If
+  the threat values are secret, P6 cannot measure the delay and stays `todo`; it still counts the events.
+- `/atwp export` adds the P5 matrix per context, the P6 counters per context and the P9 counters per context, plus
+  the logs `P5`, `P6` and `P9`.
 
 ## In-game procedure per context
 

@@ -609,7 +609,8 @@ local CENSUS = {
     "C_DamageMeter.IsDamageMeterAvailable", "C_DamageMeter.GetAvailableCombatSessions",
     "C_DamageMeter.GetCombatSessionFromType", "C_DamageMeter.GetSessionDurationSeconds", "Enum.DamageMeterType",
     "Enum.DamageMeterSessionType", "C_InstanceEncounter.IsEncounterInProgress", "IsEncounterInProgress", "UnitGUID",
-    "UnitGroupRolesAssigned", "UnitClassification", "UnitExists", "UnitIsDead", "UnitCanAttack", "UnitIsUnit",
+    "UnitGroupRolesAssigned", "UnitTokenFromGUID", "C_Secrets.CanCompareUnitTokens",
+    "C_Secrets.ShouldUnitIdentityBeSecret", "C_Secrets.ShouldUnitComparisonBeSecret", "UnitClassification", "UnitExists", "UnitIsDead", "UnitCanAttack", "UnitIsUnit",
     "UnitAffectingCombat", "IsInInstance", "GetInstanceInfo", "IsInGroup", "IsInRaid", "GetNumGroupMembers", "GetTime",
     "debugprofilestop", "UpdateAddOnMemoryUsage", "GetAddOnMemoryUsage", "C_Timer.After", "C_Timer.NewTicker",
     "CreateFrame",
@@ -1425,6 +1426,13 @@ table.insert(Probe.exportHooks, function()
     end
     return lines
 end)
+
+-- Helpers shared with the later Checks files (Checks_Units.lua, M0.4 on), so that every check reads the same way.
+Probe.helpers = {
+    now = now, flag = flag, boolText = boolText, shown = shown, store = store, elapsed = elapsed, stamp = stamp,
+    contextKey = contextKey, inCombat = inCombat, exists = exists, hostile = hostile, groupUnits = groupUnits,
+    mobText = mobText, median = median, errText = errText,
+}
 
 table.insert(Probe.resetHooks, function()
     local d = Probe.DB()

@@ -49,6 +49,20 @@ All notable changes to this project are documented here. The format follows
   proposes a verdict from SPEC-08 §1. New commands `/atwp ctx <label>` and `/atwp watch on|off` (automatic readings in
   combat, also for later checks); `/atwp reset` also clears what P2–P4 counted. Nothing verified in game yet.
 
+- M0.4: probe checks P5, P6 and P9 (`tools/probe/AzTw_Probe/Checks_Units.lua`, development only), all reading
+  through `/atwp watch`. P5 reads, every second in combat (every third in a raid), the threat of the player, the pet and
+  every member on every hostile mob a token reaches (`target`, `focus`, `mouseover`, `targettarget`, `pettarget`,
+  `boss1–5`, the members' targets, `nameplate1–40`), deduplicated by GUID in memory, and counts each mob token kind ×
+  unit kind as number / state / secret / nil / error; it tracks per fight the mobs nobody targets and those seen only on
+  a nameplate, asks `UnitTokenFromGUID` for mobs no token reaches any more and `C_Secrets.CanCompareUnitTokens` for the
+  target against the other tokens, and counts nameplate events. P6 counts `UNIT_THREAT_LIST_UPDATE` and
+  `UNIT_THREAT_SITUATION_UPDATE` per payload kind and context (average and peak per second) and, with a 10 Hz sampling
+  of the threat on the target, the delay from a change to the next event, changes without an event within 1 s and
+  events without a change. P9 reads `UnitGUID` and `C_Secrets.ShouldUnitIdentityBeSecret` on every unit (GUID types and
+  creature ids, never a player GUID), the `UnitTokenFromGUID` round trip, `UnitGroupRolesAssigned`,
+  `C_Secrets.ShouldUnitComparisonBeSecret` with `UnitIsUnit`, and checks that a token keeps the same mob GUID until the
+  token changes. Each proposes its verdict from SPEC-08 §1. P1's census now has 53 APIs. Nothing verified in game yet.
+
 - The owner's logo (`assets/logo-source.webp`) and the NEBULA logos for the credits (`assets/`).
 - Repository tooling adapted from Azeroth Accord: `tools/check_docs.py` (links, wiki twins, ADR index, privacy scan, LF
   endings), `tools/check_pr_docs.py`, `tools/ship_step.py`, `tools/release_notes.py`, `tools/sync_wiki.py`; the

@@ -92,9 +92,15 @@ prints or stores player or guild names.
   `UNIT_THREAT_SITUATION_UPDATE` counts, payload units and delay against a polling tick; `UnitGUID` and
   `UnitGroupRolesAssigned` (secret or not) in instances; GUID stability of a mob across a fight.
 - Done when:
-  - [ ] Offline: the checks and their counters exist; `check_docs.py` passes.
+  - [x] Offline: the checks and their counters exist; `check_docs.py` passes.
   - [ ] P5, P6 and P9 answered. *(in game, party and dungeon)*
 - Real client: everything.
+- *Done (offline, 2026-11-25): `Checks_Units.lua` with P5 (unit × mob token matrix, mobs only on a nameplate,
+  `UnitTokenFromGUID`, `CanCompareUnitTokens`), P6 (event counts per payload kind, rate, delay against a 10 Hz sampling)
+  and P9 (GUIDs, identity predictions, round trips, roles, comparisons, GUID stability per token), all read through
+  `/atwp watch`; each proposes its verdict from SPEC-08 §1; smoke-tested against a throwaway mock client (readable,
+  secret, raid and unstable-GUID cases; no secret, name or GUID saved or exported). The in-game box waits for the
+  owner.*
 
 ### M0.5 — Combat events (P7, P8)
 - Branch: `step/m0-5-combat-events`
