@@ -5,6 +5,10 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Documentation
+
+- M2.R: `v0.2.0` released on GitHub; the release step is ticked in the M2 milestone file.
+
 ## [0.2.0] - 2026-11-26
 
 The second test version: the **Threat Monitor** (milestone M2), switched on. On the mob you target (or on your friend's

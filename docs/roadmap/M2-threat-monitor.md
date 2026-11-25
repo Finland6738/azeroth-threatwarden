@@ -25,6 +25,9 @@ closing on the tank goes WARNING then DANGER, and a target with no data shows UN
 | M2.8 In-game checklist M2 | Sonnet | low |
 | M2.R Release preparation `v0.2.0` | Sonnet | medium |
 
+*State (2026-11-26): M2 is complete in code (steps M2.1–M2.8, offline tests in CI) and released as `v0.2.0` (M2.R). The
+exit criterion needs the game and is **open** until the owner runs [the M2 checklist](../checklists/M2.md).*
+
 ### M2.1 — Specification of the monitor
 - Branch: `step/m2-1-spec`
 - Depends on: M0.7 when available; started before it by the owner's decision of 2026-11-25
@@ -157,5 +160,12 @@ closing on the tank goes WARNING then DANGER, and a target with no data shows UN
 - Scope: as M1.R, for `v0.2.0`.
 - Done when:
   - [x] The `monitor` switch is on, the later ones off; changelog promoted, status updated; the checks are green.
-  - [ ] The dry run is green, and the tag `v0.2.0` and its GitHub Release (changelog section as notes, zip with only the
+  - [x] The dry run is green, and the tag `v0.2.0` and its GitHub Release (changelog section as notes, zip with only the
         addon) exist.
+- *Done (2026-11-26): `monitor` switched on, changelog promoted and status updated (commit `42593db`, every later switch
+  off, 720 quick tests and 734 with `--long`); the dry run of the Release workflow was green; annotated tag `v0.2.0` on
+  that commit, [GitHub Release](https://github.com/Finland6738/azeroth-threatwarden/releases/tag/v0.2.0) with the
+  changelog section as notes and `AzerothThreatwarden-v0.2.0-forever.zip` (139 files in `AzerothThreatwarden/`: addon,
+  libraries, media, fonts with their OFL texts, `LICENSE` and the `CHANGELOG.md` the packager writes;
+  `## Version: v0.2.0`). CurseForge skipped (no `CF_API_KEY`). The zip has not been installed or run in the game; the M0
+  probe and the M1 and M2 checklists are still open.*
