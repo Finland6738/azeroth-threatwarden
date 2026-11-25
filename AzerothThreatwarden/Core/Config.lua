@@ -1,0 +1,621 @@
+-- Config: the two SavedVariables, schema 1, typed rules, defaults, migrations, read-only on a newer schema and damaged
+-- tables set aside under `corrupt` (SPEC-02 §3, ADR 0005). Lua 5.1, no game API but Compat.ServerTime.
+-- Adapted from Azeroth Accord (Core/Config.lua), same owner, GPL-3.0 (ADR 0012). Kept from there: the copy, the rules
+-- by path checked parents first, the merge of the defaults, the migrations on a copy, read-only on a newer schema, Get
+-- and Set by path, the size estimate. Changed: the version key is `schema`; a damaged table is set aside in
+-- `account.corrupt` before it goes back to its default; a missing migration step fails like a step that raises; the
+-- window size is brought within its limits and the scale rounded instead of reset; Set refuses a whole container and
+-- emits only when the value changes; the token, the guild maps and the Base64 helpers of Accord are not needed here.
+--
+--   AzerothThreatwardenDB      (account)   = { schema, settings = { language, theme, effects, animations, font,
+--                                               minimap = { hide, minimapPos } }, corrupt = { ... } }
+--   AzerothThreatwardenCharDB  (character) = { schema, ui = { shown, locked, scale, pos, size, lastTab, lastPage } }
+--
+-- Load() runs at ADDON_LOADED (Core/Init.lua, before Locale.Apply): the defaults are added without overwriting, old data
+-- is migrated step by step, wrong values go back to their defaults and are listed in Config.issues (paths, never
+-- names). Data of a NEWER schema is never rewritten: the addon works on a copy and Set refuses (Config:IsReadOnly).
+-- Unknown keys stay as they are. Nothing here holds a player, guild or realm name (SPEC-02 §3.3).
+--
+-- Every module reads its settings with Config:Get(path) and writes them with Config:Set(path, value); the language
+-- the interface uses is the one place `account.settings.language` (SPEC-09 Q5), applied by Core/Locale.lua at load.
+local ADDON_NAME, ns = ...
+ns = ns or {}
+ns.modules = ns.modules or {}
+
+local Config = {}
+ns.Config, ns.modules.Config = Config, Config
+
+local type, pairs, ipairs, pcall, tostring, next, select = type, pairs, ipairs, pcall, tostring, next, select
+local floor, huge, abs = math.floor, math.huge, math.abs
+local concat, sort = table.concat, table.sort
+
+Config.SCHEMA = 1           -- the schema this version of the addon knows (SPEC-02 §3.2, §3.3)
+
+-- Development build. A checkout of the repository is one; the BigWigs packager comments out the block between the
+-- debug markers below in every packaged build, so a release has DEV = false (tools/check_package.py checks it).
+Config.DEV = false
+--@debug@
+Config.DEV = true
+--@end-debug@
+Config.VARIABLES = { account = "AzerothThreatwardenDB", char = "AzerothThreatwardenCharDB" }
+Config.SCOPES = { "account", "char" }
+
+-- The enumerations of SPEC-02 §3.2 and §3.3. LANGUAGES is the one list of the languages a player can choose: every
+-- code but "auto" has its file in Locales/ (test_language.lua checks both ways).
+Config.LANGUAGES = { "auto", "enUS", "itIT" }
+Config.THEMES = { "nebula", "aurora", "warden" }
+Config.FONT_SOURCES = { "addon", "game" }
+Config.TABS = { "monitor", "settings" }          -- "reports" from M4
+Config.PAGES = { "settings", "about" }
+Config.POINTS = { "TOPLEFT", "TOP", "TOPRIGHT", "LEFT", "CENTER", "RIGHT", "BOTTOMLEFT", "BOTTOM", "BOTTOMRIGHT" }
+
+-- The window: scale 50-200 % in steps of 5 %; the sizes of the two layouts (SPEC-03 §4).
+Config.SCALE = { min = 0.5, max = 2.0, step = 0.05 }
+Config.SIZES = {
+	compact = { minW = 220, minH = 140, maxW = 600, maxH = 800 },
+	wide = { minW = 480, minH = 420, maxW = 900, maxH = 900 },
+}
+
+-- `account.corrupt`: at most MAX_CORRUPT entries, the oldest goes first; the copy of a damaged table keeps
+-- CORRUPT_DEPTH levels and CORRUPT_KEYS keys in all, strings cut at CORRUPT_TEXT characters.
+Config.MAX_CORRUPT = 5
+Config.CORRUPT_DEPTH = 3
+Config.CORRUPT_KEYS = 50
+Config.CORRUPT_TEXT = 200
+Config.MAX_ISSUES = 50      -- problems kept from one Load (the report shows the first ones)
+
+Config.defaults = {
+	account = {
+		schema = Config.SCHEMA,
+		settings = {
+			language = "auto",        -- SPEC-09 Q5: follows the client; takes effect after /reload
+			theme = "nebula",         -- UI/Theme.lua (M1.6)
+			effects = true,
+			animations = true,
+			font = "addon",           -- takes effect when the client restarts
+			minimap = { hide = false, minimapPos = 200 },   -- handed to LibDBIcon (M1.7), which may add keys of its own
+		},
+		corrupt = {},
+	},
+	char = {
+		schema = Config.SCHEMA,
+		ui = {
+			shown = true,
+			locked = false,
+			scale = 1.0,
+			-- pos: nil until the window is moved (the centre)
+			size = {},                -- compact = { w, h }, wide = { w, h }: nil until resized
+			lastTab = "monitor",
+			lastPage = "settings",
+		},
+	},
+}
+
+---------------------------------------------------------------------------------------------------------------------
+-- Helpers
+---------------------------------------------------------------------------------------------------------------------
+local function isFinite(v)
+	return type(v) == "number" and v == v and v ~= huge and v ~= -huge
+end
+Config.IsFinite = isFinite
+
+local function copy(value, seen)
+	if type(value) ~= "table" then return value end
+	seen = seen or {}
+	if seen[value] then return seen[value] end
+	local out = {}
+	seen[value] = out
+	for k, v in pairs(value) do out[copy(k, seen)] = copy(v, seen) end
+	return out
+end
+Config.Copy = copy
+
+-- true when a and b hold the same plain content (CONFIG_CHANGED is emitted only on a change).
+local function same(a, b)
+	if a == b then return true end
+	if type(a) ~= "table" or type(b) ~= "table" then return false end
+	for k, v in pairs(a) do if not same(v, b[k]) then return false end end
+	for k in pairs(b) do if a[k] == nil then return false end end
+	return true
+end
+
+local function contains(list, value)
+	for _, option in ipairs(list) do if option == value then return true end end
+	return false
+end
+
+local function emit(event, ...)
+	if ns.Bus then ns.Bus.Emit(event, ...) end
+end
+
+local function split(path)
+	local parts = {}
+	for part in tostring(path):gmatch("[^.]+") do parts[#parts + 1] = part end
+	return parts
+end
+
+-- The table that holds `path` (from part `from` on) and the key: nil when a parent is missing or not a table.
+local function locate(root, parts, from)
+	local node = root
+	for i = from, #parts - 1 do
+		node = node[parts[i]]
+		if type(node) ~= "table" then return nil end
+	end
+	return node, parts[#parts]
+end
+
+-- A window position: { point, relativePoint, x, y }, both points among the nine anchors, x and y finite.
+function Config.IsPos(v)
+	return type(v) == "table" and contains(Config.POINTS, v.point) and contains(Config.POINTS, v.relativePoint)
+		and isFinite(v.x) and isFinite(v.y)
+end
+
+-- A size of one layout: { w, h } finite numbers (the limits are applied by clamping, not by refusing).
+function Config.IsSize(v)
+	return type(v) == "table" and isFinite(v.w) and isFinite(v.h)
+end
+
+local function clamp(v, lo, hi)
+	if v < lo then return lo end
+	if v > hi then return hi end
+	return v
+end
+
+local function sizeFixer(layout)
+	return function(v)
+		local lim = Config.SIZES[layout]
+		local w, h = clamp(v.w, lim.minW, lim.maxW), clamp(v.h, lim.minH, lim.maxH)
+		if w == v.w and h == v.h then return v end
+		local out = copy(v)
+		out.w, out.h = w, h
+		return out, "brought within the limits"
+	end
+end
+
+local function roundScale(v)
+	local step = Config.SCALE.step
+	local r = floor(v / step + 0.5) * step
+	if abs(r - v) < 1e-9 then return v end
+	return r, "rounded to " .. step
+end
+
+---------------------------------------------------------------------------------------------------------------------
+-- Rules
+---------------------------------------------------------------------------------------------------------------------
+-- By path, scope first. type: boolean | number | string | table. number: min, max, integer. string: enum. table:
+-- validate(v) for the whole table. optional: nil is allowed (the default is nil). fix(v) -> value, note: a value that
+-- passes the rule but is corrected (clamped, rounded); note nil when nothing changed. container: a table that holds
+-- other rules (Set refuses it whole). keep = false: a damaged value is reset without a `corrupt` entry.
+local function isArrayOfTables(v)
+	local n = #v
+	for k, x in pairs(v) do
+		if type(k) ~= "number" or k < 1 or k > n or k ~= floor(k) or type(x) ~= "table" then return false end
+	end
+	return true
+end
+
+Config.rules = {
+	["account.settings"] = { type = "table", container = true },
+	["account.settings.language"] = { type = "string", enum = Config.LANGUAGES },
+	["account.settings.theme"] = { type = "string", enum = Config.THEMES },
+	["account.settings.effects"] = { type = "boolean" },
+	["account.settings.animations"] = { type = "boolean" },
+	["account.settings.font"] = { type = "string", enum = Config.FONT_SOURCES },
+	["account.settings.minimap"] = { type = "table", container = true },
+	["account.settings.minimap.hide"] = { type = "boolean" },
+	["account.settings.minimap.minimapPos"] = { type = "number", min = 0, max = 360 },
+	["account.corrupt"] = { type = "table", container = true, keep = false, validate = isArrayOfTables,
+		fix = function(v)
+			if #v <= Config.MAX_CORRUPT then return v end
+			local out = {}
+			for i = #v - Config.MAX_CORRUPT + 1, #v do out[#out + 1] = v[i] end
+			return out, "oldest entries dropped"
+		end },
+	["char.ui"] = { type = "table", container = true },
+	["char.ui.shown"] = { type = "boolean" },
+	["char.ui.locked"] = { type = "boolean" },
+	["char.ui.scale"] = { type = "number", min = Config.SCALE.min, max = Config.SCALE.max, fix = roundScale },
+	["char.ui.pos"] = { type = "table", optional = true, validate = Config.IsPos },
+	["char.ui.size"] = { type = "table", container = true },
+	["char.ui.size.compact"] = { type = "table", optional = true, validate = Config.IsSize, fix = sizeFixer("compact") },
+	["char.ui.size.wide"] = { type = "table", optional = true, validate = Config.IsSize, fix = sizeFixer("wide") },
+	["char.ui.lastTab"] = { type = "string", enum = Config.TABS },
+	["char.ui.lastPage"] = { type = "string", enum = Config.PAGES },
+}
+
+-- nil when `value` satisfies `rule`, else the reason (fixed words, no value).
+local function violation(rule, value)
+	if value == nil then return (not rule.optional) and "missing" or nil end
+	local t = rule.type
+	if type(value) ~= t then return "expected " .. t .. ", got " .. type(value) end
+	if t == "number" then
+		if not isFinite(value) then return "not a finite number" end
+		if rule.integer and value ~= floor(value) then return "not an integer" end
+		if rule.min and value < rule.min then return "below " .. rule.min end
+		if rule.max and value > rule.max then return "above " .. rule.max end
+	elseif t == "string" then
+		if rule.enum and not contains(rule.enum, value) then return "not an allowed value" end
+	elseif t == "table" and rule.validate and not rule.validate(value) then
+		return "bad shape"
+	end
+	return nil
+end
+Config.Violation = violation
+
+-- The default of a path below its scope, a fresh copy.
+local function defaultAt(scope, parts, from)
+	local node = Config.defaults[scope]
+	for i = from, #parts do
+		if type(node) ~= "table" then return nil end
+		node = node[parts[i]]
+	end
+	return copy(node)
+end
+
+-- Fills what is missing from `defaults`, recursively; an existing value is never overwritten.
+local function mergeDefaults(db, defaults)
+	for k, v in pairs(defaults) do
+		if db[k] == nil then
+			db[k] = copy(v)
+		elseif type(v) == "table" and type(db[k]) == "table" then
+			mergeDefaults(db[k], v)
+		end
+	end
+end
+Config.MergeDefaults = mergeDefaults
+
+---------------------------------------------------------------------------------------------------------------------
+-- Problems and `corrupt`
+---------------------------------------------------------------------------------------------------------------------
+Config.issues = {}          -- problems found and fixed by the last Load (paths and fixed words, no names)
+Config.readOnly = {}        -- readOnly[scope] = "newer" | "migration": writes refused, the variable never rewritten
+Config.db = {}              -- Config.db.account / Config.db.char: the tables the addon works on
+Config.found = {}           -- found[scope]: the schema in the saved data, "none" (nothing saved) or "damaged"
+local pending = {}          -- `corrupt` entries of this Load, added to account.corrupt at its end
+
+local function issue(text)
+	if #Config.issues < Config.MAX_ISSUES then Config.issues[#Config.issues + 1] = text end
+end
+
+-- A bounded copy of a damaged value for `corrupt`: plain values only, CORRUPT_DEPTH levels, CORRUPT_KEYS keys.
+local function boundedCopy(value)
+	local budget = Config.CORRUPT_KEYS
+	local function plain(v)
+		local t = type(v)
+		if t == "number" then return isFinite(v) and v or tostring(v) end
+		if t == "string" then return #v > Config.CORRUPT_TEXT and v:sub(1, Config.CORRUPT_TEXT) or v end
+		if t == "boolean" then return v end
+		return "<" .. t .. ">"
+	end
+	local function walk(t, depth)
+		local out = {}
+		for k, v in pairs(t) do
+			if budget <= 0 then break end
+			local kt = type(k)
+			if (kt == "string" or kt == "boolean" or (kt == "number" and isFinite(k))) then
+				budget = budget - 1
+				if type(v) == "table" then
+					if depth < Config.CORRUPT_DEPTH then out[plain(k)] = walk(v, depth + 1) else out[plain(k)] = "<table>" end
+				else
+					out[plain(k)] = plain(v)
+				end
+			end
+		end
+		return out
+	end
+	return walk(value, 1)
+end
+Config.BoundedCopy = boundedCopy
+
+-- Sets a damaged value aside: { scope, path, at, kind, data } (data only for a table).
+local function setAside(scope, path, value)
+	local Compat = ns.Compat
+	pending[#pending + 1] = {
+		scope = scope,
+		path = path,
+		at = Compat and Compat.ServerTime and Compat.ServerTime() or 0,
+		kind = type(value),
+		data = type(value) == "table" and boundedCopy(value) or nil,
+	}
+end
+
+-- Adds the entries of this Load to account.corrupt, the oldest dropped beyond MAX_CORRUPT. A read-only account gets
+-- them in its working copy only (never saved).
+local function flushCorrupt()
+	local db = Config.db.account
+	if not db or #pending == 0 then pending = {} return end
+	local list = db.corrupt
+	for _, entry in ipairs(pending) do list[#list + 1] = entry end
+	while #list > Config.MAX_CORRUPT do table.remove(list, 1) end
+	pending = {}
+end
+
+---------------------------------------------------------------------------------------------------------------------
+-- Sanitize: the rules, parents first
+---------------------------------------------------------------------------------------------------------------------
+local function depthOf(path) return select(2, path:gsub("%.", "")) end
+
+local function rulePaths(scope)
+	local paths, prefix = {}, scope .. "."
+	for path in pairs(Config.rules) do
+		if path:sub(1, #prefix) == prefix then paths[#paths + 1] = path end
+	end
+	sort(paths, function(a, b)   -- parents first, so a reset parent is checked again below
+		local da, db = depthOf(a), depthOf(b)
+		if da ~= db then return da < db end
+		return a < b
+	end)
+	return paths
+end
+
+-- Brings `db` (the working table of `scope`) within the rules. Returns the number of fixes.
+function Config.Sanitize(scope, db)
+	local before = #Config.issues
+	for _, path in ipairs(rulePaths(scope)) do
+		local rule = Config.rules[path]
+		local parts = split(path)
+		local parent, key = locate(db, parts, 2)
+		if parent then
+			local value = parent[key]
+			local why = violation(rule, value)
+			if why then
+				if rule.type == "table" and value ~= nil and rule.keep ~= false then setAside(scope, path, value) end
+				parent[key] = defaultAt(scope, parts, 2)
+				issue(path .. ": reset (" .. why .. ")")
+			elseif rule.fix and value ~= nil then
+				local fixed, note = rule.fix(value)
+				if note then
+					parent[key] = fixed
+					issue(path .. ": " .. note)
+				end
+			end
+		end
+	end
+	return #Config.issues - before
+end
+
+---------------------------------------------------------------------------------------------------------------------
+-- Migrations
+---------------------------------------------------------------------------------------------------------------------
+-- Config.migrations[scope][n] brings the data from version n - 1 to n. Each step is idempotent (on data that already
+-- has the new shape it changes nothing) and has a test that starts from the data of the version before (DAT-20).
+-- Step 1: data without a version is version 0 and needs only the defaults and the rules, so it has nothing to do.
+Config.migrations = {
+	account = {
+		[1] = function(db) end,
+	},
+	char = {
+		[1] = function(db) end,
+	},
+}
+
+-- Runs the steps after `from` up to `target` on `db`. Returns true, or false and the reason (db may be half changed:
+-- callers pass a copy). A missing step fails too: every version has its step.
+local function migrate(scope, db, from, target)
+	local steps = Config.migrations[scope] or {}
+	for n = from + 1, target do
+		local step = steps[n]
+		if type(step) ~= "function" then return false, "step " .. n .. " missing" end
+		local ok, err = pcall(step, db)
+		if not ok then return false, "step " .. n .. " failed" end
+		db.schema = n
+	end
+	return true
+end
+Config.Migrate = migrate
+
+---------------------------------------------------------------------------------------------------------------------
+-- Load (SPEC-02 §3.4)
+---------------------------------------------------------------------------------------------------------------------
+-- The version in the saved table: a whole number >= 0, 0 when absent, nil when damaged.
+local function schemaOf(raw)
+	local v = raw.schema
+	if v == nil then return 0 end
+	if isFinite(v) and v >= 0 and v == floor(v) then return v end
+	return nil
+end
+
+local function loadScope(scope)
+	local var = Config.VARIABLES[scope]
+	local raw = _G[var]       -- the addon's own SavedVariables (TOC), not a game API
+	local target = Config.SCHEMA
+	Config.readOnly[scope] = nil
+	local work
+
+	if type(raw) ~= "table" then
+		-- 1. Absent: a new table. Not a table: its type goes into `corrupt`, then a new table.
+		if raw ~= nil then
+			setAside(scope, scope, raw)
+			issue(var .. ": not a table, replaced by the defaults")
+			Config.found[scope] = "damaged"
+		else
+			Config.found[scope] = "none"
+		end
+		raw = {}
+		_G[var] = raw
+		work = raw
+	else
+		-- 2. A missing or damaged schema is 0.
+		local version = schemaOf(raw)
+		if version == nil then
+			issue(var .. ": damaged schema, treated as 0")
+			Config.found[scope] = "damaged"
+			version = 0
+		else
+			if raw.schema == nil and next(raw) ~= nil then issue(var .. ": schema missing, treated as 0") end
+			Config.found[scope] = raw.schema == nil and "none" or version
+		end
+
+		if version > target then
+			-- 4. Written by a newer version of the addon: read it, never rewrite it. All work happens on a copy.
+			Config.readOnly[scope] = "newer"
+			issue(("%s: schema %d is newer than %d, read-only"):format(var, version, target))
+			work = copy(raw)
+		elseif version < target and next(raw) ~= nil then
+			-- 3. Older: the steps run on a copy; on success the copy's content replaces the saved table's (same table).
+			local trial = copy(raw)
+			local ok, why = migrate(scope, trial, version, target)
+			if ok then
+				for k in pairs(raw) do raw[k] = nil end
+				for k, v in pairs(trial) do raw[k] = v end
+				work = raw
+			else
+				Config.readOnly[scope] = "migration"
+				issue(var .. ": migration " .. why .. ", read-only")
+				work = copy(raw)
+			end
+		else
+			work = raw
+		end
+	end
+
+	work.schema = target
+	Config.db[scope] = work
+	mergeDefaults(work, Config.defaults[scope])   -- 5.
+	Config.Sanitize(scope, work)                  -- 6. (7: unknown keys are never touched)
+end
+
+-- Loads both variables (ADDON_LOADED). Safe to call again: a second run on clean data changes nothing.
+function Config:Load()
+	Config.issues = {}
+	pending = {}
+	for _, scope in ipairs(Config.SCOPES) do loadScope(scope) end
+	flushCorrupt()
+	Config.loaded = true
+	emit("CONFIG_LOADED")
+	return #Config.issues == 0
+end
+
+-- true when `scope` (or, without one, either scope) refuses writes.
+function Config:IsReadOnly(scope)
+	if scope then return Config.readOnly[scope] ~= nil end
+	return Config.readOnly.account ~= nil or Config.readOnly.char ~= nil
+end
+
+---------------------------------------------------------------------------------------------------------------------
+-- Get / Set by path: "account.settings.language", "char.ui.scale"
+---------------------------------------------------------------------------------------------------------------------
+-- The value at `path`, nil when absent. A table is the live one (LibDBIcon keeps the minimap table): change it only
+-- through Set.
+function Config:Get(path)
+	local parts = split(path)
+	local node = Config.db[parts[1]]
+	for i = 2, #parts do
+		if type(node) ~= "table" then return nil end
+		node = node[parts[i]]
+	end
+	return node
+end
+
+-- Validated write. Returns true, or false and the reason: "unknown path", "not a value" (a whole container),
+-- "read-only", or the rule broken. A size is brought within its limits and the scale rounded, as at load.
+-- CONFIG_CHANGED(path) is emitted only when the stored value changes.
+function Config:Set(path, value)
+	local parts = split(path)
+	local scope = parts[1]
+	local rule = Config.rules[path]
+	if not rule or not Config.db[scope] then return false, "unknown path" end
+	if rule.container then return false, "not a value" end
+	if Config.readOnly[scope] then return false, "read-only" end
+	local why = violation(rule, value)
+	if why then return false, why end
+	if rule.fix and value ~= nil then value = (rule.fix(value)) end
+	local parent, leaf = locate(Config.db[scope], parts, 2)
+	if not parent then return false, "parent missing" end
+	if same(parent[leaf], value) then return true end
+	parent[leaf] = copy(value)
+	emit("CONFIG_CHANGED", path)
+	return true
+end
+
+-- Puts every path of `prefix` that has a rule and no container back to its default, in place (unknown keys stay).
+local function resetUnder(scope, prefix)
+	local changed = {}
+	for _, path in ipairs(rulePaths(scope)) do
+		local rule = Config.rules[path]
+		if not rule.container and path:sub(1, #prefix) == prefix then
+			local parts = split(path)
+			local parent, key = locate(Config.db[scope], parts, 2)
+			local default = defaultAt(scope, parts, 2)
+			if parent and not same(parent[key], default) then
+				parent[key] = default
+				changed[#changed + 1] = path
+			end
+		end
+	end
+	for _, path in ipairs(changed) do emit("CONFIG_CHANGED", path) end
+	return true
+end
+
+-- *Reset settings* (Settings, M1.8): account.settings back to the defaults and `corrupt` emptied. Recordings and
+-- profiles are not touched.
+function Config:ResetSettings()
+	if not Config.db.account then return false, "not loaded" end
+	if Config.readOnly.account then return false, "read-only" end
+	resetUnder("account", "account.settings.")
+	local list = Config.db.account.corrupt
+	for i = #list, 1, -1 do list[i] = nil end
+	return true
+end
+
+-- /atw reset (M1.7): the window's position, sizes and scale back to the defaults.
+function Config:ResetWindow()
+	if not Config.db.char then return false, "not loaded" end
+	if Config.readOnly.char then return false, "read-only" end
+	resetUnder("char", "char.ui.pos")
+	resetUnder("char", "char.ui.size.")
+	resetUnder("char", "char.ui.scale")
+	return true
+end
+
+---------------------------------------------------------------------------------------------------------------------
+-- Size and /atw debug (SPEC-01 §9: schema per variable, read-only, problems corrected, `corrupt`, size in KB)
+---------------------------------------------------------------------------------------------------------------------
+-- An estimate of the bytes a value takes in the saved file: keys, values and punctuation, as the client writes it.
+function Config.EstimateSize(value, seen)
+	local t = type(value)
+	if t == "string" then return #value + 3 end
+	if t == "number" or t == "boolean" then return 8 end
+	if t ~= "table" then return 0 end
+	seen = seen or {}
+	if seen[value] then return 0 end
+	seen[value] = true
+	local total = 2
+	for k, v in pairs(value) do total = total + Config.EstimateSize(k, seen) + Config.EstimateSize(v, seen) + 4 end
+	return total
+end
+
+local READ_ONLY_WHY = {
+	newer = "READ-ONLY: saved by a newer version, never rewritten",
+	migration = "READ-ONLY: a migration failed, never rewritten",
+}
+
+function Config:DebugLines()
+	local lines = {}
+	if not Config.loaded then return { "not loaded" } end
+	for _, scope in ipairs(Config.SCOPES) do
+		local db = Config.db[scope]
+		lines[#lines + 1] = ("%s: schema found %s, current %d, about %.1f KB%s"):format(Config.VARIABLES[scope],
+			tostring(Config.found[scope]), Config.SCHEMA, (db and Config.EstimateSize(db) or 0) / 1024,
+			Config.readOnly[scope] and (" - " .. READ_ONLY_WHY[Config.readOnly[scope]]) or "")
+	end
+	local corrupt = Config.db.account and Config.db.account.corrupt or {}
+	lines[#lines + 1] = ("corrupt entries: %d (at most %d kept)"):format(#corrupt, Config.MAX_CORRUPT)
+	for _, entry in ipairs(corrupt) do
+		local path = type(entry) == "table" and type(entry.path) == "string" and entry.path:match("^[%w%.]+$") or "?"
+		local kind = type(entry) == "table" and type(entry.kind) == "string" and entry.kind:match("^%a+$") or "?"
+		lines[#lines + 1] = ("  %s: %s found"):format(path, kind)
+	end
+	if #Config.issues == 0 then
+		lines[#lines + 1] = "problems corrected at load: none"
+	else
+		lines[#lines + 1] = ("problems corrected at load: %d"):format(#Config.issues)
+		for i, text in ipairs(Config.issues) do
+			if i > 15 then lines[#lines + 1] = "  ..." break end
+			lines[#lines + 1] = "  " .. text
+		end
+	end
+	return lines
+end
+
+if ns.addon then ns.addon.Config = Config end

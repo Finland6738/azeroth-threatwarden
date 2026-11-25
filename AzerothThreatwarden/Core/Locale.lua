@@ -1,7 +1,9 @@
 -- Locale: the addon's own language tables (SPEC-01 §10, ADR 0009 and its update). Lua 5.1.
 -- Every file of Locales/ registers its table whatever the client's language; ns.L answers in the active language with
 -- English as the fallback. AceLocale is not used: its choice of language is global for every Ace addon.
--- Until ADDON_LOADED (and until Config exists, M1.5) the active language is the client's.
+-- Until ADDON_LOADED the active language is the client's; at ADDON_LOADED Core/Init.lua calls Locale.Apply with
+-- `account.settings.language` of Core/Config.lua (SPEC-09 Q5: `auto` follows GetLocale(), `enUS` and `itIT` force it),
+-- so a change made in Settings takes effect after /reload.
 local ADDON_NAME, ns = ...
 ns = ns or {}
 ns.modules = ns.modules or {}

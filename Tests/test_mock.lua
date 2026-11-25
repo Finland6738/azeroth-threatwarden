@@ -179,7 +179,7 @@ describe("the saved data of a /reload", function()
 			list = { 1, 2, { 3 } }, [7] = "seven", [true] = "yes" }
 		local copy = AzerothThreatwardenDB
 		Mock.Reload()
-		deepEq(AzerothThreatwardenDB, copy)
+		for k, v in pairs(copy) do deepEq(AzerothThreatwardenDB[k], v, tostring(k)) end   -- Config adds its own keys
 	end)
 
 	it("refuses what the client cannot save", function()
@@ -205,7 +205,8 @@ describe("the saved data of a /reload", function()
 		AzerothThreatwardenCharDB = { kept = true }
 		Mock.Reload()
 		isNil(SomethingElse)
-		isNil(AzerothThreatwardenDB)
+		isNil(Mock.savedText.SomethingElse)
+		notNil(Mock.savedText.AzerothThreatwardenDB, "Config creates it at load")
 		truthy(AzerothThreatwardenCharDB.kept)
 	end)
 

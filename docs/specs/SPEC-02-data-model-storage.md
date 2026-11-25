@@ -101,20 +101,23 @@ Nessun nome di giocatore, gilda o reame nelle impostazioni: i nomi stanno solo n
 All'`ADDON_LOADED` `Config:Load()` tratta ogni variabile così (l'algoritmo è quello di Accord, `Core/Config.lua`):
 
 1. **Assente** → tabella nuova con i predefiniti, nessun problema segnalato. **Non è una tabella** (una stringa, un
-   numero) → voce in `corrupt` con il solo tipo trovato, poi tabella nuova.
+   numero) → voce in `corrupt` con il solo tipo trovato (`path` = `account` o `char`), poi tabella nuova.
 2. **`schema` assente o non valido** (non intero, negativo) → vale 0; se la tabella non è vuota il problema si annota.
 3. **`schema` più vecchio** → le migrazioni da `schema + 1` alla versione conosciuta girano su una **copia**; se riescono
-   la copia sostituisce il contenuto della tabella salvata (che resta la stessa tabella); se un passo fallisce, la
-   variabile resta intatta e quella parte dell'addon va in **sola lettura**.
+   la copia sostituisce il contenuto della tabella salvata (che resta la stessa tabella); se un passo fallisce o
+   **manca**, la variabile resta intatta e quella parte dell'addon va in **sola lettura** (lavora su una copia).
 4. **`schema` più nuovo** di quello conosciuto (si è tornati a una versione precedente dell'addon) → sola lettura:
    l'addon lavora su una copia e non riscrive mai la variabile; Settings mostra *Saved data comes from a newer version:
    changes are not saved* e `/atw debug` lo dice.
 5. **Predefiniti**: si aggiungono solo le chiavi che mancano, mai sopra un valore presente.
 6. **Regole** per percorso, dal genitore al figlio: una tabella attesa che ha un altro tipo, o che una regola rifiuta
-   per intero, va in `corrupt` (copia limitata a 3 livelli e 50 chiavi) e torna al predefinito; un valore semplice
-   sbagliato (tipo, intervallo, enumerazione) torna al predefinito; dimensione e posizione della finestra fuori dai
-   limiti si **riportano** nei limiti invece di tornare al predefinito. Ogni correzione si annota (`Config.issues`,
-   testo senza nomi).
+   per intero, va in `corrupt` (copia limitata a 3 livelli e 50 chiavi, solo valori semplici, testi tagliati a 200
+   caratteri) e torna al predefinito; un valore semplice sbagliato (tipo, intervallo, enumerazione, numero non finito)
+   torna al predefinito; le dimensioni della finestra fuori dai limiti si **riportano** nei limiti e la scala si
+   **arrotonda** a 0,05 invece di tornare al predefinito. Della posizione Config controlla solo la forma: riportarla
+   dentro lo schermo è compito della finestra (M1.7, [SPEC-03 §4](SPEC-03-threat-monitor-ui.md#4-finestra)), perché
+   solo lei conosce lo schermo. Ogni correzione si annota (`Config.issues`, percorso e parole fisse, mai valori o
+   nomi; al massimo 50 per caricamento).
 7. **Chiavi sconosciute** restano come sono: Config non cancella mai ciò che non conosce.
 
 `corrupt` è un array di `{ scope, path, at, kind, data }` (`scope` `account` o `char`, `at` da `GetServerTime`,
@@ -122,13 +125,19 @@ All'`ADDON_LOADED` `Config:Load()` tratta ogni variabile così (l'algoritmo è q
 solo a una segnalazione (`/atw debug` le conta). Si svuota con *Reset settings*.
 
 Scrittura: `Config:Set(path, value)` controlla la regola del percorso e rifiuta un valore non valido (restituisce
-`false` e il motivo) o una variabile in sola lettura; emette `CONFIG_CHANGED(path)` solo se il valore cambia.
-*Reset settings* (Settings) riporta ai predefiniti `account.settings` e svuota `corrupt`; `/atw reset` riporta ai
-predefiniti solo posizione, dimensioni e scala della finestra (`char.ui`). Nessuno dei due tocca registrazioni e
-profili.
+`false` e il motivo), un percorso sconosciuto, una tabella contenitore intera (`settings`, `minimap`, `ui`, `size`,
+`corrupt`: si scrivono le foglie) o una variabile in sola lettura; dimensioni e scala si correggono come al
+caricamento; conserva una copia del valore ed emette `CONFIG_CHANGED(path)` solo se il valore cambia. `Config:Load()`
+emette `CONFIG_LOADED`. *Reset settings* (Settings, `Config:ResetSettings()`) riporta ai predefiniti le chiavi
+conosciute di `account.settings` (quelle sconosciute, per esempio `minimap.lock` di LibDBIcon, restano) e svuota
+`corrupt`; `/atw reset` (`Config:ResetWindow()`) riporta ai predefiniti solo posizione, dimensioni e scala della
+finestra (`char.ui`). Nessuno dei due tocca registrazioni e profili; in sola lettura rifiutano.
 
 Migrazioni: `Config.migrations.account[n]` e `Config.migrations.char[n]` portano i dati da `n − 1` a `n`; il passo 1
-non fa nulla (dati senza versione = 0, servono solo predefiniti e regole).
+non fa nulla (dati senza versione = 0, servono solo predefiniti e regole). `/atw debug` riporta, per variabile, lo
+schema trovato (`none`, `damaged` o il numero), quello attuale, la dimensione stimata in KB e la sola lettura con il
+motivo; poi le voci di `corrupt` (percorso e tipo, mai il contenuto) e i problemi corretti
+(`Config:DebugLines()`, [SPEC-01 §9](SPEC-01-platform-architecture.md#9-diagnostica-atw-debug)).
 
 - **DAT-20** MUST: una migrazione per versione, idempotente, provata con un test che parte dai dati della versione
   precedente.

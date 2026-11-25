@@ -167,38 +167,16 @@ function Diag.FeatureLines()
 	return { "on: " .. (#on > 0 and concat(on, ", ") or "none"), "off: " .. (#off > 0 and concat(off, ", ") or "none") }
 end
 
--- An estimate of the size of a saved table: the bytes of its keys and values written out.
-local function estimate(value, depth, seen)
-	local t = type(value)
-	if t == "string" then return #value + 3 end
-	if t == "number" or t == "boolean" then return 8 end
-	if t ~= "table" or seen[value] or depth > 20 then return 0 end
-	seen[value] = true
-	local size = 2
-	for k, v in pairs(value) do size = size + estimate(k, depth + 1, seen) + estimate(v, depth + 1, seen) + 2 end
-	return size
-end
-
+-- The saved data (SPEC-01 §9): schema per variable, read-only, `corrupt`, problems corrected, size. Core/Config.lua
+-- knows them; without it (a file failed to load) only whether the variables exist.
 Diag.SAVED_VARIABLES = { "AzerothThreatwardenDB", "AzerothThreatwardenCharDB" }
 
 function Diag.SavedLines()
-	local lines = {}
-	for _, name in ipairs(Diag.SAVED_VARIABLES) do
-		local data = _G[name]   -- the addon's own SavedVariables (TOC), not a game API
-		if type(data) ~= "table" then
-			lines[#lines + 1] = name .. ": nothing saved yet"
-		else
-			local schema = data.schema
-			lines[#lines + 1] = ("%s: schema %s, about %.1f KB"):format(name,
-				(type(schema) == "number" or type(schema) == "string") and tostring(schema) or "none",
-				estimate(data, 0, {}) / 1024)
-		end
-	end
 	local Config = ns.Config
-	if Config and Config.DebugLines then
-		for _, line in ipairs(Config:DebugLines()) do lines[#lines + 1] = line end
-	else
-		lines[#lines + 1] = "read-only, problems corrected and corrupt entries: Config arrives in M1.5"
+	if Config and Config.DebugLines then return Config:DebugLines() end
+	local lines = { "Config not loaded" }
+	for _, name in ipairs(Diag.SAVED_VARIABLES) do
+		lines[#lines + 1] = name .. ": " .. (type(_G[name]) == "table" and "present" or "nothing saved")
 	end
 	return lines
 end

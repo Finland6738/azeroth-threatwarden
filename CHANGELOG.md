@@ -7,6 +7,15 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
+- M1.5: `Core/Config.lua` keeps the two SavedVariables (`AzerothThreatwardenDB` per account, `AzerothThreatwardenCharDB`
+  per character) at schema 1 of SPEC-02 §3: typed rules with enumerations and ranges, defaults added without
+  overwriting, one idempotent migration step per version run on a copy, **read-only** when the saved schema is newer
+  (or a migration fails: the data is never rewritten), damaged tables set aside under `corrupt` (at most 5) instead of
+  stopping the addon, unknown keys always kept; `Config:Set` validates and emits `CONFIG_CHANGED(path)`. The language
+  setting `account.settings.language` (`auto`, `enUS`, `itIT`) is applied by `Core/Locale.lua` at load: `auto` follows
+  the client, other client languages fall back to English, a change takes effect after `/reload` (the Settings page to
+  change it is M1.8). The *Saved data* section of `/atw debug` now comes from Config (schema found, read-only, `corrupt`
+  entries, problems corrected, size). Not run in the game.
 - M1.4: `Core/Compat.lua`, the only door to the game: the API table of SPEC-01 §8.2 (58 entries, checked against the
   Forever dump) with the states available, missing, restricted and error; the capabilities of §8.4, unknown until a
   reading proves them; the client restrictions; secret-value checks that never read a secret; the normalized threat

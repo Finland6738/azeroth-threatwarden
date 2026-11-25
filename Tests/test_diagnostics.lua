@@ -50,8 +50,10 @@ describe("the report (SPEC-01 §9)", function()
 
 	it("gives the saved data, the memory, the Bus and the Scheduler", function()
 		local text = D().Report()
-		contains(text, "AzerothThreatwardenDB: nothing saved yet")
-		contains(text, "Config arrives in M1.5")
+		contains(text, "AzerothThreatwardenDB: schema found none, current 1, about 0.")
+		contains(text, "AzerothThreatwardenCharDB: schema found none, current 1, about 0.")
+		contains(text, "corrupt entries: 0 (at most 5 kept)")
+		contains(text, "problems corrected at load: none")
 		contains(text, "addon memory: 2048.2 KB")
 		contains(text, "framerate: 60 fps")
 		contains(text, "COMBAT_ENDED: 1 listener(s)")
@@ -95,11 +97,16 @@ describe("the report (SPEC-01 §9)", function()
 		contains(text, "WoW Forever: no")
 	end)
 
-	it("counts the saved data and their schema", function()
+	it("counts the saved data and their schema, from Config (SPEC-01 §9)", function()
 		boot(function(M)
-			M.saved = { AzerothThreatwardenDB = { schema = 1, settings = { language = "itIT" } } }
+			M.saved = { AzerothThreatwardenDB = { schema = 1, settings = { language = "itIT", theme = "pink" } },
+				AzerothThreatwardenCharDB = { schema = 9 } }
 		end)
-		matches(D().Report(), "AzerothThreatwardenDB: schema 1, about %d+%.%d KB")
+		local text = D().Report()
+		matches(text, "AzerothThreatwardenDB: schema found 1, current 1, about %d+%.%d KB\n")
+		matches(text, "AzerothThreatwardenCharDB: schema found 9, current 1, about %d+%.%d KB %- READ%-ONLY")
+		contains(text, "problems corrected at load: 2")
+		contains(text, "  account.settings.theme: reset (not an allowed value)")
 	end)
 end)
 

@@ -203,7 +203,7 @@ Compat.APIS = {
 	{ id = "damagemeter.Available", paths = { "C_DamageMeter.IsDamageMeterAvailable" }, check = "call", show = true,
 		since = "M4", probe = "P8" },
 	{ id = "time.GetTime", paths = { "GetTime" }, check = "call", since = "M1", probe = "-" },
-	{ id = "time.ServerTime", paths = { "GetServerTime" }, check = "call", since = "M4", probe = "P12" },
+	{ id = "time.ServerTime", paths = { "GetServerTime" }, check = "call", since = "M1", probe = "P12" },
 	{ id = "time.After", paths = { "C_Timer.After" }, check = "exists", since = "M1", probe = "P11" },
 	{ id = "time.NewTicker", paths = { "C_Timer.NewTicker" }, check = "exists", since = "M1", probe = "P11" },
 	{ id = "time.NewTimer", paths = { "C_Timer.NewTimer" }, check = "exists", since = "M1", probe = "P11" },
@@ -441,6 +441,12 @@ end
 -- The client's language code ("enUS" when it cannot say).
 function Compat.ClientLocale()
 	return plainString((first("GetLocale"))) or "enUS"
+end
+
+-- Seconds since the epoch of the realm clock (GetServerTime), nil when unknown: the date of a `corrupt` entry of
+-- Core/Config.lua (SPEC-02 §3.4) and, from M4, of the recorded sessions.
+function Compat.ServerTime()
+	return plainNumber((first("GetServerTime")))
 end
 
 -- The Version field of the TOC ("@project-version@" in a development copy), nil when unknown.

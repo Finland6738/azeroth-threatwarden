@@ -2,9 +2,12 @@
 -- Compartment functions (SPEC-01 §3.1). Lua 5.1.
 -- Adapted from Azeroth Accord (Core/Init.lua), same owner, GPL-3.0 (ADR 0012).
 -- Modules attach themselves to the private namespace `ns`; the ones loaded before this file (Bus, Compat, Locale) are
--- attached to the addon object here, the later ones attach themselves (AzerothThreatwarden.Scheduler, ...). Modules
--- that do not exist yet (Config: M1.5; Window: M1.7) are asked for with `if ns.X`. Every game call goes through
+-- attached to the addon object here, the later ones attach themselves (AzerothThreatwarden.Scheduler, Config, ...).
+-- Modules that do not exist yet (Window: M1.7) are asked for with `if ns.X`. Every game call goes through
 -- Core/Compat.lua (ARC-02).
+--
+-- At ADDON_LOADED the order matters: Config loads the saved data first, then Locale picks the language from
+-- `account.settings.language` (the one place of SPEC-09 Q5), then Compat probes the client.
 local ADDON_NAME, ns = ...
 ns = ns or {}
 ns.modules = ns.modules or {}

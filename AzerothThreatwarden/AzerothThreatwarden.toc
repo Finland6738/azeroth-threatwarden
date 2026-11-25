@@ -26,5 +26,6 @@ Locales\itIT.lua
 Core\Init.lua
 Core\Features.lua
 Core\Scheduler.lua
+Core\Config.lua
 Core\Diagnostics.lua
 UI\DiagnosticsBox.lua

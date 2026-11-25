@@ -97,7 +97,7 @@ altro modulo caricato dopo di lui al caricamento del file, solo nei suoi gestori
 | `Core/Bus.lua` | publish/subscribe interno, copiato da Accord: `Bus.On`, `Bus.Off`, `Bus.Emit` (chiamate con il punto); un ascoltatore che solleva un errore non ferma gli altri (l'errore va nell'anello degli errori); un `Emit` non alloca (ARC-06) e non consegna un evento con un argomento segreto | — | `test_bus.lua` | M1.4 |
 | `Core/Compat.lua` | unica porta verso le API del gioco: `Resolve`, `Call` sotto `pcall`, `IsSecret`/`Readable`, tabella delle API e delle capacità (§8), lettura normalizzata della threat (§8.3), timer, restrizioni | emette `CAPABILITY_CHANGED`; ascolta (dal gioco) `ADDON_RESTRICTION_STATE_CHANGED` | `test_compat.lua`, `test_api_boundary.lua` (nessun file di `UI/` chiama il gioco) | M1.4 |
 | `Core/Scheduler.lua` | tick limitati con nome (ARC-09): avvio, arresto, frequenza, misura del costo | ascolta `COMBAT_ENDED` (ferma i tick legati al combattimento) | `test_scheduler.lua` | M1.4 |
-| `Core/Config.lua` | SavedVariables, schema 1, regole tipizzate, predefiniti, migrazioni, sola lettura, `corrupt` ([SPEC-02 §3](SPEC-02-data-model-storage.md#3-savedvariables)); `Config:Get(path)`, `Config:Set(path, value)` | emette `CONFIG_LOADED`, `CONFIG_CHANGED(path)` | `test_config.lua` | M1.5 |
+| `Core/Config.lua` | SavedVariables, schema 1, regole tipizzate, predefiniti, migrazioni, sola lettura, `corrupt` ([SPEC-02 §3](SPEC-02-data-model-storage.md#3-savedvariables)); `Config:Get(path)`, `Config:Set(path, value)`, `Config:ResetSettings()`, `Config:ResetWindow()`, `Config:DebugLines()` (sezione *Saved data* di §9); `Config.LANGUAGES`, l'elenco delle lingue (§10) | emette `CONFIG_LOADED`, `CONFIG_CHANGED(path)` | `test_config.lua`, `test_language.lua` | M1.5 |
 | `Core/Diagnostics.lua` | anello degli errori dell'addon (10, ripuliti dai percorsi), testo del rapporto (§9), mai nomi | — (legge Bus, Compat, Config, Scheduler) | `test_diagnostics.lua` | M1.4 |
 | `Core/Commands.lua` | `/threatwarden` e `/atw` ([SPEC-03 §5](SPEC-03-threat-monitor-ui.md#5-comandi-e-configurazione)); un comando di una parte spenta in `Features` risponde *coming in vX* | — (chiama le funzioni pubbliche di Window, Settings, About, Diagnostics) | `test_commands.lua` | M1.7 |
 | `UI/Assets.lua` | tabella unica di texture e font dell'addon (`Media/`), come in Accord | — | `test_theme.lua` (ogni file in tabella) | M1.6 |
@@ -285,7 +285,7 @@ senza firma), **assente** (si cerca a runtime). In grassetto le voci il cui comp
 | `combatlog.Restricted` | `C_CombatLog.IsCombatLogRestricted` | chiamata | firma | solo per il rapporto; il combat log non si usa ([ADR 0004](../adr/0004-threat-from-the-unit-threat-api-sampled-in-combat.md)) | M1 | **P7** |
 | `damagemeter.Available` | `C_DamageMeter.IsDamageMeterAvailable` | chiamata | firma | morti e durata (forse, M4) | M4 | **P8** |
 | `time.GetTime` | `GetTime` | chiamata | firma | tempo dei campioni | M1 | — |
-| `time.ServerTime` | `GetServerTime` | chiamata | firma | data delle sessioni | M4 | P12 |
+| `time.ServerTime` | `GetServerTime` | chiamata | firma | data delle voci `corrupt` (M1.5) e delle sessioni | M1 | P12 |
 | `time.After`, `time.NewTicker`, `time.NewTimer` | `C_Timer.After`, `NewTicker`, `NewTimer` | esistenza | firma | Scheduler | M1 | P11 |
 | `time.ProfileStop` | `debugprofilestop` | esistenza | firma | costo dei tick (ARC-09) | M1 | P10 |
 | `addon.Metadata` | `C_AddOns.GetAddOnMetadata` | chiamata | firma | versione nel rapporto e in Info | M1 | — |

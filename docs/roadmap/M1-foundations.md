@@ -115,10 +115,17 @@ in CI. Released as `v0.1.0`.
   framework, read-only on a newer schema, damaged tables kept under `corrupt`, `CONFIG_CHANGED` on the Bus),
   `settings.language` (`auto`, `enUS`, `itIT`) applied by `Core/Locale.lua` at load (SPEC-01 §10, ADR 0009 update).
 - Done when:
-  - [ ] A wrong value falls back to its default; a newer schema is left untouched and read-only.
-  - [ ] The language setting picks the locale after `/reload`; `auto` follows the client.
+  - [x] A wrong value falls back to its default; a newer schema is left untouched and read-only.
+  - [x] The language setting picks the locale after `/reload`; `auto` follows the client.
 - Tests: `test_config.lua` (migrations, read-only, corruption, reload), `test_language.lua`.
 - Real client: settings survive logout and `/reload`.
+- *Done (2026-11-25): `Core/Config.lua` (schema 1 of SPEC-02 §3.2–§3.3, rules, defaults, migrations on a copy with a
+  failing or missing step leading to read-only, read-only on a newer schema, `corrupt` with at most 5 bounded entries,
+  sizes clamped and scale rounded, `Set` with `CONFIG_CHANGED`, `ResetSettings`/`ResetWindow` for M1.7–M1.8, the
+  *Saved data* lines of `/atw debug`, `Config.DEV` for the packager); `account.settings.language` applied by
+  `Locale.Apply` at `ADDON_LOADED`; `Compat.ServerTime` (`time.ServerTime` now since M1) dates the `corrupt` entries.
+  SPEC-02 §3.4 completed (position checked for shape only, the window keeps it on screen in M1.7). 251 quick tests, 252
+  with `--long`. Not run in the game: settings surviving a real logout and `/reload`, the language after `/reload`.*
 
 ### M1.6 — Media, fonts, theme and widget kit
 - Branch: `step/m1-6-look`

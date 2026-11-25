@@ -27,23 +27,26 @@ describe("loading the addon", function()
 			"AzerothThreatwarden/Core/Locale.lua", "AzerothThreatwarden/Locales/enUS.lua",
 			"AzerothThreatwarden/Locales/itIT.lua", "AzerothThreatwarden/Core/Init.lua",
 			"AzerothThreatwarden/Core/Features.lua", "AzerothThreatwarden/Core/Scheduler.lua",
-			"AzerothThreatwarden/Core/Diagnostics.lua", "AzerothThreatwarden/UI/DiagnosticsBox.lua",
+			"AzerothThreatwarden/Core/Config.lua", "AzerothThreatwarden/Core/Diagnostics.lua",
+			"AzerothThreatwarden/UI/DiagnosticsBox.lua",
 		})
 	end)
 
 	-- SLASH_ACECONSOLE_ATW1 is the name AceConsole gives the /atw command (the client finds commands by global name).
-	it("defines no global but the addon object, the Compartment functions and the command (ARC-04)", function()
+	it("defines no global but the addon object, the saved data, the Compartment functions and the command (ARC-04)",
+		function()
 		deepEq(Mock.NewGlobals(), {
-			"AzerothThreatwarden", "AzerothThreatwarden_OnAddonCompartmentClick",
+			"AzerothThreatwarden", "AzerothThreatwardenCharDB", "AzerothThreatwardenDB",
+			"AzerothThreatwarden_OnAddonCompartmentClick",
 			"AzerothThreatwarden_OnAddonCompartmentEnter", "AzerothThreatwarden_OnAddonCompartmentLeave",
 			"SLASH_ACECONSOLE_ATW1",
 		})
 	end)
 
-	it("prints nothing, writes no saved data and starts no timer at login", function()
+	it("prints nothing, saves only the defaults of Config and starts no timer at login", function()
 		eq(#Mock.output, 0)
-		isNil(AzerothThreatwardenDB)
-		isNil(AzerothThreatwardenCharDB)
+		deepEq(AzerothThreatwardenDB, Mock.ns.Config.defaults.account)
+		deepEq(AzerothThreatwardenCharDB, Mock.ns.Config.defaults.char)
 		eq(Mock.PendingTimers(), 0)
 	end)
 end)
