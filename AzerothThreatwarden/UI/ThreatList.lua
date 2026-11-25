@@ -485,6 +485,22 @@ end
 ---------------------------------------------------------------------------------------------------------------------
 -- Drawing
 ---------------------------------------------------------------------------------------------------------------------
+-- The game's colour of a class file as { r, g, b }, asked once per class: the rows change class at every new order
+-- (ARC-06). nil when unknown (asked again the next time).
+local classColors = {}
+local function classColor(classFile)
+	if not classFile then return nil end
+	local color = classColors[classFile]
+	if not color then
+		local r, g, b = Compat.ClassColor(classFile)
+		if r then
+			color = { r, g, b }
+			classColors[classFile] = color
+		end
+	end
+	return color
+end
+
 local function fillRow(view, w, row)
 	local rec = row.record
 	local state = row.state or "UNKNOWN"
@@ -499,12 +515,11 @@ local function fillRow(view, w, row)
 	setText(view, w.name, unitLabel(rec))
 	if w.classFile ~= rec.classFile then
 		w.classFile = rec.classFile
-		local r, g, b = Compat.ClassColor(rec.classFile)
-		if r then
-			w.classColor = { r, g, b }
-			Theme.ClassText(w.name, r, g, b)
+		local color = classColor(rec.classFile)
+		w.classColor = color
+		if color then
+			Theme.ClassText(w.name, color[1], color[2], color[3])
 		else
-			w.classColor = nil
 			Theme.Text(w.name, "text-1")
 		end
 		w.paintMark(w.classMark)

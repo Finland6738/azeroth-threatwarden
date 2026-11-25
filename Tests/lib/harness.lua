@@ -279,6 +279,18 @@ T.log = function(...)
 	cfg.log("    " .. table.concat(parts, " ") .. "\n")
 end
 
+-- How many Lua VM instructions fn() runs, counted in blocks of `step` (100 by default): a measure of work that does not
+-- depend on the machine, for the per-tick budget (Tests/long/test_monitor_budget.lua).
+T.instructions = function(fn, step)
+	step = step or 100
+	local count = 0
+	debug.sethook(function() count = count + 1 end, "", step)
+	local ok, err = pcall(fn)
+	debug.sethook()
+	if not ok then error(err, 0) end
+	return count * step
+end
+
 -- A Lua error caught by the client's error handler fails the test that left it behind.
 local function checkErrors()
 	local errors = Mock.errors
@@ -298,6 +310,7 @@ T.boot = function(extraSetup)
 end
 
 rawset(testEnv, "Fight", loadChunk(cfg.fightPath, "Tests/lib/fight.lua", testEnv)(Mock))
+rawset(testEnv, "Raid", loadChunk(cfg.raidPath, "Tests/lib/raid.lua", testEnv)(Mock))
 
 local function matchesFilter(name)
 	local filter = cfg.filter

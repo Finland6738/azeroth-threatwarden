@@ -221,6 +221,35 @@ describe("changing theme without /reload", function()
 		near((fs:GetTextColor()), (Th().Color("text-1")), 1e-6, "only the square is coloured on a light theme")
 	end)
 
+	it("recolouring a registered region allocates nothing, and Apply paints the last colour (ARC-06)", function()
+		local paint = function() end
+		local region = { SetVertexColor = paint, SetColorTexture = paint, SetTextColor = paint }
+		local text = CreateFrame("Frame"):CreateFontString()
+		Th().Tint(region, "ok")
+		Th().Text(text, "text-2")
+		local grown = math.huge
+		for _ = 1, 3 do
+			collectgarbage("collect")
+			collectgarbage("stop")
+			local before = collectgarbage("count")
+			for i = 1, 1000 do
+				Th().Tint(region, i % 2 == 0 and "ok" or "err")
+				Th().Fill(region, "accent")
+			end
+			grown = math.min(grown, collectgarbage("count") - before)
+			collectgarbage("restart")
+		end
+		truthy(grown < 4, "grew by " .. grown .. " KB")
+		-- a class colour written over a token, and a token over the class colour, leave one colour each
+		Th().ClassText(text, 0.2, 0.4, 0.6)
+		Th().Text(text, "text-3")
+		Th().Apply("aurora")
+		near((text:GetTextColor()), (Th().Color("text-3", "aurora")), 1e-6)
+		Th().TextRGB(text, 0.7, 0.1, 0.1)
+		Th().Apply("warden")
+		near((text:GetTextColor()), 0.7, 1e-6)
+	end)
+
 	it("Call runs now and on every Apply, and THEME_CHANGED goes on the Bus", function()
 		local seen, heard = {}, {}
 		Mock.ns.Bus.On("THEME_CHANGED", function(id) heard[#heard + 1] = id end)

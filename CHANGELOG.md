@@ -7,6 +7,15 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
+- M2.7: performance budget and long tests of the threat monitor. Long scenarios (`Tests/long/test_monitor_raid.lua`,
+  on a simulated raid of 40, `Tests/lib/raid.lua`) play hours of combat ticks through the whole pipeline, from the
+  scanner to the list: one mob at 2, 5 and 10 Hz with tank deaths, a boss and four adds with frequent target changes
+  through the three probe outcomes, and states oscillating around the thresholds; the state rules are checked on every
+  tick and memory, pools and frames stop growing. A per-tick budget (`Tests/long/test_monitor_budget.lua`) fails the
+  *Long tests* workflow on a regression of work (VM instructions), allocation or time (relative to a reference loop);
+  the workflow now runs on changes to the interface too. The default of 5 reads per second stays provisional until the
+  in-game probe P10; its offline cost is recorded in SPEC-09 Q14 and SPEC-01 §5.
+
 - M2.6: monitor settings and demo mode, behind the `monitor` switch. A *Monitor* card in Settings: Warning and Danger
   thresholds (Danger always at least 5 points above), reads per second (2-10 Hz, default 5, provisional), units per read
   (5-40), when the window shows (*In group or combat*, the default: it opens at a fight and on joining a group and
@@ -65,6 +74,11 @@ All notable changes to this project are documented here. The format follows
   (M2.6).
 
 ### Changed
+
+- M2.7: three allocations per tick removed from the threat list, with no change of behaviour: reading a setting
+  (`Config:Get`, done at every bar animation) no longer splits its path each time, recolouring a region in
+  `UI/Theme.lua` writes over its entry instead of making one, and the list asks for the colour of a class once. In a
+  raid of 40 a tick with changing values went from about 12 KB of new tables to a few bytes of new text.
 
 - M2.4: the scanner's allocation test keeps the smallest growth of three batches of 500 scans under 4 KB, as the
   model's test does: a growth of the Lua state outside the scans (2.5-2.8 KB now and then) no longer fails it, while

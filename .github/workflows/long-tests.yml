@@ -1,14 +1,16 @@
 name: Long tests
 
-# The offline tests with the long scenarios (Tests/run_tests.py --long, Tests/long/, ADR 0010): a 40-player raid with
-# many mobs and a /reload in the middle of the fight today; recordings near the storage limit and the rest of SPEC-08 §3
-# as their modules arrive. They run when the threat pipeline, the recorder, the harness or these tests change, every
-# Monday, and on request; the CI workflow ("Tests") stays quick.
+# The offline tests with the long scenarios (Tests/run_tests.py --long, Tests/long/, ADR 0010): hours of combat ticks
+# of the threat monitor in a 40-player raid and the budget of one tick, and ten minutes of the mock client with a
+# /reload; recordings near the storage limit and the rest of SPEC-08 §3 as their modules arrive. They run when the
+# threat pipeline, the list and its widgets, the recorder, the harness or these tests change, every Monday, and on
+# request; the CI workflow ("Tests") stays quick.
 on:
   pull_request:
     paths:
       - "AzerothThreatwarden/Core/**"
       - "AzerothThreatwarden/Data/**"
+      - "AzerothThreatwarden/UI/**"
       - "Tests/lib/**"
       - "Tests/mock/**"
       - "Tests/long/**"

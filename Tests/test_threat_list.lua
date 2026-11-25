@@ -143,6 +143,27 @@ describe("the rows (values)", function()
 		near(r1, tr, 1e-6, "an unknown colour is text-1") near(g1, tg, 1e-6)
 	end)
 
+	it("ask the game for the colour of a class once, however often the rows change places (ARC-06)", function()
+		local asked = {}
+		C_ClassColor = { GetClassColor = function(class)
+			asked[class] = (asked[class] or 0) + 1
+			return { r = 1, g = 0.5, b = 0 }
+		end }
+		local pull = partyPull(50, 70)
+		pull:to(1)
+		local places = {}
+		for second = 2, 8 do   -- the player and the rogue swap places again and again
+			pull:threat("boss", "player", { scaled = second % 2 == 0 and 78 or 30 })
+			pull:to(second + 0.5)
+			places[tokens()[2]] = true
+		end
+		truthy(places.player and places.party3, "both were second in turn")
+		eq(asked.ROGUE, 1)
+		eq(asked.MAGE, 1)
+		for class, n in pairs(asked) do eq(n, 1, class) end
+		near((widget("party3").name:GetTextColor()), 1, 1e-6)
+	end)
+
 	it("name an unreadable unit after its token, never empty", function()
 		local pull = partyPull()
 		pull:secrets{ identity = true }

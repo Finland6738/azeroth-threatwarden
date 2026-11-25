@@ -197,6 +197,41 @@ aggiornamento di M1.1; §10).
 - Target che scompaiono, muoiono o cambiano GUID, dati mancanti, ritardati o incoerenti: gestiti dal modello
   ([SPEC-02](SPEC-02-data-model-storage.md)) e coperti da test.
 
+### 5.1 Il costo di un tick del monitor (misura offline di M2.7)
+
+Un tick completo del monitor in un raid da 40: 40 letture, modello e calcoli, stati, elenco con la finestra aperta
+(33 righe). Sono misure **offline** sul client finto, con funzioni del gioco a risposta costante: dicono come cambia il
+costo fra una versione e l'altra, **non** quanto costa nel gioco. La frequenza predefinita resta **5 Hz provvisoria**
+in attesa della misura nel client (P10, [Q14](SPEC-09-risks-open-questions.md)).
+
+| Misura per tick | Misurato (M2.7) | Budget (il test fallisce oltre) |
+|---|---|---|
+| Lavoro (istruzioni della VM Lua) | 156 000 – 168 000 | 220 000 |
+| Allocazioni | 14 – 27 byte | 48 byte |
+| Tempo, in esecuzioni del ciclo di riferimento | 9 – 14 | 30 |
+| Tempo sul PC di sviluppo (solo informativo) | circa 2 ms a macchina scarica, fino a 6 ms nelle ripetizioni più lente | nessuno |
+
+| Frequenza | Tick al secondo × circa 2 ms |
+|---|---|
+| 2 Hz | circa 4 ms al secondo |
+| 5 Hz (predefinito provvisorio) | circa 10 ms al secondo |
+| 10 Hz | circa 20 ms al secondo |
+
+- Ripartizione del lavoro a 5 Hz: letture (con la segretezza controllata da Compat) circa metà, elenco circa 23 %,
+  modello e calcoli circa 21 % (di più a 10 Hz, per i campioni della tendenza), stati circa 6 %. In *state only* un
+  tick costa circa il 55 % di uno con i valori, con nulla di leggibile circa il 35 %.
+- La lettura di **una sola unità** chiesta da `UNIT_THREAT_SITUATION_UPDATE` rifà modello, stati ed elenco: circa il
+  40 % di un tick ciascuna. Una raffica di questi eventi conta più della frequenza del tick; se raggrupparli lo decide
+  M0.7 con P6 e P10 (il comportamento di [MON-07](SPEC-03-threat-monitor-ui.md#14-quando-si-legge-eventi-e-tick) non
+  cambia con M2.7).
+- Il budget proposto per P10 (≤ 1 ms per tick al p95 e ≤ 5 ms al secondo,
+  [SPEC-08](SPEC-08-quality-probe-release.md#p10--costo-del-campionamento)) offline **non** è rispettato a 40 unità e
+  5 Hz sul PC di sviluppo: se P10 lo conferma nel client, si abbassa la frequenza o il limite di unità, o si riduce il
+  lavoro di letture ed eventi.
+- Il budget si controlla in `Tests/long/test_monitor_budget.lua` ([SPEC-08 §3](SPEC-08-quality-probe-release.md#3-test-lunghi)),
+  per 2, 5 e 10 Hz, su un mob e con cambi di bersaglio. Un aumento voluto si misura, si spiega nella pull request e
+  sposta i numeri nel test e in questa tabella.
+
 ## 6. Sicurezza, privacy, conformità (fonte §10)
 
 Nessuna comunicazione di rete; nessuna credenziale o dato personale raccolto; dati solo nelle SavedVariables; funzione

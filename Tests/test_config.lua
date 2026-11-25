@@ -222,6 +222,23 @@ describe("Set and Get (SPEC-02 §3.4)", function()
 		isNil(C():Get("account.settings.nothing.deeper"))
 		isNil(C():Get("nowhere.at.all"))
 	end)
+
+	it("Get allocates nothing after the first call of a path, and follows the stored value (ARC-06)", function()
+		eq(C():Get("account.settings.animations"), true)
+		local grown = math.huge
+		for _ = 1, 3 do   -- the smallest of three batches under 4 KB, as the other allocation tests
+			collectgarbage("collect")
+			collectgarbage("stop")
+			local before = collectgarbage("count")
+			for _ = 1, 1000 do C():Get("account.settings.animations") end
+			grown = math.min(grown, collectgarbage("count") - before)
+			collectgarbage("restart")
+		end
+		truthy(grown < 4, "grew by " .. grown .. " KB")
+		truthy(C():Set("account.settings.animations", false))
+		eq(C():Get("account.settings.animations"), false)
+		eq(C().db.account.settings, C():Get("account.settings"), "a table is the live one")
+	end)
 end)
 
 describe("damaged data (DAT-24)", function()

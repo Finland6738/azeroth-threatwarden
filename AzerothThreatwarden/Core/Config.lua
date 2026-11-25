@@ -64,7 +64,8 @@ Config.MONITOR = {
 	gap = 5,
 }
 -- The one place of the defaults the owner still has to decide (SPEC-09): the thresholds (Q7), when the window shows
--- itself (Q13), the sampling rate and the units read per scan (Q14, provisional until the probe P10 and M2.7).
+-- itself (Q13), the sampling rate and the units read per scan (Q14, provisional until the probe P10 measures them in
+-- the game; their offline cost is in SPEC-01 §5.1).
 Config.MONITOR_DEFAULTS = {
 	warning = 80, danger = 95,
 	rate = 5, maxUnits = 40,
@@ -558,10 +559,18 @@ end
 ---------------------------------------------------------------------------------------------------------------------
 -- Get / Set by path: "account.settings.language", "char.ui.scale"
 ---------------------------------------------------------------------------------------------------------------------
+-- path -> its names, split once for Get and never changed afterwards (the paths are a fixed set): Get runs in frequent
+-- paths (Motion.On, at every tween of a threat bar) and must not allocate (ARC-06).
+local GET_PARTS = {}
+
 -- The value at `path`, nil when absent. A table is the live one (LibDBIcon keeps the minimap table): change it only
 -- through Set.
 function Config:Get(path)
-	local parts = split(path)
+	local parts = GET_PARTS[path]
+	if not parts then
+		parts = split(path)
+		if type(path) == "string" then GET_PARTS[path] = parts end
+	end
 	local node = Config.db[parts[1]]
 	for i = 2, #parts do
 		if type(node) ~= "table" then return nil end

@@ -147,32 +147,41 @@ end
 -- replaces the others, so a pooled row that is filled again never keeps the colour of its previous data.
 local TEXT_COLOUR = { text = true, class = true, rgb = true }
 
-local function add(region, entry)
+-- Registers one colour of a region and applies it. One entry per kind: registering again replaces the token (a button
+-- that changes style). The entry already there is written over, so recolouring a region allocates nothing: the threat
+-- list does it whenever a row changes state or unit (ARC-06). A "fn" entry is always added.
+local function add(region, kind, token, alpha, r, g, b, fn)
 	local list = registry[region]
 	if not list then list = {}; registry[region] = list end
-	-- one entry per kind: registering again replaces the token (a button that changes style)
-	for i, e in ipairs(list) do
-		if e.kind ~= "fn" and (e.kind == entry.kind or (TEXT_COLOUR[e.kind] and TEXT_COLOUR[entry.kind])) then
-			list[i] = entry; applyOne(region, entry); return region
+	local entry
+	for i = 1, #list do
+		local k = list[i].kind
+		if k ~= "fn" and (k == kind or (TEXT_COLOUR[k] and TEXT_COLOUR[kind])) then
+			entry = list[i]
+			break
 		end
 	end
-	list[#list + 1] = entry
+	if not entry then
+		entry = {}
+		list[#list + 1] = entry
+	end
+	entry.kind, entry.token, entry.alpha, entry.r, entry.g, entry.b, entry.fn = kind, token, alpha, r, g, b, fn
 	applyOne(region, entry)
 	return region
 end
 
 -- A white texture shows `token` through SetVertexColor; `alpha` multiplies the token's own alpha.
-function Theme.Tint(region, token, alpha) return add(region, { kind = "vertex", token = token, alpha = alpha }) end
+function Theme.Tint(region, token, alpha) return add(region, "vertex", token, alpha) end
 -- A solid-colour texture (SetColorTexture) in `token`.
-function Theme.Fill(region, token, alpha) return add(region, { kind = "color", token = token, alpha = alpha }) end
+function Theme.Fill(region, token, alpha) return add(region, "color", token, alpha) end
 -- A FontString (or font object) coloured with `token`.
-function Theme.Text(region, token) return add(region, { kind = "text", token = token }) end
+function Theme.Text(region, token) return add(region, "text", token) end
 -- A FontString in a colour of the game (r, g, b in 0..1), not of a theme. It survives Apply.
-function Theme.TextRGB(region, r, g, b) return add(region, { kind = "rgb", r = r, g = g, b = b }) end
+function Theme.TextRGB(region, r, g, b) return add(region, "rgb", nil, nil, r, g, b) end
 -- A player's name: the class colour on the dark themes, text-1 on the light one (the square next to it carries the colour).
-function Theme.ClassText(region, r, g, b) return add(region, { kind = "class", r = r, g = g, b = b }) end
+function Theme.ClassText(region, r, g, b) return add(region, "class", nil, nil, r, g, b) end
 -- A free function fn(region, themeId) that sets whatever a token cannot (a gradient, a blend mode); runs now and on Apply.
-function Theme.Call(region, fn) return add(region, { kind = "fn", fn = fn }) end
+function Theme.Call(region, fn) return add(region, "fn", nil, nil, nil, nil, nil, fn) end
 
 function Theme.Count()
 	local n = 0

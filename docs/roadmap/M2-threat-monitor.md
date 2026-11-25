@@ -131,7 +131,14 @@ closing on the tank goes WARNING then DANGER, and a target with no data shows UN
 - Scope: long scenarios (40-player raid, hours of ticks), a per-tick time and allocation budget in the mock, the
   rate proposed by P10 as default.
 - Done when:
-  - [ ] The long scenario stays inside its budget; the default rate is recorded in SPEC-09 Q14.
+  - [x] The long scenario stays inside its budget; the default rate is recorded in SPEC-09 Q14.
+- *Done (2026-11-25, before M0.7): `Tests/lib/raid.lua` (a simulated raid of 40 whose answers do not allocate);
+  `test_monitor_raid.lua` (one mob for 30 minutes at 2, 5 and 10 Hz, a boss and four adds for two hours at 10 Hz
+  through the three outcomes, oscillating states) and `test_monitor_budget.lua` (work, allocation and time per tick at
+  2, 5 and 10 Hz) in `Tests/long/`; three allocations per tick removed (`Config:Get`, the colour registry of
+  `UI/Theme.lua`, class colours in the list); the *Long tests* workflow also runs on `UI/` changes. The default stays
+  **5 Hz, provisional**: the probe P10 has not run, so no rate comes from it yet; the offline cost is in SPEC-01 §5.1
+  and SPEC-09 Q14. The cost in the game and the cost of bursts of threat events wait for P6, P10 and M2.8.*
 
 ### M2.8 — In-game checklist M2
 - Branch: `step/m2-8-checklist`

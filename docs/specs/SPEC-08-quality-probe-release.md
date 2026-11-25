@@ -424,8 +424,21 @@ pull:finish()    -- suona il resto
 
 `Tests/run_tests.py --long` (workflow *Long tests*, scenari in `Tests/long/`): raid di 40 con molti mob per ore;
 storico vicino al limite; sessioni lunghe; apertura e chiusura ripetuta del replay; misura delle allocazioni per tick.
-Ogni voce arriva con il modulo che prova; M1.3 ne ha una sola, sul client finto: dieci minuti di raid da 40 con cinque
-mob e un `/reload` a metà.
+Ogni voce arriva con il modulo che prova.
+
+| File | Da | Cosa prova |
+|---|---|---|
+| `test_raid.lua` | M1.3 | il client finto da solo: dieci minuti di raid da 40 con cinque mob e un `/reload` a metà |
+| `test_monitor_raid.lua` | M2.7 | la pipeline intera (Scanner → Model → Calc → State → elenco, con la finestra) in un raid da 40: un mob per 30 minuti a 2, 5 e 10 Hz con morti dei tank; boss e quattro add per due ore a 10 Hz con un nuovo bersaglio ogni pochi secondi, morti di tank e add e i tre esiti del probe; stati che oscillano attorno alle soglie. A ogni tick le regole di SPEC-03 §2 (salite immediate, discese trattenute), mai una discesa prima di 1 s; pool, frame, registro dei colori e memoria che smettono di crescere |
+| `test_monitor_budget.lua` | M2.7 | il costo di un tick con 40 unità e la finestra, a 2, 5 e 10 Hz, su un mob e con cambi di bersaglio: tre misure deterministiche con un budget ciascuna ([SPEC-01 §5](SPEC-01-platform-architecture.md#5-prestazioni-fonte-9)) |
+
+Il raid simulato è `Tests/lib/raid.lua` (globale `Raid`): costruisce il raid con uno script di combattimento e
+sostituisce le funzioni della threat con risposte calcolate una volta per passo, senza allocazioni, così che si misuri
+l'addon; le regole restano **ipotesi** fino al probe. Le tre misure del budget: **lavoro**, istruzioni della VM per
+tick (`T.instructions`, uguale su ogni macchina); **allocazioni**, crescita dello stato Lua per tick con il garbage
+collector fermo, il minimo di tre blocchi dopo una raccolta completa e un riscaldamento (i setter dei widget del mock
+che allocano scrivono sul posto); **tempo**, `os.clock` per tick in rapporto a un ciclo di riferimento fisso eseguito
+a turno, la mediana di sette blocchi.
 
 ## 4. Prove nel client
 

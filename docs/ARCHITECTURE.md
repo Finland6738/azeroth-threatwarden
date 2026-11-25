@@ -260,7 +260,8 @@ flowchart LR
 8. Periodic work goes through `Core/Scheduler.lua`; nothing runs on a fixed `OnUpdate`.
 9. Test it offline ([ADR 0010](adr/0010-offline-tests-with-lupa-and-a-mock-client.md)): `Tests/test_<module>.lua` on
    the mock client of `Tests/mock/` (add the API there, with its dump entry), with fight scripts (`Tests/lib/fight.lua`)
-   for what depends on a fight.
+   for what depends on a fight. What runs on every tick keeps inside the budget of `Tests/long/test_monitor_budget.lua`
+   (work, allocation and time in a raid of 40, [SPEC-01 §5](specs/SPEC-01-platform-architecture.md#5-prestazioni-fonte-9)).
 
 ### For other addons, macros and players (no stability guarantee)
 
