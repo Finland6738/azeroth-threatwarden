@@ -72,6 +72,9 @@ All notable changes to this project are documented here. The format follows
 
 ### Documentation
 
+- M1.9: the in-game checklist of milestone M1 (`docs/checklists/M1.md`), to be run by the owner in WoW Forever
+  and reported with the *In-game test report* form; README status: M1 complete in code, in-game check open. Not run
+  in the game.
 - M0.0: repository bootstrap. The owner's original specification (`docs/specs/source-specification.md`) and the
   detailed specification in Italian, [SPEC-00](docs/specs/SPEC-00-vision-scope.md) to
   [SPEC-09](docs/specs/SPEC-09-risks-open-questions.md): vision and the binding data reliability categories, platform

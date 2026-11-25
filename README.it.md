@@ -7,7 +7,8 @@ della threat, di coaching e di analisi dei combattimenti per **World of Warcraft
 quale mob, ti avvisa prima che tu prenda l'aggro, registra i combattimenti e spiega cosa è successo, distinguendo sempre
 ciò che è **noto** da ciò che è **stimato**.
 
-> **Stato: sviluppo iniziale.** Specifiche, decisioni e piano sono scritti e l'addon ha le sue
+> **Stato: sviluppo iniziale. La M1 (fondamenta) è completa nel codice; la sua
+> [verifica in gioco](docs/checklists/M1.md) (in inglese) è ancora aperta.** Specifiche, decisioni e piano sono scritti e l'addon ha le sue
 > fondamenta: impostazioni salvate (con versione e migrazioni), l'aspetto dell'ecosistema, una finestra spostabile (la
 > scheda Monitor è ancora vuota) con le Impostazioni (temi, lingua, finestra) e la pagina Info con i crediti, i [comandi](docs/wiki/Commands-it.md) `/atw` e `/threatwarden`, il pulsante della
 > minimappa e la voce nell'Addon Compartment; non legge ancora la threat e non c'è una versione da installare. Il primo

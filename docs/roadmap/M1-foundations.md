@@ -8,6 +8,9 @@ settings, credits and a diagnostic report, on tested foundations copied from Aze
 after `/reload`; Settings and Info work in both languages; `/atw debug` lists what Compat found; the offline tests run
 in CI. Released as `v0.1.0`.
 
+*State (2026-11-25): M1 is complete in code (steps M1.1–M1.9, offline tests in CI). The part of the criterion that
+needs the game is **open** until the owner runs [the M1 checklist](../checklists/M1.md).*
+
 | Step | Model | Effort |
 |---|---|---|
 | M1.1 Specification: architecture, data, window, ui-style | Opus | high |
@@ -199,8 +202,11 @@ in CI. Released as `v0.1.0`.
 - Scope: `docs/checklists/M1.md` (load, window, commands, settings, language, `/atw debug`, UI scales and custom UIs);
   README status.
 - Done when:
-  - [ ] The checklist exists and links the *In-game test report* form.
+  - [x] The checklist exists and links the *In-game test report* form.
 - Real client: the checklist itself, run by the owner.
+- *Done (2026-11-25): `docs/checklists/M1.md` (setup, loading, commands, window, minimap and Compartment, Settings,
+  Info, saved data, combat, `/atw debug`, UI scales and custom UIs, result table), checklist index, README status in
+  both languages. Documentation only; **the checklist has not been run in the game**.*
 
 ### M1.R — Release preparation `v0.1.0`
 - Branch: `chore/release-v0.1.0`

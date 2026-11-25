@@ -7,4 +7,4 @@ before `v1.0.0`. Results are reported with the *In-game test report* issue form.
 
 | Checklist | Milestone | State |
 |---|---|---|
-| `M1.md` | M1 Foundations | written in step M1.9 |
+| [M1.md](M1.md) | M1 Foundations | written, **not run yet** |
