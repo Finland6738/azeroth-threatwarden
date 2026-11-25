@@ -7,6 +7,14 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
+- M1.4: `Core/Compat.lua`, the only door to the game: the API table of SPEC-01 §8.2 (58 entries, checked against the
+  Forever dump) with the states available, missing, restricted and error; the capabilities of §8.4, unknown until a
+  reading proves them; the client restrictions; secret-value checks that never read a secret; the normalized threat
+  read (`Compat.Threat.Read`: values, state only or none, with the reason), allocation-free, ready for M2.
+  `Core/Bus.lua` (internal events), `Core/Scheduler.lua` (named, bounded ticks; none runs yet) and
+  `Core/Diagnostics.lua` (the addon's error ring and the diagnostic report, in English and without names).
+  **`/atw debug`** opens the report in a box, already selected, to paste into a bug report; the other commands arrive
+  with the window (M1.7). A test checks that no file but Compat calls the game. Not run in the game.
 - M1.3: the offline test harness `Tests/` (development only, never packaged), adapted from Azeroth Accord:
   `run_tests.py` (lupa 2.8, Lua 5.1, the real libraries and the addon in TOC order, a name filter, `-v`, `--long`, the
   libraries fetched when missing), assertions and harness with a `/reload` and re-login simulation of the SavedVariables,

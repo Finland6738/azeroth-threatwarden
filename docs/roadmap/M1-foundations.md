@@ -92,10 +92,20 @@ in CI. Released as `v0.1.0`.
   `Core/Scheduler.lua` (bounded ticks, only while needed), `Core/Diagnostics.lua` (error ring, report text without
   names), `UI/DiagnosticsBox.lua` (copy box); a test that no `UI/` file calls a game API directly.
 - Done when:
-  - [ ] Every API of SPEC-01 §2 is in the capability table; a missing or secret one is reported, never raised.
-  - [ ] `/atw debug` produces the report (header, client, locale, features, APIs, saved data, memory, errors).
+  - [x] Every API of SPEC-01 §2 is in the capability table; a missing or secret one is reported, never raised.
+  - [x] `/atw debug` produces the report (header, client, locale, features, APIs, saved data, memory, errors).
 - Tests: `test_compat.lua`, `test_api_boundary.lua`, `test_diagnostics.lua`, `test_bus.lua`, `test_scheduler.lua`.
 - Real client: the capability states and the report text.
+- *Done (2026-11-25): `Core/Compat.lua` (58 APIs of SPEC-01 §8.2, all checked against the dump, with the states
+  available/missing/restricted/error; capabilities of §8.4, unknown until a reading proves them; client restrictions
+  from `Enum.AddOnRestrictionType` and `ADDON_RESTRICTION_STATE_CHANGED`; `IsSecret` that never reads a secret;
+  `Compat.Threat.Read` of §8.3, allocation-free), `Core/Bus.lua`, `Core/Scheduler.lua` (named ticks, 1–10 Hz, stop at
+  `COMBAT_ENDED`, cost per tick; none runs in M1), `Core/Diagnostics.lua` (error ring, the report of §9 in English,
+  without names), `UI/DiagnosticsBox.lua` (the client's own dialog look until M1.6), `/atw debug` through AceConsole
+  (the other commands are M1.7). Compat and Bus now load before `Locale`; `Init` and `Locale` call the game only through
+  Compat. Two APIs added to the table: `client.RealmName`, `addon.ErrorHandler`. 201 quick tests, 202 with `--long`.
+  Not run in the game: the capability states, the restriction names and values [probe P11], the report text and the
+  copy box.*
 
 ### M1.5 — Config, schema and migrations, language setting
 - Branch: `step/m1-5-config`

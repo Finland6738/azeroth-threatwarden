@@ -23,16 +23,20 @@ describe("loading the addon", function()
 		local own = {}
 		for i = first, #Mock.loadedFiles do own[#own + 1] = Mock.loadedFiles[i] end
 		deepEq(own, {
+			"AzerothThreatwarden/Core/Bus.lua", "AzerothThreatwarden/Core/Compat.lua",
 			"AzerothThreatwarden/Core/Locale.lua", "AzerothThreatwarden/Locales/enUS.lua",
 			"AzerothThreatwarden/Locales/itIT.lua", "AzerothThreatwarden/Core/Init.lua",
-			"AzerothThreatwarden/Core/Features.lua",
+			"AzerothThreatwarden/Core/Features.lua", "AzerothThreatwarden/Core/Scheduler.lua",
+			"AzerothThreatwarden/Core/Diagnostics.lua", "AzerothThreatwarden/UI/DiagnosticsBox.lua",
 		})
 	end)
 
-	it("defines no global but the addon object and the Compartment functions (ARC-04)", function()
+	-- SLASH_ACECONSOLE_ATW1 is the name AceConsole gives the /atw command (the client finds commands by global name).
+	it("defines no global but the addon object, the Compartment functions and the command (ARC-04)", function()
 		deepEq(Mock.NewGlobals(), {
 			"AzerothThreatwarden", "AzerothThreatwarden_OnAddonCompartmentClick",
 			"AzerothThreatwarden_OnAddonCompartmentEnter", "AzerothThreatwarden_OnAddonCompartmentLeave",
+			"SLASH_ACECONSOLE_ATW1",
 		})
 	end)
 
@@ -72,7 +76,7 @@ describe("the Forever check (ARC-01)", function()
 	end)
 end)
 
--- A stand-in for Core/Bus.lua (M1.4) that records what Init raises, and keeps the real one working once it exists.
+-- Records what Init raises on Core/Bus.lua, and keeps the real Bus working.
 local raised
 local function recordBus()
 	raised = {}

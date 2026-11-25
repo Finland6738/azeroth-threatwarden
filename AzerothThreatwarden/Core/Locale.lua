@@ -31,9 +31,9 @@ local L = setmetatable({}, {
 ns.L = L
 
 -- The client's language code, "enUS" when the client cannot say.
+-- Core/Compat.lua loads before this file, because the language is asked while the files of Locales/ load.
 local function clientLocale()
-	-- M1.4 routes this call through Core/Compat.lua.
-	local code = GetLocale and GetLocale()
+	local code = ns.Compat and ns.Compat.ClientLocale()
 	return type(code) == "string" and code or Locale.BASE
 end
 
