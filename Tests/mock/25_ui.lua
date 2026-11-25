@@ -24,7 +24,8 @@ Enum.UITextureSliceMode = { Stretched = 1, Tiled = 0 }
 
 -- Moving is instant: the mock records that the frame is being moved.
 function Widget:StartMoving() self._moving = true end
-function Widget:StopMovingOrSizing() self._moving = false end
+function Widget:StartSizing(point) self._sizing = point end
+function Widget:StopMovingOrSizing() self._moving, self._sizing = false, nil end
 
 function CreateColor(r, g, b, a) return { r = r, g = g, b = b, a = a or 1 } end
 

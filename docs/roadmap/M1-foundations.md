@@ -158,10 +158,17 @@ in CI. Released as `v0.1.0`.
   toggles; `show`, `hide`, `lock`, `unlock`, `reset`, `settings`, `debug`, `about`, `help`), `UI/Launcher.lua` with the
   LibDBIcon button (hideable) and the Addon Compartment.
 - Done when:
-  - [ ] The window keeps position, size, scale and lock after `/reload`.
-  - [ ] Every command answers in both languages.
+  - [x] The window keeps position, size, scale and lock after `/reload`.
+  - [x] Every command answers in both languages.
 - Tests: `test_window.lua`, `test_commands.lua`, `test_launcher.lua`.
 - Real client: moving, resizing and scaling; the window in combat.
+- *Done (2026-11-25): `UI/Window.lua` (compact and wide layouts, module state, tabs with Reports behind its switch, move,
+  lock, resize, scale, `char.ui`, Esc, screen edges), `Core/Commands.lua`, `UI/Launcher.lua` (LibDBIcon button,
+  Compartment functions moved there from `Init`), the Bus event `DISPLAY_CHANGED`, wiki *Commands*. The Settings tab and
+  the Info page are one line of text until M1.8, which also gives the controls for scale and the minimap button. The wide
+  title bar is 52 pt (the kit of M1.6; SPEC-03 said 44). Both boxes are checked offline only: 404 tests with `--long`.
+  Not run in the game: moving, resizing and scaling, the window after a real `/reload`, in combat and on another screen
+  size, Esc, the minimap button, the Addon Compartment, the title fit with the real fonts.*
 
 ### M1.8 — Settings, Info and credits, first design previews
 - Branch: `step/m1-8-settings-about`

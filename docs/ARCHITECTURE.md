@@ -141,11 +141,12 @@ copied from Azeroth Accord and renamed; each copied file says so in its header.
 |---|---|---|---|
 | `ADDON_READY` | Init, after Config, Locale and Compat | modules that prepare state | M1 |
 | `CONFIG_LOADED`, `CONFIG_CHANGED(path)` | Config | Theme, Window, Launcher | M1 |
+| `DISPLAY_CHANGED` | Init (screen size or interface scale) | Window | M1 |
 | `SETTINGS_CHANGED(key)` | Settings | Window, Diagnostics | M1 |
 | `THEME_CHANGED(themeId)` | Theme | views | M1 |
 | `CAPABILITY_CHANGED(id, state)` | Compat | Window (module state), ThreatState | M1 |
 | `COMBAT_STARTED`, `COMBAT_ENDED` | Init | Scheduler, Window, Scanner, Recorder | M1 |
-| `WINDOW_SHOWN(shown)`, `TAB_CHANGED(tabId)` | Window | Launcher, Scanner, tabs | M1 |
+| `WINDOW_SHOWN(shown)`, `TAB_CHANGED(tabId)` | Window | Scanner, tabs | M1 |
 | `TARGET_CHANGED`, `THREAT_SCANNED`, `THREAT_UPDATED`, `STATE_CHANGED`, `THREAT_MODE_CHANGED` | Data | ThreatList, Alerts, Recorder | *planned*, M2 |
 | `ALERT_RAISED`, `COACH_TIP` | Alerts, Coach | Window, Recorder | *planned*, M3 |
 | `SESSION_STARTED`, `SESSION_ENDED`, `SESSIONS_CHANGED` | Recorder, Storage | Reports | *planned*, M4 |

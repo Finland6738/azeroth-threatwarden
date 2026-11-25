@@ -92,21 +92,21 @@ altro modulo caricato dopo di lui al caricamento del file, solo nei suoi gestori
 | File | Responsabilità | Bus: emette / ascolta | Test | Step |
 |---|---|---|---|---|
 | `Core/Locale.lua` | tabelle delle lingue registrate dai file di `Locales/`; `ns.L`, una tabella che risponde nella lingua attiva con ripiego sull'inglese; `Locale.Apply(code)` al caricamento (§10) | — | `test_locales.lua`, `test_language.lua` | M1.2, M1.5 |
-| `Core/Init.lua` | oggetto AceAddon `AzerothThreatwarden`; le tre funzioni del Compartment nominate dal TOC (da M1.2, `UI/Launcher.lua` le completa in M1.7); controllo Forever (ARC-01); ciclo di vita: `ADDON_LOADED` → `Config:Load`, `Locale.Apply`, `Compat:Probe`; `PLAYER_LOGIN` → interfaccia; `PLAYER_LOGOUT`; stato del combattimento da `PLAYER_REGEN_DISABLED/ENABLED`; sezioni di `/atw debug` (`AddDebugSection`) | emette `ADDON_READY`, `COMBAT_STARTED`, `COMBAT_ENDED` | `test_init.lua` (avvio, client non Forever, `/reload`) | M1.2, M1.3 |
+| `Core/Init.lua` | oggetto AceAddon `AzerothThreatwarden`; controllo Forever (ARC-01); ciclo di vita: `ADDON_LOADED` → `Config:Load`, `Locale.Apply`, `Compat:Probe`; `PLAYER_LOGIN` → interfaccia; `PLAYER_LOGOUT`; stato del combattimento da `PLAYER_REGEN_DISABLED/ENABLED`; cambi di schermo da `DISPLAY_SIZE_CHANGED` e `UI_SCALE_CHANGED`; registrazione dei comandi; sezioni di `/atw debug` (`AddDebugSection`) | emette `ADDON_READY`, `COMBAT_STARTED`, `COMBAT_ENDED`, `DISPLAY_CHANGED` | `test_init.lua` (avvio, client non Forever, `/reload`) | M1.2, M1.3 |
 | `Core/Features.lua` | interruttori delle parti non finite (§3.4); `Features.On(name)` si chiede quando si agisce, mai una volta sola al caricamento | — | `test_features.lua` | M1.2 |
 | `Core/Bus.lua` | publish/subscribe interno, copiato da Accord: `Bus.On`, `Bus.Off`, `Bus.Emit` (chiamate con il punto); un ascoltatore che solleva un errore non ferma gli altri (l'errore va nell'anello degli errori); un `Emit` non alloca (ARC-06) e non consegna un evento con un argomento segreto | — | `test_bus.lua` | M1.4 |
 | `Core/Compat.lua` | unica porta verso le API del gioco: `Resolve`, `Call` sotto `pcall`, `IsSecret`/`Readable`, tabella delle API e delle capacità (§8), lettura normalizzata della threat (§8.3), timer, restrizioni | emette `CAPABILITY_CHANGED`; ascolta (dal gioco) `ADDON_RESTRICTION_STATE_CHANGED` | `test_compat.lua`, `test_api_boundary.lua` (nessun file di `UI/` chiama il gioco) | M1.4 |
 | `Core/Scheduler.lua` | tick limitati con nome (ARC-09): avvio, arresto, frequenza, misura del costo | ascolta `COMBAT_ENDED` (ferma i tick legati al combattimento) | `test_scheduler.lua` | M1.4 |
 | `Core/Config.lua` | SavedVariables, schema 1, regole tipizzate, predefiniti, migrazioni, sola lettura, `corrupt` ([SPEC-02 §3](SPEC-02-data-model-storage.md#3-savedvariables)); `Config:Get(path)`, `Config:Set(path, value)`, `Config:ResetSettings()`, `Config:ResetWindow()`, `Config:DebugLines()` (sezione *Saved data* di §9); `Config.LANGUAGES`, l'elenco delle lingue (§10) | emette `CONFIG_LOADED`, `CONFIG_CHANGED(path)` | `test_config.lua`, `test_language.lua` | M1.5 |
 | `Core/Diagnostics.lua` | anello degli errori dell'addon (10, ripuliti dai percorsi), testo del rapporto (§9), mai nomi | — (legge Bus, Compat, Config, Scheduler) | `test_diagnostics.lua` | M1.4 |
-| `Core/Commands.lua` | `/threatwarden` e `/atw` ([SPEC-03 §5](SPEC-03-threat-monitor-ui.md#5-comandi-e-configurazione)); un comando di una parte spenta in `Features` risponde *coming in vX* | — (chiama le funzioni pubbliche di Window, Settings, About, Diagnostics) | `test_commands.lua` | M1.7 |
+| `Core/Commands.lua` | `/threatwarden` e `/atw` ([SPEC-03 §5](SPEC-03-threat-monitor-ui.md#5-comandi-e-configurazione)); un comando di una parte spenta in `Features` risponde *This arrives in vX* e non fa nulla | — (chiama le funzioni pubbliche di Window e Diagnostics) | `test_commands.lua` | M1.7 |
 | `UI/Assets.lua` | tabella unica di texture e font dell'addon (`Media/`), come in Accord | — | `test_assets.lua` (ogni file in tabella, formato TGA, icone, licenze) | M1.6 |
 | `UI/Theme.lua` | token di Nebula, Aurora e Warden e i token di stato ([ui-style](ui-style.md)); registro delle regioni tinte; oggetti font `AzerothThreatwardenFont<Id>`; `Px()`; forme 9-slice | emette `THEME_CHANGED(themeId)`; ascolta `CONFIG_LOADED`, `CONFIG_CHANGED` | `test_theme.lua` (parità dei token, contrasti, nessun colore fuori dal tema) | M1.6 |
 | `UI/Motion.lua` | animazioni del tema (durate 120/200/320 ms), spente con `settings.animations` | — | `test_theme.lua` | M1.6 |
 | `UI/Widgets/` | il kit di Accord (`Core.lua`: Button, Card, Badge, Tabs, Segmented, TitleBar, Dialog, EditBox, ChoiceList; `Controls.lua`: Switch, Slider, Select; `ThinBar.lua`; `Tooltip.lua`), più `Threat.lua` con `ThreatBar`, `StateBadge` e `StateStripe` (vuoti di dati fino a M2) | — | `test_widgets.lua` | M1.6 |
 | `UI/DiagnosticsBox.lua` | la finestra da cui copiare il rapporto di `/atw debug`: dal M1.6 un `Widgets.Dialog` senza velo, spostabile | — | `test_diagnostics.lua` | M1.4 |
-| `UI/Window.lua` | finestra principale ([SPEC-03 §4](SPEC-03-threat-monitor-ui.md#4-finestra)): barra del titolo, schede, spostamento, blocco, ridimensionamento, scala, posizione per personaggio, Esc | emette `WINDOW_SHOWN(shown)`, `TAB_CHANGED(tabId)`; ascolta `THEME_CHANGED`, `COMBAT_STARTED`, `COMBAT_ENDED`, `CAPABILITY_CHANGED` | `test_window.lua` | M1.7 |
-| `UI/Launcher.lua` | pulsante della minimappa (LibDataBroker + LibDBIcon, nascondibile) e voce dell'Addon Compartment (le tre funzioni globali del TOC) | ascolta `CONFIG_CHANGED` (`settings.minimap.hide`) | `test_launcher.lua` | M1.7 |
+| `UI/Window.lua` | finestra principale ([SPEC-03 §4](SPEC-03-threat-monitor-ui.md#4-finestra)): barra del titolo, schede, spostamento, blocco, ridimensionamento, scala, posizione per personaggio, Esc | emette `WINDOW_SHOWN(shown)`, `TAB_CHANGED(tabId)`; ascolta `CONFIG_LOADED`, `CONFIG_CHANGED`, `DISPLAY_CHANGED`, `COMBAT_STARTED`, `COMBAT_ENDED`, `CAPABILITY_CHANGED` (i colori li ridipinge il registro del tema) | `test_window.lua` | M1.7 |
+| `UI/Launcher.lua` | pulsante della minimappa (LibDataBroker + LibDBIcon, nascondibile) e voce dell'Addon Compartment (le tre funzioni globali del TOC), con lo stesso tooltip | ascolta `CONFIG_CHANGED` (`settings.minimap.*`) | `test_launcher.lua` | M1.7 |
 | `UI/Settings.lua` | pagina Settings (Aspetto, Lingua, Finestra, ripristino) nella scheda e nel pannello Impostazioni del gioco | emette `SETTINGS_CHANGED(key)` | `test_settings.lua`, `test_ui_texts.lua` | M1.8 |
 | `UI/About.lua` | pagina Info: logo, versione, crediti NEBULA, link da copiare, licenza | — | `test_about.lua` | M1.8 |
 
@@ -135,13 +135,14 @@ Accord.
 | Evento | Argomenti | Chi lo emette | Chi lo ascolta | Da |
 |---|---|---|---|---|
 | `ADDON_READY` | — | `Core/Init.lua`, dopo Config, Locale e Compat all'`ADDON_LOADED` | i moduli che preparano lo stato | M1.2 |
-| `CONFIG_LOADED` | — | `Core/Config.lua`, dati caricati, migrati e ripuliti | Theme, Window, Launcher | M1.5 |
+| `CONFIG_LOADED` | — | `Core/Config.lua`, dati caricati, migrati e ripuliti | Theme, Window | M1.5 |
 | `CONFIG_CHANGED` | `path` (per esempio `"account.settings.theme"`) | `Config:Set` | Theme, Launcher, Window | M1.5 |
 | `SETTINGS_CHANGED` | `key` | `UI/Settings.lua`, quando il giocatore cambia un'opzione | Window, Diagnostics | M1.8 |
 | `THEME_CHANGED` | `themeId` | `UI/Theme.lua` dopo `Theme.Apply` | le viste con elementi non registrati | M1.6 |
 | `CAPABILITY_CHANGED` | `id`, `state` | `Core/Compat.lua` (`Compat:SetCapability`, cambio di una restrizione) | Window (stato del modulo), ThreatState (M2) | M1.4 |
 | `COMBAT_STARTED` / `COMBAT_ENDED` | — | `Core/Init.lua` da `PLAYER_REGEN_DISABLED/ENABLED` | Scheduler, Window, Scanner (M2), Recorder (M4) | M1.2 |
-| `WINDOW_SHOWN` | `shown` (bool) | `UI/Window.lua` | Launcher (tooltip), Scanner (M2: legge solo se serve) | M1.7 |
+| `DISPLAY_CHANGED` | — | `Core/Init.lua` da `DISPLAY_SIZE_CHANGED` e `UI_SCALE_CHANGED` | Window (torna nello schermo) | M1.7 |
+| `WINDOW_SHOWN` | `shown` (bool) | `UI/Window.lua` | Scanner (M2: legge solo se serve) | M1.7 |
 | `TAB_CHANGED` | `tabId` | `UI/Window.lua` | le schede | M1.7 |
 | `TARGET_CHANGED`, `THREAT_SCANNED`, `THREAT_UPDATED`, `STATE_CHANGED`, `THREAT_MODE_CHANGED` | vedi §3.2 | `Data/` | UI, Alerts, Recorder | M2 |
 | `ALERT_RAISED`, `COACH_TIP` | vedi §3.2 | `Data/` | Window, Recorder | M3 |

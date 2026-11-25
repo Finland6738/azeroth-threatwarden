@@ -29,6 +29,7 @@ Core\Features.lua
 Core\Scheduler.lua
 Core\Config.lua
 Core\Diagnostics.lua
+Core\Commands.lua
 UI\Assets.lua
 UI\Theme.lua
 UI\Motion.lua
@@ -38,3 +39,5 @@ UI\Widgets\ThinBar.lua
 UI\Widgets\Tooltip.lua
 UI\Widgets\Threat.lua
 UI\DiagnosticsBox.lua
+UI\Window.lua
+UI\Launcher.lua

@@ -12,7 +12,8 @@ local function titles(text)
 end
 
 local SECTIONS = { "Client", "Features", "APIs", "Capabilities", "Restrictions", "Saved data", "Memory", "Bus",
-	"Scheduler", "Look", "Last errors" }
+	"Scheduler", "Look", "Window",
+	"Last errors" }
 
 describe("the report (SPEC-01 §9)", function()
 	it("has the header and the sections in order", function()
@@ -56,7 +57,7 @@ describe("the report (SPEC-01 §9)", function()
 		contains(text, "problems corrected at load: none")
 		contains(text, "addon memory: 2048.2 KB")
 		contains(text, "framerate: 60 fps")
-		contains(text, "COMBAT_ENDED: 1 listener(s)")
+		contains(text, "COMBAT_ENDED: 2 listener(s)")
 		contains(text, "no tick running")
 		contains(text, "no addon errors recorded this session")
 	end)
@@ -235,20 +236,5 @@ describe("/atw debug", function()
 	it("takes the word in any case and with spaces", function()
 		Mock.Slash("/atw   DEBUG  ")
 		truthy(Box():IsShown())
-	end)
-
-	it("says the other commands are coming, and the bare command toggles", function()
-		Mock.Slash("/atw help")
-		contains(Mock.PlainOutput(), "More commands arrive with the next development steps.")
-		Mock.ClearOutput()
-		Mock.Slash("/atw")
-		contains(Mock.PlainOutput(), "This part is coming soon.")
-		falsy(Box():IsShown())
-	end)
-
-	it("answers in Italian on an Italian client", function()
-		boot(function(M) M.player.locale = "itIT" end)
-		Mock.Slash("/atw aiuto")
-		contains(Mock.PlainOutput(), "Altri comandi arrivano con i prossimi passi di sviluppo.")
 	end)
 end)

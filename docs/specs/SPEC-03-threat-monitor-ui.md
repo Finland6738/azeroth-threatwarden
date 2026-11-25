@@ -72,11 +72,13 @@ ricordano ciascuna la propria dimensione (`char.ui.size.compact` e `.wide`, [SPE
 | Scopo | sovrapposta al gioco durante il combattimento | leggere e configurare fuori dal combattimento |
 | Dimensione predefinita | 300 × 220 pt | 560 × 520 pt |
 | Minimo / massimo | 220 × 140 / 600 × 800 | 480 × 420 / 900 × 900 |
-| Barra del titolo | 28 pt: logo 18 pt, `THREATWARDEN` (Orbitron, 12 pt), stato del modulo, blocco, chiusura | 44 pt: logo 24 pt, `AZEROTH THREATWARDEN` (Orbitron, 16 pt), stato del modulo come sottotitolo mono, blocco, chiusura |
+| Barra del titolo | 28 pt: logo 18 pt, `THREATWARDEN` (Orbitron, 12 pt), stato del modulo, blocco, chiusura | 52 pt (come il kit di M1.6): logo 24 pt, `AZEROTH THREATWARDEN` (Orbitron, font `Display`), stato del modulo come sottotitolo mono, blocco, chiusura |
 | Schede | 24 pt, solo testo, indicatore da 2 pt | 36 pt, indicatore da 2 pt (come Accord) |
 | Contenuto | intestazione del mob, righe da 20 pt, piede da 16 pt con la qualità dei dati (M2) | colonna di card larga fino a 520 pt, con il selettore a pillole *Settings · Info* in Settings |
 
 - Passando da una disposizione all'altra l'angolo in alto a sinistra resta fermo e la finestra resta nello schermo.
+- Se nella compatta nome e stato non ci stanno insieme (finestra stretta, parola lunga), sparisce il nome: resta il
+  logo, e lo stato non perde la parola.
 - La dimensione si cambia dalla maniglia in basso a destra (icona `dashed`, come Accord), dentro i limiti della
   disposizione; si salva al rilascio.
 - In combattimento la finestra resta com'è; l'opzione di M2 *Compact in combat* (nascondere le schede in
@@ -95,7 +97,8 @@ Lo **stato del modulo** è una pastiglia con icona e parola (mai solo colore), c
 | `unavailable` | API mancanti o segrete (`none`) | *Unavailable* | `err` |
 | `unsupported` | client non riconosciuto (ARC-01) | *Unsupported client* | `err` |
 
-Il tooltip della pastiglia dice il motivo (dalle capacità di Compat). Quali di questi stati compaiono davvero in gruppo
+Il tooltip della pastiglia dice il motivo (dalle capacità di Compat). Si controlla prima *Unsupported client*, poi
+l'interruttore `monitor`, poi le capacità. Quali di questi stati compaiono davvero in gruppo
 e in istanza lo dice il probe **[probe P3]**. Pulsanti a destra: **blocco** (lucchetto aperto o chiuso; con la finestra
 bloccata non si sposta né si ridimensiona), **chiusura** (croce). La barra del titolo trascina la finestra quando non è
 bloccata.
@@ -108,7 +111,8 @@ bloccata.
 | **Reports** | ampia | sessioni registrate e report; non compare finché l'interruttore `reports` è spento | M4 |
 | **Settings** | ampia | pagina *Settings* (card Aspetto, Lingua, Finestra, ripristino) e pagina *Info* (logo, versione, crediti, link) | M1.8 |
 
-La scheda e la pagina aperte per ultime si ricordano per personaggio (`char.ui.lastTab`, `lastPage`).
+La scheda e la pagina aperte per ultime si ricordano per personaggio (`char.ui.lastTab`, `lastPage`). Fino a M1.8 la
+scheda Settings mostra una sola riga che annuncia le pagine *Settings* e *Info* (secondo `lastPage`).
 
 ### 4.5 Comportamento
 
@@ -116,12 +120,14 @@ La scheda e la pagina aperte per ultime si ricordano per personaggio (`char.ui.l
 |---|---|
 | Apertura al login | secondo `char.ui.shown` (vero la prima volta); le regole di [Q13](SPEC-09-risks-open-questions.md) arrivano con il monitor in M2 |
 | Spostamento | trascinando la barra del titolo; la finestra resta nello schermo (`SetClampedToScreen`) e torna dentro a `DISPLAY_SIZE_CHANGED` e `UI_SCALE_CHANGED` |
-| Posizione | per personaggio (`char.ui.pos`), salvata al rilascio; `nil` = al centro |
-| Scala | `char.ui.scale` 50–200 % dalla card Finestra; si somma alla scala dell'interfaccia del gioco |
+| Posizione | per personaggio (`char.ui.pos`), salvata al rilascio e quando il cambio di disposizione ancora l'angolo in alto a sinistra; `nil` = al centro. Il client non la salva per conto suo (`SetDontSavePosition`) |
+| Schermo più piccolo | la finestra torna dentro senza riscrivere la posizione salvata, che torna valida con lo schermo di prima |
+| Scala | `char.ui.scale` 50–200 % dalla card Finestra; si somma alla scala dell'interfaccia del gioco; al cambio gli scostamenti salvati sono convertiti, così la finestra resta dov'è |
 | Blocco | `char.ui.locked`, dal lucchetto, da `/atw lock` e `/atw unlock`, dalla card Finestra |
 | Esc | chiude la finestra (frame in `UISpecialFrames` attraverso Compat), anche in combattimento |
 | Livello | strato `MEDIUM`, sopra le finestre normali quando si clicca (`SetToplevel`) |
 | `/reload` | posizione, dimensioni, scala, blocco, scheda e apertura tornano come erano (DAT-23) |
+| Dati in sola lettura | la finestra si apre, si chiude, si sposta e cambia scheda, senza scrivere nulla; `lock`, `unlock` e `reset` dicono che nulla è cambiato |
 
 ### 4.6 Minimappa e Addon Compartment
 
@@ -138,7 +144,9 @@ La scheda e la pagina aperte per ultime si ricordano per personaggio (`char.ui.l
 
 ## 5. Comandi e configurazione
 
-`/threatwarden` e `/atw` (Q1), con AceConsole. Le risposte vanno solo nella finestra di chat del giocatore (mai in un
+`/threatwarden` e `/atw` (Q1), con AceConsole (`Core/Commands.lua`; conta solo la prima parola, in qualsiasi
+maiuscola). `show`, `hide`, `settings`, `about` e `debug` rispondono aprendo o chiudendo ciò che nominano; `lock`,
+`unlock`, `reset` e `help` scrivono anche una riga. Le risposte vanno solo nella finestra di chat del giocatore (mai in un
 canale, [ADR 0001](../adr/0001-local-only-addon-no-network.md)), nella lingua attiva; il rapporto di `debug` è in
 inglese.
 

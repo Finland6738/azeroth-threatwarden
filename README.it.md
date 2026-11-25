@@ -7,8 +7,10 @@ della threat, di coaching e di analisi dei combattimenti per **World of Warcraft
 quale mob, ti avvisa prima che tu prenda l'aggro, registra i combattimenti e spiega cosa è successo, distinguendo sempre
 ciò che è **noto** da ciò che è **stimato**.
 
-> **Stato: sviluppo iniziale.** Specifiche, decisioni e piano sono scritti e l'addon ha il suo scheletro, che conserva
-> le impostazioni salvate (con versione e migrazioni) e per ora risponde solo a `/atw debug` con un rapporto diagnostico; l'aspetto (temi, font, icone e componenti) è pronto per la finestra, che ancora non c'è; non c'è ancora una versione da installare. Il primo
+> **Stato: sviluppo iniziale.** Specifiche, decisioni e piano sono scritti e l'addon ha le sue
+> fondamenta: impostazioni salvate (con versione e migrazioni), l'aspetto dell'ecosistema, una finestra spostabile (la
+> scheda Monitor è ancora vuota), i [comandi](docs/wiki/Commands-it.md) `/atw` e `/threatwarden`, il pulsante della
+> minimappa e la voce nell'Addon Compartment; non legge ancora la threat e non c'è una versione da installare. Il primo
 > passo è una sonda nel client vero (milestone M0): verifica quali dati di threat WoW Forever dà a un addon, perché in
 > alcune situazioni il client può nascondere i valori agli addon. La [sonda](docs/spike/README.md) (uno strumento di
 > sviluppo, mai distribuito) ora verifica il client e le funzioni della threat, compreso se i loro valori sono segreti

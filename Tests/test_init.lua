@@ -28,16 +28,18 @@ describe("loading the addon", function()
 			"AzerothThreatwarden/Locales/itIT.lua", "AzerothThreatwarden/Core/Init.lua",
 			"AzerothThreatwarden/Core/Features.lua", "AzerothThreatwarden/Core/Scheduler.lua",
 			"AzerothThreatwarden/Core/Config.lua", "AzerothThreatwarden/Core/Diagnostics.lua",
-			"AzerothThreatwarden/UI/Assets.lua", "AzerothThreatwarden/UI/Theme.lua",
+			"AzerothThreatwarden/Core/Commands.lua", "AzerothThreatwarden/UI/Assets.lua", "AzerothThreatwarden/UI/Theme.lua",
 			"AzerothThreatwarden/UI/Motion.lua", "AzerothThreatwarden/UI/Widgets/Core.lua",
 			"AzerothThreatwarden/UI/Widgets/Controls.lua", "AzerothThreatwarden/UI/Widgets/ThinBar.lua",
 			"AzerothThreatwarden/UI/Widgets/Tooltip.lua", "AzerothThreatwarden/UI/Widgets/Threat.lua",
-			"AzerothThreatwarden/UI/DiagnosticsBox.lua",
+			"AzerothThreatwarden/UI/DiagnosticsBox.lua", "AzerothThreatwarden/UI/Window.lua",
+			"AzerothThreatwarden/UI/Launcher.lua",
 		})
 	end)
 
-	-- SLASH_ACECONSOLE_ATW1 is the name AceConsole gives the /atw command (the client finds commands by global name).
-	it("defines no global but the addon object, the saved data, the Compartment functions and the command (ARC-04)",
+	-- SLASH_ACECONSOLE_<NAME>1 is the name AceConsole gives a command (the client finds commands by global name). The
+	-- window has a name so that Esc closes it; LibDBIcon names its minimap button.
+	it("defines no global but the addon object, the saved data, the Compartment functions, the commands, the window (ARC-04)",
 		function()
 		-- the font objects of the theme are named AzerothThreatwardenFont<Id> (ARC-04)
 		local names, fonts = {}, 0
@@ -46,10 +48,10 @@ describe("loading the addon", function()
 		end
 		eq(fonts, 18)
 		deepEq(names, {
-			"AzerothThreatwarden", "AzerothThreatwardenCharDB", "AzerothThreatwardenDB",
+			"AzerothThreatwarden", "AzerothThreatwardenCharDB", "AzerothThreatwardenDB", "AzerothThreatwardenWindow",
 			"AzerothThreatwarden_OnAddonCompartmentClick",
 			"AzerothThreatwarden_OnAddonCompartmentEnter", "AzerothThreatwarden_OnAddonCompartmentLeave",
-			"SLASH_ACECONSOLE_ATW1",
+			"LibDBIcon10_AzerothThreatwarden", "SLASH_ACECONSOLE_ATW1", "SLASH_ACECONSOLE_THREATWARDEN1",
 		})
 	end)
 
@@ -153,35 +155,7 @@ describe("debug sections", function()
 	end)
 end)
 
-describe("the Addon Compartment (TOC functions)", function()
-	it("says the window is coming when it is clicked", function()
-		AzerothThreatwarden_OnAddonCompartmentClick("AzerothThreatwarden", "LeftButton")
-		contains(Mock.PlainOutput(), "This part is coming soon.")
-	end)
-
-	it("shows a tooltip on enter and hides it on leave", function()
-		AzerothThreatwarden_OnAddonCompartmentEnter("AzerothThreatwarden", CreateFrame("Button"))
-		truthy(GameTooltip:IsShown())
-		deepEq(Mock.TooltipLines(),
-			{ "Azeroth Threatwarden", "The Threatwarden window arrives with the next development steps." })
-		AzerothThreatwarden_OnAddonCompartmentLeave()
-		falsy(GameTooltip:IsShown())
-	end)
-
-	it("does nothing, without an error, on a client with no GameTooltip", function()
-		GameTooltip = nil
-		AzerothThreatwarden_OnAddonCompartmentEnter("AzerothThreatwarden")
-		AzerothThreatwarden_OnAddonCompartmentLeave()
-	end)
-
-	it("opens the window when there is one", function()
-		local toggled = 0
-		Mock.ns.Window = { Toggle = function() toggled = toggled + 1 end }
-		AzerothThreatwarden_OnAddonCompartmentClick()
-		eq(toggled, 1)
-		eq(#Mock.output, 0)
-	end)
-end)
+-- The Addon Compartment functions are tested with the minimap button in test_launcher.lua.
 
 describe("a /reload", function()
 	before_boot(function(M)

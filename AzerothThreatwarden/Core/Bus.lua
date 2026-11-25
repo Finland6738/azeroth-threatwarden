@@ -16,6 +16,7 @@
 --   THEME_CHANGED(themeId)          UI/Theme.lua (M1.6); the theme was applied.
 --   CAPABILITY_CHANGED(id, state)   Core/Compat.lua; Compat:SetCapability or a client restriction changed a capability.
 --   COMBAT_STARTED(), COMBAT_ENDED() Core/Init.lua, from PLAYER_REGEN_DISABLED / PLAYER_REGEN_ENABLED.
+--   DISPLAY_CHANGED()               Core/Init.lua (M1.7), from DISPLAY_SIZE_CHANGED / UI_SCALE_CHANGED.
 --   WINDOW_SHOWN(shown)             UI/Window.lua (M1.7).
 --   TAB_CHANGED(tabId)              UI/Window.lua (M1.7).
 --   TARGET_CHANGED, THREAT_SCANNED, THREAT_UPDATED, STATE_CHANGED, THREAT_MODE_CHANGED     Data/ (M2)

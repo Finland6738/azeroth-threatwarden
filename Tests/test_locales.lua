@@ -8,7 +8,7 @@ local ADDON = "AzerothThreatwarden/"
 
 -- Strings that are the same as English on purpose (names, loanwords, bare numbers), per language.
 local SAME = {
-	itIT = { ADDON_TITLE = true },
+	itIT = { ADDON_TITLE = true, WINDOW_TITLE = true, WINDOW_TITLE_COMPACT = true, TAB_MONITOR = true },
 }
 
 -- The checks, as functions that return a list of problems: the group at the end proves they find them. -----------
@@ -177,9 +177,8 @@ describe("an Italian client", function()
 	it("answers in Italian without a Lua error", function()
 		eq(AzerothThreatwarden.Locale.Active(), "itIT")
 		AzerothThreatwarden_OnAddonCompartmentClick()
-		contains(Mock.PlainOutput(), "Questa parte arriva presto.")
 		AzerothThreatwarden_OnAddonCompartmentEnter("AzerothThreatwarden")
-		contains(Mock.TooltipLines(), "La finestra di Threatwarden arriva con i prossimi passi di sviluppo.")
+		contains(Mock.TooltipLines(), "Clic destro: impostazioni")
 		Mock.Reload()
 		eq(AzerothThreatwarden.Locale.Active(), "itIT")
 		eq(#Mock.errors, 0)

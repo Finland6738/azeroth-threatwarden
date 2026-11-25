@@ -7,6 +7,14 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
+- M1.7: the main window (`UI/Window.lua`): compact layout for the Monitor tab (which says that threat monitoring
+  arrives in v0.2.0), wide layout for Settings (a placeholder until M1.8), title bar with the logo, the module state
+  (*Off* in this version), lock and close; moved by the title bar, resized from the corner grip, scaled and locked;
+  position, size, scale, lock, tab and visibility remembered per character; Esc closes it; it comes back inside a
+  smaller screen. **`/atw`** and **`/threatwarden`** (`Core/Commands.lua`) with `show`, `hide`, `lock`, `unlock`,
+  `reset`, `settings`, `about`, `debug`, `help`, in English and Italian; `demo`, `mute` and `reports` say which version
+  brings them. A minimap button (hideable, saved per account) and the Addon Compartment entry (`UI/Launcher.lua`):
+  left click shows or hides the window, right click opens Settings. Wiki page *Commands*. Not run in the game.
 - M1.6: the look of the addon. `AzerothThreatwarden/Media/` with the textures and icons drawn by
   `tools/make_media.py` (rounded shapes, shadow, glows, the icon sheet with four state icons of different shapes), the
   logo from the owner's picture (also the AddOns list icon), the NEBULA logos for the credits and the fonts Outfit,

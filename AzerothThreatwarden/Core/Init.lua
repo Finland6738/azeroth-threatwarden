@@ -1,10 +1,10 @@
--- Init: the addon object, the Forever check, the lifecycle, combat start and end, the /atw debug sections and the Addon
--- Compartment functions (SPEC-01 §3.1). Lua 5.1.
+-- Init: the addon object, the Forever check, the lifecycle, combat start and end, screen changes and the /atw debug
+-- sections (SPEC-01 §3.1). Lua 5.1.
 -- Adapted from Azeroth Accord (Core/Init.lua), same owner, GPL-3.0 (ADR 0012).
 -- Modules attach themselves to the private namespace `ns`; the ones loaded before this file (Bus, Compat, Locale) are
 -- attached to the addon object here, the later ones attach themselves (AzerothThreatwarden.Scheduler, Config, ...).
--- Modules that do not exist yet (Window: M1.7) are asked for with `if ns.X`. Every game call goes through
--- Core/Compat.lua (ARC-02).
+-- Modules loaded after this file are asked for with `if ns.X`. Every game call goes through Core/Compat.lua (ARC-02).
+-- The commands are Core/Commands.lua, the Addon Compartment and the minimap button UI/Launcher.lua.
 --
 -- At ADDON_LOADED the order matters: Config loads the saved data first, then Locale picks the language from
 -- `account.settings.language` (the one place of SPEC-09 Q5), then Compat probes the client.
@@ -40,7 +40,7 @@ function ATW:AddDebugSection(title, linesFn)
 	self.debugSections[#self.debugSections + 1] = { title = title, linesFn = linesFn }
 end
 
--- Opens or closes the window (UI/Window.lua, M1.7): the Addon Compartment and, later, the commands and the minimap.
+-- Shows or hides the window (UI/Window.lua).
 function ATW:Toggle()
 	if ns.Window then return ns.Window:Toggle() end
 	self:Print(L["COMING_SOON"])
@@ -57,8 +57,7 @@ function ATW:OnInitialize()   -- ADDON_LOADED: the SavedVariables are available 
 	ns.Locale.Apply(ns.Config and ns.Config:Get("account.settings.language") or "auto")
 	Compat:Probe()
 	self.isForever = self:IsForever()   -- false: diagnostic mode, no numbers (ARC-01)
-	-- Only /atw debug for now; Core/Commands.lua (M1.7) takes the command over with /threatwarden and the full set.
-	self:RegisterChatCommand("atw", "OnSlashCommand")
+	if ns.Commands then ns.Commands.Register() end   -- /threatwarden and /atw
 	emit("ADDON_READY")
 end
 
@@ -67,6 +66,8 @@ function ATW:OnEnable()   -- PLAYER_LOGIN
 	self:RegisterEvent("PLAYER_REGEN_DISABLED", "OnCombatStart")
 	self:RegisterEvent("PLAYER_REGEN_ENABLED", "OnCombatEnd")
 	self:RegisterEvent("ADDON_RESTRICTION_STATE_CHANGED", "OnRestrictionChanged")
+	self:RegisterEvent("DISPLAY_SIZE_CHANGED", "OnDisplayChanged")
+	self:RegisterEvent("UI_SCALE_CHANGED", "OnDisplayChanged")
 	for _, module in ipairs(ns.onEnable or {}) do
 		local ok, err = pcall(module)
 		if not ok then Compat.ReportError(err) end
@@ -78,17 +79,9 @@ function ATW:OnRestrictionChanged(_, kind)
 	Compat:OnRestrictionChanged(kind)
 end
 
--- /atw: `debug` opens the diagnostic report; no argument toggles the window; anything else says the commands are
--- coming (the full set is M1.7).
-function ATW:OnSlashCommand(input)
-	local command = type(input) == "string" and input:match("^%s*(%S*)"):lower() or ""
-	if command == "debug" then
-		if ns.Diagnostics then ns.Diagnostics.Show() end
-	elseif command == "" then
-		self:Toggle()
-	else
-		self:Print(L["COMMANDS_SOON"])
-	end
+-- The screen or the interface scale changed: the window brings itself back inside.
+function ATW:OnDisplayChanged()
+	emit("DISPLAY_CHANGED")
 end
 
 function ATW:OnCombatStart()
@@ -99,24 +92,4 @@ end
 function ATW:OnCombatEnd()
 	self.inCombat = false
 	emit("COMBAT_ENDED")
-end
-
--- Addon Compartment entry points (globals named in the TOC; UI/Launcher.lua completes them in M1.7).
-function AzerothThreatwarden_OnAddonCompartmentClick()
-	ATW:Toggle()
-end
-
--- GameTooltip is part of the game's interface code, not of the API dump: Compat looks it up when used.
-function AzerothThreatwarden_OnAddonCompartmentEnter(_, menuButtonFrame)
-	local tip = Compat.Tooltip()
-	if not tip then return end
-	tip:SetOwner(menuButtonFrame or Compat.UIParent(), "ANCHOR_LEFT")
-	tip:SetText(L["ADDON_TITLE"])
-	tip:AddLine(L["COMPARTMENT_HINT"])
-	tip:Show()
-end
-
-function AzerothThreatwarden_OnAddonCompartmentLeave()
-	local tip = Compat.Tooltip()
-	if tip then tip:Hide() end
 end
