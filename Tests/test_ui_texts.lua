@@ -1,0 +1,132 @@
+-- Nothing on screen without a locale key (ADR 0009, SPEC-01 §12): before the interface is built, every string of the
+-- language table is replaced by a marker that keeps its placeholders. Whatever a widget of the addon then shows must
+-- be made of markers; the only other texts are the proper names, numbers and addresses listed here. The same screens
+-- are walked in Italian, where no English sentence may remain.
+
+local MARK = "\194\171"   -- « opens a marker, » closes it
+local END = "\194\187"
+
+-- Replaces each string of `code` by «KEY», followed by its placeholders so that string.format still works.
+local function mark(code)
+	local strings = AzerothThreatwarden.Locale.Strings(code)
+	for key, text in pairs(strings) do
+		local holders = {}
+		for p in text:gsub("%%%%", ""):gmatch("%%[%-%+ #0]*%d*%.?%d*[cdiouxXeEfgGqs]") do holders[#holders + 1] = " " .. p end
+		strings[key] = MARK .. key .. table.concat(holders) .. END
+	end
+end
+
+-- Texts that are not language: addresses and what the theme or the client gives.
+local PLAIN = {
+	["https://github.com/Finland6738/azeroth-threatwarden"] = true,
+	["https://ko-fi.com/finland6738"] = true,
+}
+
+-- Every window of the addon, opened on every page.
+local function build()
+	local ATW = AzerothThreatwarden
+	local W = ATW.Window
+	W:Open()
+	W:SelectTab("settings")
+	W:OpenPage("about")
+	W:OpenPage("settings")
+	ATW.Settings.panel:Show()
+	ATW.Settings.panel.view:ShowPage("about")
+	ATW.Settings.panel.view:ShowPage("settings")
+	ATW.Diagnostics.Show()
+	-- the states a click brings on
+	local f = W:Frame().pages.settings.view.settings
+	f.reset:Click()
+	return { W:Frame(), ATW.Settings.panel }
+end
+
+-- Every widget under `root`: its children and regions.
+local function walk(root, out)
+	out[#out + 1] = root
+	for _, child in ipairs({ root:GetChildren() }) do walk(child, out) end
+	for _, region in ipairs({ root:GetRegions() }) do walk(region, out) end
+	return out
+end
+
+-- The texts shown by the widgets under the roots, and by the diagnostic box's own parts (not its report).
+local function texts(roots)
+	local out = {}
+	for _, root in ipairs(roots) do
+		for _, widget in ipairs(walk(root, {})) do
+			local kind = widget:GetObjectType()
+			if (kind == "FontString" or kind == "EditBox") and type(widget:GetText()) == "string" then
+				local text = widget:GetText()
+				if text ~= "" then out[#out + 1] = text end
+			end
+		end
+	end
+	return out
+end
+
+-- What is left of a text once markers, numbers, punctuation and game codes are taken out.
+local function leftover(text)
+	if PLAIN[text] then return "" end
+	local rest = text:gsub("|T.-|t", ""):gsub("|c%x%x%x%x%x%x%x%x", ""):gsub("|r", "")
+	rest = rest:gsub(MARK, "{"):gsub(END, "}")
+	local removed = 1   -- a marker may hold another (a state inside "Threat monitor: %s"): innermost first
+	while removed > 0 do rest, removed = rest:gsub("{[^{}]*}", "") end
+	return (rest:gsub("[%d%p%s]", ""))
+end
+
+describe("nothing on screen without a locale key", function()
+	before_boot(function(M) M.OnFilesLoaded(function() mark("enUS") end) end)
+
+	it("in the window, its pages and the game's panel", function()
+		local roots = build()
+		local shown, bad = texts(roots), {}
+		for _, text in ipairs(shown) do
+			if leftover(text) ~= "" then bad[#bad + 1] = text end
+		end
+		deepEq(bad, {})
+		truthy(#shown > 40, "the screens were really read: " .. #shown)
+		eq(#Mock.errors, 0)
+	end)
+
+	it("in the diagnostic box, besides the report (English by rule)", function()
+		AzerothThreatwarden.Diagnostics.Show()
+		local box = AzerothThreatwarden.DiagnosticsBox
+		local shown = 0
+		for _, widget in ipairs(walk(box.frame, {})) do
+			if widget:GetObjectType() == "FontString" and widget:GetText() ~= "" then
+				shown = shown + 1
+				eq(leftover(widget:GetText()), "", widget:GetText())
+			end
+		end
+		truthy(shown >= 3)
+	end)
+
+	it("in the tooltips of the minimap button", function()
+		AzerothThreatwarden_OnAddonCompartmentEnter("AzerothThreatwarden")
+		local lines = Mock.TooltipLines()
+		truthy(#lines >= 5)
+		for _, line in ipairs(lines) do eq(leftover(line), "", line) end
+	end)
+
+	it("and the check itself finds a literal text", function()
+		eq(leftover("Hello"), "Hello")
+		eq(leftover(MARK .. "KEY" .. END .. " 100%"), "")
+	end)
+end)
+
+describe("the screens in Italian", function()
+	before_boot(function(M) M.player.locale = "itIT" end)
+
+	it("show no English text that has an Italian one", function()
+		local ATW = AzerothThreatwarden
+		local en, it_ = ATW.Locale.Strings("enUS"), ATW.Locale.Strings("itIT")
+		local translated = {}
+		for key, text in pairs(en) do
+			if it_[key] ~= text then translated[text] = key end
+		end
+		local found = {}
+		for _, text in ipairs(texts(build())) do
+			if translated[text] then found[#found + 1] = translated[text] .. ": " .. text end
+		end
+		deepEq(found, {})
+	end)
+end)

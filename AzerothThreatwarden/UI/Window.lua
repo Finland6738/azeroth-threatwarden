@@ -26,6 +26,7 @@ Window.NAME = "AzerothThreatwardenWindow"
 Window.DEFAULT_SIZE = { compact = { w = 300, h = 220 }, wide = { w = 560, h = 520 } }
 Window.RADIUS = { compact = 8, wide = 12 }
 Window.GRIP = 14
+Window.PAGE_MARGIN = 20   -- around the Settings tab
 
 -- The tabs, in order. `feature`: shown only while that switch of Core/Features.lua is on (ADR 0014).
 Window.TABS = {
@@ -308,7 +309,6 @@ local function buildPages(f)
 	placeholder(f.pages.monitor, "MONITOR_COMING", true)   -- the monitor itself is M2
 	placeholder(f.pages.reports, nil)
 	f.pages.reports.text:SetText(L["CMD_LATER"]:format("v0.4.0"))
-	placeholder(f.pages.settings, "SETTINGS_COMING")       -- the Settings and Info pages are M1.8
 end
 
 local function buildGrip(f)
@@ -410,11 +410,22 @@ local function applyTabSwitches(f)
 	end
 end
 
--- The text of the Settings tab until M1.8 builds the pages.
+-- The Settings tab (UI/Settings.lua), built the first time it is shown, on the page opened last (`char.ui.lastPage`;
+-- Window.page wins while the character's data cannot be written).
 local function paintPage(f)
-	local page = get("char.ui.lastPage")
-	if Window.page then page = Window.page end
-	f.pages.settings.text:SetText(L[page == "about" and "ABOUT_COMING" or "SETTINGS_COMING"])
+	if f.tab ~= "settings" or not ns.Settings then return end
+	local page = f.pages.settings
+	if not page.view then
+		local holder = CreateFrame("Frame", nil, page)
+		holder:SetPoint("TOPLEFT", page, "TOPLEFT", Window.PAGE_MARGIN, -10)
+		holder:SetPoint("BOTTOMRIGHT", page, "BOTTOMRIGHT", -Window.PAGE_MARGIN, Window.PAGE_MARGIN)
+		page.view = ns.Settings.Build(holder, { onPage = function(id)
+			Window.page = id
+			save("char.ui.lastPage", id)
+		end })
+	end
+	page.view.width = f:GetWidth() - 2 * Window.PAGE_MARGIN
+	page.view:ShowPage(Window.page or get("char.ui.lastPage") or "settings")
 end
 
 -- The compact bar gives up its title before the state loses its word.

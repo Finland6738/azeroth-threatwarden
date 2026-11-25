@@ -126,7 +126,7 @@ copied from Azeroth Accord and renamed; each copied file says so in its header.
 | `Core/Commands.lua` | `/threatwarden` and `/atw` | M1.7 |
 | `UI/Assets.lua`, `Theme.lua`, `Motion.lua`, `Widgets/` | the ecosystem look: Nebula, Aurora and Warden themes, the four state tokens, fonts, 9-slice shapes (`Media/`, made by `tools/make_media.py` and `make_fonts.py`), the widget kit plus `ThreatBar` and `StateBadge`; the theme changes without `/reload` | M1.6 |
 | `UI/Window.lua`, `UI/Launcher.lua` | the window (compact layout for Monitor, wide layout for Settings and Reports), tabs, move, lock, resize, scale; the minimap button and the Addon Compartment entry | M1.7 |
-| `UI/Settings.lua`, `UI/About.lua` | Settings (Appearance, Language, Window, Reset) and Info with the NEBULA credits | M1.8 |
+| `UI/Settings.lua`, `UI/About.lua` | Settings (Appearance, Language, Window, Reset) and Info with the NEBULA credits, in the window's Settings tab and in the game's own settings panel (through Compat) | M1.8 |
 | `Data/TargetTracker.lua`, `Data/ThreatScanner.lua` | the monitored mob; threat reads on events and a bounded tick in combat | *planned*, M2 |
 | `Data/ThreatModel.lua`, `Data/ThreatCalc.lua`, `Data/ThreatState.lua` | records, categories, staleness; margin, trend, time to overtake; states with hysteresis | *planned*, M2 |
 | `UI/ThreatList.lua` | the threat list in the Monitor tab | *planned*, M2 |
@@ -140,10 +140,10 @@ copied from Azeroth Accord and renamed; each copied file says so in its header.
 | Event | Raised by | Heard by | Since |
 |---|---|---|---|
 | `ADDON_READY` | Init, after Config, Locale and Compat | modules that prepare state | M1 |
-| `CONFIG_LOADED`, `CONFIG_CHANGED(path)` | Config | Theme, Window, Launcher | M1 |
+| `CONFIG_LOADED`, `CONFIG_CHANGED(path)` | Config | Theme, Window, Launcher, Settings | M1 |
 | `DISPLAY_CHANGED` | Init (screen size or interface scale) | Window | M1 |
-| `SETTINGS_CHANGED(key)` | Settings | Window, Diagnostics | M1 |
-| `THEME_CHANGED(themeId)` | Theme | views | M1 |
+| `SETTINGS_CHANGED(key)` | Settings | no one yet (views follow `CONFIG_CHANGED`) | M1 |
+| `THEME_CHANGED(themeId)` | Theme | Settings, other views | M1 |
 | `CAPABILITY_CHANGED(id, state)` | Compat | Window (module state), ThreatState | M1 |
 | `COMBAT_STARTED`, `COMBAT_ENDED` | Init | Scheduler, Window, Scanner, Recorder | M1 |
 | `WINDOW_SHOWN(shown)`, `TAB_CHANGED(tabId)` | Window | Scanner, tabs | M1 |

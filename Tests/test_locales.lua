@@ -8,7 +8,9 @@ local ADDON = "AzerothThreatwarden/"
 
 -- Strings that are the same as English on purpose (names, loanwords, bare numbers), per language.
 local SAME = {
-	itIT = { ADDON_TITLE = true, WINDOW_TITLE = true, WINDOW_TITLE_COMPACT = true, TAB_MONITOR = true },
+	itIT = { ADDON_TITLE = true, WINDOW_TITLE = true, WINDOW_TITLE_COMPACT = true, TAB_MONITOR = true,
+		PAGE_ABOUT = true, THEME_NEBULA = true, THEME_AURORA = true, THEME_WARDEN = true, LANGUAGE_ENUS = true,
+		LANGUAGE_ITIT = true, SET_PERCENT = true },
 }
 
 -- The checks, as functions that return a list of problems: the group at the end proves they find them. -----------

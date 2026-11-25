@@ -39,13 +39,19 @@ local function clientLocale()
 	return type(code) == "string" and code or Locale.BASE
 end
 
--- Picks the active language. `setting` is "auto" (or nil: follow the client) or a language code; a language without a
--- file falls back to English. Returns the code applied.
-function Locale.Apply(setting)
+-- The language a setting stands for: "auto" (or nil) follows the client, a language without a file falls back to
+-- English. Changes nothing (Settings asks it whether a /reload would change the language).
+function Locale.Resolve(setting)
 	local code = setting
 	if code == nil or code == "auto" then code = clientLocale() end
 	code = ALIASES[code] or code
 	if not tables[code] then code = Locale.BASE end
+	return code
+end
+
+-- Picks the active language of `setting` (see Locale.Resolve). Returns the code applied.
+function Locale.Apply(setting)
+	local code = Locale.Resolve(setting)
 	activeCode, active = code, tables[code] or {}
 	return code
 end

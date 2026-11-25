@@ -13,13 +13,12 @@ compaiono solo nella tua finestra di chat, nella lingua dell'addon; nulla viene 
 | `/atw lock` | blocca la finestra: non si sposta né si ridimensiona |
 | `/atw unlock` | sblocca la finestra |
 | `/atw reset` | riporta posizione, dimensioni e scala della finestra ai valori predefiniti e la mostra al centro |
-| `/atw settings` | apre la scheda Impostazioni |
-| `/atw about` | apre la pagina Info |
+| `/atw settings` | apre la pagina [Impostazioni](Settings-it) |
+| `/atw about` | apre la pagina [Info](About-it) |
 | `/atw debug` | apre il [rapporto diagnostico](Reporting-Bugs-and-Feedback-it), pronto da copiare (sempre in inglese) |
 | `/atw help` | elenca i comandi |
 
-In questa versione la scheda Impostazioni e la pagina Info dicono solo che stanno arrivando. `/atw demo`, `/atw mute` e
-`/atw reports` rispondono con la versione che li porterà.
+`/atw demo`, `/atw mute` e `/atw reports` rispondono con la versione che li porterà.
 
 ## La finestra
 

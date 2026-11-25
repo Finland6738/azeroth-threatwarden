@@ -29,6 +29,7 @@ distinguono ciò che è rilevato da ciò che è stimato.
 | 08 | [Qualità, probe e rilascio](SPEC-08-quality-probe-release.md) | probe M0 (P1–P12), test offline e lunghi, prove nel client, Definition of Done | M0, tutte |
 | 09 | [Rischi e domande aperte](SPEC-09-risks-open-questions.md) | rischi R1…, domande per il proprietario Q1… con risposta proposta | tutte |
 | — | [Stile dell'interfaccia](ui-style.md) | differenze da Accord: nomi, finestra compatta, barre della threat, token di stato, tema Warden con i contrasti | M1, M2 |
+| — | [Anteprime di progetto](mockups/README.md) | immagini dell'interfaccia (non screenshot), generate da `tools/make_mockups.py` | M1 → |
 | — | [Specifiche originali](source-specification.md) | il documento del proprietario, invariato | — |
 
 Ogni milestone dalla M1 si apre con uno step di specifica (`M<N>.1`) che completa le sezioni marcate **[da

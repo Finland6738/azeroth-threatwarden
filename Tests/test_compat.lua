@@ -23,8 +23,7 @@ local SPEC_IDS = {
 }
 
 -- What the mock client does not imitate yet (Tests/mock headers): reported missing, never raised.
-local NOT_MOCKED = { ["ui.Reload"] = true, ["ui.SettingsPanel"] = true,
-	["ui.ClassColor"] = true, ["ui.PlaySound"] = true }
+local NOT_MOCKED = { ["ui.ClassColor"] = true, ["ui.PlaySound"] = true }
 
 describe("the API table (SPEC-01 §8.2, ARC-02)", function()
 	it("has every API of the specification, once, in its order", function()

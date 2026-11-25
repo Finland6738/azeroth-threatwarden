@@ -107,7 +107,7 @@ altro modulo caricato dopo di lui al caricamento del file, solo nei suoi gestori
 | `UI/DiagnosticsBox.lua` | la finestra da cui copiare il rapporto di `/atw debug`: dal M1.6 un `Widgets.Dialog` senza velo, spostabile | — | `test_diagnostics.lua` | M1.4 |
 | `UI/Window.lua` | finestra principale ([SPEC-03 §4](SPEC-03-threat-monitor-ui.md#4-finestra)): barra del titolo, schede, spostamento, blocco, ridimensionamento, scala, posizione per personaggio, Esc | emette `WINDOW_SHOWN(shown)`, `TAB_CHANGED(tabId)`; ascolta `CONFIG_LOADED`, `CONFIG_CHANGED`, `DISPLAY_CHANGED`, `COMBAT_STARTED`, `COMBAT_ENDED`, `CAPABILITY_CHANGED` (i colori li ridipinge il registro del tema) | `test_window.lua` | M1.7 |
 | `UI/Launcher.lua` | pulsante della minimappa (LibDataBroker + LibDBIcon, nascondibile) e voce dell'Addon Compartment (le tre funzioni globali del TOC), con lo stesso tooltip | ascolta `CONFIG_CHANGED` (`settings.minimap.*`) | `test_launcher.lua` | M1.7 |
-| `UI/Settings.lua` | pagina Settings (Aspetto, Lingua, Finestra, ripristino) nella scheda e nel pannello Impostazioni del gioco | emette `SETTINGS_CHANGED(key)` | `test_settings.lua`, `test_ui_texts.lua` | M1.8 |
+| `UI/Settings.lua` | selettore *Settings · Info* e pagina Settings (Aspetto, Lingua, Finestra, ripristino) nella scheda e nel pannello Impostazioni del gioco; `Settings.Build(parent, opts)`, `Settings.AddPage(id, def)`, `Settings.RegisterPanel()`; sezione *Settings* di `/atw debug` (stato del pannello) | emette `SETTINGS_CHANGED(key)`; ascolta `CONFIG_LOADED`, `CONFIG_CHANGED`, `THEME_CHANGED` | `test_settings.lua`, `test_ui_texts.lua` | M1.8 |
 | `UI/About.lua` | pagina Info: logo, versione, crediti NEBULA, link da copiare, licenza | — | `test_about.lua` | M1.8 |
 
 ### 3.2 I moduli delle milestone successive (previsti)
@@ -135,10 +135,10 @@ Accord.
 | Evento | Argomenti | Chi lo emette | Chi lo ascolta | Da |
 |---|---|---|---|---|
 | `ADDON_READY` | — | `Core/Init.lua`, dopo Config, Locale e Compat all'`ADDON_LOADED` | i moduli che preparano lo stato | M1.2 |
-| `CONFIG_LOADED` | — | `Core/Config.lua`, dati caricati, migrati e ripuliti | Theme, Window | M1.5 |
-| `CONFIG_CHANGED` | `path` (per esempio `"account.settings.theme"`) | `Config:Set` | Theme, Launcher, Window | M1.5 |
-| `SETTINGS_CHANGED` | `key` | `UI/Settings.lua`, quando il giocatore cambia un'opzione | Window, Diagnostics | M1.8 |
-| `THEME_CHANGED` | `themeId` | `UI/Theme.lua` dopo `Theme.Apply` | le viste con elementi non registrati | M1.6 |
+| `CONFIG_LOADED` | — | `Core/Config.lua`, dati caricati, migrati e ripuliti | Theme, Window, Settings | M1.5 |
+| `CONFIG_CHANGED` | `path` (per esempio `"account.settings.theme"`) | `Config:Set` | Theme, Launcher, Window, Settings | M1.5 |
+| `SETTINGS_CHANGED` | `key` | `UI/Settings.lua`, quando il giocatore cambia un'opzione | nessuno ancora (le viste seguono `CONFIG_CHANGED`) | M1.8 |
+| `THEME_CHANGED` | `themeId` | `UI/Theme.lua` dopo `Theme.Apply` | Settings e le viste con elementi non registrati | M1.6 |
 | `CAPABILITY_CHANGED` | `id`, `state` | `Core/Compat.lua` (`Compat:SetCapability`, cambio di una restrizione) | Window (stato del modulo), ThreatState (M2) | M1.4 |
 | `COMBAT_STARTED` / `COMBAT_ENDED` | — | `Core/Init.lua` da `PLAYER_REGEN_DISABLED/ENABLED` | Scheduler, Window, Scanner (M2), Recorder (M4) | M1.2 |
 | `DISPLAY_CHANGED` | — | `Core/Init.lua` da `DISPLAY_SIZE_CHANGED` e `UI_SCALE_CHANGED` | Window (torna nello schermo) | M1.7 |
@@ -297,7 +297,7 @@ senza firma), **assente** (si cerca a runtime). In grassetto le voci il cui comp
 | `ui.CreateFrame`, `ui.CreateFont` | `CreateFrame`, `CreateFont` | esistenza | globale | tutta l'interfaccia (solo da `UI/` attraverso il kit e il tema) | M1 | — |
 | `ui.CreateColor` | `CreateColor` | esistenza | globale | sfumature (`SetGradient`) del tema; senza, un colore semplice (M1.6) | M1 | — |
 | `ui.ScreenSize` | `GetPhysicalScreenSize`, `GetScreenWidth`, `GetScreenHeight` | chiamata | firma | tenere la finestra nello schermo | M1 | — |
-| `ui.SettingsPanel` | `Settings.RegisterCanvasLayoutCategory`, `Settings.RegisterAddOnCategory`, `Settings.OpenToCategory` | esistenza | assente (FrameXML) | voce nel pannello Impostazioni del gioco (M1.8); se manca resta la scheda della finestra | M1 | da provare in gioco |
+| `ui.SettingsPanel` | `Settings.RegisterCanvasLayoutCategory`, `Settings.RegisterAddOnCategory`, `Settings.OpenToCategory` | esistenza | assente (FrameXML) | voce nel pannello Impostazioni del gioco (M1.8, `Compat.HasSettingsPanel`, `Compat.RegisterSettingsPanel`; `OpenToCategory` non è ancora chiamata); se manca resta la scheda della finestra | M1 | da provare in gioco |
 | `ui.SpecialFrames` | `UISpecialFrames` | esistenza | assente (FrameXML) | Esc chiude la finestra ([SPEC-03 §4.5](SPEC-03-threat-monitor-ui.md#45-comportamento)) | M1 | da provare in gioco |
 | `ui.SlashCmdList` | `SlashCmdList` (attraverso AceConsole) | esistenza | assente (FrameXML) | comandi | M1 | da provare in gioco |
 | `ui.ClassColor` | `C_ClassColor.GetClassColor` | esistenza | firma | colore di classe nell'elenco | M2 | — |

@@ -111,8 +111,9 @@ bloccata.
 | **Reports** | ampia | sessioni registrate e report; non compare finché l'interruttore `reports` è spento | M4 |
 | **Settings** | ampia | pagina *Settings* (card Aspetto, Lingua, Finestra, ripristino) e pagina *Info* (logo, versione, crediti, link) | M1.8 |
 
-La scheda e la pagina aperte per ultime si ricordano per personaggio (`char.ui.lastTab`, `lastPage`). Fino a M1.8 la
-scheda Settings mostra una sola riga che annuncia le pagine *Settings* e *Info* (secondo `lastPage`).
+La scheda e la pagina aperte per ultime si ricordano per personaggio (`char.ui.lastTab`, `lastPage`). La scheda
+Settings si costruisce la prima volta che si mostra; il pannello del gioco ha lo stesso contenuto e non cambia la
+pagina ricordata. Le card si restringono con la finestra (al massimo 520 pt) e la pagina scorre con la rotella.
 
 ### 4.5 Comportamento
 
@@ -178,10 +179,17 @@ si applica subito, tranne il font (al riavvio del client) e la lingua (dopo `/re
 |---|---|---|---|
 | **Appearance** | tema (segmentato *Nebula · Aurora · Warden*), effetti (interruttore), animazioni (interruttore), font (segmentato *Addon font · Game font*) | `account.settings.theme`, `effects`, `animations`, `font` | M1.8 |
 | **Language** | *Automatic · English · Italiano*, nota e pulsante *Reload now* | `account.settings.language` | M1.8 |
-| **Window** | blocco (interruttore), scala (cursore 50–200 %), *Show minimap button* (interruttore), *Reset window* | `char.ui.locked`, `scale`, `account.settings.minimap.hide` | M1.8 |
-| **Reset** | *Reset settings* con conferma (riporta ai predefiniti `account.settings`, [SPEC-02 §3.4](SPEC-02-data-model-storage.md#34-caricamento-migrazioni-e-dati-danneggiati)) | — | M1.8 |
+| **Window** | blocco (interruttore), scala (cursore 50–200 %, salvata al rilascio perché la finestra si scala sotto il mouse), *Show minimap button* (interruttore), *Reset window* | `char.ui.locked`, `scale`, `account.settings.minimap.hide` | M1.8 |
+| **Reset** | *Reset settings* con conferma: un secondo clic entro 8 s, o la prima è annullata anche cambiando pagina (riporta ai predefiniti `account.settings`, [SPEC-02 §3.4](SPEC-02-data-model-storage.md#34-caricamento-migrazioni-e-dati-danneggiati)) | — | M1.8 |
 | **Monitor** | soglie, frequenza, unità massime, quando mostrare la finestra | M2.1 le fissa | M2 |
 | **Alerts** | canali, cooldown, silenzio | M3.1 | M3 |
 | **Recording** | durata e limite delle registrazioni | M4.1 | M4 |
 
-La stessa pagina compare nel pannello Impostazioni del gioco (*Options → AddOns*), se il client lo permette (M1.8).
+*Reload now* è attivo solo quando la lingua scelta è diversa da quella a schermo. Con dati in sola lettura la pagina
+mostra un avviso (versione più nuova, o migrazione fallita), i controlli tornano al valore salvato e la card dice
+*Not saved*. La stessa pagina compare nel pannello Impostazioni del gioco (*Options → AddOns*), se il client lo
+permette (M1.8).
+
+La pagina **Info** mostra logo, nome e versione, i crediti *Created and designed by Finland. Made with the Italian guild
+NEBULA.* con il logo NEBULA del tema (scuro in Nebula e Warden, chiaro in Aurora), le caselle da copiare con il
+repository e Ko-fi, licenza, `docs/third-party.md` e l'avviso di progetto fan. `/atw about` la apre.

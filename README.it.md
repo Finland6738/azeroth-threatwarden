@@ -9,7 +9,7 @@ ciò che è **noto** da ciò che è **stimato**.
 
 > **Stato: sviluppo iniziale.** Specifiche, decisioni e piano sono scritti e l'addon ha le sue
 > fondamenta: impostazioni salvate (con versione e migrazioni), l'aspetto dell'ecosistema, una finestra spostabile (la
-> scheda Monitor è ancora vuota), i [comandi](docs/wiki/Commands-it.md) `/atw` e `/threatwarden`, il pulsante della
+> scheda Monitor è ancora vuota) con le Impostazioni (temi, lingua, finestra) e la pagina Info con i crediti, i [comandi](docs/wiki/Commands-it.md) `/atw` e `/threatwarden`, il pulsante della
 > minimappa e la voce nell'Addon Compartment; non legge ancora la threat e non c'è una versione da installare. Il primo
 > passo è una sonda nel client vero (milestone M0): verifica quali dati di threat WoW Forever dà a un addon, perché in
 > alcune situazioni il client può nascondere i valori agli addon. La [sonda](docs/spike/README.md) (uno strumento di
@@ -22,6 +22,17 @@ ciò che è **noto** da ciò che è **stimato**.
 [English](README.md) · [Roadmap](ROADMAP.md) · [Specifiche](docs/specs/README.md) ·
 [Architettura (in inglese)](docs/ARCHITECTURE.md) · [Decisioni](docs/adr/README.md) · [Manuale](docs/wiki/Home-it.md)
 ([English](docs/wiki/Home.md))
+
+## Che aspetto ha
+
+Anteprime di progetto, non screenshot: disegnate dal layout e dai testi dell'addon, perché non è ancora stato provato
+in gioco ([tutte le anteprime: inglese e italiano, tre temi](docs/specs/mockups/previews/README.md)).
+
+![La pagina Impostazioni, tema Nebula](docs/specs/mockups/previews/settings-nebula-it.webp)
+
+![La pagina Info con i crediti, tema Warden](docs/specs/mockups/previews/about-warden-it.webp)
+
+![La finestra della v0.1.0 prima del monitor della threat, tema Aurora](docs/specs/mockups/previews/window-aurora-it.webp)
 
 ## Funzioni previste
 

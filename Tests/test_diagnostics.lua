@@ -12,7 +12,7 @@ local function titles(text)
 end
 
 local SECTIONS = { "Client", "Features", "APIs", "Capabilities", "Restrictions", "Saved data", "Memory", "Bus",
-	"Scheduler", "Look", "Window",
+	"Scheduler", "Look", "Window", "Settings",
 	"Last errors" }
 
 describe("the report (SPEC-01 §9)", function()
@@ -39,9 +39,9 @@ describe("the report (SPEC-01 §9)", function()
 
 	it("lists what Compat found: every API, the capabilities and the restrictions", function()
 		local text = D().Report()
-		contains(text, "55 available, 4 missing, 0 restricted, 0 error")
+		contains(text, "57 available, 2 missing, 0 restricted, 0 error")
 		contains(text, "threat.Detailed: available")
-		contains(text, "ui.Reload: missing")
+		contains(text, "ui.ClassColor: missing")
 		contains(text, "secret.HasSecretRestrictions: available = false")
 		contains(text, "threatValues: unknown")
 		contains(text, "combatLog: missing (CombatLogGetCurrentEventInfo missing)")

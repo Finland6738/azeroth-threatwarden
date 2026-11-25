@@ -41,3 +41,5 @@ UI\Widgets\Threat.lua
 UI\DiagnosticsBox.lua
 UI\Window.lua
 UI\Launcher.lua
+UI\Settings.lua
+UI\About.lua

@@ -287,7 +287,7 @@ for _, name in ipairs({
 	"SetHighlightLocked", "LockHighlight", "UnlockHighlight", "SetMouseClickEnabled", "SetMouseMotionEnabled",
 	"SetIgnoreParentScale", "SetIgnoreParentAlpha", "SetFlattensRenderLayers", "SetClipsChildren",
 	"SetClampRectInsets", "SetTextInsets", "SetHorizTile", "SetVertTile", "SetDontSavePosition", "SetScrollChild",
-	"SetVerticalScroll", "SetHorizontalScroll", "SetSpacing", "SetResizeBounds",
+	"SetHorizontalScroll", "SetSpacing", "SetResizeBounds",
 }) do
 	Widget[name] = function() end
 end

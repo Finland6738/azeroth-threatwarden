@@ -22,6 +22,23 @@ function Widget:SetFormattedText(format, ...) self:SetText(string.format(format,
 
 Enum.UITextureSliceMode = { Stretched = 1, Tiled = 0 }
 
+-- A scroll frame keeps the offset the addon gave it.
+function Widget:SetVerticalScroll(v) self._vscroll = v end
+function Widget:GetVerticalScroll() return self._vscroll or 0 end
+
+-- The game's Settings window (interface code, not in the dump): the mock keeps what was registered in
+-- Mock.settingsCategories. A setup may set `Settings = nil` to imitate a client without it.
+Mock.settingsCategories = {}
+Settings = {
+	RegisterCanvasLayoutCategory = function(frame, name) return { frame = frame, name = name } end,
+	RegisterAddOnCategory = function(category) Mock.settingsCategories[#Mock.settingsCategories + 1] = category end,
+	OpenToCategory = function() end,
+}
+
+-- /reload as the client does it: counted in Mock.reloads (the harness's own Mock.Reload rebuilds the Lua state).
+Mock.reloads = 0
+C_UI = { Reload = function() Mock.reloads = Mock.reloads + 1 end }
+
 -- Moving is instant: the mock records that the frame is being moved.
 function Widget:StartMoving() self._moving = true end
 function Widget:StartSizing(point) self._sizing = point end

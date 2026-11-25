@@ -7,6 +7,16 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
+- M1.8: the **Settings** page (`UI/Settings.lua`): Appearance (theme Nebula, Aurora or Warden, neon effects,
+  animations, addon or game font), Language (Automatic, English, Italiano, with *Reload now*), Window (lock, scale,
+  minimap button, reset window) and *Reset settings*, which asks for a second click. Every change applies at once,
+  except the font (complete after a game restart) and the language (after a reload); saved data that cannot be written
+  is announced and never rewritten. The same page is in the game's own settings window, if the client allows it. The
+  **Info** page (`UI/About.lua`, `/atw about`): logo, version, *Created and designed by Finland. Made with the Italian
+  guild NEBULA.* with the NEBULA logo of the theme, the repository and Ko-fi in copy boxes, licence and notices.
+  Design previews (`tools/make_mockups.py`, `docs/specs/mockups/`, never screenshots) of the window, Settings and Info
+  in three themes and two languages; wiki pages *Installation*, *Interface Tour*, *Settings* and *About*. Not run in
+  the game.
 - M1.7: the main window (`UI/Window.lua`): compact layout for the Monitor tab (which says that threat monitoring
   arrives in v0.2.0), wide layout for Settings (a placeholder until M1.8), title bar with the logo, the module state
   (*Off* in this version), lock and close; moved by the title bar, resized from the corner grip, scaled and locked;

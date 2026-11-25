@@ -180,10 +180,18 @@ in CI. Released as `v0.1.0`.
   settings, about, in English and Italian, in Nebula, Aurora and Warden); wiki pages Installation, Interface Tour,
   Commands, Settings, About (both languages); README images.
 - Done when:
-  - [ ] Every setting applies at once (except the font, which needs a restart, and the manual says so).
-  - [ ] The previews are generated, linked and checked by `check_docs.py`.
+  - [x] Every setting applies at once (except the font, which needs a restart, and the manual says so).
+  - [x] The previews are generated, linked and checked by `check_docs.py`.
 - Tests: `test_settings.lua`, `test_about.lua`, `test_ui_texts.lua` (nothing on screen without a locale key).
 - Real client: settings and credits in both languages.
+- *Done (2026-11-25): `UI/Settings.lua` (page selector, Appearance, Language with *Reload now*, Window, Reset asking
+  twice, the read-only warning, the panel in the game's settings window through `Compat.RegisterSettingsPanel`),
+  `UI/About.lua` (logo, version, credits, NEBULA logo by theme, repository and Ko-fi), `Compat.Reload`,
+  `Locale.Resolve`; the language also needs a `/reload`; `tools/make_mockups.py`, `mockup_lib.py`, `mockup_scenes.py`
+  and 18 previews (window, settings, about; three themes; English and Italian) in `docs/specs/mockups/`; wiki
+  *Installation*, *Interface Tour*, *Settings*, *About* in both languages, README images. Accord's annotated spec pages
+  were not adapted. Checked offline only. Not run in the game: the Settings tab and the panel in the game's own window,
+  the slider and the copy boxes, *Reload now*, the text wrapping with the real fonts, the logos.*
 
 ### M1.9 — In-game checklist M1
 - Branch: `step/m1-9-checklist`

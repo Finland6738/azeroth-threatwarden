@@ -214,7 +214,7 @@ scuri e chiari), quindi un valore non si cambia senza ricalcolare la tabella; le
 |---|---|
 | Logo dell'addon (`assets/logo-source.webp`, lo scudo runico) | barra del titolo (18 pt nella compatta, 24 pt nella ampia), pulsante della minimappa, voce dell'Addon Compartment (`## IconTexture`), pagina Info; texture `logo_256` e `logo_64` generate da `tools/make_media.py` (M1.6); attenuato al 20 % dietro il testo della scheda Monitor vuota |
 | Loghi NEBULA (`assets/nebula-logo-dark.png`, `assets/nebula-logo-light.png`) | solo nei crediti (Info, M1.8): quello scuro in Nebula e Warden, quello chiaro in Aurora; usati con il permesso della gilda |
-| Crediti | *Created and designed by Finland. Made with the Italian guild NEBULA.*, link alla pagina di NEBULA, repository e segnalazioni (caselle da copiare), licenza GPL-3.0, `docs/third-party.md`, avviso di fan-made non affiliato a Blizzard |
+| Crediti | *Created and designed by Finland. Made with the Italian guild NEBULA.*, repository (codice, manuale, segnalazioni) e Ko-fi (caselle da copiare), licenza GPL-3.0, `docs/third-party.md`, avviso di fan-made non affiliato a Blizzard |
 
 Il nome pubblico è solo "Finland": nessun nome reale, e-mail o percorso personale in nessun file.
 

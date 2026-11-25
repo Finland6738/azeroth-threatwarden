@@ -13,13 +13,12 @@ own chat window, in the addon's language; nothing is ever posted to other player
 | `/atw lock` | locks the window: it cannot be moved or resized |
 | `/atw unlock` | unlocks the window |
 | `/atw reset` | puts the window's position, size and scale back to the defaults and shows it in the centre |
-| `/atw settings` | opens the Settings tab |
-| `/atw about` | opens the Info page |
+| `/atw settings` | opens the [Settings](Settings) page |
+| `/atw about` | opens the [Info](About) page |
 | `/atw debug` | opens the [diagnostic report](Reporting-Bugs-and-Feedback), ready to copy (always in English) |
 | `/atw help` | lists the commands |
 
-In this version the Settings tab and the Info page only say that they are coming. `/atw demo`, `/atw mute` and
-`/atw reports` answer with the version that will bring them.
+`/atw demo`, `/atw mute` and `/atw reports` answer with the version that will bring them.
 
 ## The window
 

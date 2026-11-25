@@ -17,8 +17,7 @@ local TEXT = {
 		unknown = "Unknown command: dance. Type /atw help.", later = "This arrives in %s.",
 		header = "Commands (/atw or /threatwarden):", toggle = "/atw - show or hide the window",
 		help = "/atw help - list the commands",
-		settings = "Settings arrive with the next development steps.",
-		about = "The Info page and the credits arrive with the next development steps.",
+		settings = "Reset settings", about = "Credits",
 		readOnly = "Nothing was changed: your saved data is read-only (see /atw debug).",
 	},
 	itIT = {
@@ -27,8 +26,7 @@ local TEXT = {
 		unknown = "Comando sconosciuto: dance. Scrivi /atw help.", later = "Arriva nella %s.",
 		header = "Comandi (/atw o /threatwarden):", toggle = "/atw - mostra o nasconde la finestra",
 		help = "/atw help - elenca i comandi",
-		settings = "Le impostazioni arrivano con i prossimi passi di sviluppo.",
-		about = "La pagina Info e i crediti arrivano con i prossimi passi di sviluppo.",
+		settings = "Ripristina impostazioni", about = "Crediti",
 		readOnly = "Nulla è cambiato: i dati salvati sono in sola lettura (vedi /atw debug).",
 	},
 }
@@ -81,10 +79,13 @@ for _, code in ipairs({ "enUS", "itIT" }) do
 			run("/atw settings")
 			truthy(W():IsShown())
 			eq(W():Tab(), "settings")
-			eq(W():Frame().pages.settings.text:GetText(), T.settings)
+			local view = W():Frame().pages.settings.view
+			eq(view.pageId, "settings")
+			eq(view.settings.reset:GetLabel(), T.settings)
 			run("/atw about")
 			eq(ui().lastPage, "about")
-			eq(W():Frame().pages.settings.text:GetText(), T.about)
+			eq(view.pageId, "about")
+			eq(view.info.cards[2].items[1].region:GetText(), T.about)
 		end)
 
 		it("open the diagnostic report, in English", function()

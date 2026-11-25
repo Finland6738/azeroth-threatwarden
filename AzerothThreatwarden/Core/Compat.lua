@@ -592,6 +592,36 @@ function Compat.SliceModeStretched()
 	return type(mode) == "number" and mode or 0
 end
 
+-- Reloads the interface (the *Reload now* button of Settings): true when the client took the call. A click is the
+-- hardware event the client may ask for.
+function Compat.Reload()
+	local fn = Resolve("C_UI.Reload")
+	if type(fn) ~= "function" then fn = Resolve("ReloadUI") end
+	if type(fn) ~= "function" then return false end
+	return (pcall(fn))
+end
+
+-- The game's own Settings window (interface code the dump does not list [to be tried in game]): true when a panel can
+-- be registered in it.
+function Compat.HasSettingsPanel()
+	return type(Resolve("Settings.RegisterCanvasLayoutCategory")) == "function"
+		and type(Resolve("Settings.RegisterAddOnCategory")) == "function"
+end
+
+-- Adds `frame` to Options > AddOns under `name`. Returns the category, or nil and "unavailable" or "failed". Never
+-- raises.
+function Compat.RegisterSettingsPanel(frame, name)
+	if not Compat.HasSettingsPanel() then return nil, "unavailable" end
+	local ok, category = pcall(function()
+		local made = Resolve("Settings.RegisterCanvasLayoutCategory")(frame, name)
+		Resolve("Settings.RegisterAddOnCategory")(made)
+		return made
+	end)
+	if ok and category then return category end
+	if not ok and ns.Diagnostics then ns.Diagnostics.Record(category) end
+	return nil, "failed"
+end
+
 -- Esc closes the named frame (UISpecialFrames). False when the client has no such list.
 function Compat.CloseOnEscape(frameName)
 	local list = Resolve("UISpecialFrames")

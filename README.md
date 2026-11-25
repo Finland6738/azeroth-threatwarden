@@ -8,7 +8,7 @@ which mob, warns you before you pull aggro, records your fights and explains wha
 **known** from what is **estimated**.
 
 > **Status: early development.** The specification, the decisions and the plan are written and the addon has its
-> foundations: saved settings (versioned, with migrations), the ecosystem look, a movable window (its Monitor tab is still empty), the [commands](docs/wiki/Commands.md) `/atw` and `/threatwarden`, a minimap button and the Addon Compartment entry; it reads no threat yet and there is no release to install. The first step is a probe in the real client (milestone M0): it checks which threat data WoW Forever gives an
+> foundations: saved settings (versioned, with migrations), the ecosystem look, a movable window (its Monitor tab is still empty) with Settings (themes, language, window) and an Info page with the credits, the [commands](docs/wiki/Commands.md) `/atw` and `/threatwarden`, a minimap button and the Addon Compartment entry; it reads no threat yet and there is no release to install. The first step is a probe in the real client (milestone M0): it checks which threat data WoW Forever gives an
 > addon, because the client may hide threat values from addons in some situations. That
 > [probe](docs/spike/README.md) (a development tool, never distributed) can now check the client and the threat
 > functions, including whether their values are secret (P1–P4), which units and mobs answer, the threat events, GUIDs
@@ -19,6 +19,17 @@ which mob, warns you before you pull aggro, records your fights and explains wha
 [Italiano](README.it.md) · [Roadmap](ROADMAP.md) · [Specification (Italian)](docs/specs/README.md) ·
 [Architecture](docs/ARCHITECTURE.md) · [Decisions](docs/adr/README.md) · [User manual](docs/wiki/Home.md)
 ([Italiano](docs/wiki/Home-it.md))
+
+## What it looks like
+
+Design previews, not screenshots: drawn from the addon's own layout and texts, because it has not been run in the game
+yet ([all previews: English and Italian, three themes](docs/specs/mockups/previews/README.md)).
+
+![The Settings page, theme Nebula](docs/specs/mockups/previews/settings-nebula.webp)
+
+![The Info page and the credits, theme Warden](docs/specs/mockups/previews/about-warden.webp)
+
+![The window of v0.1.0 before the threat monitor arrives, theme Aurora](docs/specs/mockups/previews/window-aurora.webp)
 
 ## Planned features
 
