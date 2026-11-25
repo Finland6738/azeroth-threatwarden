@@ -1,0 +1,87 @@
+# Threat Monitor
+
+*Italiano: [[Monitor della threat|Threat-Monitor-it]]*
+
+> **Arrives with `v0.2.0`.** In `v0.1.0` the Monitor tab only says that threat monitoring is coming. Which threat data
+> WoW Forever really gives an addon is still being checked, so the monitor is made for every answer.
+
+The **Monitor** tab shows who threatens the mob you are fighting. It reads the game while you are in combat, a mob is
+monitored and the window is open on this tab.
+
+![The monitor with threat values: one damage dealer in WARNING, one in DANGER](../specs/mockups/previews/monitor-values-nebula.webp)
+
+## The header
+
+- The **mob**: the enemy you target or, if you target a friend (a healer selecting the tank), the friend's target. Its
+  kind (*Elite*, *Rare*, *Boss*) is written next to its name.
+- **Your state**, with an icon and a word.
+- **Tank**: who holds the mob. If nobody in your group holds it you read *(not in the list)* after the name, and
+  *Unknown tank* when nothing readable says who it is.
+- **Margin**: for a damage dealer or healer, how far you are from 100 % (taking aggro); for the tank, how far the
+  second one is from 100 %.
+
+## The list
+
+One row for each unit on the mob's threat list (you, your pet, your party or raid):
+
+| Part of a row | Meaning |
+|---|---|
+| Strip on the left, badge on the right | the state: **Safe**, **Warning**, **Danger** or **Unknown**, always with an icon and a word |
+| Role icon, shield icon | the assigned role; the shield marks who holds the mob |
+| Name | the class colour (your own row has a ring around it) |
+| Bar and number | the scaled threat: 100 % means pulling aggro. The ticks are the Warning (80 %) and Danger (95 %) thresholds |
+| Arrow | the trend of the last seconds (an *estimate*); `~2 s` means *may take aggro in about 2 s* (a *prediction*) |
+| `?` and a dashed bar | unknown: hover the row to read why |
+| `—` and no bar | *state only*: the game gives the state but hides the numbers |
+
+Hover a row to see every value with its kind (*detected*, *calculated*, *estimated*, *predicted*) and, for anything
+missing, the reason (*Secret value*, *Not available*, *Insufficient data*, *Stale*). A narrow window drops the role
+icon, the trend and the bar before the words.
+
+Click **Sort** to change the order: *Percentage*, *Absolute threat* (only where the game gives it), *Risk*, *Recent
+change*. Unknown rows are always last. **Me on top** keeps your row first. The order changes at most once a second, and
+at once when someone enters Danger. These two choices are saved from a later step of `v0.2.0`; until then they last for
+the session. When the list does not fit, the last line says *+N more* and your row stays visible.
+
+![The tank's view, with the margin over the second](../specs/mockups/previews/monitor-tank-warden.webp)
+
+## The states
+
+| State | For a damage dealer or healer | For the tank holding the mob |
+|---|---|---|
+| **Safe** | below 80 % | the second one is below 80 % |
+| **Warning** | from 80 %, or predicted to reach 95 % within 3 s | the second one is from 80 % |
+| **Danger** | from 95 %, or holding the mob | the second one is from 95 %, or has more threat |
+| **Unknown** | the game gives nothing readable, or the data is old | the same |
+
+The thresholds are provisional. A state rises at once and falls only after a second, so it does not flicker.
+
+## When the game hides the numbers
+
+![State only: states without percentages](../specs/mockups/previews/monitor-state-nebula.webp)
+
+In **state only** mode the game tells who holds the mob and each one's state, but no numbers: no bars, no margin, no
+trend, and the footer says *State only*.
+
+![Threat data unavailable](../specs/mockups/previews/monitor-unknown-warden.webp)
+
+When nothing is readable you see **Threat data unavailable** with the reason: never an invented number, never an empty
+bar that looks like 0 %.
+
+## Before and after a fight
+
+![No target](../specs/mockups/previews/monitor-no-target-nebula.webp)
+
+Without an enemy the window says *No target*. Out of combat it says *Not in combat*; when a fight ends the last rows
+stay, marked as stale, under *Combat ended*. A dead or vanished enemy shows *Target died* or *Target lost*.
+
+## The footer and the title bar
+
+The footer says how old the data is and how many reads of the last 10 s were usable. The pill in the title bar says
+*Idle*, *Live*, *State only* or *Unavailable*.
+
+The interface is also in Italian:
+
+![The monitor in Italian, theme Aurora](../specs/mockups/previews/monitor-values-aurora-it.webp)
+
+*Design previews, not screenshots: drawn from the addon's own layout and texts, with an invented fight, because the addon has not been run in the game yet ([all previews](https://github.com/Finland6738/azeroth-threatwarden/blob/main/docs/specs/mockups/previews/README.md)).*

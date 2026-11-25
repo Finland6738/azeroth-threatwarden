@@ -71,6 +71,35 @@ ThreatScanner.scans, ThreatScanner.reads = 0, 0
 ThreatScanner.turns = 1       -- turns of the round robin at the last scan (1: everybody read)
 ThreatScanner.holder = nil    -- the record holding the mob at the last scan
 
+-- The data quality (MON-03, SPEC-03 §1.5): reads of the last QUALITY_SECONDS in one-second buckets, made once.
+-- A read "nil" (not on the list) is not an error and does not count.
+ThreatScanner.QUALITY_SECONDS = 10
+local qualitySecond, qualityGood, qualityAll = {}, {}, {}
+for i = 1, 10 do qualitySecond[i], qualityGood[i], qualityAll[i] = -1, 0, 0 end
+
+local function countQuality(mode, reason, now)
+	if mode == "none" and reason == "nil" then return end
+	local second = floor(now)
+	local i = second % 10 + 1
+	if qualitySecond[i] ~= second then qualitySecond[i], qualityGood[i], qualityAll[i] = second, 0, 0 end
+	qualityAll[i] = qualityAll[i] + 1
+	if mode ~= "none" then qualityGood[i] = qualityGood[i] + 1 end
+end
+
+-- The percentage (0-100) of valid reads (values or state) in the last 10 s, or nil when there were none.
+function ThreatScanner.Quality(now)
+	local second = floor(now)
+	local good, all = 0, 0
+	for i = 1, 10 do
+		local age = second - qualitySecond[i]
+		if qualitySecond[i] >= 0 and age >= 0 and age < 10 then
+			good, all = good + qualityGood[i], all + qualityAll[i]
+		end
+	end
+	if all == 0 then return nil end
+	return good * 100 / all
+end
+
 local rate, maxUnits = ThreatScanner.DEFAULTS.rate, ThreatScanner.DEFAULTS.maxUnits
 local scanning, pending = false, false
 local window = { shown = false, tab = nil }
@@ -193,6 +222,7 @@ local RANK = { values = 3, state = 2, none = 1 }
 local function readOne(rec, mobToken, mobKey)
 	rec.mode = Threat.Read(rec.unitToken, mobToken, rec)
 	rec.mobToken, rec.mobKey, rec.stale, rec.scanned = mobToken, mobKey, false, true
+	countQuality(rec.mode, rec.reason, Compat.Now())
 	ThreatScanner.reads = ThreatScanner.reads + 1
 end
 

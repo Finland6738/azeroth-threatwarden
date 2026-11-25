@@ -360,6 +360,9 @@ describe("the pool (DAT-11, ARC-06)", function()
 		pull:threat("boss", "player", 600)
 		pull:to(0.5)
 		Mock.ns.Scheduler.Stop("threat")
+		-- only the Data modules are measured: the view (M2.5) writes new texts when values change; its own bound is in
+		-- test_threat_list.lua
+		Mock.ns.ThreatList.view:Hide()
 		-- the mock client allocates for its own answers: constant stand-ins, so that only the addon is measured
 		local mobGUID = UnitGUID("target")
 		UnitExists = function() return true end

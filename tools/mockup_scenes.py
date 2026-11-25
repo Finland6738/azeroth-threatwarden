@@ -2,8 +2,9 @@
 page and the Info page, each in English and Italian and in the three themes. The layout follows UI/Window.lua,
 UI/Settings.lua and UI/About.lua; every text comes from the addon's locale files.
 
-Adapted from Azeroth Accord (tools/mockup_scenes.py), same owner, GPL-3.0 (ADR 0012). Nothing here is invented data
-about players: the only made-up values are the state of the controls (the defaults of Core/Config.lua).
+Adapted from Azeroth Accord (tools/mockup_scenes.py), same owner, GPL-3.0 (ADR 0012). The made-up values are the state
+of the controls (the defaults of Core/Config.lua) and, in the monitor scenes, an invented fight: no player, mob or
+number comes from a real game.
 """
 import mockup_lib as lib
 from mockup_lib import T, button, card, esc, note, row, seg, switch, window
@@ -17,6 +18,145 @@ LEFT, RIGHT, TOP = 24, 616, 100
 def monitor(theme):
     body = (f'<div class="empty">{lib.logo()}<p>{esc(T("MONITOR_COMING"))}</p></div>')
     return window(theme, "monitor", body, 300, 140, 2.0)
+
+
+# ---- the threat monitor (UI/ThreatList.lua). Invented data: the mob and the players do not exist. ----------------------
+
+ICONS = {
+    "state-safe": '<path d="M12 2 21 6v7c0 5-4 8-9 9-5-1-9-4-9-9V6z" fill="currentColor" stroke="none"/><path d="M8 12l3 3 5-6" stroke="var(--state-safe)"/>',
+    "state-warning": '<path d="M12 2 23 21H1z" fill="currentColor" stroke="none"/><path d="M12 9v5M12 17.5v.01" stroke="var(--state-warning)"/>',
+    "state-danger": '<path d="M7.5 2h9L22 7.5v9L16.5 22h-9L2 16.5v-9z" fill="currentColor" stroke="none"/><path d="M9 7v7M15 7v7M9 17.5v.01M15 17.5v.01" stroke="var(--state-danger)"/>',
+    "state-unknown": '<circle cx="12" cy="12" r="10"/><path d="M9 9a3 3 0 1 1 4 3c-1 .5-1 1-1 2M12 17.5v.01"/>',
+    "tank": '<path d="M12 2 21 5v8c0 4-4 7-9 9-5-2-9-5-9-9V5z"/><path d="M12 6l5 2v5c0 2-2 4-5 5z" fill="currentColor" stroke="none"/>',
+    "role-tank": '<path d="M12 2 21 5v8c0 4-4 7-9 9-5-2-9-5-9-9V5z" fill="currentColor" stroke="none"/>',
+    "role-healer": '<path d="M9 3h6v6h6v6h-6v6H9v-6H3V9h6z" fill="currentColor" stroke="none"/>',
+    "role-dps": '<path d="M6 18 20 4M4 12l8 8M4 20l3-3" stroke-width="3"/>',
+    "trend-up": '<path d="M3 19l7-7 4 3 6-8M14 6h6v6"/>',
+    "trend-flat": '<path d="M3 12h17M15 7l5 5-5 5"/>',
+    "predict": '<path d="M2 12h.01M8 12h.01"/><path d="M14 6l8 6-8 6z" fill="currentColor" stroke="none"/>',
+    "check": '<path d="M4 12l5 5L20 6"/>', "minus": '<path d="M5 12h14"/>',
+}
+CLASS = {"warrior": "#C69B6D", "mage": "#3FC7EB", "priest": "#FFFFFF", "rogue": "#FFF468"}
+STATE_KEY = {"safe": "STATE_SAFE", "warning": "STATE_WARNING", "danger": "STATE_DANGER", "unknown": "STATE_UNKNOWN"}
+
+
+def icon(name, size=10):
+    return lib._svg(ICONS[name], size)
+
+
+def badge(state, large=False):
+    return (f'<span class="badge{" large" if large else ""}" style="background:var(--state-{state})">'
+            f'{icon("state-" + state)}{esc(T(STATE_KEY[state]))}</span>')
+
+
+def mon_head(title, kind=None, state=None, tank=None, margin=None, holder=True):
+    mob = f'<div class="mob">{esc(title)}' + (f'<small>{esc(kind)}</small>' if kind else "") + "</div>"
+    out = mob + (badge(state, True) if state else "")
+    if tank:
+        mark = f'<span style="color:var(--text-2);display:grid">{icon("tank")}</span>' if holder else ""
+        out += f'<div class="tankline">{mark}{esc(tank)}</div>'
+    if margin:
+        out += f'<div class="margin">{esc(T("MON_MARGIN", margin))}</div>'
+    return f'<div class="mhead">{out}</div>'
+
+
+def mon_row(theme, name, cls, role, state, percent=None, holder=False, me=False, trend=None, eta=None,
+            state_only=False):
+    # on the light theme the name is text-1 and the class colour is the mark before the role icon
+    light = theme == "aurora"
+    ink = "var(--text-1)" if light else CLASS[cls]
+    mark = f'<span class="mark" style="background:{CLASS[cls]}"></span>' if light else ""
+    track = 26 if lib.LANG[0] == "itIT" else 38
+    if state_only:
+        bar = f'<span class="barbox" style="width:{track + 48}px;justify-content:flex-end"><span class="num" style="color:var(--text-2)">{esc(T("MON_DASH"))}</span></span>'
+    else:
+        ticks = '<u style="left:80%"></u><u style="left:95%"></u>'
+        fill = f'<i style="width:{min(percent, 100)}%;background:var(--state-{state})"></i>'
+        pred = icon("predict") if eta else ""
+        bar = (f'<span class="barbox"><span class="tr" style="width:{track}px">{fill}{ticks}</span>'
+               f'<span class="pred">{pred}</span><span class="num">{percent} %</span></span>')
+    cell = esc(T("MON_TIME", eta)) if eta else (icon("trend-" + trend) if trend else "")
+    width = 82 if lib.LANG[0] == "itIT" else 66
+    return (f'<div class="mrow{" self" if me else ""}"><span class="stripe" style="background:var(--state-{state})"></span>'
+            f'{mark}<span class="cell">{icon("role-" + role)}</span>'
+            f'<span class="cell" style="color:var(--text-2)">{icon("tank") if holder else ""}</span>'
+            f'<span class="name" style="color:{ink}">{esc(name)}</span>{bar}<span class="trend">{cell}</span>'
+            f'<span class="badgebox" style="width:{width}px">{badge(state)}</span></div>')
+
+
+def mon_list(rows):
+    head = (f'<div class="mlisthead"><span>{esc(T("MON_SORT", T("SORT_RELATIVE")))}</span>'
+            f'<span>{icon("minus")}{esc(T("MON_PIN_OFF"))}</span></div>')
+    return head + "".join(rows)
+
+
+def tip(lines, top):
+    return (f'<div class="tip" style="left:700px;top:{top}px"><b>{esc(lines[0])}</b>'
+            + "".join(f"<div>{esc(line)}</div>" for line in lines[1:]) + "</div>")
+
+
+def mon_window(theme, module, body, footer="", warn=False):
+    foot = f'<div class="mfoot{" warn" if warn else ""}">{esc(footer)}</div>'
+    # the compact bar gives up its title before the state loses its word (UI/Window.lua)
+    hidden = len(T(lib.MODULE[module][0])) > 12
+    return lib.window(theme, "monitor", f'<div class="mon">{body}{foot}</div>', 60, 110, 2.0, module, hidden)
+
+
+def quality(valid):
+    return T("MON_QUALITY", 0.2, valid)
+
+
+def category(value, key):
+    return T("TIP_TAGGED", value, T(key))
+
+
+def monitor_values(theme):
+    rows = [mon_row(theme, "Bram", "warrior", "tank", "danger", 100, holder=True),
+            mon_row(theme, "Kor", "rogue", "dps", "danger", 97, trend="up"),
+            mon_row(theme, T("UNIT_YOU"), "mage", "dps", "warning", 84, me=True, eta=2),
+            mon_row(theme, "Sela", "priest", "healer", "safe", 12, trend="flat")]
+    body = (mon_head("Gorrak", T("MON_CLASS_BOSS"), "warning", T("MON_TANK", "Bram"), "+16")
+            + mon_list(rows))
+    lines = [T("UNIT_YOU"), T("TIP_STATE", T("STATE_WARNING"), T("CAT_CALCULATED")),
+             T("TIP_SCALED", category("84 %", "CAT_DETECTED")), T("TIP_MARGIN", category("+16", "CAT_CALCULATED")),
+             T("TIP_TREND", category(T("TIP_TREND_VALUE", 6.2, T("CONF_MEDIUM"), 9), "CAT_ESTIMATED")),
+             T("TIP_PREDICTION", category(T("TIP_PREDICTED_AGGRO", 2), "CAT_PREDICTED")),
+             T("TIP_READ", 0.2), T("TIP_MODE", T("MODULE_LIVE"))]
+    return mon_window(theme, "live", body, quality(100)) + tip(lines, 170)
+
+
+def monitor_tank(theme):
+    rows = [mon_row(theme, T("UNIT_YOU"), "warrior", "tank", "safe", 100, holder=True, me=True),
+            mon_row(theme, "Kor", "rogue", "dps", "safe", 70, trend="up"),
+            mon_row(theme, "Sela", "priest", "healer", "safe", 15, trend="flat")]
+    body = mon_head("Gorrak", T("MON_CLASS_BOSS"), "safe", T("MON_TANK", T("UNIT_YOU")), "+30") + mon_list(rows)
+    return mon_window(theme, "live", body, quality(100))
+
+
+def monitor_state(theme):
+    rows = [mon_row(theme, "Bram", "warrior", "tank", "safe", holder=True, state_only=True),
+            mon_row(theme, "Kor", "rogue", "dps", "warning", state_only=True),
+            mon_row(theme, T("UNIT_YOU"), "mage", "dps", "safe", me=True, state_only=True),
+            mon_row(theme, "Sela", "priest", "healer", "safe", state_only=True)]
+    body = (mon_head("Gorrak", T("MON_CLASS_BOSS"), "safe", T("MON_TANK", "Bram"), T("MON_DASH"))
+            + mon_list(rows))
+    lines = ["Kor", T("TIP_STATE", T("STATE_WARNING"), T("CAT_DETECTED")), T("TIP_STATE_ONLY"),
+             T("TIP_GAME_STATE"), T("TIP_SCALED", T("WHY_STATE_ONLY")), T("TIP_MODE", T("MODULE_STATE"))]
+    return mon_window(theme, "state", body, T("MON_QUALITY_STATE", 0.2, 100)) + tip(lines, 220)
+
+
+def monitor_unknown(theme):
+    body = (mon_head("Gorrak", T("MON_CLASS_BOSS"), "unknown", T("MON_TANK_UNKNOWN"), holder=False)
+            + f'<div class="mmsg">{esc(T("MON_UNAVAILABLE"))}<small>{esc(T("WHY_SECRET"))}</small></div>')
+    lines = ["Gorrak", T("TIP_STATE_UNKNOWN", T("STATE_UNKNOWN")), T("WHY_SECRET"), T("MON_TANK_UNKNOWN"),
+             T("WHY_TANK_UNKNOWN")]
+    return mon_window(theme, "unavailable", body, quality(0), True) + tip(lines, 190)
+
+
+def monitor_no_target(theme):
+    body = (mon_head(T("MON_NO_TARGET"))
+            + f'<div class="mmsg">{esc(T("MON_NO_TARGET_HINT"))}</div>')
+    return mon_window(theme, "idle", body)
 
 
 def pager(on):
@@ -83,6 +223,20 @@ def about(theme):
     return page(theme, 1, cards, LEFT) + page(theme, 1, cards, RIGHT, 316)
 
 
+MONITOR_KINDS = [
+    ("monitor-values", monitor_values, THEMES,
+     "The monitor with threat values: a damage dealer in WARNING with a prediction, one in DANGER",
+     "Il monitor con i valori di threat: un DPS in ATTENZIONE con la previsione, uno in PERICOLO"),
+    ("monitor-tank", monitor_tank, ["nebula", "warden"], "The tank's view, with the margin over the second",
+     "La vista del tank, con il margine sul secondo"),
+    ("monitor-state", monitor_state, ["nebula", "warden"],
+     "State only: the client hides the values, the monitor shows the game's state",
+     "Solo stato: il client nasconde i valori, il monitor mostra lo stato del gioco"),
+    ("monitor-unknown", monitor_unknown, ["nebula", "warden"], "Nothing readable: threat data unavailable",
+     "Nulla di leggibile: dati di threat non disponibili"),
+    ("monitor-no-target", monitor_no_target, ["nebula", "warden"], "No target", "Nessun bersaglio"),
+]
+
 KINDS = [
     ("window", monitor, "The window of v0.1.0: the Monitor tab before threat monitoring arrives",
      "La finestra della v0.1.0: la scheda Monitor prima che arrivi il monitor della threat"),
@@ -97,6 +251,11 @@ SCENES = []
 for _lang in ("enUS", "itIT"):
     for _kind, _fn, _en, _it in KINDS:
         for _theme in THEMES:
+            _name = f"{_kind}-{_theme}" + ("-it" if _lang == "itIT" else "")
+            _caption = f"{_en if _lang == 'enUS' else _it} ({THEME_NAMES[_theme]})"
+            SCENES.append((_name, _caption, (lambda f=_fn, t=_theme: f(t)), _lang, _theme))
+    for _kind, _fn, _themes, _en, _it in MONITOR_KINDS:
+        for _theme in _themes:
             _name = f"{_kind}-{_theme}" + ("-it" if _lang == "itIT" else "")
             _caption = f"{_en if _lang == 'enUS' else _it} ({THEME_NAMES[_theme]})"
             SCENES.append((_name, _caption, (lambda f=_fn, t=_theme: f(t)), _lang, _theme))

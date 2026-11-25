@@ -127,9 +127,9 @@ copied from Azeroth Accord and renamed; each copied file says so in its header.
 | `UI/Assets.lua`, `Theme.lua`, `Motion.lua`, `Widgets/` | the ecosystem look: Nebula, Aurora and Warden themes, the four state tokens, fonts, 9-slice shapes (`Media/`, made by `tools/make_media.py` and `make_fonts.py`), the widget kit plus `ThreatBar` and `StateBadge`; the theme changes without `/reload` | M1.6 |
 | `UI/Window.lua`, `UI/Launcher.lua` | the window (compact layout for Monitor, wide layout for Settings and Reports), tabs, move, lock, resize, scale; the minimap button and the Addon Compartment entry | M1.7 |
 | `UI/Settings.lua`, `UI/About.lua` | Settings (Appearance, Language, Window, Reset) and Info with the NEBULA credits, in the window's Settings tab and in the game's own settings panel (through Compat) | M1.8 |
-| `Data/TargetTracker.lua`, `Data/ThreatScanner.lua` | the monitored mob; threat reads on events and a bounded tick in combat | *planned*, M2 |
-| `Data/ThreatModel.lua`, `Data/ThreatCalc.lua`, `Data/ThreatState.lua` | records, categories, staleness; margin, trend, time to overtake; states with hysteresis | *planned*, M2 |
-| `UI/ThreatList.lua` | the threat list in the Monitor tab | *planned*, M2 |
+| `Data/TargetTracker.lua`, `Data/ThreatScanner.lua` | the monitored mob; threat reads on events and a bounded tick in combat | M2 (behind `monitor`) |
+| `Data/ThreatModel.lua`, `Data/ThreatCalc.lua`, `Data/ThreatState.lua` | records, categories, staleness; margin, trend, time to overtake; states with hysteresis | M2 (behind `monitor`) |
+| `UI/ThreatList.lua` | the threat list in the Monitor tab | M2 (behind `monitor`) |
 | `Data/Alerts.lua`, `Data/Coach.lua`, `Data/CoachRules.lua` | alerts with cooldowns; rule-based tips with reason and confidence | *planned*, M3 |
 | `Data/Recorder.lua`, `Data/Session.lua`, `Data/Storage.lua`, `Data/Report.lua` | sessions, samples, events, limits, the combat report | *planned*, M4 |
 | `Data/Replay.lua`, `UI/Timeline.lua`, `UI/ReplayWindow.lua` | timeline and replay | *planned*, M5 |
@@ -147,7 +147,7 @@ copied from Azeroth Accord and renamed; each copied file says so in its header.
 | `CAPABILITY_CHANGED(id, state)` | Compat | Window (module state), ThreatState | M1 |
 | `COMBAT_STARTED`, `COMBAT_ENDED` | Init | Scheduler, Window, Scanner, Recorder | M1 |
 | `WINDOW_SHOWN(shown)`, `TAB_CHANGED(tabId)` | Window | Scanner, tabs | M1 |
-| `TARGET_CHANGED`, `THREAT_SCANNED`, `THREAT_UPDATED`, `STATE_CHANGED`, `THREAT_MODE_CHANGED` | Data | ThreatList, Alerts, Recorder | *planned*, M2 |
+| `TARGET_CHANGED`, `TARGET_STATUS`, `THREAT_SCANNED`, `THREAT_UPDATED`, `STATE_CHANGED`, `THREAT_MODE_CHANGED` | Data | ThreatList, Window; Alerts and Recorder later | M2 (behind `monitor`) |
 | `ALERT_RAISED`, `COACH_TIP` | Alerts, Coach | Window, Recorder | *planned*, M3 |
 | `SESSION_STARTED`, `SESSION_ENDED`, `SESSIONS_CHANGED` | Recorder, Storage | Reports | *planned*, M4 |
 

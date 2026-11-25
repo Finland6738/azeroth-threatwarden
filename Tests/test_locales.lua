@@ -10,7 +10,8 @@ local ADDON = "AzerothThreatwarden/"
 local SAME = {
 	itIT = { ADDON_TITLE = true, WINDOW_TITLE = true, WINDOW_TITLE_COMPACT = true, TAB_MONITOR = true,
 		PAGE_ABOUT = true, THEME_NEBULA = true, THEME_AURORA = true, THEME_WARDEN = true, LANGUAGE_ENUS = true,
-		LANGUAGE_ITIT = true, SET_PERCENT = true },
+		LANGUAGE_ITIT = true, SET_PERCENT = true, MON_CLASS_BOSS = true, MON_DASH = true, MON_TANK = true,
+		MON_TIME = true, ROLE_TANK = true, TIP_TAGGED = true, TIP_THREAT = true },
 }
 
 -- The checks, as functions that return a list of problems: the group at the end proves they find them. -----------

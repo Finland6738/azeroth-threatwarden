@@ -7,6 +7,20 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
+- M2.5: the threat list view in the Monitor tab, behind the `monitor` switch (off until v0.2.0; the M1 text stays
+  while it is off). `UI/ThreatList.lua`: the header of the monitored mob (name, kind, your state, the tank, the
+  margin), one row per unit on its threat list (class colour, role and holder icons, bar, scaled percentage, margin in
+  a wide window, a state badge with icon and word, trend arrow or `~2 s` of a prediction, your row ringed), tooltips
+  with every value, its reliability category and the reason of everything missing, the *state only*, unreadable, empty,
+  out of combat, combat ended, dead and lost views, a data-quality footer, four orders (percentage, absolute threat,
+  risk, recent change) with *Me on top*, at most one new order a second and at once on Danger, *+N more* with your row
+  always visible, and a narrow layout that keeps the state's word. It redraws once per update, only while visible, and
+  writes a text only when it changes. The title bar's pill follows the monitor's mode. New role icons in the icon sheet,
+  new locale keys in English and Italian, design previews of every state and the wiki page *Threat Monitor*.
+- M2.5: for the view, `Compat.ClassColor` and `Compat.Unit.Classification`, the mob's name, classification and holder
+  name in `Data/TargetTracker.lua` (and `TARGET_STATUS` when a dead mob is deselected), and the share of valid reads of
+  the last 10 s in `Data/ThreatScanner.lua`.
+
 - M2.2: the threat scanner and the target tracker, behind the `monitor` switch (off until v0.2.0).
   `Data/TargetTracker.lua` picks the monitored mob (the hostile target, or the target of a friendly target), keys it by
   GUID or by a counter when the GUID is secret, and sees target changes, a death, a disappearance and a new creature

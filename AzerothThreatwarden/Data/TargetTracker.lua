@@ -13,7 +13,9 @@
 -- why there is none: "none" (no hostile target), "died" (the mob died), "lost" (it no longer exists: it vanished, or
 -- the token names nobody any more). After a death or a loss the status stays until another mob is monitored.
 --
--- It reads existence, hostility, death and GUID only, through Core/Compat.lua, and works out of combat too (the header
+-- A change of `status` with no mob before or after (a dead mob deselected) emits TARGET_STATUS(status) for the view.
+-- It reads existence, hostility, death and GUID (and, when the view asks, the names and classification of the header)
+-- only, through Core/Compat.lua, and works out of combat too (the header
 -- shows the mob before the pull). While the `monitor` switch is off (Core/Features.lua) it registers no game event and
 -- monitors nothing. Check() is allocation-free unless the mob changed (ARC-06): it runs on every scan.
 local ADDON_NAME, ns = ...
@@ -80,8 +82,10 @@ local function apply(token, fresh, status)
 	if not token then
 		TargetTracker.mobToken, TargetTracker.mobKey, TargetTracker.mobGUID = nil, nil, nil
 		-- "died" and "lost" stay until the player's target changes
+		local before = TargetTracker.status
 		if old ~= nil or fresh or TargetTracker.status == "active" then TargetTracker.status = status or "none" end
-		if old ~= nil then emit("TARGET_CHANGED", nil) end
+		if old ~= nil then emit("TARGET_CHANGED", nil)
+		elseif TargetTracker.status ~= before then emit("TARGET_STATUS", TargetTracker.status) end
 		return
 	end
 	local guid, reason = Unit.GUID(token)
@@ -150,6 +154,28 @@ function TargetTracker.Check()
 		end
 	end
 	return true
+end
+
+-- The header of the monitor (SPEC-03 §1.6): the mob's name and classification, and the name of its target, who
+-- holds it when no watched unit does (SPEC-03 §1.3). Read when asked, never per scan; nil when secret or unknown.
+local TARGET_OF = { target = "targettarget", targettarget = "targettargettarget" }
+
+function TargetTracker.MobName()
+	local token = TargetTracker.mobToken
+	if not token then return nil end
+	return (Unit.Name(token))
+end
+
+function TargetTracker.MobClassification()
+	local token = TargetTracker.mobToken
+	if not token then return nil end
+	return (Unit.Classification(token))
+end
+
+function TargetTracker.HolderName()
+	local of = TARGET_OF[TargetTracker.mobToken or ""]
+	if not of then return nil end
+	return (Unit.Name(of))
 end
 
 function TargetTracker.MobToken() return TargetTracker.mobToken end

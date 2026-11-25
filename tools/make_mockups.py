@@ -79,13 +79,13 @@ def to_webp(png, webp):
     Image.open(png).convert("RGB").save(webp, "WEBP", quality=80, method=6)
 
 
-GROUPS = [("The window", "window-"), ("Settings", "settings-"), ("Info and credits", "about-")]
+GROUPS = [("The threat monitor", "monitor-"), ("The window", "window-"), ("Settings", "settings-"), ("Info and credits", "about-")]
 
 
 def index_text(scenes):
     lines = ["# Interface previews", "",
-             "The window, the Settings page and the Info page of Azeroth Threatwarden, in the three themes and in both "
-             "languages of the interface.", "",
+             "The threat monitor, the window, the Settings page and the Info page of Azeroth Threatwarden, in both "
+             "languages of the interface (the monitor's players and mob are invented).", "",
              "> **Design previews, not screenshots.** Drawn from the addon's layout, colours (`UI/Theme.lua`) and texts "
              "(`Locales/`), with original art only (CSS shapes, the addon's logo, the NEBULA logos and the fonts the "
              "addon ships). Nothing has been run in WoW Forever yet, so the real window may differ in small details "

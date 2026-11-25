@@ -684,6 +684,9 @@ function Unit.GUID(unit) return text("UnitGUID", unit) end
 -- The name shown for a unit (never stored outside the sessions, SPEC-02 §1) [probe P9].
 function Unit.Name(unit) return text("UnitName", unit) end
 
+-- The classification of a unit ("normal", "elite", "rare", "rareelite", "worldboss", "minus"...) [probe P5].
+function Unit.Classification(unit) return text("UnitClassification", unit) end
+
 -- The class file ("WARRIOR"...), the second value of UnitClass.
 function Unit.Class(unit)
 	if not unitArg(unit) then return nil, "no-unit" end
@@ -704,6 +707,18 @@ function Unit.Role(unit)
 	if reason then return nil, reason end
 	if ROLES[role] then return ROLES[role], nil end
 	return nil, "none"
+end
+
+-- The game's colour of a class file: r, g, b in 0..1, or nil (unknown class, no API, a secret or bad answer).
+function Compat.ClassColor(classFile)
+	if type(classFile) ~= "string" or IsSecret(classFile) then return nil end
+	local fn = Resolve("C_ClassColor.GetClassColor")
+	if type(fn) ~= "function" then return nil end
+	local ok, color = pcall(fn, classFile)
+	if not ok or IsSecret(color) or type(color) ~= "table" then return nil end
+	local r, g, b = plainNumber(color.r), plainNumber(color.g), plainNumber(color.b)
+	if r and g and b then return r, g, b end
+	return nil
 end
 
 local Group = {}

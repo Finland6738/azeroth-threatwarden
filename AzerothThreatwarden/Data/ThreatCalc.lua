@@ -31,6 +31,7 @@ ThreatCalc.GAP = 1            -- seconds between two valid samples that restart 
 ThreatCalc.HIGH = { samples = 8, r2 = 0.8 }
 ThreatCalc.MEDIUM = { samples = 5, r2 = 0.5 }
 ThreatCalc.MAX_OVERTAKE = 10  -- seconds: a later overtake is not shown
+ThreatCalc.ARROW = 2          -- points per second beyond which the trend arrow points up or down (SPEC-03 §2.5)
 ThreatCalc.WARNING_AHEAD = 3  -- seconds: the predicted WARNING (SPEC-03 §2.2)
 ThreatCalc.USE_LEAD = false   -- [probe P2]: true only if UnitThreatPercentageOfLead proves to be the % over the second
 

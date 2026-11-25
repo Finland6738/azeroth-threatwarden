@@ -11,7 +11,7 @@
 -- and resizing work in combat too. No game API is named (ARC-02): CreateFrame and Core/Compat.lua.
 --
 -- Bus: emits WINDOW_SHOWN(shown) and TAB_CHANGED(tabId); listens CONFIG_LOADED, CONFIG_CHANGED, DISPLAY_CHANGED,
--- COMBAT_STARTED, COMBAT_ENDED and CAPABILITY_CHANGED.
+-- COMBAT_STARTED, COMBAT_ENDED, CAPABILITY_CHANGED, THREAT_MODE_CHANGED and TARGET_CHANGED (the pill).
 local ADDON_NAME, ns = ...
 ns = ns or {}
 ns.modules = ns.modules or {}
@@ -70,11 +70,21 @@ end
 function Window.ModuleState()
 	if ns.addon and ns.addon.isForever == false then return "unsupported" end
 	if not featureOn("monitor") then return "off" end
+	if not (ns.addon and ns.addon.inCombat) then return "idle" end
+	local Tracker, Scanner = ns.TargetTracker, ns.ThreatScanner
+	if Tracker and Tracker.enabled and not Tracker.mobKey then return "idle" end
+	-- the mode of the last scan says it, once a scan has answered something about somebody
+	if Scanner and Scanner.active then
+		local mode, reason = Scanner.mode, Scanner.modeReason
+		if mode == "values" then return "live" end
+		if mode == "state" then return "state" end
+		if reason and reason ~= "nil" then return "unavailable" end
+	end
 	if hidden("threatValues") then
 		if hidden("threatState") then return "unavailable" end
 		return "state"
 	end
-	if ns.addon and ns.addon.inCombat and Compat.Capability("threatValues") == Compat.AVAILABLE then return "live" end
+	if Compat.Capability("threatValues") == Compat.AVAILABLE then return "live" end
 	return "idle"
 end
 
@@ -306,7 +316,7 @@ local function buildPages(f)
 		page:Hide()
 		f.pages[t.id] = page
 	end
-	placeholder(f.pages.monitor, "MONITOR_COMING", true)   -- the monitor itself is M2
+	placeholder(f.pages.monitor, "MONITOR_COMING", true)   -- shown while the `monitor` switch is off (paintMonitor)
 	placeholder(f.pages.reports, nil)
 	f.pages.reports.text:SetText(L["CMD_LATER"]:format("v0.4.0"))
 end
@@ -369,7 +379,13 @@ local function build()
 	buildGrip(f)
 	Widgets.CloseOnEscape(Window.NAME)
 
-	f:SetScript("OnSizeChanged", function() Window:LayoutTitle() end)
+	f:SetScript("OnSizeChanged", function()
+		Window:LayoutTitle()
+		local view = f.pages.monitor.view
+		if view and f.layout == "compact" and featureOn("monitor") then
+			view:Layout(f:GetWidth(), f:GetHeight() - Widgets.TITLE_HEIGHT_COMPACT - Widgets.TAB_HEIGHT_COMPACT)
+		end
+	end)
 	f:SetScript("OnShow", function() Window:Refresh() emit("WINDOW_SHOWN", true) end)
 	f:SetScript("OnHide", function(self)
 		stopMoving(self)
@@ -406,6 +422,21 @@ local function applyTabSwitches(f)
 	for _, t in ipairs(Window.TABS) do
 		if t.feature then
 			for _, tabs in pairs(f.tabs) do tabs:SetTabShown(t.id, featureOn(t.feature)) end
+		end
+	end
+end
+
+-- The Monitor tab (UI/ThreatList.lua) while the `monitor` switch is on; the M1 placeholder while it is off.
+local function paintMonitor(f)
+	local page = f.pages.monitor
+	local on = featureOn("monitor") and ns.ThreatList ~= nil and not (ns.addon and ns.addon.isForever == false)
+	page.logo:SetShown(not on)
+	page.text:SetShown(not on)
+	if on and not page.view then page.view = ns.ThreatList.Build(page) end
+	if page.view then
+		page.view:SetShown(on)
+		if on and f.layout == "compact" then
+			page.view:Layout(f:GetWidth(), f:GetHeight() - Widgets.TITLE_HEIGHT_COMPACT - Widgets.TAB_HEIGHT_COMPACT)
 		end
 	end
 end
@@ -457,6 +488,7 @@ function Window:Refresh()
 	applyTabSwitches(f)
 	refreshLock(f)
 	paintPage(f)
+	paintMonitor(f)
 	self:RefreshState()
 end
 
@@ -619,6 +651,8 @@ if ns.Bus then
 	ns.Bus.On("COMBAT_STARTED", state)
 	ns.Bus.On("COMBAT_ENDED", state)
 	ns.Bus.On("CAPABILITY_CHANGED", state)
+	ns.Bus.On("THREAT_MODE_CHANGED", state)
+	ns.Bus.On("TARGET_CHANGED", state)
 end
 
 -- At login the window is shown as the character left it (shown the first time).

@@ -28,6 +28,7 @@ della threat, di coaching e di analisi dei combattimenti per World of Warcraft: 
 |---|---|
 | Installarlo | [[Installazione|Installation-it]] |
 | Vedere com'è fatto | [[Giro dell'interfaccia|Interface-Tour-it]] |
+| Capire l'elenco della threat (arriva con la `v0.2.0`) | [[Monitor della threat|Threat-Monitor-it]] |
 | Cambiarne aspetto, lingua o finestra | [[Impostazioni|Settings-it]] |
 | Sapere chi l'ha fatto | [[Informazioni e crediti|About-it]] |
 | Sapere cosa posso scrivere e cosa fa la finestra | [[Comandi|Commands-it]] |

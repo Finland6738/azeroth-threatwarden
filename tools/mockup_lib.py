@@ -71,6 +71,11 @@ def themes():
                        r"rgba\(r, g, b, ([\d.]+)\)", source).groups()
     for token, alpha in zip(("border-subtle", "border", "border-strong"), alphas):
         out["aurora"][token] = "rgba(%s,%s,%s,%s)" % (*ink.groups(), alpha)
+    # the four state colours and their ink, the same in every theme (Theme.STATE)
+    state = re.search(r"^Theme\.STATE = \{(.*?)^\}", source, re.M | re.S).group(1)
+    for token, colour in re.findall(r'\["([\w-]+)"\]\s*=\s*hex\("(#[0-9A-Fa-f]{6})"\)', state):
+        for theme in out:
+            out[theme][token] = colour
     _cache["themes"] = out
     return out
 
@@ -164,6 +169,38 @@ body { font: 400 13px/1.35 'Outfit', 'Segoe UI', sans-serif; color: var(--text-1
 .mono { font: 400 11px/14px 'JetBrains Mono', monospace; color: var(--text-3); }
 .url { height: 28px; margin-top: 4px; display: flex; align-items: center; padding: 0 10px; border-radius: 8px; background: var(--surface-2); border: 1px solid var(--border); white-space: nowrap; overflow: hidden; }
 .label { font: 400 11px/14px 'Outfit', sans-serif; color: var(--text-2); margin-top: 12px; }
+.mon { position: absolute; left: 8px; right: 8px; top: 56px; bottom: 2px; font: 500 11px/14px 'Outfit', sans-serif; }
+.mhead { position: relative; height: 34px; }
+.mhead.tall { height: 46px; }
+.mhead .mob { position: absolute; left: 0; top: 1px; display: flex; gap: 4px; align-items: baseline; font: 500 13px/16px 'Outfit', sans-serif; }
+.mhead .mob small { font: 400 11px/14px 'Outfit', sans-serif; color: var(--text-3); }
+.mhead .tankline { position: absolute; left: 0; top: 20px; display: flex; gap: 4px; align-items: center; color: var(--text-2); }
+.mhead .margin { position: absolute; right: 0; top: 20px; font: 500 11px/14px 'JetBrains Mono', monospace; color: var(--text-2); }
+.badge { display: inline-flex; align-items: center; gap: 3px; height: 14px; padding: 0 7px 0 5px; border-radius: 8px; color: var(--on-state); font: 600 9px/1 'Outfit', sans-serif; white-space: nowrap; }
+.badge.large { position: absolute; right: 0; top: 0; height: 18px; }
+.mlisthead { height: 14px; display: flex; justify-content: space-between; align-items: center; font: 600 10px/1 'Outfit', sans-serif; color: var(--text-3); }
+.mlisthead span { display: flex; gap: 3px; align-items: center; padding: 0 2px; }
+.mrow { position: relative; display: flex; align-items: center; height: 20px; padding-left: 8px; }
+.mrow.self { box-shadow: inset 0 0 0 1px var(--accent); border-radius: 4px; }
+.mrow .stripe { position: absolute; left: 0; top: 0; bottom: 0; width: 3px; }
+.mrow .mark { position: absolute; left: 4px; top: 5px; width: 2px; height: 10px; }
+.mrow .cell { width: 12px; flex: none; display: grid; place-items: center start; color: var(--text-3); }
+.mrow .name { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mrow .barbox { display: flex; align-items: center; gap: 2px; flex: none; margin-left: 4px; }
+.mrow .tr { position: relative; height: 10px; border-radius: 4px; background: var(--surface-3); }
+.mrow .tr i { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 4px; }
+.mrow .tr u { position: absolute; top: 0; bottom: 0; width: 1px; background: var(--border-strong); }
+.mrow .tr.unknown { background: var(--surface-3); border: 1px dashed var(--state-unknown); }
+.mrow .pred { width: 10px; display: grid; place-items: center; color: var(--text-2); }
+.mrow .num { width: 36px; text-align: right; font: 500 11px/14px 'JetBrains Mono', monospace; }
+.mrow .trend { width: 28px; margin-left: 2px; display: grid; place-items: center; white-space: nowrap; letter-spacing: -.04em; font: 500 10px/14px 'JetBrains Mono', monospace; color: var(--text-2); }
+.mrow .badgebox { margin-left: 2px; margin-right: 2px; flex: none; display: flex; justify-content: flex-end; }
+.mmsg { position: absolute; left: 4px; right: 4px; top: 48px; bottom: 16px; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 4px; text-align: center; font: 500 13px/1.35 'Outfit', sans-serif; color: var(--text-2); }
+.mmsg small { font: 400 11px/14px 'Outfit', sans-serif; color: var(--text-3); }
+.mfoot { position: absolute; left: 0; right: 12px; bottom: 0; height: 16px; font: 400 10px/16px 'JetBrains Mono', monospace; color: var(--text-3); white-space: nowrap; overflow: hidden; }
+.mfoot.warn { color: var(--warn); }
+.tip { position: absolute; width: 440px; padding: 14px 18px; border-radius: 14px; background: var(--text-1); color: var(--bg); font: 400 18px/1.55 'Outfit', sans-serif; box-shadow: 0 20px 40px -16px rgba(0,0,0,.6); }
+.tip b { display: block; font-weight: 500; font-size: 20px; }
 """
 
 
@@ -227,15 +264,29 @@ def card(title, inner):
     return f'<div class="card">{heading}{inner}</div>'
 
 
-def window(theme, tab, body, x, y, scale=1.0):
+# the pill of the module state (UI/Window.lua, Window.STATES): the icon, the word's key and the colour token
+MODULE = {"off": ("MODULE_OFF", "text-3"), "idle": ("MODULE_IDLE", "text-3"), "live": ("MODULE_LIVE", "ok"),
+          "state": ("MODULE_STATE", "warn"), "unavailable": ("MODULE_UNAVAILABLE", "err")}
+MODULE_ICONS = {
+    "off": '<path d="M5 12h14"/>', "idle": '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
+    "live": '<path d="M4 12l5 5L20 6"/>', "state": '<path d="M12 3 22 20H2z"/><path d="M12 10v4M12 17v.01"/>',
+    "unavailable": '<path d="M18 6 6 18M6 6l12 12"/>',
+}
+
+
+def window(theme, tab, body, x, y, scale=1.0, module="off", title_hidden=False):
     """The window: wide (Settings, Info) or compact (Monitor); `x`, `y` its top-left corner on the stage."""
     compact = tab == "monitor"
     layout = "compact" if compact else "wide"
-    state = f'<span class="state">{icon_minus()}{esc(T("MODULE_OFF"))}</span>'
+    key, token = MODULE[module]
+    tone = (f' style="color:var(--{token});background:color-mix(in srgb,var(--{token}) 16%,transparent)"'
+            if compact and module != "off" else (f' style="color:var(--{token})"' if module != "off" else ""))
+    state = f'<span class="state"{tone}>{_svg(MODULE_ICONS[module], 10)}{esc(T(key))}</span>'
     icons = (f'<span class="icons"><span>{icon_unlock(12 if compact else 16)}</span>'
              f'<span>{icon_cross(12 if compact else 16)}</span></span>')
     if compact:
-        title = f'<span class="name">{esc(T("WINDOW_TITLE_COMPACT"))}</span>{state}'
+        name = "" if title_hidden else f'<span class="name">{esc(T("WINDOW_TITLE_COMPACT"))}</span>'
+        title = f'{name}{state}'
     else:
         title = f'<span><span class="name">{esc(T("WINDOW_TITLE"))}</span>{state}</span>'
     tabs = "".join(f'<span class="{"on" if t == tab else ""}">{esc(T("TAB_" + t.upper()))}</span>'

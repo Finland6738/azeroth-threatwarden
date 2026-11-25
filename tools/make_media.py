@@ -94,7 +94,9 @@ ICON_NAMES = ["chevron", "check", "cross", "dashed", "skull", "shield", "heal", 
               "bell", "flag", "minus", "gem", "bag", "book", "link", "arrow_left",
               # Threatwarden (M1.6, docs/specs/ui-style.md 3.4)
               "state-safe", "state-warning", "state-danger", "state-unknown", "unlock", "tank", "trend-up",
-              "trend-down", "trend-flat", "predict", "stale"]
+              "trend-down", "trend-flat", "predict", "stale",
+              # Threatwarden (M2.5, SPEC-03 §2.6): the assigned role of a row (the `tank` icon is who holds the mob)
+              "role-tank", "role-healer", "role-dps"]
 
 
 def draw_icon(name):
@@ -290,6 +292,15 @@ def draw_icon(name):
         for k in range(6):
             d.arc([pt(1.6, 1.6), pt(14.4, 14.4)], start=k * 60 + 8, end=k * 60 + 44, fill=255, width=w)
         d.line([pt(8, 4.5), pt(8, 8), pt(10.8, 9.6)], fill=255, width=w, joint="curve")
+    elif name == "role-tank":      # a plain solid shield (`tank`, split, is who holds the mob)
+        d.polygon([pt(8, 1.4), pt(14, 3.6), pt(13.4, 9.4), pt(8, 14.8), pt(2.6, 9.4), pt(2, 3.6)], fill=255)
+    elif name == "role-healer":    # a cross
+        d.rectangle([pt(6, 1.8), pt(10, 14.2)], fill=255)
+        d.rectangle([pt(1.8, 6), pt(14.2, 10)], fill=255)
+    elif name == "role-dps":       # a sword, point up to the right
+        d.line([pt(4.2, 11.8), pt(13.4, 2.6)], fill=255, width=int(2.2 * u))
+        d.line([pt(3, 7.8), pt(8.2, 13)], fill=255, width=w)
+        d.line([pt(2.4, 13.6), pt(4.8, 11.2)], fill=255, width=w)
     return img.resize((CELL, CELL), Image.LANCZOS)
 
 

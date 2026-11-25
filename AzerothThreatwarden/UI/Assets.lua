@@ -48,7 +48,7 @@ Assets.icons = { "chevron", "check", "cross", "dashed", "skull", "shield", "heal
 	"coin", "refresh", "download", "upload",
 	"bell", "flag", "minus", "gem", "bag", "book", "link", "arrow_left",
 	"state-safe", "state-warning", "state-danger", "state-unknown", "unlock", "tank", "trend-up", "trend-down",
-	"trend-flat", "predict", "stale" }
+	"trend-flat", "predict", "stale", "role-tank", "role-healer", "role-dps" }
 
 -- Fonts (docs/third-party.md). Orbitron ships whole (it declares a Reserved Font Name): it is used for the title only, in
 -- capitals, and has no middle dot or arrow. `fallback` is the game font used when SetFont fails or the player chose the

@@ -99,8 +99,13 @@ closing on the tank goes WARNING then DANGER, and a target with no data shows UN
   arrow, estimate marker, quality indicator, sorting, "pin me on top"), empty, no-target and UNKNOWN states; wiki page
   *Threat Monitor* (both languages) with previews.
 - Done when:
-  - [ ] No state is shown by colour alone; every unknown value has a tooltip with its reason.
+  - [x] No state is shown by colour alone; every unknown value has a tooltip with its reason.
 - Tests: `test_threat_list.lua`.
+- *Done (2026-11-25, before M0.7): `UI/ThreatList.lua` in the Monitor tab behind the `monitor` switch (the M1 text stays
+  while it is off), with header, rows, every view of SPEC-03 §2.6, tooltips with categories and reasons, the four orders
+  with *Me on top* (kept for the session until schema 2, M2.6), the quality footer and bounded redraws; role icons,
+  locale keys in both languages, previews `monitor-*`, wiki page *Threat Monitor*; `test_threat_list.lua` (44 tests).
+  Readability in combat and at small sizes waits for M2.8.*
 - Real client: readability in combat, at small sizes.
 
 ### M2.6 — Monitor settings and demo mode

@@ -10,12 +10,12 @@ basso.
   font che l'addon distribuisce (SIL OFL 1.1, `AzerothThreatwarden/Media/Fonts/`). Nessun'immagine, icona o texture del
   gioco; nulla viene scaricato dalla rete.
 - **Dati inventati**: nessun giocatore, gilda o reame vero. Le anteprime di M1 mostrano solo i valori predefiniti delle
-  impostazioni.
+  impostazioni; quelle del monitor (M2.5) un combattimento inventato (mob e nomi che non esistono).
 - **File leggeri**: WebP, qualità 80.
 
 | Cartella | Contenuto | Prodotta da |
 |---|---|---|
-| [`previews/`](previews/README.md) | la finestra (scheda Monitor vuota), le Impostazioni e la pagina Info, nei temi Nebula, Aurora e Warden, in inglese e italiano | `tools/make_mockups.py` |
+| [`previews/`](previews/README.md) | il monitor della threat (valori, vista del tank, solo stato, sconosciuto, nessun bersaglio; Nebula e Warden, la prima anche in Aurora), la finestra di M1 (scheda Monitor vuota), le Impostazioni e la pagina Info nei tre temi, in inglese e italiano | `tools/make_mockups.py` |
 
 ## Rifarle
 

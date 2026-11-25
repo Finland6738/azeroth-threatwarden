@@ -43,6 +43,7 @@ UI\Widgets\Controls.lua
 UI\Widgets\ThinBar.lua
 UI\Widgets\Tooltip.lua
 UI\Widgets\Threat.lua
+UI\ThreatList.lua
 UI\DiagnosticsBox.lua
 UI\Window.lua
 UI\Launcher.lua

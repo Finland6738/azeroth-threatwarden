@@ -150,11 +150,13 @@ registrati gli eventi della threat (ARC-05, M2.2 *Done when*):
 - Una riga `stale` diventa UNKNOWN con motivo `stale` (rispettando la permanenza di §2.4): barra tratteggiata, `?`,
   icona `stale` al posto del trend, tooltip *Stale: last read 1.4 s ago*. I suoi campioni non contano per il trend.
 - **Indicatore di qualità** (MON-03), nel piede da 16 pt della compatta, in `RowMono` `text-3`:
-  *Updated 0.2 s ago · 96 % valid (10 s)*. `Updated` = tempo dall'ultima scansione completa; `valid` = letture in
+  *Updated 0.2 s ago · 96 % valid (10 s)* (in modalità `state` la forma breve *State only · 0.2 s ago · 96 % valid*,
+  perché stia in 300 pt; M2.5). `Updated` = tempo dall'ultima scansione completa; `valid` = letture in
   `values` o `state` diviso tutte le letture delle unità osservate negli ultimi 10 s (le `nil` non contano: non essere
   nella lista non è un errore), in un anello di dieci secchielli da 1 s (nessuna allocazione). Il testo passa al token
   `warn` quando le valide sono meno del 50 % o l'ultimo aggiornamento è più vecchio di `2 · I`. In modalità `state` il
-  piede comincia con *State only ·*; fuori dal combattimento dice *Not in combat*.
+  piede comincia con *State only ·*; fuori dal combattimento dice *Not in combat*. Le letture valide le conta lo
+  Scanner (`ThreatScanner.Quality`, M2.5).
 
 ### 1.6 I campi, uno per uno
 
@@ -313,6 +315,13 @@ Le righe, alte 20 pt su `surface-1`: striscia di stato a sinistra, icona del ruo
 | Fine del combattimento | *Combat ended* | ultime righe, tutte `stale` | *Not in combat* | *Idle* |
 | Mob morto / scomparso | *Target died* / *Target lost* | vuoto | — | *Idle* |
 
+**Disposizione della riga (M2.5).** Nella finestra stretta spariscono prima la colonna del margine (c'è solo da 370 pt
+di contenuto), poi l'icona del ruolo (sotto 250 pt), la cella del trend (sotto 230 pt) e il binario della barra
+(restano numero e icona `predict`); il distintivo, con icona e parola, resta sempre. Quando c'è una previsione il `~4 s`
+sta nella cella del trend al posto della freccia (che resta nel tooltip). Sul tema chiaro il colore di classe è un
+segno di 2 pt accanto al nome. Fuori dal combattimento senza righe l'elenco dice *Not in combat*; con la lista vuota in
+combattimento *No one is on its threat list yet*. A un nemico morto deselezionato il Tracker emette `TARGET_STATUS`.
+
 Tutti i testi sono chiavi di lingua in `enUS` e `itIT`; le chiavi nuove le aggiunge M2.5 (le proposte italiane si
 fissano lì, come i distintivi di [ui-style §4.2](ui-style.md#42-i-quattro-token-di-stato)). Icone nuove del foglio
 (M2.5, `tools/make_media.py`): `role-tank`, `role-healer`, `role-dps` per il ruolo (l'icona `tank` resta per chi
@@ -336,7 +345,8 @@ tiene il mob).
 - Le righe visibili sono quante ne entrano (20 pt ciascuna); le altre si riassumono nell'ultima come *+N more*. La
   propria riga è sempre visibile: se cadrebbe sotto, prende l'ultimo posto visibile.
 - L'ordinamento si sceglie dalla card *Monitor* (§5) e cliccando l'intestazione dell'elenco (passa al successivo); si
-  salva in `settings.monitor.sort`.
+  salva in `settings.monitor.sort`. Nella stessa intestazione il pulsante *Me on top: on/off* cambia `pinSelf`. Fino
+  allo schema 2 (M2.6) le due scelte valgono per la sessione (M2.5).
 
 ## 4. Finestra
 

@@ -1,0 +1,90 @@
+# Monitor della threat
+
+*English: [[Threat Monitor|Threat-Monitor]]*
+
+> **Arriva con la `v0.2.0`.** Nella `v0.1.0` la scheda Monitor dice solo che il monitor della threat arriverà. Quali
+> dati di threat WoW Forever dia davvero a un addon è ancora da verificare, perciò il monitor è fatto per ogni
+> risposta.
+
+La scheda **Monitor** mostra chi minaccia il nemico che stai combattendo. Legge il gioco quando sei in combattimento,
+c'è un nemico monitorato e la finestra è aperta su questa scheda.
+
+![Il monitor con i valori di threat: un DPS in ATTENZIONE, uno in PERICOLO](../specs/mockups/previews/monitor-values-nebula.webp)
+
+## L'intestazione
+
+- Il **nemico**: quello che selezioni o, se selezioni un alleato (un guaritore che seleziona il tank), il bersaglio
+  dell'alleato. Il tipo (*Élite*, *Raro*, *Boss*) è scritto accanto al nome.
+- Il **tuo stato**, con un'icona e una parola.
+- **Tank**: chi tiene il nemico. Se non lo tiene nessuno del gruppo leggi *(non in elenco)* dopo il nome, e *Tank
+  sconosciuto* quando nulla di leggibile dice chi sia.
+- **Margine**: per un DPS o un guaritore, quanto sei lontano dal 100 % (prendere l'aggro); per il tank, quanto il
+  secondo è lontano dal 100 %.
+
+## L'elenco
+
+Una riga per ogni unità nella lista della threat del nemico (tu, il tuo famiglio, il gruppo o l'incursione):
+
+| Parte della riga | Significato |
+|---|---|
+| Striscia a sinistra, distintivo a destra | lo stato: **Sicuro**, **Attenzione**, **Pericolo** o **Sconosciuto**, sempre con icona e parola |
+| Icona del ruolo, icona dello scudo | il ruolo assegnato; lo scudo indica chi tiene il nemico |
+| Nome | il colore di classe (la tua riga ha un contorno) |
+| Barra e numero | la threat scalata: 100 % significa prendere l'aggro. Le tacche sono le soglie Attenzione (80 %) e Pericolo (95 %) |
+| Freccia | la tendenza degli ultimi secondi (una *stima*); `~2 s` significa *potrebbe prendere l'aggro fra circa 2 s* (una *previsione*) |
+| `?` e barra tratteggiata | sconosciuto: passa sulla riga per leggere il motivo |
+| `—` senza barra | *solo stato*: il gioco dà lo stato ma nasconde i numeri |
+
+Passa il mouse su una riga per vedere ogni valore con la sua categoria (*rilevato*, *calcolato*, *stimato*,
+*previsto*) e, per ciò che manca, il motivo (*Valore segreto*, *Non disponibile*, *Dati insufficienti*, *Dato
+vecchio*). Una finestra stretta toglie l'icona del ruolo, la tendenza e la barra prima delle parole.
+
+Clicca **Ordine** per cambiarlo: *Percentuale*, *Threat assoluta* (solo dove il gioco la dà), *Rischio*, *Variazione
+recente*. Le righe sconosciute sono sempre in fondo. **Io in cima** tiene la tua riga per prima. L'ordine cambia al
+massimo una volta al secondo, e subito quando qualcuno entra in Pericolo. Queste due scelte si salveranno da uno step
+successivo della `v0.2.0`; fino ad allora valgono per la sessione. Quando l'elenco non ci sta, l'ultima riga dice *+N
+altri* e la tua resta visibile.
+
+![La vista del tank, con il margine sul secondo](../specs/mockups/previews/monitor-tank-warden.webp)
+
+## Gli stati
+
+| Stato | Per un DPS o un guaritore | Per il tank che tiene il nemico |
+|---|---|---|
+| **Sicuro** | sotto l'80 % | il secondo è sotto l'80 % |
+| **Attenzione** | dall'80 %, o si prevede che arrivi al 95 % entro 3 s | il secondo è dall'80 % |
+| **Pericolo** | dal 95 %, o tiene il nemico | il secondo è dal 95 %, o ha più threat |
+| **Sconosciuto** | il gioco non dà nulla di leggibile, o il dato è vecchio | lo stesso |
+
+Le soglie sono provvisorie. Uno stato sale subito e scende solo dopo un secondo, così non lampeggia.
+
+## Quando il gioco nasconde i numeri
+
+![Solo stato: stati senza percentuali](../specs/mockups/previews/monitor-state-nebula.webp)
+
+In modalità **solo stato** il gioco dice chi tiene il nemico e lo stato di ognuno, ma nessun numero: niente barre,
+margine o tendenza, e il piede dice *Solo stato*.
+
+![Dati di threat non disponibili](../specs/mockups/previews/monitor-unknown-warden.webp)
+
+Quando nulla è leggibile vedi **Dati di threat non disponibili** con il motivo: mai un numero inventato, mai una barra
+vuota che sembri 0 %.
+
+## Prima e dopo un combattimento
+
+![Nessun bersaglio](../specs/mockups/previews/monitor-no-target-nebula.webp)
+
+Senza un nemico la finestra dice *Nessun bersaglio*. Fuori dal combattimento dice *Non in combattimento*; alla fine di
+un combattimento le ultime righe restano, segnate come vecchie, sotto *Combattimento finito*. Un nemico morto o
+scomparso mostra *Bersaglio morto* o *Bersaglio perso*.
+
+## Il piede e la barra del titolo
+
+Il piede dice quanto sono vecchi i dati e quante letture degli ultimi 10 s erano utilizzabili. La pastiglia nella barra
+del titolo dice *In attesa*, *In diretta*, *Solo stato* o *Non disponibile*.
+
+L'interfaccia è in italiano e in inglese:
+
+![Il monitor in italiano, tema Aurora](../specs/mockups/previews/monitor-values-aurora-it.webp)
+
+*Anteprime di progetto, non screenshot: disegnate dal layout e dai testi dell'addon, con un combattimento inventato, perché l'addon non è ancora stato provato in gioco ([tutte le anteprime](https://github.com/Finland6738/azeroth-threatwarden/blob/main/docs/specs/mockups/previews/README.md)).*

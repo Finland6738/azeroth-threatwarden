@@ -104,7 +104,8 @@ end
 -- tooltip, "TOP").
 -- :Set(percent, state, estimated, predicted, tooltip) -- percent nil (or not a number) or state "unknown" is unknown;
 --   the tooltip is a Widgets.Tooltip content, already translated (the reason of an unknown value, "may" of a prediction).
--- :SetThresholds(warning, danger), :SetWidth(w), :GetState(), :GetPercent() (nil when unknown).
+-- :SetThresholds(warning, danger), :SetWidth(w), :GetState(), :GetPercent() (nil when unknown), :SetTrackShown(bool)
+-- (false in a narrow row: the number and the `predict` icon stay).
 function Widgets.ThreatBar(parent, opts)
 	opts = opts or {}
 	local numberWidth = opts.numberWidth or Widgets.BAR_NUMBER_WIDTH
@@ -243,6 +244,7 @@ function Widgets.ThreatBar(parent, opts)
 	end
 	function bar:GetState() return self.state end
 	function bar:GetPercent() return self.percent end
+	function bar:SetTrackShown(trackShown) track:SetShown(trackShown) end
 
 	bar:SetScript("OnSizeChanged", function()
 		drawWidth(shown)
