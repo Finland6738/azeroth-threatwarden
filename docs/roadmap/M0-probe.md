@@ -58,10 +58,13 @@ prints or stores player or guild names.
   as text (selected, ready for Ctrl+C); `tools/install_probe.py` and `tools/local.example.ini` (`<WoW folder>` only);
   name scrubbing helper (`<player n>`, `<mob n>`).
 - Done when:
-  - [ ] Offline: files, commands, registry, scrubbing and install script exist; a Lua syntax check of the probe passes;
+  - [x] Offline: files, commands, registry, scrubbing and install script exist; a Lua syntax check of the probe passes;
         `check_docs.py` passes.
   - [ ] The probe loads on Forever and `/atwp` lists the checks. *(in game)*
 - Real client: everything.
+- *Done (offline, 2026-11-25): `tools/probe/AzTw_Probe/` (registry with P1–P12 stubs, context stamp, scrubbing, export),
+  `tools/install_probe.py`, `tools/check_probe.py` (Lua 5.1 syntax, TOC, `.pkgmeta`) run by `check_docs.py` and CI.
+  The in-game box waits for the owner.*
 
 ### M0.3 — Client and threat API (P1–P4)
 - Branch: `step/m0-3-threat-api`

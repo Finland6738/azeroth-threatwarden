@@ -6,8 +6,9 @@ P1–P12, with their exact calls, contexts, recorded fields and the consequence 
 [SPEC-08 §1](../specs/SPEC-08-quality-probe-release.md#1-probe-m0) (in Italian); the steps are in
 [M0-probe.md](../roadmap/M0-probe.md).
 
-> **Status: planned.** This page describes the probe as M0.1 specifies it. The code arrives in M0.2 (skeleton) and
-> M0.3–M0.6 (the checks); until then nothing here can be installed or run.
+> **Status: skeleton (M0.2).** The probe installs and loads, lists P1–P12, stores notes and exports; every check still
+> answers `todo`, "not implemented yet, step M0.x". The checks arrive in M0.3–M0.6. Nothing has been verified in the
+> real client yet.
 
 ## What the probe is
 
@@ -20,9 +21,11 @@ P1–P12, with their exact calls, contexts, recorded fields and the consequence 
   `<mob n>` (plus the GUID type and the creature id, which are not personal data). Unit tokens such as `party2` are kept.
 - No network, no addon messages, nothing sent to chat channels, no CVar or game setting changed.
 - Results are saved in `AzTw_ProbeDB` as `{id, verdict, details, build, context, time}` (verdict: `supported`,
-  `partial`, `not supported` or `todo`), plus one log per check.
+  `partial`, `not supported` or `todo`), plus one log per check. `context` is the stamp of SPEC-08 §1.2.
+- Error texts and notes are scrubbed of GUIDs and of the names the probe has seen through a unit token (you, your
+  group, your targets, nameplates; also guild and realm). It cannot recognise any other name: never type one in a note.
 
-## Install (planned, from M0.2)
+## Install
 
 1. Copy `tools/local.example.ini` to `tools/local.ini` (git-ignored) and set `addons` to the
    `<WoW folder>/_forever_/Interface/AddOns` folder of your installation.
@@ -33,13 +36,16 @@ P1–P12, with their exact calls, contexts, recorded fields and the consequence 
    ```
 
    It copies `tools/probe/AzTw_Probe/` into that folder and nothing else.
-3. In game, `/reload` (or restart the client). The chat shows "AzTw Probe: loaded". If it does not load, enable "Load
-   out of date AddOns" and send the exact error.
+3. In game, `/reload` (restart the client the first time, so that it sees the new folder). The chat shows
+   "AzTw Probe: loaded", and `/atwp` lists P1–P12. If it does not load, enable "Load out of date AddOns" and send the
+   exact error.
 
 Run the installer again after every update of the probe, then `/reload`. The results in `AzTw_ProbeDB` survive the
 update. To remove the probe after M0, delete the `AzTw_Probe` folder from the AddOns folder.
 
-## Commands (planned)
+## Commands
+
+Commands of M0.2 exist now; the others arrive with their step.
 
 | Command | Step | What it does |
 |---|---|---|
@@ -48,15 +54,17 @@ update. To remove the probe after M0, delete the `AzTw_Probe` folder from the Ad
 | `/atwp export` | M0.2 | Opens a movable frame with all results and logs as plain text, already selected: press Ctrl+C and paste it back |
 | `/atwp note <id> <text>` | M0.2 | Stores a free-text observation, for example `/atwp note P4 melee`; never write player or guild names in it |
 | `/atwp reset` | M0.2 | Clears the stored results and logs (not during P12) |
+| `/atwp help` | M0.2 | Prints the commands your version has |
 | `/atwp ctx <label>` | M0.3 | Labels the current context (`solo`, `party`, `dungeon`, `raid`, `bg`…); every reading also carries the context the probe detects by itself |
 | `/atwp watch on\|off` | M0.3 | Automatic readings in combat (at combat start, every second, at encounter start, at combat end): used by P3–P7 and P9 |
 | `/atwp perf [hz] [units]` | M0.6 | P10: times the threat reading at 2, 5 and 10 Hz with 5, 10 and 40 units (or the given ones), 30 seconds each |
 
-Later steps may add commands; the usage line printed by `/atwp help` always lists the ones your version has.
+Later steps may add commands; the usage line printed by `/atwp help` (and by any unknown command) always lists the
+ones your version has.
 
 ## What each step adds
 
-| Step | Checks | Planned file |
+| Step | Checks | File |
 |---|---|---|
 | M0.2 | skeleton, registry, export, name scrubbing, install script | `AzTw_Probe.lua` |
 | M0.3 | P1–P4 | `Checks_ThreatAPI.lua` |

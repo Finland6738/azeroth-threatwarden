@@ -29,6 +29,14 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
+- M0.2: probe skeleton (development only, never distributed). `tools/probe/AzTw_Probe/` (`## Interface: 16001`,
+  `AzTw_ProbeDB`) with `/atwp list|run <id>|export|note <id> <text>|reset|help`, the check registry (P1–P12 answer
+  "not implemented yet, step M0.x"), results `{id, verdict, details, build, context, time}`, the context stamp of
+  SPEC-08, secret-safe calls, name scrubbing (`<player n>`, `<mob n>`, `<guild>`, `<realm>`) and an export frame with
+  the text already selected. `tools/install_probe.py` copies it into the AddOns folder named in `tools/local.ini`.
+  `tools/check_probe.py` checks its Lua 5.1 syntax, its TOC and that `.pkgmeta` leaves `tools/` out; it runs from
+  `check_docs.py` and in CI.
+
 - The owner's logo (`assets/logo-source.webp`) and the NEBULA logos for the credits (`assets/`).
 - Repository tooling adapted from Azeroth Accord: `tools/check_docs.py` (links, wiki twins, ADR index, privacy scan, LF
   endings), `tools/check_pr_docs.py`, `tools/ship_step.py`, `tools/release_notes.py`, `tools/sync_wiki.py`; the

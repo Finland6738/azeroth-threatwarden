@@ -29,6 +29,14 @@ jobs:
         with:
           python-version: "3.12"
 
+      # lupa embeds Lua 5.1: the probe syntax check and, from M1.3, the addon tests need it.
+      - name: Install lupa
+        run: python -m pip install lupa==2.8
+
+      # Lua syntax, TOC and packaging rule of the probe addon; --require: never skipped in CI.
+      - name: Check the probe addon
+        run: python -I -X utf8 tools/check_probe.py --require
+
       # Links, wiki sidebar and links, ADR index, privacy scan, LF line endings, the docs rule's own cases.
       - name: Check the documentation
         run: python -I -X utf8 tools/check_docs.py
@@ -50,6 +58,5 @@ jobs:
       - name: Run the addon tests
         if: hashFiles('Tests/run_tests.py') != ''
         run: |
-          python -m pip install lupa==2.8
           python -I -X utf8 tools/fetch_libs.py
           python -I -X utf8 Tests/run_tests.py

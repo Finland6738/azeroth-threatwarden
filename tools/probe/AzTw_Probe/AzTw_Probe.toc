@@ -1,0 +1,9 @@
+## Interface: 16001
+## Title: AzTw Probe (development only)
+## Notes: Throwaway spike addon for Azeroth Threatwarden (M0). Never distributed.
+## Author: Finland6738
+## Version: 0.2.0
+## SavedVariables: AzTw_ProbeDB
+# Adapted from Azeroth Accord (tools/probe/AzAc_Probe/AzAc_Probe.toc), same owner, GPL-3.0 (ADR 0012).
+
+AzTw_Probe.lua
