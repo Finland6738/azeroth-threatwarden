@@ -202,6 +202,8 @@ Quattro stati per riga: **SAFE**, **WARNING**, **DANGER**, **UNKNOWN** (`Data/Th
 - Un tank designato che **non** tiene il mob: se lo tiene un altro tank designato (cambio di tank, taunt), la sua riga
   segue la regola dei non tank ma senza il DANGER per "tiene il mob"; se lo tiene un non tank, la sua riga è DANGER con
   motivo *Lost aggro*.
+- **Tank sconosciuto** (*Unknown tank*): nessuna riga osservata tiene il mob. `ThreatState.tankReason` dice perché:
+  `not-watched` (letture leggibili, ma lo tiene un'unità non osservata) o `unknown` (nulla di leggibile lo dice) (M2.4).
 
 ### 2.2 Modalità `values`
 
@@ -256,7 +258,15 @@ margine = `100 − s`:
   diventa UNKNOWN solo se il cambio precedente ha almeno 1 s: niente lampeggi (mai più di un cambio al secondo per
   riga, salvo le salite, [ui-style §3.2](ui-style.md#32-la-barra-della-threat-widgetsthreatbar-m16-dati-da-m2)).
 - `STATE_CHANGED(unitKey, mobKey, old, new)` si emette solo per lo stato **mostrato**, dopo isteresi e permanenza: gli
-  avvisi di M3 non ereditano oscillazioni.
+  avvisi di M3 non ereditano oscillazioni. `old = nil`: l'unità entra nella lista della threat; `new = nil`: ne esce
+  (morte, `drop`); entrare e uscire non sono cambi di stato e non aspettano la permanenza. A un nuovo mob o a un nuovo
+  combattimento gli stati ripartono senza evento per la coppia vecchia (M2.4).
+- Una discesa trattenuta dalla permanenza si ricontrolla con un solo timer (`Compat.After`): avviene anche quando non
+  arrivano più scansioni, per esempio a `COMBAT_ENDED` (righe `stale` → UNKNOWN) (M2.4).
+- Il motivo dello stato (`row.stateReason`): nessuno per una soglia; `predicted`, `aggro` (un non tank tiene il mob),
+  `lost-aggro`, `behind` (tank con stato 2), `alone`, `margin-unknown`, `state-only`; per UNKNOWN quello della lettura
+  (`secret`, `missing`, `error`, `no-unit`, `stale`) o, per il tank, quello del secondo. `THREAT_MODE_CHANGED` si
+  emette quando cambia la modalità o il suo motivo (M2.4).
 - Lo **stato dell'intestazione** è quello della propria riga; se il giocatore non è nella lista l'intestazione non ha
   distintivo e dice *You are not on its threat list*.
 

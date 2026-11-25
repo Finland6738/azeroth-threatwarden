@@ -81,8 +81,15 @@ closing on the tank goes WARNING then DANGER, and a target with no data shows UN
 - Scope: `Data/ThreatState.lua` (SAFE, WARNING, DANGER, UNKNOWN; `DEFAULTS` 80/95; hysteresis; tank margin rule;
   `STATE_CHANGED` on the Bus), tank from `isTanking` and the assigned role.
 - Done when:
-  - [ ] States do not flicker on a series that oscillates around a threshold.
+  - [x] States do not flicker on a series that oscillates around a threshold.
 - Tests: `test_threat_state.lua` (all scenarios of SPEC-08 QA-03 that concern states).
+- *Done (2026-11-25, before M0.7): `Data/ThreatState.lua` behind the `monitor` switch: the rules of SPEC-03 §2.2–§2.3
+  for non tanks, the tank holding the mob (margin over the second), designated tanks losing the mob, a tank swap and
+  the pet alone; hysteresis 3 points and a 1 s dwell for falls with one timer, so a held fall happens after the fight
+  too; the predicted WARNING; UNKNOWN with its reason; the Unknown tank; `STATE_CHANGED` (old or new `nil` when the unit
+  enters or leaves the list) and `THREAT_MODE_CHANGED`; `DEFAULTS` 80/95 overridden by `settings.monitor.warning` and
+  `.danger` when M2.6 adds them. `test_threat_state.lua` (55 tests). The game's situation and lead meanings (P2), the
+  110 %/130 % rule (P4) and the roles (P9) wait for the probe.*
 
 ### M2.5 — The threat list view
 - Branch: `step/m2-5-threat-list`

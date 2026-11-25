@@ -29,7 +29,22 @@ All notable changes to this project are documented here. The format follows
   new mob, a new fight, a new holder of the mob and after a gap of more than 1 s. Each update publishes
   `THREAT_UPDATED` and allocates nothing.
 
+- M2.4: threat states, thresholds and tank detection, behind the `monitor` switch. `Data/ThreatState.lua` gives every
+  row on the threat list SAFE, WARNING, DANGER or UNKNOWN with its reason: a non tank on its own percentage (WARNING at
+  80 %, DANGER at 95 %, provisional, or while it holds the mob), the tank holding the mob on its margin over the
+  second, the game's threat state in *state only* mode, UNKNOWN with the reason when nothing is readable or the row is
+  stale. A predicted WARNING when the trend reaches DANGER within 3 s with at least a medium confidence. Hysteresis of 3
+  points and a 1 s dwell for falls (rises are immediate), also after the fight, so states never flicker. Tanks are the
+  units with the TANK role, or whoever holds the mob when no one has it; a tank that loses the mob to a non tank is
+  DANGER (*lost aggro*); no readable holder is an Unknown tank. `STATE_CHANGED` only on a real change of the shown
+  state, `THREAT_MODE_CHANGED` when the reading mode changes. The thresholds read the player's settings when they exist
+  (M2.6).
+
 ### Changed
+
+- M2.4: the scanner's allocation test keeps the smallest growth of three batches of 500 scans under 4 KB, as the
+  model's test does: a growth of the Lua state outside the scans (2.5-2.8 KB now and then) no longer fails it, while
+  an allocation per scan (at least 16 KB) still does.
 
 - M2.1: the test fight scripts (`Tests/lib/fight.lua`) gain the verbs `outcome` (the three probe outcomes,
   `Fight.OUTCOMES`), `role`, `secrets`, `answer`, `clearAnswers`, `silent` and `event`, for the monitor's tests.
