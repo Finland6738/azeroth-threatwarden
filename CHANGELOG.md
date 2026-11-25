@@ -37,6 +37,18 @@ All notable changes to this project are documented here. The format follows
   `tools/check_probe.py` checks its Lua 5.1 syntax, its TOC and that `.pkgmeta` leaves `tools/` out; it runs from
   `check_docs.py` and in CI.
 
+- M0.3: probe checks P1–P4 (`tools/probe/AzTw_Probe/Checks_ThreatAPI.lua`, development only). P1 logs the six values
+  of `GetBuildInfo`, `WOW_PROJECT_ID`, the locale, `C_Secrets.HasSecretRestrictions`,
+  `C_CombatLog.IsCombatLogRestricted` and a census of the 49 APIs P2–P12 call. P2 recognises the case of the target
+  (none, friendly, hostile not engaged, in combat, dead) and records count, kind and readable value of every return
+  of the four threat functions, with the mob's token and with its GUID, reading by itself every 0.5 s in combat once
+  run. P3 reads the player, the group and `targettarget` on the same mob with the `C_Secrets` predictions,
+  `issecretvalue` and `canaccessvalue`, counts secret values and state per context, and tests once per context
+  whether a secret value can be shown without being read (P3b). P4 is the guided tank and DPS trial: `/atwp note P4
+  melee|ranged` arms it, it samples at 10 Hz and logs the 3 s before and 1 s after the aggro changes. Each check
+  proposes a verdict from SPEC-08 §1. New commands `/atwp ctx <label>` and `/atwp watch on|off` (automatic readings in
+  combat, also for later checks); `/atwp reset` also clears what P2–P4 counted. Nothing verified in game yet.
+
 - The owner's logo (`assets/logo-source.webp`) and the NEBULA logos for the credits (`assets/`).
 - Repository tooling adapted from Azeroth Accord: `tools/check_docs.py` (links, wiki twins, ADR index, privacy scan, LF
   endings), `tools/check_pr_docs.py`, `tools/ship_step.py`, `tools/release_notes.py`, `tools/sync_wiki.py`; the

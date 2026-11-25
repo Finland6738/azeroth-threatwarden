@@ -13,12 +13,13 @@ local ADDON_NAME, Probe = ...
 
 Probe.checks, Probe.order = {}, {}
 -- commands[name] = function(arg, rest): slash subcommands (the Checks files add theirs).
--- exportHooks: functions returning extra export lines.
-Probe.commands, Probe.exportHooks = {}, {}
+-- exportHooks: functions returning extra export lines. resetHooks: functions called by /atwp reset (they clear the
+-- check's own saved data). noteHooks: functions(id, text) called after /atwp note stored a note (P4 arms its trial).
+Probe.commands, Probe.exportHooks, Probe.resetHooks, Probe.noteHooks = {}, {}, {}, {}
 
 local PREFIX = "|cff66ccffAzTw Probe:|r "
 local VERDICTS = { ["supported"] = true, ["partial"] = true, ["not supported"] = true, ["todo"] = true }
-local LOG_LIMIT = 1000
+local LOG_LIMIT = 2000 -- raised in M0.3: /atwp watch and P4 log readings during whole fights
 
 local function out(msg)
     pcall(print, PREFIX .. tostring(msg))
@@ -471,6 +472,12 @@ end
 function Probe:Reset()
     local d = db()
     d.results, d.log = {}, {}
+    for _, hook in ipairs(self.resetHooks) do
+        local ok, err = pcall(hook, self)
+        if not ok then
+            out("reset hook error: " .. errorText(err))
+        end
+    end
     out("results and logs cleared")
 end
 
@@ -635,6 +642,12 @@ Probe.commands.note = function(id, text)
     Probe.LearnNames()
     Probe:Log("notes", id .. " [" .. Probe.Context().code .. "]: " .. Probe.Scrub(text))
     out("note stored for " .. id)
+    for _, hook in ipairs(Probe.noteHooks) do
+        local ok, err = pcall(hook, id, text)
+        if not ok then
+            out("note hook error: " .. errorText(err))
+        end
+    end
 end
 
 local function handle(message)

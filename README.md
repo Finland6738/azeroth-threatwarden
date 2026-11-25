@@ -9,8 +9,9 @@ which mob, warns you before you pull aggro, records your fights and explains wha
 
 > **Status: design phase.** The specification, the decisions and the plan are written; there is nothing to install
 > yet. The first step is a probe in the real client (milestone M0): it checks which threat data WoW Forever gives an
-> addon, because the client may hide threat values from addons in some situations. The skeleton of that
-> [probe](docs/spike/README.md) (a development tool, never distributed) is written; its checks come next. The first
+> addon, because the client may hide threat values from addons in some situations. That
+> [probe](docs/spike/README.md) (a development tool, never distributed) can now check the client and the threat
+> functions, including whether their values are secret (P1–P4); the other checks come next. The first
 > version, `v0.1.0`, comes after milestone M1; the MVP (monitor, alerts, Coach, recording and combat report) is `v0.4.0`.
 
 [Italiano](README.it.md) · [Roadmap](ROADMAP.md) · [Specification (Italian)](docs/specs/README.md) ·

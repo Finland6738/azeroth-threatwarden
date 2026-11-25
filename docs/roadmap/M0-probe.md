@@ -76,9 +76,12 @@ prints or stores player or guild names.
   raid, with a context stamp per reading; P4 a guided test (tank and DPS on one mob) that logs `scaledPercent` and
   `rawPercent` at the moment aggro changes.
 - Done when:
-  - [ ] Offline: `/atwp run P1`…`P4` and their logging exist; `check_docs.py` passes.
+  - [x] Offline: `/atwp run P1`…`P4` and their logging exist; `check_docs.py` passes.
   - [ ] P1–P4 answered with a verdict each. *(in game)*
 - Real client: everything.
+- *Done (offline, 2026-11-25): `Checks_ThreatAPI.lua` with P1–P4, P3b, `/atwp ctx` and `/atwp watch`; each check
+  proposes its verdict from SPEC-08 §1; smoke-tested against a throwaway mock client (secret values never touched,
+  no names in the export). The in-game box waits for the owner.*
 
 ### M0.4 — Units, mobs and threat events (P5, P6, P9)
 - Branch: `step/m0-4-units-events`

@@ -6,9 +6,9 @@ P1–P12, with their exact calls, contexts, recorded fields and the consequence 
 [SPEC-08 §1](../specs/SPEC-08-quality-probe-release.md#1-probe-m0) (in Italian); the steps are in
 [M0-probe.md](../roadmap/M0-probe.md).
 
-> **Status: skeleton (M0.2).** The probe installs and loads, lists P1–P12, stores notes and exports; every check still
-> answers `todo`, "not implemented yet, step M0.x". The checks arrive in M0.3–M0.6. Nothing has been verified in the
-> real client yet.
+> **Status: P1–P4 written (M0.3).** The probe installs and loads, lists P1–P12, stores notes and exports; P1–P4 (client,
+> threat functions, secret values, the tank and DPS trial) work, with `/atwp ctx` and `/atwp watch`. P5–P12 still answer
+> `todo`, "not implemented yet, step M0.x"; they arrive in M0.4–M0.6. Nothing has been verified in the real client yet.
 
 ## What the probe is
 
@@ -45,7 +45,7 @@ update. To remove the probe after M0, delete the `AzTw_Probe` folder from the Ad
 
 ## Commands
 
-Commands of M0.2 exist now; the others arrive with their step.
+Commands of M0.2 and M0.3 exist now; `/atwp perf` arrives with M0.6.
 
 | Command | Step | What it does |
 |---|---|---|
@@ -55,8 +55,8 @@ Commands of M0.2 exist now; the others arrive with their step.
 | `/atwp note <id> <text>` | M0.2 | Stores a free-text observation, for example `/atwp note P4 melee`; never write player or guild names in it |
 | `/atwp reset` | M0.2 | Clears the stored results and logs (not during P12) |
 | `/atwp help` | M0.2 | Prints the commands your version has |
-| `/atwp ctx <label>` | M0.3 | Labels the current context (`solo`, `party`, `dungeon`, `raid`, `bg`…); every reading also carries the context the probe detects by itself |
-| `/atwp watch on\|off` | M0.3 | Automatic readings in combat (at combat start, every second, at encounter start, at combat end): used by P3–P7 and P9 |
+| `/atwp ctx <label>` | M0.3 | Labels the current context (`solo`, `party`, `dungeon`, `raid`, `bg`…); every reading also carries the context the probe detects by itself. `/atwp ctx` alone prints the current stamp, `/atwp ctx clear` removes the label |
+| `/atwp watch on\|off` | M0.3 | Automatic readings in combat (at combat start, every second, at encounter start, at combat end and 2 s later): used by P3–P7 and P9. It stays on across `/reload` until `/atwp watch off` |
 | `/atwp perf [hz] [units]` | M0.6 | P10: times the threat reading at 2, 5 and 10 Hz with 5, 10 and 40 units (or the given ones), 30 seconds each |
 
 Later steps may add commands; the usage line printed by `/atwp help` (and by any unknown command) always lists the
@@ -71,6 +71,32 @@ ones your version has.
 | M0.4 | P5, P6, P9 | `Checks_Units.lua` |
 | M0.5 | P7, P8 | `Checks_Events.lua` |
 | M0.6 | P10–P12 | `Checks_Cost.lua` |
+
+## P1–P4 (M0.3)
+
+Each `/atwp run <id>` prints one line: the check, the **proposed** verdict in brackets and its details. The verdict
+follows the criteria of SPEC-08 §1; when the evidence is not complete yet it stays `todo` and the details say what is
+missing. M0.7 decides the final verdicts from the export, so keep playing the contexts even after a `supported`.
+
+| Check | What you do | What it records |
+|---|---|---|
+| P1 | Once per client build, after the login: `/atwp run P1` | The six values of `GetBuildInfo`, `WOW_PROJECT_ID` (and every `WOW_PROJECT_*` constant), the client language, `C_Secrets.HasSecretRestrictions()`, `C_CombatLog.IsCombatLogRestricted()` and a census of the APIs P2–P12 use (present or absent) |
+| P2 | `/atwp run P2` with no target, a friendly target, a hostile mob not engaged, during a fight and on the corpse. After the first run of the session it also reads by itself every 0.5 s while you are in combat | The case it recognised (a no target, b friendly, c not engaged, d in combat with you, e in combat with someone else, f dead mob); for each of the four threat functions, called with the mob's token and with its GUID, how many values came back and the kind of each (`nil`, `secret`, boolean, number with its value); the threat colours and whether the native threat warning is on |
+| P3 | `/atwp watch on` once, `/atwp ctx <label>` when you enter a context, then play; `/atwp run P3` at the end | For you, every group member and `targettarget` on the same hostile mob: the `C_Secrets.ShouldUnitThreat…BeSecret` predictions and whether they were right, which values and which state came back secret, per context. P3b: the first time a value is secret in a context, the probe passes it to a hidden bar and a hidden text and records only whether the client accepted it |
+| P4 | In a party with a tank, on one mob with many hit points: the tank builds threat for about 10 s, you write `/atwp note P4 melee` and deal damage until you take the aggro. Three times in melee, three at range (`/atwp note P4 ranged`); then `/atwp run P4` | Each note arms one trial: 10 samples a second of your threat and the tank's, and when the aggro changes the 3 s before and 1 s after, with the highest raw and scaled percentages before the change |
+
+What to expect and what to send back:
+
+- The proposed verdicts: P1 `supported` when the client is build `1.60.1` (70170 or later) with interface 16001; P2
+  `supported` when the five cases a–d and f were seen and nothing was missing, out of range or only reachable with the
+  GUID; P3 `not supported` when, in a party, dungeon or raid fight, both your values and your state were secret,
+  `partial` when something was secret, `supported` only after fights solo, in a party, in a dungeon and in a raid with
+  nothing secret; P4 `supported` when the aggro changed at about 110 % raw in melee and 130 % at range, with the
+  scaled percentage at about 100 just before.
+- If P3 shows the values secret in a party, P4 cannot measure anything there: repeat it in `solo-combat` with a pet or a
+  companion as the tank (the probe uses `pet` when you have no group), or leave it without a verdict.
+- `/atwp export` contains the per-case counters of P2, the per-context counters of P3, the P4 trials and the logs of
+  every reading; send the whole text. A secret value appears only as `S` (or `secret`), never as a number.
 
 ## In-game procedure per context
 

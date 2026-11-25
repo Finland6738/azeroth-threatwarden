@@ -9,8 +9,9 @@ ciò che è **noto** da ciò che è **stimato**.
 
 > **Stato: fase di progetto.** Specifiche, decisioni e piano sono scritti; non c'è ancora nulla da installare. Il primo
 > passo è una sonda nel client vero (milestone M0): verifica quali dati di threat WoW Forever dà a un addon, perché in
-> alcune situazioni il client può nascondere i valori agli addon. Lo scheletro della [sonda](docs/spike/README.md)
-> (uno strumento di sviluppo, mai distribuito) è scritto; i controlli arrivano nei prossimi step. La prima versione,
+> alcune situazioni il client può nascondere i valori agli addon. La [sonda](docs/spike/README.md) (uno strumento di
+> sviluppo, mai distribuito) ora verifica il client e le funzioni della threat, compreso se i loro valori sono segreti
+> (P1–P4); gli altri controlli arrivano nei prossimi step. La prima versione,
 > `v0.1.0`, arriva dopo la milestone M1; l'MVP (monitor, avvisi, Coach, registrazione e report di combattimento) è la `v0.4.0`.
 
 [English](README.md) · [Roadmap](ROADMAP.md) · [Specifiche](docs/specs/README.md) · [Decisioni](docs/adr/README.md) ·
