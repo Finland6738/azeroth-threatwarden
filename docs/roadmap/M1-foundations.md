@@ -8,8 +8,9 @@ settings, credits and a diagnostic report, on tested foundations copied from Aze
 after `/reload`; Settings and Info work in both languages; `/atw debug` lists what Compat found; the offline tests run
 in CI. Released as `v0.1.0`.
 
-*State (2026-11-25): M1 is complete in code (steps M1.1–M1.9, offline tests in CI). The part of the criterion that
-needs the game is **open** until the owner runs [the M1 checklist](../checklists/M1.md).*
+*State (2026-11-25): M1 is complete in code (steps M1.1–M1.9, offline tests in CI) and released as `v0.1.0` (M1.R).
+The part of the criterion that needs the game is **open** until the owner runs
+[the M1 checklist](../checklists/M1.md).*
 
 | Step | Model | Effort |
 |---|---|---|
@@ -214,5 +215,11 @@ needs the game is **open** until the owner runs [the M1 checklist](../checklists
 - Scope: switches of later milestones off; `release_notes.py --promote 0.1.0`; README and wiki status; a dry run of
   the Release workflow; then the annotated tag `v0.1.0`, its push, and a check of the GitHub Release and of the zip.
 - Done when:
-  - [ ] The dry run is green and the zip contains only the addon, its libraries, fonts and `LICENSE`.
-  - [ ] The GitHub Release `v0.1.0` exists with the changelog section as its notes.
+  - [x] The dry run is green and the zip contains only the addon, its libraries, fonts and `LICENSE`.
+  - [x] The GitHub Release `v0.1.0` exists with the changelog section as its notes.
+- *Done (2026-11-25): changelog promoted and status updated (commit `d8d2fb5`, every feature switch off, 448 quick
+  tests); the dry run of the Release workflow was green; annotated tag `v0.1.0` on that commit,
+  [GitHub Release](https://github.com/Finland6738/azeroth-threatwarden/releases/tag/v0.1.0) with the changelog section
+  as notes and `AzerothThreatwarden-v0.1.0-forever.zip` (131 files in `AzerothThreatwarden/`: addon, libraries, media,
+  fonts with their OFL texts, `LICENSE` and the `CHANGELOG.md` the packager writes; `## Version: v0.1.0`).
+  CurseForge skipped (no `CF_API_KEY`). The zip has not been installed or run in the game.*

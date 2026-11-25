@@ -5,6 +5,10 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Documentation
+
+- M1.R: `v0.1.0` released on GitHub; the release step is ticked in the M1 milestone file.
+
 ## [0.1.0] - 2026-11-25
 
 The **first test version**: the foundations of the addon (milestone M1). It is built for WoW Forever (Interface 16001)
