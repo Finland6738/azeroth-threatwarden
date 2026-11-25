@@ -7,16 +7,17 @@ della threat, di coaching e di analisi dei combattimenti per **World of Warcraft
 quale mob, ti avvisa prima che tu prenda l'aggro, registra i combattimenti e spiega cosa è successo, distinguendo sempre
 ciò che è **noto** da ciò che è **stimato**.
 
-> **Stato: sviluppo iniziale. La [`v0.1.0`](https://github.com/Finland6738/azeroth-threatwarden/releases/tag/v0.1.0) è
-> la prima versione di prova: solo le fondamenta, ancora nessuna threat.** Si scarica da
+> **Stato: sviluppo iniziale. La [`v0.2.0`](https://github.com/Finland6738/azeroth-threatwarden/releases/tag/v0.2.0) è
+> la seconda versione di prova: porta il monitor della threat, non verificato in gioco.** Si scarica da
 > [GitHub Releases](https://github.com/Finland6738/azeroth-threatwarden/releases)
-> ([come installarla](docs/wiki/Installation-it.md)). Ha le impostazioni salvate (con versione e migrazioni), l'aspetto
-> dell'ecosistema, una finestra spostabile (la scheda Monitor è ancora vuota) con le Impostazioni (temi, lingua,
-> finestra) e la pagina Info con i crediti, i [comandi](docs/wiki/Commands-it.md) `/atw` e `/threatwarden`, il pulsante
-> della minimappa e la voce nell'Addon Compartment. È controllata solo da test offline: la
-> [verifica in gioco della M1](docs/checklists/M1.md) (in inglese) e i risultati della sonda M0 sono ancora aperti.
-> **Il monitor della threat (M2) è completo nel codice** su `main`, ancora spento fino alla `v0.2.0`: la sua
-> [verifica in gioco](docs/checklists/M2.md) (in inglese) e la sonda sono aperte. La
+> ([come installarla](docs/wiki/Installation-it.md)). La scheda Monitor mostra chi minaccia il nemico che selezioni, il
+> tank, la percentuale, il margine, la tendenza e uno stato, oppure *solo stato* / *sconosciuto* con il motivo quando il
+> client non dà numeri; `/atw demo` riproduce uno scontro inventato; soglie e frequenza di lettura sono provvisorie
+> ([Monitor della threat](docs/wiki/Threat-Monitor-it.md)). Ha anche le impostazioni salvate (con versione e
+> migrazioni), l'aspetto dell'ecosistema, una finestra spostabile con le Impostazioni e la pagina Info con i crediti, i
+> [comandi](docs/wiki/Commands-it.md) `/atw` e `/threatwarden`, il pulsante della minimappa e la voce nell'Addon
+> Compartment. È controllata solo da test offline: la sonda M0 e le verifiche in gioco della
+> [M1](docs/checklists/M1.md) e della [M2](docs/checklists/M2.md) (in inglese) sono ancora aperte. La
 > [sonda](docs/spike/README.md) (uno strumento di sviluppo, mai distribuito) verifica nel client vero quali dati di
 > threat WoW Forever dà a un addon, perché in alcune situazioni il client può nascondere i valori agli addon: il client e
 > le funzioni della threat, compreso se i loro valori sono segreti (P1–P4), quali unità e mob rispondono, gli eventi
@@ -37,7 +38,7 @@ in gioco ([tutte le anteprime: inglese e italiano, tre temi](docs/specs/mockups/
 
 ![La pagina Info con i crediti, tema Warden](docs/specs/mockups/previews/about-warden-it.webp)
 
-![La finestra della v0.1.0 prima del monitor della threat, tema Aurora](docs/specs/mockups/previews/window-aurora-it.webp)
+![Il monitor della threat con uno scontro inventato, tema Aurora](docs/specs/mockups/previews/monitor-values-aurora-it.webp)
 
 ## Funzioni previste
 

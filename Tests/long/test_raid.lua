@@ -51,6 +51,7 @@ describe("a long raid fight", function()
 		end
 		pull:stop()
 		eq(#Mock.threat.Mobs(), 0)
+		Mock.Advance(2)   -- the monitor, on since v0.2.0, may still hold a state that falls after the fight (1 s dwell)
 		eq(Mock.PendingTimers(), 0)
 		eq(reads, (SECONDS / 10) * MOBS * (PLAYERS + 1))
 		T.log(string.format("%d simulated seconds, %d readings, %.1f s of CPU", SECONDS, reads, Mock.RealClock() - t0))

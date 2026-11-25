@@ -100,10 +100,10 @@ for _, code in ipairs({ "enUS", "itIT" }) do
 			contains(out, T.toggle)
 			contains(out, T.help)
 			for _, name in ipairs(NAMES) do contains(out, "/atw " .. name .. " - ") end
-			falsy(out:find("/atw demo", 1, true))
+			contains(out, "/atw demo - ")
 			falsy(out:find("/atw mute", 1, true))
 			falsy(out:find("/atw reports", 1, true))
-			eq(#Mock.output, #NAMES + 2)
+			eq(#Mock.output, #NAMES + 3)
 		end)
 
 		it("say what an unknown word is", function()
@@ -112,7 +112,7 @@ for _, code in ipairs({ "enUS", "itIT" }) do
 		end)
 
 		it("say when a command of a part switched off arrives, and do nothing", function()
-			for _, case in ipairs({ { "demo", "v0.2.0" }, { "mute", "v0.3.0" }, { "reports", "v0.4.0" } }) do
+			for _, case in ipairs({ { "mute", "v0.3.0" }, { "reports", "v0.4.0" } }) do
 				contains(run("/atw " .. case[1]), T.later:format(case[2]))
 			end
 			eq(W():Tab(), "monitor")
@@ -165,8 +165,14 @@ describe("the way a command is typed", function()
 		truthy(#Mock.output > 0)
 	end)
 
-	it("lists and runs the demo once the monitor is on", function()
-		boot(function(M) M.features = { monitor = true } end)
+	it("says that the demo arrives in v0.2.0 with the monitor switched off", function()
+		boot(function(M) M.features = { monitor = false } end)
+		falsy(run("/atw help"):find("/atw demo", 1, true))
+		contains(run("/atw demo"), "This arrives in v0.2.0.")
+		falsy(AzerothThreatwarden.Demo.IsActive())
+	end)
+
+	it("lists and runs the demo", function()
 		contains(run("/atw help"), "/atw demo - ")
 		contains(run("/atw demo"), "Demo started")
 		truthy(AzerothThreatwarden.Demo.IsActive())

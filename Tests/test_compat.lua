@@ -165,9 +165,10 @@ end)
 describe("capabilities (SPEC-01 §8.4, ARC-12)", function()
 	it("start unknown until a reading proves them; the combat log is missing, as expected", function()
 		for _, id in ipairs({ "threatValues", "threatState", "threatLead", "threatEvents", "groupThreat", "otherMobs",
-			"mobIdentity", "roles", "damageMeter" }) do
+			"mobIdentity", "damageMeter" }) do
 			eq(C().Capability(id), "unknown", id)
 		end
+		eq(C().Capability("roles"), "available", "proven at login: the monitor reads the player's role")
 		deepEq({ C().Capability("combatLog") }, { "missing", "CombatLogGetCurrentEventInfo missing" })
 	end)
 

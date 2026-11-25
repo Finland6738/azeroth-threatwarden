@@ -2,8 +2,8 @@
 
 *Italiano: [[Installazione|Installation-it]]*
 
-> **`v0.1.0` is the first test version: foundations only, no threat yet.** It has not been checked in the real client
-> yet.
+> **`v0.2.0` is the second test version: it brings the [[Threat Monitor|Threat-Monitor]].** It has not been checked
+> in the real client yet.
 
 ## From a release
 
@@ -34,8 +34,8 @@ if needed ([[Privacy and Data|Privacy-and-Data]]). To remove the addon, delete t
 
 English by default, Italian in an Italian client (`itIT`). You can choose the language in [[Settings|Settings]].
 
-![The window of v0.1.0 in English, theme Nebula](../specs/mockups/previews/window-nebula.webp)
+![The threat monitor in English, theme Nebula, invented fight](../specs/mockups/previews/monitor-values-nebula.webp)
 
-![The window of v0.1.0 in Italian, theme Warden](../specs/mockups/previews/window-warden-it.webp)
+![The threat monitor in Italian, theme Warden, invented fight](../specs/mockups/previews/monitor-values-warden-it.webp)
 
 *Design previews, not screenshots: drawn from the addon's own layout and texts, because the addon has not been run in the game yet ([all previews](https://github.com/Finland6738/azeroth-threatwarden/blob/main/docs/specs/mockups/previews/README.md)).*

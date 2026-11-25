@@ -2,8 +2,9 @@
 
 *Italiano: [[Monitor della threat|Threat-Monitor-it]]*
 
-> **Arrives with `v0.2.0`.** In `v0.1.0` the Monitor tab only says that threat monitoring is coming. Which threat data
-> WoW Forever really gives an addon is still being checked, so the monitor is made for every answer.
+> **New in `v0.2.0`, not verified in game.** Which threat data WoW Forever really gives an addon is still being
+> checked (the M0 probe and the in-game checks are open), so the monitor is made for every answer: values, *state only*
+> or unknown, with the reason. Thresholds and reading rate are provisional.
 
 The **Monitor** tab shows who threatens the mob you are fighting. It reads the game while you are in combat, a mob is
 monitored and the window is open on this tab. By default the window opens by itself when a fight starts or you join a

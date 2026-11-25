@@ -139,7 +139,7 @@ describe("starting the demo", function()
 	end)
 
 	it("is refused with the monitor switched off, and on another client", function()
-		boot(function(M) M.features = {} end)
+		boot(function(M) M.features = { monitor = false } end)
 		deepEq({ D().Start() }, { false, "off" })
 		contains(run("/atw demo"), "This arrives in v0.2.0.")
 		boot(function(M) M.features = { monitor = true }; M.client.project = 1 end)

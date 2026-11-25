@@ -13,7 +13,7 @@ end
 
 local SECTIONS = { "Client", "Features", "APIs", "Capabilities", "Restrictions", "Saved data", "Memory", "Bus",
 	"Scheduler", "Demo", "Look", "Window", "Settings",
-	"Last errors" }
+	"Target", "Threat scanner", "Last errors" }
 
 describe("the report (SPEC-01 §9)", function()
 	it("has the header and the sections in order", function()
@@ -32,8 +32,8 @@ describe("the report (SPEC-01 §9)", function()
 		contains(text, "language: setting auto, active enUS")
 		contains(text, "missing language keys: 0")
 		contains(text, "instance: none")
-		contains(text, "on: none")
-		contains(text, "off: alerts, analytics, coach, export, heatmap, monitor, multitarget, profiles, recording, " ..
+		contains(text, "on: monitor")
+		contains(text, "off: alerts, analytics, coach, export, heatmap, multitarget, profiles, recording, " ..
 			"replay, reports, timeline")
 	end)
 

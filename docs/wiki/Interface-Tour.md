@@ -2,21 +2,21 @@
 
 *Italiano: [[Giro dell'interfaccia|Interface-Tour-it]]*
 
-What the addon shows today. The threat monitor itself arrives in `v0.2.0`.
+What the addon shows today.
 
 ## The window
 
 Open it with `/atw`, the minimap button or the Addon Compartment. The **title bar** has the logo, the state of the
-threat monitor (*Off* in this version), the lock and the close button. Move the window by its title bar and resize it
+[[threat monitor|Threat-Monitor]] (*Idle*, *Live*, *State only*, *Unavailable* or *Demo*), the lock and the close button. Move the window by its title bar and resize it
 from the dashed corner; the [[Commands|Commands]] page lists the commands.
 
 The **Monitor** tab is small, to sit over the game:
 
-![The Monitor tab, theme Nebula](../specs/mockups/previews/window-nebula.webp)
+![The Monitor tab with an invented fight, theme Nebula](../specs/mockups/previews/monitor-values-nebula.webp)
 
-![The Monitor tab, theme Aurora](../specs/mockups/previews/window-aurora.webp)
+![The Monitor tab with an invented fight, theme Aurora](../specs/mockups/previews/monitor-values-aurora.webp)
 
-![The Monitor tab, theme Warden](../specs/mockups/previews/window-warden.webp)
+![The Monitor tab with an invented fight, theme Warden](../specs/mockups/previews/monitor-values-warden.webp)
 
 ## Settings and Info
 

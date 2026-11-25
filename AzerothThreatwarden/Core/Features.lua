@@ -2,7 +2,7 @@
 -- Adapted from Azeroth Accord (Core/Features.lua), same owner, GPL-3.0 (ADR 0012).
 -- While a switch is off nothing of the part is visible, it registers no game event and it writes no data; a command of
 -- it answers that it arrives in a later version. Modules ask Features.On(name) when they act, never once at load.
--- Every switch is off in v0.1.0; each is turned on by the release step of its milestone.
+-- Each switch is turned on by the release step of its milestone: `monitor` is on since v0.2.0, the others are off.
 --
 --   monitor          threat reading, threat list, states, demo      M2.R
 --   alerts, coach    alerts; Threat Coach                            M3.R
@@ -17,7 +17,7 @@ ns = ns or {}
 ns.modules = ns.modules or {}
 
 local Features = {
-	monitor = false,
+	monitor = true,
 	alerts = false,
 	coach = false,
 	recording = false,

@@ -2,21 +2,21 @@
 
 *English: [[Interface tour|Interface-Tour]]*
 
-Ciò che l'addon mostra oggi. Il monitor della threat arriva nella `v0.2.0`.
+Ciò che l'addon mostra oggi.
 
 ## La finestra
 
 Si apre con `/atw`, con il pulsante della minimappa o dall'Addon Compartment. La **barra del titolo** ha il logo, lo
-stato del monitor della threat (*Spento* in questa versione), il lucchetto e la chiusura. La finestra si sposta dalla
+stato del [[monitor della threat|Threat-Monitor-it]] (*In attesa*, *In diretta*, *Solo stato*, *Non disponibile* o *Demo*), il lucchetto e la chiusura. La finestra si sposta dalla
 barra del titolo e si ridimensiona dall'angolo tratteggiato; la pagina [[Comandi|Commands-it]] elenca i comandi.
 
 La scheda **Monitor** è piccola, per stare sopra il gioco:
 
-![La scheda Monitor, tema Nebula](../specs/mockups/previews/window-nebula.webp)
+![La scheda Monitor con uno scontro inventato, tema Nebula](../specs/mockups/previews/monitor-values-nebula.webp)
 
-![La scheda Monitor, tema Aurora](../specs/mockups/previews/window-aurora.webp)
+![La scheda Monitor con uno scontro inventato, tema Aurora](../specs/mockups/previews/monitor-values-aurora.webp)
 
-![La scheda Monitor, tema Warden](../specs/mockups/previews/window-warden.webp)
+![La scheda Monitor con uno scontro inventato, tema Warden](../specs/mockups/previews/monitor-values-warden.webp)
 
 ## Impostazioni e Info
 

@@ -5,9 +5,24 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-11-26
+
+The second test version: the **Threat Monitor** (milestone M2), switched on. On the mob you target (or on your friend's
+target) the Monitor tab lists who is on its threat list, the tank, the scaled percentage, the margin, the trend and the
+state **Safe**, **Warning**, **Danger** or **Unknown**. What it shows depends on what the client gives an addon:
+**values**, **state only** (no numbers) or **unknown**, always with the reason, never an invented number. `/atw demo`
+plays an invented fight to try it without one. The thresholds (Warning 80 %, Danger 95 %) and the rate (5 reads per
+second) are **provisional**.
+
+It has been checked by offline tests only. The results of the M0 probe (which threat data the client gives an addon)
+and the in-game checklists of [M1](https://github.com/Finland6738/azeroth-threatwarden/blob/v0.2.0/docs/checklists/M1.md) and [M2](https://github.com/Finland6738/azeroth-threatwarden/blob/v0.2.0/docs/checklists/M2.md) are **still open**, so nothing
+below has been verified in the real client. The monitor was built before the probe, on the specification's assumptions.
+Alerts, Coach, recording and reports are switched off until later versions. The probe is a development tool in the
+repository and is not part of this package.
+
 ### Documentation
 
-- M2.8: the [in-game checklist of M2](docs/checklists/M2.md): the monitor solo, in a party, a dungeon and a raid, the
+- M2.8: the [in-game checklist of M2](https://github.com/Finland6738/azeroth-threatwarden/blob/v0.2.0/docs/checklists/M2.md): the monitor solo, in a party, a dungeon and a raid, the
   tank line and margin, Warning and Danger without flicker, target changes and deaths, *state only* and unknown values,
   sorting, the settings, demo mode, CPU and frame rate in a raid at 2, 5 and 10 Hz, and the threshold tuning notes
   (Q7). README status updated: M2 is complete in code; the in-game check and the probe are open.
@@ -81,6 +96,11 @@ All notable changes to this project are documented here. The format follows
   (M2.6).
 
 ### Changed
+
+- M2.R: the `monitor` switch is on: the threat monitor of M2.2-M2.7 (scanner, model, calculator, states, threat list,
+  settings and demo mode) is part of this version. The Monitor tab no longer says that monitoring arrives later, and the
+  module pill, the `/atw demo` command and the *Monitor* card of Settings work. Entries below that say a part is
+  "behind the `monitor` switch (off until v0.2.0)" describe it before this release.
 
 - M2.7: three allocations per tick removed from the threat list, with no change of behaviour: reading a setting
   (`Config:Get`, done at every bar animation) no longer splits its path each time, recolouring a region in

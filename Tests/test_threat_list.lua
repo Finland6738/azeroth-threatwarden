@@ -72,7 +72,7 @@ describe("the monitor tab", function()
 		local page = Mock.ns.Window.frame.pages.monitor
 		falsy(page.text:IsShown())
 		falsy(page.logo:IsShown())
-		boot(function(M) M.features = {} end)
+		boot(function(M) M.features = { monitor = false } end)
 		isNil(TL().view)
 		local old = Mock.ns.Window.frame.pages.monitor
 		truthy(old.text:IsShown())

@@ -155,3 +155,7 @@ closing on the tank goes WARNING then DANGER, and a target with no data shows UN
 ### M2.R — Release preparation `v0.2.0`
 - Branch: `chore/release-v0.2.0`
 - Scope: as M1.R, for `v0.2.0`.
+- Done when:
+  - [x] The `monitor` switch is on, the later ones off; changelog promoted, status updated; the checks are green.
+  - [ ] The dry run is green, and the tag `v0.2.0` and its GitHub Release (changelog section as notes, zip with only the
+        addon) exist.

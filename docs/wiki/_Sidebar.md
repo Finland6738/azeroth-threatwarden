@@ -3,7 +3,7 @@
 **Start**
 - [[Installation|Installation]]
 - [[Interface tour|Interface-Tour]]
-- [[Threat Monitor|Threat-Monitor]] (`v0.2.0`)
+- [[Threat Monitor|Threat-Monitor]]
 
 **Reference**
 - [[Commands|Commands]]
@@ -17,7 +17,7 @@
 **Italiano**
 - [[Installazione|Installation-it]]
 - [[Giro dell'interfaccia|Interface-Tour-it]]
-- [[Monitor della threat|Threat-Monitor-it]] (`v0.2.0`)
+- [[Monitor della threat|Threat-Monitor-it]]
 - [[Comandi|Commands-it]]
 - [[Impostazioni|Settings-it]]
 - [[Informazioni e crediti|About-it]]

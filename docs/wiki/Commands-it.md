@@ -17,21 +17,22 @@ compaiono solo nella tua finestra di chat, nella lingua dell'addon; nulla viene 
 | `/atw about` | apre la pagina [Info](About-it) |
 | `/atw debug` | apre il [rapporto diagnostico](Reporting-Bugs-and-Feedback-it), pronto da copiare (sempre in inglese) |
 | `/atw help` | elenca i comandi |
-| `/atw demo` | *dalla `v0.2.0`*: avvia la [modalità demo](Threat-Monitor-it#modalità-demo), uno scontro inventato (scritto di nuovo, la chiude) |
-| `/atw demo stop` | *dalla `v0.2.0`*: chiude la modalità demo (anche `/atw demo off`) |
+| `/atw demo` | avvia la [modalità demo](Threat-Monitor-it#modalità-demo), uno scontro inventato (scritto di nuovo, la chiude) |
+| `/atw demo stop` | chiude la modalità demo (anche `/atw demo off`) |
 
-Nella `v0.1.0` `/atw demo`, `/atw mute` e `/atw reports` rispondono con la versione che li porterà.
+`/atw mute` e `/atw reports` rispondono con la versione che li porterà.
 
 ## La finestra
 
-- Si apre al primo accesso; poi resta aperta o chiusa come l'hai lasciata, per ogni personaggio. Dalla `v0.2.0` può
+- Si apre al primo accesso; poi resta aperta o chiusa come l'hai lasciata, per ogni personaggio. Può
   anche aprirsi e chiudersi da sola ([quando si mostra la finestra](Settings-it#monitor)).
 - Si **sposta** trascinando la barra del titolo e si **ridimensiona** dall'angolo tratteggiato in basso a destra. Il
   lucchetto nella barra del titolo blocca entrambe le cose.
 - La scheda **Monitor** è piccola, per stare sopra il gioco; **Impostazioni** è più grande. Ognuna ricorda la propria
   dimensione.
-- La pastiglia nella barra del titolo dice cosa sta facendo il monitor della threat. In questa versione dice *Spento*:
-  il monitor arriva nella `v0.2.0`.
+- La pastiglia nella barra del titolo dice cosa sta facendo il
+  [monitor della threat](Threat-Monitor-it#il-piede-e-la-barra-del-titolo): *In attesa*, *In diretta*, *Solo stato*,
+  *Non disponibile* o *Demo*.
 - `Esc` la chiude. Si mostra, si nasconde, si sposta e si ridimensiona anche in combattimento.
 
 ## Pulsante della minimappa e Addon Compartment

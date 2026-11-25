@@ -34,6 +34,16 @@ local function point()
 	return { p, rel, x, y }
 end
 
+describe("the window with the monitor switched off", function()
+	before_boot(function(M) M.features = { monitor = false } end)
+
+	it("says that the monitor arrives in v0.2.0", function()
+		eq(F().pages.monitor.text:GetText(), "Threat monitoring arrives in v0.2.0")
+		truthy(F().pages.monitor.text:IsShown())
+		isNil(AzerothThreatwarden.ThreatList.view)
+	end)
+end)
+
 describe("the window at login", function()
 	it("is shown the first time, on the Monitor tab, compact, at the default size in the centre", function()
 		truthy(W():IsShown())
@@ -47,8 +57,10 @@ describe("the window at login", function()
 		eq(#Mock.errors, 0)
 	end)
 
-	it("says that the monitor arrives in v0.2.0", function()
-		eq(F().pages.monitor.text:GetText(), "Threat monitoring arrives in v0.2.0")
+	it("shows the threat list on the Monitor tab", function()
+		notNil(AzerothThreatwarden.ThreatList.view)
+		truthy(AzerothThreatwarden.ThreatList.view:IsVisible())
+		falsy(F().pages.monitor.text:IsShown(), "the placeholder is only for the monitor switched off")
 		truthy(F().pages.monitor:IsShown())
 		falsy(F().pages.settings:IsShown())
 	end)
@@ -358,6 +370,7 @@ end)
 
 describe("the module state (SPEC-03 §4.3)", function()
 	it("is Off while the monitor is switched off, with an icon, a word and the reason in the tooltip", function()
+		boot(function(M) M.features = { monitor = false } end)
 		eq(W().ModuleState(), "off")
 		for _, bar in pairs(F().titles) do
 			eq(bar.chip.label:GetText(), "Off")
@@ -406,17 +419,22 @@ describe("an Italian client", function()
 	before_boot(function(M) M.player.locale = "itIT" end)
 
 	it("writes the window in Italian", function()
-		eq(F().pages.monitor.text:GetText(), "Il monitor della threat arriva nella v0.2.0")
-		eq(F().titles.compact.chip.label:GetText(), "Spento")
+		eq(F().titles.compact.chip.label:GetText(), "In attesa")
 		eq(F().tabs.compact.buttons.settings.label:GetText(), "Impostazioni")
 		eq(#Mock.errors, 0)
+	end)
+
+	it("writes the placeholder and Off in Italian with the monitor switched off", function()
+		boot(function(M) M.features = { monitor = false }; M.player.locale = "itIT" end)
+		eq(F().pages.monitor.text:GetText(), "Il monitor della threat arriva nella v0.2.0")
+		eq(F().titles.compact.chip.label:GetText(), "Spento")
 	end)
 end)
 
 describe("the debug section", function()
 	it("tells the state of the window", function()
 		local text = AzerothThreatwarden.Diagnostics.Report()
-		contains(text, "created yes, shown yes, tab monitor, module state off")
+		contains(text, "created yes, shown yes, tab monitor, module state idle")
 		contains(text, "layout compact, size 300 x 220, scale 1.00, locked no, position centre")
 	end)
 end)
@@ -625,7 +643,7 @@ describe("when the window shows itself (SPEC-03 §5.1, Q13)", function()
 
 	it("does nothing by itself while the monitor is switched off", function()
 		boot(function(M)
-			M.features = {}
+			M.features = { monitor = false }
 			M.saved = { AzerothThreatwardenCharDB = { schema = 1, ui = { shown = false } } }
 		end)
 		eq(W().ShowMode(), "manual")

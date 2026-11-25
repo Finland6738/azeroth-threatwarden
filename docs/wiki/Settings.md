@@ -49,7 +49,7 @@ Saved for each character, except the minimap button (whole account).
 
 ## Monitor
 
-*Arrives with `v0.2.0`.* Saved for the whole account. Every change applies at once, also to a
+Saved for the whole account. Every change applies at once, also to a
 [demo](Threat-Monitor#demo-mode) or a fight in progress.
 
 ![The Monitor card of Settings, theme Nebula: the top and the page scrolled down](../specs/mockups/previews/settings-monitor-nebula.webp)

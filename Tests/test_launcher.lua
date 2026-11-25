@@ -6,7 +6,7 @@ local function icon() return LibStub("LibDBIcon-1.0") end
 local function button() return icon():GetMinimapButton("AzerothThreatwarden") end
 local function Config() return AzerothThreatwarden.Config end
 
-local TIP = { "Azeroth Threatwarden", "Development build", "Threat monitor: Off", "Left-click: show or hide",
+local TIP = { "Azeroth Threatwarden", "Development build", "Threat monitor: Idle", "Left-click: show or hide",
 	"Right-click: settings" }
 
 describe("the minimap button", function()
@@ -105,7 +105,7 @@ describe("an Italian client", function()
 
 	it("shows the tooltip in Italian", function()
 		AzerothThreatwarden_OnAddonCompartmentEnter("AzerothThreatwarden")
-		deepEq(Mock.TooltipLines(), { "Azeroth Threatwarden", "Versione di sviluppo", "Monitor della threat: Spento",
+		deepEq(Mock.TooltipLines(), { "Azeroth Threatwarden", "Versione di sviluppo", "Monitor della threat: In attesa",
 			"Clic sinistro: mostra o nascondi", "Clic destro: impostazioni" })
 	end)
 end)

@@ -117,7 +117,7 @@ copied from Azeroth Accord and renamed; each copied file says so in its header.
 | `Core/Locale.lua` | language tables registered by `Locales/`; `ns.L` answers in the active language with English as fallback; the language is chosen at load from `settings.language` (*auto*, English, Italian) | M1.2, M1.5 |
 | `Locales/enUS.lua`, `itIT.lua` | every visible string, one file per language ([ADR 0009](adr/0009-interface-and-documentation-languages.md)) | M1.2 → |
 | `Core/Init.lua` | the AceAddon object; the Forever check (diagnostic mode on another client); lifecycle (`ADDON_LOADED` → Config, Locale, Compat; `PLAYER_LOGIN` → interface); combat start and end from `PLAYER_REGEN_*`; `/atw debug` sections | M1.2 |
-| `Core/Features.lua` | the switches of later parts (`monitor`, `alerts`, `coach`, `recording`, `reports`, …), all off in `v0.1.0` | M1.2 |
+| `Core/Features.lua` | the switches of later parts (`monitor`, `alerts`, `coach`, `recording`, `reports`, …), `monitor` on since `v0.2.0`, the others off | M1.2 |
 | `Core/Bus.lua` | internal publish/subscribe (`Bus.On`, `Off`, `Emit`); a failing listener never stops the others; an emit allocates nothing and refuses a secret argument | M1.4 |
 | `Core/Compat.lua` | the API table (state per API: available, missing, restricted, error), the capabilities (`threatValues`, `threatState`, `groupThreat`…: available, missing, restricted, unknown), guarded calls, secret-value checks, the normalized threat read, timers, restrictions | M1.4 |
 | `Core/Scheduler.lua` | named, bounded ticks (1–10 Hz), only while needed, each guarded and timed | M1.4 |
@@ -127,10 +127,10 @@ copied from Azeroth Accord and renamed; each copied file says so in its header.
 | `UI/Assets.lua`, `Theme.lua`, `Motion.lua`, `Widgets/` | the ecosystem look: Nebula, Aurora and Warden themes, the four state tokens, fonts, 9-slice shapes (`Media/`, made by `tools/make_media.py` and `make_fonts.py`), the widget kit plus `ThreatBar` and `StateBadge`; the theme changes without `/reload` | M1.6 |
 | `UI/Window.lua`, `UI/Launcher.lua` | the window (compact layout for Monitor, wide layout for Settings and Reports), tabs, move, lock, resize, scale; the minimap button and the Addon Compartment entry | M1.7 |
 | `UI/Settings.lua`, `UI/About.lua` | Settings (Appearance, Language, Window, Reset) and Info with the NEBULA credits, in the window's Settings tab and in the game's own settings panel (through Compat) | M1.8 |
-| `Data/TargetTracker.lua`, `Data/ThreatScanner.lua` | the monitored mob; threat reads on events and a bounded tick in combat | M2 (behind `monitor`) |
-| `Data/ThreatModel.lua`, `Data/ThreatCalc.lua`, `Data/ThreatState.lua` | records, categories, staleness; margin, trend, time to overtake; states with hysteresis | M2 (behind `monitor`) |
-| `UI/ThreatList.lua` | the threat list in the Monitor tab | M2 (behind `monitor`) |
-| `Core/Demo.lua`, `Data/Demo.lua` | demo mode: an invented fight through the same model, states and list, nothing read or saved | M2 (behind `monitor`) |
+| `Data/TargetTracker.lua`, `Data/ThreatScanner.lua` | the monitored mob; threat reads on events and a bounded tick in combat | M2 (switch `monitor`, on since `v0.2.0`) |
+| `Data/ThreatModel.lua`, `Data/ThreatCalc.lua`, `Data/ThreatState.lua` | records, categories, staleness; margin, trend, time to overtake; states with hysteresis | M2 (switch `monitor`, on since `v0.2.0`) |
+| `UI/ThreatList.lua` | the threat list in the Monitor tab | M2 (switch `monitor`, on since `v0.2.0`) |
+| `Core/Demo.lua`, `Data/Demo.lua` | demo mode: an invented fight through the same model, states and list, nothing read or saved | M2 (switch `monitor`, on since `v0.2.0`) |
 | `Data/Alerts.lua`, `Data/Coach.lua`, `Data/CoachRules.lua` | alerts with cooldowns; rule-based tips with reason and confidence | *planned*, M3 |
 | `Data/Recorder.lua`, `Data/Session.lua`, `Data/Storage.lua`, `Data/Report.lua` | sessions, samples, events, limits, the combat report | *planned*, M4 |
 | `Data/Replay.lua`, `UI/Timeline.lua`, `UI/ReplayWindow.lua` | timeline and replay | *planned*, M5 |
@@ -148,8 +148,8 @@ copied from Azeroth Accord and renamed; each copied file says so in its header.
 | `CAPABILITY_CHANGED(id, state)` | Compat | Window (module state), ThreatState | M1 |
 | `COMBAT_STARTED`, `COMBAT_ENDED` | Init | Scheduler, Window, Scanner, Recorder | M1 |
 | `WINDOW_SHOWN(shown)`, `TAB_CHANGED(tabId)` | Window | Scanner, Demo, tabs | M1 |
-| `GROUP_CHANGED(inGroup)`, `DEMO_CHANGED(active)` | Init, Demo | Window; ThreatList and Settings for the demo | M2 (behind `monitor`) |
-| `TARGET_CHANGED`, `TARGET_STATUS`, `THREAT_SCANNED`, `THREAT_UPDATED`, `STATE_CHANGED`, `THREAT_MODE_CHANGED` | Data | ThreatList, Window; Alerts and Recorder later | M2 (behind `monitor`) |
+| `GROUP_CHANGED(inGroup)`, `DEMO_CHANGED(active)` | Init, Demo | Window; ThreatList and Settings for the demo | M2 (switch `monitor`, on since `v0.2.0`) |
+| `TARGET_CHANGED`, `TARGET_STATUS`, `THREAT_SCANNED`, `THREAT_UPDATED`, `STATE_CHANGED`, `THREAT_MODE_CHANGED` | Data | ThreatList, Window; Alerts and Recorder later | M2 (switch `monitor`, on since `v0.2.0`) |
 | `ALERT_RAISED`, `COACH_TIP` | Alerts, Coach | Window, Recorder | *planned*, M3 |
 | `SESSION_STARTED`, `SESSION_ENDED`, `SESSIONS_CHANGED` | Recorder, Storage | Reports | *planned*, M4 |
 

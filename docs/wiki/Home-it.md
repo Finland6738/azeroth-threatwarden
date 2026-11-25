@@ -7,11 +7,12 @@
 **Conosci la tua threat. Capisci i tuoi errori. Non perdere l'aggro.** Azeroth Threatwarden è un addon di monitoraggio
 della threat, di coaching e di analisi dei combattimenti per World of Warcraft: Forever.
 
-> **Stato: sviluppo iniziale. La `v0.1.0` è la prima versione di prova: solo le fondamenta, ancora nessuna threat.** Si
-> scarica da [GitHub Releases](https://github.com/Finland6738/azeroth-threatwarden/releases). Ha la finestra, le
-> impostazioni e i crediti, i comandi e il pulsante della minimappa; non è ancora stata verificata nel client vero, ed è
-> ancora aperta la verifica di quali dati di threat il gioco dà a un addon. L'MVP (monitor della threat, avvisi, Coach,
-> registrazione e report di combattimento) è la `v0.4.0`. Questo manuale cresce a ogni versione.
+> **Stato: sviluppo iniziale. La `v0.2.0` è la seconda versione di prova: porta il
+> [[monitor della threat|Threat-Monitor-it]], non verificato in gioco.** Si scarica da
+> [GitHub Releases](https://github.com/Finland6738/azeroth-threatwarden/releases). Ha anche la finestra, le impostazioni e i crediti, i comandi e il pulsante della
+> minimappa. È controllata solo da test offline: la verifica di quali dati di threat il gioco dà a un addon e le
+> verifiche in gioco sono ancora aperte. L'MVP (monitor della threat, avvisi, Coach, registrazione e report di
+> combattimento) è la `v0.4.0`. Questo manuale cresce a ogni versione.
 
 ## Cosa farà
 
@@ -28,7 +29,7 @@ della threat, di coaching e di analisi dei combattimenti per World of Warcraft: 
 |---|---|
 | Installarlo | [[Installazione|Installation-it]] |
 | Vedere com'è fatto | [[Giro dell'interfaccia|Interface-Tour-it]] |
-| Capire l'elenco della threat (arriva con la `v0.2.0`) | [[Monitor della threat|Threat-Monitor-it]] |
+| Capire l'elenco della threat | [[Monitor della threat|Threat-Monitor-it]] |
 | Cambiarne aspetto, lingua o finestra | [[Impostazioni|Settings-it]] |
 | Sapere chi l'ha fatto | [[Informazioni e crediti|About-it]] |
 | Sapere cosa posso scrivere e cosa fa la finestra | [[Comandi|Commands-it]] |

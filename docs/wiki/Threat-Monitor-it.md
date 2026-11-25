@@ -2,9 +2,9 @@
 
 *English: [[Threat Monitor|Threat-Monitor]]*
 
-> **Arriva con la `v0.2.0`.** Nella `v0.1.0` la scheda Monitor dice solo che il monitor della threat arriverà. Quali
-> dati di threat WoW Forever dia davvero a un addon è ancora da verificare, perciò il monitor è fatto per ogni
-> risposta.
+> **Nuovo nella `v0.2.0`, non verificato in gioco.** Quali dati di threat WoW Forever dia davvero a un addon è ancora
+> da verificare (la sonda M0 e le verifiche in gioco sono aperte), perciò il monitor è fatto per ogni risposta: valori,
+> *solo stato* o sconosciuto, con il motivo. Soglie e frequenza di lettura sono provvisorie.
 
 La scheda **Monitor** mostra chi minaccia il nemico che stai combattendo. Legge il gioco quando sei in combattimento,
 c'è un nemico monitorato e la finestra è aperta su questa scheda. Di base la finestra si apre da sola quando inizia un

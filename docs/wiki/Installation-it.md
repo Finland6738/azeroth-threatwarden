@@ -2,8 +2,8 @@
 
 *English: [[Installation|Installation]]*
 
-> **La `v0.1.0` è la prima versione di prova: solo le fondamenta, ancora nessuna threat.** Non è ancora stata
-> verificata nel client vero.
+> **La `v0.2.0` è la seconda versione di prova: porta il [[monitor della threat|Threat-Monitor-it]].** Non è ancora
+> stata verificata nel client vero.
 
 ## Da una versione pubblicata
 
@@ -35,8 +35,8 @@ se serve, vengono migrate ([[Privacy e dati|Privacy-and-Data-it]]). Per rimuover
 
 Inglese di base, italiano in un client italiano (`itIT`). La lingua si può scegliere nelle [[Impostazioni|Settings-it]].
 
-![La finestra della v0.1.0 in inglese, tema Nebula](../specs/mockups/previews/window-nebula.webp)
+![Il monitor della threat in inglese, tema Nebula, scontro inventato](../specs/mockups/previews/monitor-values-nebula.webp)
 
-![La finestra della v0.1.0 in italiano, tema Warden](../specs/mockups/previews/window-warden-it.webp)
+![Il monitor della threat in italiano, tema Warden, scontro inventato](../specs/mockups/previews/monitor-values-warden-it.webp)
 
 *Anteprime di progetto, non screenshot: disegnate dal layout e dai testi dell'addon, perché l'addon non è ancora stato provato in gioco ([tutte le anteprime](https://github.com/Finland6738/azeroth-threatwarden/blob/main/docs/specs/mockups/previews/README.md)).*

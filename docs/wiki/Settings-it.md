@@ -49,7 +49,7 @@ Salvata per personaggio, tranne il pulsante della minimappa (tutto l'account).
 
 ## Monitor
 
-*Arriva con la `v0.2.0`.* Salvato per tutto l'account. Ogni modifica si applica subito, anche a una
+Salvato per tutto l'account. Ogni modifica si applica subito, anche a una
 [demo](Threat-Monitor-it#modalità-demo) o a un combattimento in corso.
 
 ![La card Monitor delle Impostazioni, tema Nebula: la parte alta e la pagina scorsa in basso](../specs/mockups/previews/settings-monitor-nebula.webp)
