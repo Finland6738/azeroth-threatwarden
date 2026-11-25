@@ -25,7 +25,7 @@ diagnostica e lo dice in `/atw debug` invece di dare numeri.
 | `UnitThreatLeadSituation(unit, mob)` | → 0–3, nilable | quanto il tank è sopra il secondo | **[verificare]** P2 |
 | `GetThreatStatusColor(index)` | → r, g, b | solo confronto, i colori sono del tema | presente |
 | `IsThreatWarningEnabled()` | → bool | rispettare l'avviso nativo, non duplicarlo | presente |
-| `ShouldUnitThreatValuesBeSecret(unit, mob)` / `ShouldUnitThreatStateBeSecret(unit [, mob])` | → bool | sapere **prima** se una lettura sarà segreta | **[verificare]** P3 |
+| `C_Secrets.ShouldUnitThreatValuesBeSecret(unit, mob)` / `C_Secrets.ShouldUnitThreatStateBeSecret(unit [, mob])` (nel namespace `C_Secrets`, non globali) | → bool | sapere **prima** se una lettura sarà segreta | **[verificare]** P3 |
 | `issecretvalue(v)`, `issecrettable(t)` | → bool | non toccare mai un valore segreto | presente |
 | `UNIT_THREAT_LIST_UPDATE`, `UNIT_THREAT_SITUATION_UPDATE` | evento con unità | aggiornamenti guidati da eventi | **[verificare]** P6 |
 | `COMBAT_LOG_EVENT_UNFILTERED` | nessun payload documentato; **`CombatLogGetCurrentEventInfo` assente** | eventi di combattimento | **probabilmente non leggibile**, P7 |

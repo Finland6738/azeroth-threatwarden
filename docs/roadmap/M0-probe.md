@@ -43,9 +43,11 @@ prints or stores player or guild names.
   it, the expected outcome per verdict and what it changes in the plan); `docs/spike/README.md` with the install and the
   commands planned; the in-game procedure as a short table per context (solo, party, dungeon, raid).
 - Done when:
-  - [ ] Every check has its calls, contexts, recorded fields and the three verdicts with their consequence.
-  - [ ] `docs/spike/README.md` exists and `check_docs.py` passes.
+  - [x] Every check has its calls, contexts, recorded fields and the three verdicts with their consequence.
+  - [x] `docs/spike/README.md` exists and `check_docs.py` passes.
 - Real client: nothing (documentation only).
+- *Done (2026-11-25): SPEC-08 §1 details P1–P12 (rules PRB-01–PRB-06, context stamp, P3b display-only test);
+  `docs/spike/README.md` with the planned install, `/atwp` commands and procedure per context.*
 
 ### M0.2 — Probe skeleton
 - Branch: `step/m0-2-probe-skeleton`

@@ -37,7 +37,7 @@ completare in M<N>.1]** e aggiunge, quando serve, `ui-style.md` e i mockup.
 - Le API marcate **[verificare]** non compaiono nel dump oppure il loro comportamento su Forever non è ancora stato
   osservato: le conferma il probe M0 ([SPEC-08 §1](SPEC-08-quality-probe-release.md#1-probe-m0)).
 - Ogni requisito ha un identificativo (`DAT-xx`, `ARC-xx`, `MON-xx`, `ALR-xx`, `COA-xx`, `REC-xx`, `RPL-xx`, `ANA-xx`,
-  `MT-xx`, `QA-xx`) da citare in issue, PR e test.
+  `MT-xx`, `QA-xx`, `PRB-xx` per il probe) da citare in issue, PR e test.
 - Ogni dato mostrato appartiene a una categoria (rilevato, calcolato, stimato, previsto, ipotesi):
   [SPEC-00 §4](SPEC-00-vision-scope.md#4-affidabilità-dei-dati-vincolante), [ADR 0003](../adr/0003-data-reliability-categories.md).
 - Le decisioni definitive si registrano come ADR in [`docs/adr/`](../adr/README.md); le domande aperte in

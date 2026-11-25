@@ -1,0 +1,118 @@
+# Spike: the probe addon
+
+`AzTw_Probe` is a **throwaway** addon used in milestone M0 to answer, in the real WoW Forever client, what the design
+cannot answer offline: which threat data the client gives an addon, in which contexts, and at which cost. The checks
+P1–P12, with their exact calls, contexts, recorded fields and the consequence of each verdict, are specified in
+[SPEC-08 §1](../specs/SPEC-08-quality-probe-release.md#1-probe-m0) (in Italian); the steps are in
+[M0-probe.md](../roadmap/M0-probe.md).
+
+> **Status: planned.** This page describes the probe as M0.1 specifies it. The code arrives in M0.2 (skeleton) and
+> M0.3–M0.6 (the checks); until then nothing here can be installed or run.
+
+## What the probe is
+
+- It lives in `tools/probe/AzTw_Probe/` (TOC `## Interface: 16001`) and is **never distributed**: it is not part of any
+  package or release, and `.pkgmeta` never includes it.
+- Every game API call is wrapped in `pcall`; an error is a result, not a crash.
+- Every returned value is tested with `issecretvalue` before anything else. A secret value is recorded only as
+  `secret`: never compared, formatted, printed or saved. The probe never tries to work around secrecy.
+- No player, guild or character name is ever printed or stored, and no player GUID: players become `<player n>`, mobs
+  `<mob n>` (plus the GUID type and the creature id, which are not personal data). Unit tokens such as `party2` are kept.
+- No network, no addon messages, nothing sent to chat channels, no CVar or game setting changed.
+- Results are saved in `AzTw_ProbeDB` as `{id, verdict, details, build, context, time}` (verdict: `supported`,
+  `partial`, `not supported` or `todo`), plus one log per check.
+
+## Install (planned, from M0.2)
+
+1. Copy `tools/local.example.ini` to `tools/local.ini` (git-ignored) and set `addons` to the
+   `<WoW folder>/_forever_/Interface/AddOns` folder of your installation.
+2. Run:
+
+   ```bash
+   python -I -X utf8 tools/install_probe.py
+   ```
+
+   It copies `tools/probe/AzTw_Probe/` into that folder and nothing else.
+3. In game, `/reload` (or restart the client). The chat shows "AzTw Probe: loaded". If it does not load, enable "Load
+   out of date AddOns" and send the exact error.
+
+Run the installer again after every update of the probe, then `/reload`. The results in `AzTw_ProbeDB` survive the
+update. To remove the probe after M0, delete the `AzTw_Probe` folder from the AddOns folder.
+
+## Commands (planned)
+
+| Command | Step | What it does |
+|---|---|---|
+| `/atwp` or `/atwp list` | M0.2 | Lists P1–P12 with a short description and the last verdict |
+| `/atwp run <id>` | M0.2 | Runs one check now, for example `/atwp run P2`; checks that need a fight start their readings by themselves while active |
+| `/atwp export` | M0.2 | Opens a movable frame with all results and logs as plain text, already selected: press Ctrl+C and paste it back |
+| `/atwp note <id> <text>` | M0.2 | Stores a free-text observation, for example `/atwp note P4 melee`; never write player or guild names in it |
+| `/atwp reset` | M0.2 | Clears the stored results and logs (not during P12) |
+| `/atwp ctx <label>` | M0.3 | Labels the current context (`solo`, `party`, `dungeon`, `raid`, `bg`…); every reading also carries the context the probe detects by itself |
+| `/atwp watch on\|off` | M0.3 | Automatic readings in combat (at combat start, every second, at encounter start, at combat end): used by P3–P7 and P9 |
+| `/atwp perf [hz] [units]` | M0.6 | P10: times the threat reading at 2, 5 and 10 Hz with 5, 10 and 40 units (or the given ones), 30 seconds each |
+
+Later steps may add commands; the usage line printed by `/atwp help` always lists the ones your version has.
+
+## What each step adds
+
+| Step | Checks | Planned file |
+|---|---|---|
+| M0.2 | skeleton, registry, export, name scrubbing, install script | `AzTw_Probe.lua` |
+| M0.3 | P1–P4 | `Checks_ThreatAPI.lua` |
+| M0.4 | P5, P6, P9 | `Checks_Units.lua` |
+| M0.5 | P7, P8 | `Checks_Events.lua` |
+| M0.6 | P10–P12 | `Checks_Cost.lua` |
+
+## In-game procedure per context
+
+Do the contexts in this order; each one assumes the probe is installed and `/atwp watch on` was run once. At the end of
+each session in game, `/atwp export` and send the text back. Do not run `/atwp reset` between contexts.
+
+### Solo
+
+| # | Do | Checks |
+|---|---|---|
+| 1 | Log in, `/atwp run P1` | P1 |
+| 2 | `/atwp ctx solo`; with no target, then a friendly target, then a hostile mob not engaged: `/atwp run P2` each time | P2, P3 |
+| 3 | Fight a mob of your level (an elite with many hit points is better); after it dies, `/atwp run P2` with the corpse targeted | P2, P3, P8 |
+| 4 | `/atwp run P12`, pull a mob, `/reload` in the middle of the fight, then `/atwp run P12` again; repeat with a logout | P12 |
+| 5 | `/atwp run P11`, `/atwp run P8`, `/atwp perf` out of combat (simulated) | P8, P10, P11 |
+
+### Party (open world, 2–5 players)
+
+| # | Do | Checks |
+|---|---|---|
+| 1 | `/atwp ctx party`; fight a few single mobs | P3, P6 |
+| 2 | With a tank: the tank builds threat for about 10 s, you (DPS) `/atwp note P4 melee` and deal damage until you take aggro; three times in melee, three at range (`/atwp note P4 ranged`); then `/atwp run P4` | P4 |
+| 3 | Pull 3 or more mobs, with one that nobody targets, with enemy nameplates shown and then hidden; `/atwp run P5` | P5 |
+| 4 | The tank uses a taunt at least once and you write `/atwp note P7 taunt`; `/atwp run P6`, `/atwp run P7`, `/atwp run P11` | P6, P7, P11 |
+
+### Dungeon (5-player instance)
+
+| # | Do | Checks |
+|---|---|---|
+| 1 | Entering: `/atwp ctx dungeon`, `/atwp run P9` | P9 |
+| 2 | Play trash packs normally (3 or more mobs per pull when possible) | P3, P5, P6 |
+| 3 | A boss: let the probe record the fight; after the kill `/atwp run P9` again | P3, P7, P9 |
+| 4 | At the end: `/atwp run P3`, `P5`, `P6`, `P7`, `P8`, `P11` | all of them |
+
+### Raid
+
+| # | Do | Checks |
+|---|---|---|
+| 1 | In a raid group (a converted party is enough): `/atwp ctx raid`, `/atwp run P9` | P9 |
+| 2 | Fight in the raid (a raid instance boss if possible) | P3, P5, P7 |
+| 3 | During a fight with as many players as possible: `/atwp perf` | P10 |
+| 4 | `/atwp run P3`, `/atwp run P11` | P3, P11 |
+
+### Battleground (optional)
+
+| # | Do | Checks |
+|---|---|---|
+| 1 | `/atwp ctx bg`; play a match; `/atwp run P11` and `/atwp run P3` | P3, P11 |
+
+## Results
+
+M0.7 reads the exports and writes `docs/spike/M0-results.md`: one row per check with the evidence, the verdict and the
+consequence, the feature support matrix per context, and the MVP scope decision.

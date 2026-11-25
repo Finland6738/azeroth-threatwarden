@@ -18,6 +18,15 @@ All notable changes to this project are documented here. The format follows
   and the model and effort of each step's session. `CLAUDE.md`, `CONTRIBUTING.md`, `CODE_OF_CONDUCT.md`, both READMEs
   and the first wiki pages in English and Italian.
 
+- M0.1: probe specification. [SPEC-08 §1](docs/specs/SPEC-08-quality-probe-release.md#1-probe-m0) now details every
+  check P1–P12 of the probe `AzTw_Probe`: exact calls and unit tokens (checked against the Forever dump), contexts
+  (solo, party, dungeon, raid, battleground), the fields recorded per reading (never names or player GUIDs, secret
+  values only as `secret`), how the owner runs it, and the consequence of each verdict (supported / partially / not
+  supported) on specs, ADRs and milestones. New common rules PRB-01–PRB-06, the context stamp and P3b (whether a secret
+  value can be shown without being read). [docs/spike/README.md](docs/spike/README.md): what the probe is, the planned
+  install (`tools/install_probe.py`, `tools/local.ini`), the planned `/atwp` commands and the in-game procedure per
+  context. SPEC-01 §2: the threat secrecy checks live in `C_Secrets`.
+
 ### Added
 
 - The owner's logo (`assets/logo-source.webp`) and the NEBULA logos for the credits (`assets/`).
