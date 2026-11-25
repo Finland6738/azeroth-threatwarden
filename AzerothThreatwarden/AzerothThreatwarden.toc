@@ -30,6 +30,8 @@ Core\Scheduler.lua
 Core\Config.lua
 Core\Diagnostics.lua
 Core\Commands.lua
+Data\Demo.lua
+Core\Demo.lua
 Data\TargetTracker.lua
 Data\ThreatScanner.lua
 Data\ThreatCalc.lua

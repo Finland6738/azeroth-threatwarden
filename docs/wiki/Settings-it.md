@@ -12,6 +12,8 @@ ricaricato l'interfaccia). La pagina si scorre con la rotella del mouse.
 
 ![La pagina Impostazioni in italiano, tema Warden](../specs/mockups/previews/settings-warden-it.webp)
 
+![La card Monitor in italiano, tema Warden](../specs/mockups/previews/settings-monitor-warden-it.webp)
+
 *Anteprime di progetto, non screenshot: disegnate dal layout e dai testi dell'addon, perché l'addon non è ancora stato provato in gioco ([tutte le anteprime](https://github.com/Finland6738/azeroth-threatwarden/blob/main/docs/specs/mockups/previews/README.md)).*
 
 ## Aspetto
@@ -45,9 +47,42 @@ Salvata per personaggio, tranne il pulsante della minimappa (tutto l'account).
 | Mostra il pulsante sulla minimappa | mostra o nasconde il pulsante | sì |
 | Ripristina finestra | posizione, dimensioni e scala predefinite, finestra al centro (come `/atw reset`) | — |
 
+## Monitor
+
+*Arriva con la `v0.2.0`.* Salvato per tutto l'account. Ogni modifica si applica subito, anche a una
+[demo](Threat-Monitor-it#modalità-demo) o a un combattimento in corso.
+
+![La card Monitor delle Impostazioni, tema Nebula: la parte alta e la pagina scorsa in basso](../specs/mockups/previews/settings-monitor-nebula.webp)
+
+| Opzione | Cosa fa | Scelte | Predefinito |
+|---|---|---|---|
+| Soglia di attenzione | da questa quota della threat che prende il nemico una riga dice **Attenzione** | dal 50 % al 95 % | 80 % |
+| Soglia di pericolo | da questa quota, **Pericolo** | dal 60 % al 100 % | 95 % |
+| Letture al secondo | ogni quanto si legge la threat in combattimento: una frequenza più alta reagisce prima e costa di più | da 2 a 10 Hz | 5 Hz |
+| Unità per lettura | quante unità si leggono ogni volta; in un gruppo più grande le altre si leggono a turno (tu, il famiglio, i tank e chi tiene il nemico ogni volta) | da 5 a 40 | 40 |
+| Quando si mostra la finestra | vedi sotto | In gruppo o in lotta, Sempre, A mano | In gruppo o in lotta |
+| Ordine dell'elenco | *Percentuale*, *Threat assoluta*, *Rischio*, *Variazione recente* (anche il pulsante **Ordine** dell'elenco) | | Percentuale |
+| Tienimi in cima | la tua riga viene per prima (anche **Io in cima** nell'elenco) | sì / no | no |
+| Segui il bersaglio di un alleato | con un alleato selezionato (il tank), il monitor mostra il nemico che ha come bersaglio | sì / no | sì |
+| Avvia la demo | uno scontro inventato, per provare queste impostazioni ([modalità demo](Threat-Monitor-it#modalità-demo)) | pulsante | |
+
+Pericolo resta almeno 5 punti sopra Attenzione: spostando un cursore l'altro si sposta di conseguenza. Soglie,
+frequenza e numero di unità sono provvisori finché non vengono tarati in gioco.
+
+**Quando si mostra la finestra:**
+
+- **In gruppo o in lotta**: la finestra si apre da sola, sulla scheda Monitor, quando inizia un combattimento e quando
+  entri in un gruppo. Fuori da un gruppo si chiude da sola 10 secondi dopo un combattimento, salvo che tu l'abbia
+  riaperta o sia passato a un'altra scheda. Se la chiudi durante un combattimento, resta chiusa fino al successivo. Al
+  login è come l'hai lasciata (e aperta se sei in un gruppo).
+- **Sempre**: si mostra a ogni accesso e a ogni ricarica; la chiudi solo tu.
+- **A mano**: resta aperta o chiusa come la lasci.
+
+Le aperture e chiusure automatiche non cambiano mai la tua scelta a mano.
+
 ## Ripristino
 
-**Ripristina impostazioni** riporta ai valori predefiniti l'aspetto, la lingua e il pulsante della minimappa, ed
+**Ripristina impostazioni** riporta ai valori predefiniti l'aspetto, la lingua, il pulsante della minimappa e le impostazioni del monitor, ed
 elimina i dati danneggiati che l'addon aveva messo da parte per le segnalazioni. Chiede
 un secondo clic entro pochi secondi. Le registrazioni (di una versione futura) non vengono toccate; la posizione della
 finestra si ripristina con *Ripristina finestra*.

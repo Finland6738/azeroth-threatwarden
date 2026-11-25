@@ -7,7 +7,7 @@ of the controls (the defaults of Core/Config.lua) and, in the monitor scenes, an
 number comes from a real game.
 """
 import mockup_lib as lib
-from mockup_lib import T, button, card, esc, note, row, seg, switch, window
+from mockup_lib import T, button, card, esc, note, row, seg, select, switch, window
 
 THEMES = ["nebula", "aurora", "warden"]
 THEME_NAMES = {"nebula": "Nebula", "aurora": "Aurora", "warden": "Warden"}
@@ -159,14 +159,25 @@ def monitor_no_target(theme):
     return mon_window(theme, "idle", body)
 
 
+def monitor_demo(theme):
+    rows = [mon_row(theme, "Brannok", "warrior", "tank", "safe", 100, holder=True),
+            mon_row(theme, T("UNIT_YOU"), "mage", "dps", "warning", 78, me=True, eta=4),
+            mon_row(theme, "Kor", "rogue", "dps", "safe", 49, trend="up"),
+            mon_row(theme, "Sela", "priest", "healer", "safe", 12, trend="flat")]
+    body = (mon_head(T("DEMO_MOB"), T("MON_CLASS_ELITE"), "warning", T("MON_TANK", "Brannok"), "+22")
+            + mon_list(rows))
+    lines = ["Brannok", T("MON_DEMO_TIP"), T("TIP_STATE", T("STATE_SAFE"), T("CAT_CALCULATED")), T("TIP_HOLDS")]
+    return mon_window(theme, "demo", body, T("MON_DEMO"), True) + tip(lines, 170)
+
+
 def pager(on):
     return f'<div class="pager">{seg([T("PAGE_SETTINGS"), T("PAGE_ABOUT")], on)}</div>'
 
 
-def page(theme, selected, cards, x, scroll=0):
+def page(theme, selected, cards, x, scroll=0, module="off"):
     body = (f'<div class="page">{pager(selected)}<div class="scroll"><div class="column" style="margin-top:-{scroll}px">'
             f'{"".join(cards)}</div></div></div>')
-    return window(theme, "settings", body, x, TOP)
+    return window(theme, "settings", body, x, TOP, module=module)
 
 
 def settings_cards(theme):
@@ -187,6 +198,32 @@ def settings_cards(theme):
     reset = card(T("SET_RESET"), f'<div class="body">{esc(T("SET_RESET_TEXT"))}</div>'
                  + button(T("SET_RESET_BUTTON"), "wide"))
     return [appearance, language, window_card, reset]
+
+
+# The Monitor card of Settings (M2.6, with the `monitor` switch on) and the Reset card below it.
+def monitor_card():
+    def slide(label, low, high, value, text, first=False):
+        return row(T(label), lib.slider((value - low) / (high - low), text))
+
+    inner = (slide("SET_WARNING", 50, 95, 80, T("SET_PERCENT", 80))
+             + slide("SET_DANGER", 60, 100, 95, T("SET_PERCENT", 95)) + note(T("SET_THRESHOLDS_NOTE", 5))
+             + slide("SET_RATE", 2, 10, 5, T("SET_HERTZ", 5)) + note(T("SET_RATE_NOTE"))
+             + slide("SET_MAX_UNITS", 5, 40, 40, "40") + note(T("SET_MAX_UNITS_NOTE"))
+             + f'<div class="row"><b>{esc(T("SET_SHOW"))}</b></div>'
+             + seg([T("SHOW_AUTO"), T("SHOW_ALWAYS"), T("SHOW_MANUAL")], 0, "margin-top:4px")
+             + note(T("SET_SHOW_NOTE", 10), "margin-top:8px")
+             + row(T("SET_SORT"), select(T("SORT_RELATIVE"))) + row(T("SET_PIN_SELF"), switch(False))
+             + row(T("SET_FOLLOW"), switch(True)) + note(T("SET_FOLLOW_NOTE"))
+             + note(T("SET_DEMO_NOTE"), "margin-top:12px;color:var(--text-2)")
+             + button(T("SET_DEMO_START"), "mid", "margin-top:8px"))
+    return card(T("SET_MONITOR"), inner)
+
+
+def settings_monitor(theme):
+    reset = card(T("SET_RESET"), f'<div class="body">{esc(T("SET_RESET_TEXT_MONITOR"))}</div>'
+                 + button(T("SET_RESET_BUTTON"), "wide"))
+    cards = [monitor_card(), reset]
+    return page(theme, 0, cards, LEFT, module="idle") + page(theme, 0, cards, RIGHT, 330, "idle")
 
 
 def about_cards(theme):
@@ -235,6 +272,11 @@ MONITOR_KINDS = [
     ("monitor-unknown", monitor_unknown, ["nebula", "warden"], "Nothing readable: threat data unavailable",
      "Nulla di leggibile: dati di threat non disponibili"),
     ("monitor-no-target", monitor_no_target, ["nebula", "warden"], "No target", "Nessun bersaglio"),
+    ("monitor-demo", monitor_demo, ["nebula", "warden"], "Demo mode: an invented fight, said to be one",
+     "Modalità demo: uno scontro inventato, dichiarato tale"),
+    ("settings-monitor", settings_monitor, ["nebula", "warden"],
+     "Settings: the Monitor card, its top and the page scrolled down",
+     "Impostazioni: la card Monitor, la parte alta e la pagina scorsa in basso"),
 ]
 
 KINDS = [

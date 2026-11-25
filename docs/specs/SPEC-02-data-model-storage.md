@@ -206,10 +206,13 @@ motivo; poi le voci di `corrupt` (percorso e tipo, mai il contenuto) e i problem
 
 ### 3.5 Schema 2 (M2): le impostazioni del monitor
 
-Fissato in **M2.1**, realizzato da **M2.6** (fino ad allora `ThreatState.DEFAULTS` e i predefiniti dello Scanner
-valgono da soli). Lo schema dell'account passa a **2** con la tabella `settings.monitor`; quello del personaggio resta
+Fissato in **M2.1**, realizzato da **M2.6**. I predefiniti hanno un solo posto, `Config.MONITOR_DEFAULTS` (gli
+intervalli `Config.MONITOR`); i moduli `Data/` e la vista li prendono da lì. Lo schema dell'account passa a **2** con la tabella `settings.monitor`; quello del personaggio resta
 1. La migrazione `Config.migrations.account[2]` non fa nulla (i predefiniti aggiungono le chiavi che mancano), ma
-esiste e ha il suo test (DAT-20).
+esiste e ha il suo test (DAT-20). `Config.SCHEMAS` tiene lo schema di ogni variabile. La coppia di soglie si controlla
+dopo le singole regole: se viola lo scarto, entrambe tornano ai predefiniti al caricamento; `Config:Set` su una sola
+rifiuta un valore che la violerebbe e `Config:SetThresholds(warning, danger)` le scrive insieme, emettendo
+`CONFIG_CHANGED` per ciascuna quando entrambe sono scritte.
 
 | Percorso | Tipo | Predefinito | Regola | Uso |
 |---|---|---|---|---|

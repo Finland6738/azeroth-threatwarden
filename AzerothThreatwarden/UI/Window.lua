@@ -10,8 +10,14 @@
 -- Nothing here is protected: ordinary frames, no secure template, no Blizzard frame touched, so showing, hiding, moving
 -- and resizing work in combat too. No game API is named (ARC-02): CreateFrame and Core/Compat.lua.
 --
+-- When it shows itself (SPEC-03 §5.1, `account.settings.monitor.show`, only while the `monitor` switch is on): "auto"
+-- opens it at a fight's start and on joining a group, and closes it AUTO_CLOSE seconds after a fight outside a group;
+-- "always" opens it at login; "manual" leaves it as the player left it. Showing or hiding by itself never writes
+-- `char.ui.shown` or the tab, which stay the player's choice.
+--
 -- Bus: emits WINDOW_SHOWN(shown) and TAB_CHANGED(tabId); listens CONFIG_LOADED, CONFIG_CHANGED, DISPLAY_CHANGED,
--- COMBAT_STARTED, COMBAT_ENDED, CAPABILITY_CHANGED, THREAT_MODE_CHANGED and TARGET_CHANGED (the pill).
+-- COMBAT_STARTED, COMBAT_ENDED, GROUP_CHANGED, CAPABILITY_CHANGED, THREAT_MODE_CHANGED, TARGET_CHANGED and DEMO_CHANGED
+-- (the pill).
 local ADDON_NAME, ns = ...
 ns = ns or {}
 ns.modules = ns.modules or {}
@@ -27,6 +33,8 @@ Window.DEFAULT_SIZE = { compact = { w = 300, h = 220 }, wide = { w = 560, h = 52
 Window.RADIUS = { compact = 8, wide = 12 }
 Window.GRIP = 14
 Window.PAGE_MARGIN = 20   -- around the Settings tab
+Window.AUTO_CLOSE = 10    -- seconds after a fight outside a group before the window closes itself ("auto")
+local SHOW_PATH = "account.settings.monitor.show"
 
 -- The tabs, in order. `feature`: shown only while that switch of Core/Features.lua is on (ADR 0014).
 Window.TABS = {
@@ -45,6 +53,7 @@ Window.STATES = {
 	state       = { labelKey = "MODULE_STATE",       tipKey = "MODULE_TIP_STATE",       icon = "warn",  token = "warn" },
 	unavailable = { labelKey = "MODULE_UNAVAILABLE", tipKey = "MODULE_TIP_UNAVAILABLE", icon = "cross", token = "err" },
 	unsupported = { labelKey = "MODULE_UNSUPPORTED", tipKey = "MODULE_TIP_UNSUPPORTED", icon = "warn",  token = "err" },
+	demo        = { labelKey = "MODULE_DEMO",        tipKey = "MODULE_TIP_DEMO",        icon = "predict", token = "warn" },
 }
 
 local function config() return ns.Config end
@@ -57,6 +66,9 @@ local function emit(event, ...)
 	if ns.Bus then ns.Bus.Emit(event, ...) end
 end
 local function featureOn(name) return ns.Features ~= nil and ns.Features.On(name) end
+local function demoOn() return ns.Demo ~= nil and ns.Demo.IsActive() end
+local function inCombat() return ns.addon ~= nil and ns.addon.inCombat == true end
+local function inGroup() return Compat.Group.InGroup() == true end
 
 ---------------------------------------------------------------------------------------------------------------------
 -- Module state
@@ -66,10 +78,11 @@ local function hidden(capability)
 	return state == Compat.MISSING or state == Compat.RESTRICTED
 end
 
--- "off", "idle", "live", "state", "unavailable" or "unsupported".
+-- "off", "demo", "idle", "live", "state", "unavailable" or "unsupported".
 function Window.ModuleState()
 	if ns.addon and ns.addon.isForever == false then return "unsupported" end
 	if not featureOn("monitor") then return "off" end
+	if demoOn() then return "demo" end
 	if not (ns.addon and ns.addon.inCombat) then return "idle" end
 	local Tracker, Scanner = ns.TargetTracker, ns.ThreatScanner
 	if Tracker and Tracker.enabled and not Tracker.mobKey then return "idle" end
@@ -392,7 +405,12 @@ local function build()
 		stopSizing(self)
 		-- hidden with the whole interface (Alt+Z, a cinematic) the window is still "shown": nothing to remember
 		if not self:IsShown() then
-			save("char.ui.shown", false)
+			Window:CancelAutoClose()
+			if not Window.autoHiding then
+				-- closed by the player: during a fight it stays closed until the next one (SPEC-03 §5.1)
+				if inCombat() then Window.dismissed = true end
+				save("char.ui.shown", false)
+			end
 			emit("WINDOW_SHOWN", false)
 		end
 	end)
@@ -526,6 +544,8 @@ function Window:Layout() return self.frame and self.frame.layout or nil end
 function Window:IsLocked() return get("char.ui.locked") == true end
 
 function Window:Open()
+	self.dismissed = false
+	self:CancelAutoClose()
 	local f = self:Frame()
 	if not f:IsShown() then f:Show() end
 	if f.Raise then f:Raise() end
@@ -545,8 +565,9 @@ function Window:Toggle()
 end
 
 -- Switches tab; between the two layouts the top-left corner stays where it is and the window stays on the screen.
--- Returns true when the tab exists and its part is on.
-function Window:SelectTab(id)
+-- `quiet`: the window does it by itself, so neither the tab nor the place is saved. Returns true when the tab exists
+-- and its part is on.
+function Window:SelectTab(id, quiet)
 	local f = self:Frame()
 	if not tabAvailable(id) then return false end
 	if f.tab == id or self.selecting then return true end
@@ -563,14 +584,52 @@ function Window:SelectTab(id)
 			left, top = Window.Clamp(left, top, f:GetWidth(), f:GetHeight(), sw, sh)
 			local pos = { point = "TOPLEFT", relativePoint = "BOTTOMLEFT", x = left, y = top }
 			anchor(f, pos)
-			save("char.ui.pos", pos)
+			if not quiet then save("char.ui.pos", pos) end
 		end
 	end
-	save("char.ui.lastTab", id)
+	if not quiet then save("char.ui.lastTab", id) end
 	self.selecting = false
 	self:Refresh()
 	emit("TAB_CHANGED", id)
 	return true
+end
+
+-- Shows the window on the Monitor tab without saving anything (the window's own rules, the demo).
+function Window:ShowMonitor()
+	self:CancelAutoClose()
+	local f = self:Frame()
+	self:SelectTab("monitor", true)
+	if not f:IsShown() then f:Show() end
+	if f.Raise then f:Raise() end
+	return f
+end
+
+-- When the window shows itself: "auto", "always" or "manual" (always "manual" while the monitor is off).
+function Window.ShowMode()
+	if not featureOn("monitor") or (ns.addon and ns.addon.isForever == false) then return "manual" end
+	return get(SHOW_PATH) or "manual"
+end
+
+local function openByItself()
+	if not Window:IsShown() then Window:ShowMonitor() end
+end
+
+function Window:CancelAutoClose()
+	self.closeToken = (self.closeToken or 0) + 1
+end
+
+-- "auto", after a fight outside a group: the window closes AUTO_CLOSE seconds later, unless by then another fight
+-- started, a group was joined, the player went to another tab or a demo runs.
+local function closeLater()
+	Window:CancelAutoClose()
+	local mine = Window.closeToken
+	Compat.After(Window.AUTO_CLOSE, function()
+		if mine ~= Window.closeToken or Window.ShowMode() ~= "auto" or not Window:IsShown() then return end
+		if inCombat() or inGroup() or demoOn() or Window:Tab() ~= "monitor" then return end
+		Window.autoHiding = true
+		Window.frame:Hide()
+		Window.autoHiding = false
+	end)
 end
 
 -- Opens the window on a page of the Settings tab: "settings" or "about".
@@ -625,6 +684,11 @@ end
 -- Events
 ---------------------------------------------------------------------------------------------------------------------
 local function onConfigChanged(path)
+	if path == SHOW_PATH then
+		Window:CancelAutoClose()
+		if Window.ShowMode() == "always" then openByItself() end
+		return
+	end
 	local f = Window.frame
 	if not f or Window.saving or type(path) ~= "string" then return end
 	if path == "char.ui.locked" then
@@ -648,17 +712,37 @@ if ns.Bus then
 	ns.Bus.On("CONFIG_CHANGED", onConfigChanged)
 	ns.Bus.On("DISPLAY_CHANGED", function() if Window.frame then keepOnScreen(Window.frame) end end)
 	local function state() Window:RefreshState() end
-	ns.Bus.On("COMBAT_STARTED", state)
-	ns.Bus.On("COMBAT_ENDED", state)
+	ns.Bus.On("COMBAT_STARTED", function()
+		Window.dismissed = false
+		Window:CancelAutoClose()
+		if Window.ShowMode() == "auto" then openByItself() end
+		state()
+	end)
+	ns.Bus.On("COMBAT_ENDED", function()
+		if Window.ShowMode() == "auto" and Window:IsShown() and not inGroup() then closeLater() end
+		state()
+	end)
+	ns.Bus.On("GROUP_CHANGED", function(grouped)
+		local was = Window.grouped
+		Window.grouped = grouped
+		if not grouped then return end
+		Window:CancelAutoClose()
+		if not was and not Window.dismissed and Window.ShowMode() == "auto" then openByItself() end
+	end)
+	ns.Bus.On("DEMO_CHANGED", state)
 	ns.Bus.On("CAPABILITY_CHANGED", state)
 	ns.Bus.On("THREAT_MODE_CHANGED", state)
 	ns.Bus.On("TARGET_CHANGED", state)
 end
 
--- At login the window is shown as the character left it (shown the first time).
+-- At login the window is shown as the character left it (shown the first time); "always" shows it anyway, "auto" also
+-- in a group (a fight at login arrives as COMBAT_STARTED).
 if ns.OnEnable then
 	ns.OnEnable(function()
-		if get("char.ui.shown") then Window:Open() end
+		local mode = Window.ShowMode()
+		Window.grouped = mode ~= "manual" and inGroup()
+		if get("char.ui.shown") then Window:Open()
+		elseif mode == "always" or (mode == "auto" and Window.grouped) then openByItself() end
 	end)
 end
 

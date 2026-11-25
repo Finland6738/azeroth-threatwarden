@@ -130,6 +130,7 @@ copied from Azeroth Accord and renamed; each copied file says so in its header.
 | `Data/TargetTracker.lua`, `Data/ThreatScanner.lua` | the monitored mob; threat reads on events and a bounded tick in combat | M2 (behind `monitor`) |
 | `Data/ThreatModel.lua`, `Data/ThreatCalc.lua`, `Data/ThreatState.lua` | records, categories, staleness; margin, trend, time to overtake; states with hysteresis | M2 (behind `monitor`) |
 | `UI/ThreatList.lua` | the threat list in the Monitor tab | M2 (behind `monitor`) |
+| `Core/Demo.lua`, `Data/Demo.lua` | demo mode: an invented fight through the same model, states and list, nothing read or saved | M2 (behind `monitor`) |
 | `Data/Alerts.lua`, `Data/Coach.lua`, `Data/CoachRules.lua` | alerts with cooldowns; rule-based tips with reason and confidence | *planned*, M3 |
 | `Data/Recorder.lua`, `Data/Session.lua`, `Data/Storage.lua`, `Data/Report.lua` | sessions, samples, events, limits, the combat report | *planned*, M4 |
 | `Data/Replay.lua`, `UI/Timeline.lua`, `UI/ReplayWindow.lua` | timeline and replay | *planned*, M5 |
@@ -146,7 +147,8 @@ copied from Azeroth Accord and renamed; each copied file says so in its header.
 | `THEME_CHANGED(themeId)` | Theme | Settings, other views | M1 |
 | `CAPABILITY_CHANGED(id, state)` | Compat | Window (module state), ThreatState | M1 |
 | `COMBAT_STARTED`, `COMBAT_ENDED` | Init | Scheduler, Window, Scanner, Recorder | M1 |
-| `WINDOW_SHOWN(shown)`, `TAB_CHANGED(tabId)` | Window | Scanner, tabs | M1 |
+| `WINDOW_SHOWN(shown)`, `TAB_CHANGED(tabId)` | Window | Scanner, Demo, tabs | M1 |
+| `GROUP_CHANGED(inGroup)`, `DEMO_CHANGED(active)` | Init, Demo | Window; ThreatList and Settings for the demo | M2 (behind `monitor`) |
 | `TARGET_CHANGED`, `TARGET_STATUS`, `THREAT_SCANNED`, `THREAT_UPDATED`, `STATE_CHANGED`, `THREAT_MODE_CHANGED` | Data | ThreatList, Window; Alerts and Recorder later | M2 (behind `monitor`) |
 | `ALERT_RAISED`, `COACH_TIP` | Alerts, Coach | Window, Recorder | *planned*, M3 |
 | `SESSION_STARTED`, `SESSION_ENDED`, `SESSIONS_CHANGED` | Recorder, Storage | Reports | *planned*, M4 |
@@ -229,7 +231,7 @@ flowchart LR
 
 | Variable | Schema 1 (M1) | Later |
 |---|---|---|
-| `AzerothThreatwardenDB` | `schema`, `settings` (`language`, `theme`, `effects`, `animations`, `font`, `minimap`), `corrupt` | thresholds and rate (M2), alerts (M3), `sessions` and recording limits (M4), `profiles` (M8) |
+| `AzerothThreatwardenDB` | `schema`, `settings` (`language`, `theme`, `effects`, `animations`, `font`, `minimap`), `corrupt` | schema 2 (M2): `settings.monitor`; alerts (M3), `sessions` and recording limits (M4), `profiles` (M8) |
 | `AzerothThreatwardenCharDB` | `schema`, `ui` (`shown`, `locked`, `scale`, `pos`, `size.compact`, `size.wide`, `lastTab`, `lastPage`) | — |
 
 - Defaults, rules (type, range, enum) and migrations live in `Config` ([SPEC-02 §3](specs/SPEC-02-data-model-storage.md#3-savedvariables)).

@@ -7,7 +7,9 @@
 > risposta.
 
 La scheda **Monitor** mostra chi minaccia il nemico che stai combattendo. Legge il gioco quando sei in combattimento,
-c'è un nemico monitorato e la finestra è aperta su questa scheda.
+c'è un nemico monitorato e la finestra è aperta su questa scheda. Di base la finestra si apre da sola quando inizia un
+combattimento o entri in un gruppo ([quando si mostra la finestra](Settings-it#monitor)); soglie, frequenza, ordine e il
+resto sono nella [card Monitor delle Impostazioni](Settings-it#monitor).
 
 ![Il monitor con i valori di threat: un DPS in ATTENZIONE, uno in PERICOLO](../specs/mockups/previews/monitor-values-nebula.webp)
 
@@ -30,7 +32,7 @@ Una riga per ogni unità nella lista della threat del nemico (tu, il tuo famigli
 | Striscia a sinistra, distintivo a destra | lo stato: **Sicuro**, **Attenzione**, **Pericolo** o **Sconosciuto**, sempre con icona e parola |
 | Icona del ruolo, icona dello scudo | il ruolo assegnato; lo scudo indica chi tiene il nemico |
 | Nome | il colore di classe (la tua riga ha un contorno) |
-| Barra e numero | la threat scalata: 100 % significa prendere l'aggro. Le tacche sono le soglie Attenzione (80 %) e Pericolo (95 %) |
+| Barra e numero | la threat scalata: 100 % significa prendere l'aggro. Le tacche sono le soglie Attenzione (80 %) e Pericolo (95 %), o le tue |
 | Freccia | la tendenza degli ultimi secondi (una *stima*); `~2 s` significa *potrebbe prendere l'aggro fra circa 2 s* (una *previsione*) |
 | `?` e barra tratteggiata | sconosciuto: passa sulla riga per leggere il motivo |
 | `—` senza barra | *solo stato*: il gioco dà lo stato ma nasconde i numeri |
@@ -41,8 +43,7 @@ vecchio*). Una finestra stretta toglie l'icona del ruolo, la tendenza e la barra
 
 Clicca **Ordine** per cambiarlo: *Percentuale*, *Threat assoluta* (solo dove il gioco la dà), *Rischio*, *Variazione
 recente*. Le righe sconosciute sono sempre in fondo. **Io in cima** tiene la tua riga per prima. L'ordine cambia al
-massimo una volta al secondo, e subito quando qualcuno entra in Pericolo. Queste due scelte si salveranno da uno step
-successivo della `v0.2.0`; fino ad allora valgono per la sessione. Quando l'elenco non ci sta, l'ultima riga dice *+N
+massimo una volta al secondo, e subito quando qualcuno entra in Pericolo. Entrambe le scelte vengono salvate. Quando l'elenco non ci sta, l'ultima riga dice *+N
 altri* e la tua resta visibile.
 
 ![La vista del tank, con il margine sul secondo](../specs/mockups/previews/monitor-tank-warden.webp)
@@ -56,7 +57,7 @@ altri* e la tua resta visibile.
 | **Pericolo** | dal 95 %, o tiene il nemico | il secondo è dal 95 %, o ha più threat |
 | **Sconosciuto** | il gioco non dà nulla di leggibile, o il dato è vecchio | lo stesso |
 
-Le soglie sono provvisorie. Uno stato sale subito e scende solo dopo un secondo, così non lampeggia.
+Le soglie sono provvisorie e le puoi cambiare nelle [Impostazioni](Settings-it#monitor). Uno stato sale subito e scende solo dopo un secondo, così non lampeggia.
 
 ## Quando il gioco nasconde i numeri
 
@@ -78,13 +79,31 @@ Senza un nemico la finestra dice *Nessun bersaglio*. Fuori dal combattimento dic
 un combattimento le ultime righe restano, segnate come vecchie, sotto *Combattimento finito*. Un nemico morto o
 scomparso mostra *Bersaglio morto* o *Bersaglio perso*.
 
+## Modalità demo
+
+Scrivi `/atw demo`, o premi **Avvia la demo** nella card Monitor delle Impostazioni, per guardare uno scontro inventato
+senza essere in uno vero: un *Golem della demo*, un tank, un guaritore e un DPS inventati, e tu. Compaiono a turno
+Attenzione, Pericolo, un tank che perde il nemico e lo riprende e le previsioni, poi lo scontro ricomincia. Serve a
+vedere com'è il monitor e a provare le impostazioni.
+
+![Modalità demo: uno scontro inventato, dichiarato tale](../specs/mockups/previews/monitor-demo-nebula.webp)
+
+- La pastiglia dice **Demo**, il piede *DEMO · scontro inventato, non il gioco* e i tooltip dicono che i valori sono
+  inventati.
+- Nulla è letto dal gioco e la demo non salva nulla. Ciò che cambi nel frattempo (un'impostazione, l'ordine
+  dell'elenco, il posto della finestra) viene salvato come sempre.
+- Finisce con `/atw demo stop` (o di nuovo `/atw demo`), quando chiudi la finestra e **da sola appena inizia un
+  combattimento vero**. Non può partire in combattimento e non sopravvive a una ricarica.
+
 ## Il piede e la barra del titolo
 
 Il piede dice quanto sono vecchi i dati e quante letture degli ultimi 10 s erano utilizzabili. La pastiglia nella barra
-del titolo dice *In attesa*, *In diretta*, *Solo stato* o *Non disponibile*.
+del titolo dice *In attesa*, *In diretta*, *Solo stato*, *Non disponibile* o *Demo*.
 
 L'interfaccia è in italiano e in inglese:
 
 ![Il monitor in italiano, tema Aurora](../specs/mockups/previews/monitor-values-aurora-it.webp)
+
+![Modalità demo in italiano, tema Warden](../specs/mockups/previews/monitor-demo-warden-it.webp)
 
 *Anteprime di progetto, non screenshot: disegnate dal layout e dai testi dell'addon, con un combattimento inventato, perché l'addon non è ancora stato provato in gioco ([tutte le anteprime](https://github.com/Finland6738/azeroth-threatwarden/blob/main/docs/specs/mockups/previews/README.md)).*

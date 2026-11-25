@@ -395,7 +395,7 @@ describe("the units watched (SPEC-03 §1.3)", function()
 
 	it("reads maxUnits per scan, player, tanks and holder every time, the others in turn", function()
 		local pull = raid(39)
-		TS().DEFAULTS.maxUnits = 10
+		truthy(Mock.ns.Config:Set("account.settings.monitor.maxUnits", 10))
 		pull:at(0):start():threat("boss", "m2", 1000):threat("boss", "player", 10)
 		pull:to(0)
 		eq(TS().MaxUnits(), 10)
@@ -420,7 +420,6 @@ describe("the units watched (SPEC-03 §1.3)", function()
 		eq(TS().turns, 6, "37 others on 7 places")
 		near(rec("raid9").interval, 6 / 5, 1e-9)
 		near(rec("player").interval, 1 / 5, 1e-9)
-		TS().DEFAULTS.maxUnits = 40
 	end)
 
 	it("adds the pet at UNIT_PET, second in the roster", function()

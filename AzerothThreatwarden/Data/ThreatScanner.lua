@@ -6,7 +6,7 @@
 -- GROUP_ROSTER_UPDATE, UNIT_PET of the player and COMBAT_STARTED; names, class and role are read then, never per scan.
 -- One record per unit from a pool that only grows (DAT-11): a scan allocates nothing (ARC-06, MON-08).
 --
--- maxUnits (default 40, until schema 2 of Core/Config.lua in M2.6) is how many units one scan reads: player, pet, the
+-- maxUnits (account.settings.monitor.maxUnits, default 40) is how many units one scan reads: player, pet, the
 -- designated tanks (role TANK) and whoever held the mob at the last scan are read every time, the other places go round
 -- robin in roster order. Each record carries `interval`, the time expected between two reads of it (1 / rate, times the
 -- number of turns of the round robin), for the freshness of Data/ThreatModel.lua (SPEC-03 §1.5).
@@ -41,10 +41,11 @@ local Unit, Group, Threat = Compat.Unit, Compat.Group, Compat.Threat
 local type, pairs, pcall, error = type, pairs, pcall, error
 local floor, ceil = math.floor, math.ceil
 
--- Used until schema 2 of Core/Config.lua (M2.6) stores account.settings.monitor.rate and .maxUnits (Q14).
-ThreatScanner.DEFAULTS = { rate = 5, maxUnits = 40 }
-ThreatScanner.MIN_RATE, ThreatScanner.MAX_RATE = 2, 10
-ThreatScanner.MIN_UNITS, ThreatScanner.MAX_UNITS = 5, 40
+-- The settings account.settings.monitor.rate and .maxUnits, their defaults (Q14) and ranges are Core/Config.lua's.
+local Limits, Defaults = ns.Config.MONITOR, ns.Config.MONITOR_DEFAULTS
+ThreatScanner.DEFAULTS = { rate = Defaults.rate, maxUnits = Defaults.maxUnits }
+ThreatScanner.MIN_RATE, ThreatScanner.MAX_RATE = Limits.rate.min, Limits.rate.max
+ThreatScanner.MIN_UNITS, ThreatScanner.MAX_UNITS = Limits.maxUnits.min, Limits.maxUnits.max
 ThreatScanner.MIN_GAP = 0.1          -- seconds between two full scans asked by events (MON-07)
 ThreatScanner.SAFETY_HZ = nil        -- [probe P6]: a lower safety-net tick when the events prove timely
 ThreatScanner.TICK = "threat"

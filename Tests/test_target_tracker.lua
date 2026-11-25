@@ -51,14 +51,13 @@ describe("the rule (SPEC-03 §1.2)", function()
 
 	it("does not with Follow target of target off", function()
 		newPull()
-		TT().DEFAULTS.followTargetOfTarget = false
+		truthy(Mock.ns.Config:Set("account.settings.monitor.followTargetOfTarget", false))
 		Mock.units.Target("tank", "boss")
 		Mock.units.Target("player", "tank")
 		isNil(TT().MobToken())
 		isNil(TT().MobKey())
 		eq(TT().Status(), "none")
-		TT().DEFAULTS.followTargetOfTarget = true
-		TT().Evaluate(false)
+		truthy(Mock.ns.Config:Set("account.settings.monitor.followTargetOfTarget", true))
 		eq(TT().MobToken(), "targettarget")
 	end)
 

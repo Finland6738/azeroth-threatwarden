@@ -7,6 +7,16 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
+- M2.6: monitor settings and demo mode, behind the `monitor` switch. A *Monitor* card in Settings: Warning and Danger
+  thresholds (Danger always at least 5 points above), reads per second (2-10 Hz, default 5, provisional), units per read
+  (5-40), when the window shows (*In group or combat*, the default: it opens at a fight and on joining a group and
+  closes 10 s after a fight outside a group; *Always*; *Manually*), the order of the list, *Pin me on top* and *Follow
+  the target of a friend*. The account's saved data move to schema 2 (`settings.monitor`; a migration adds the
+  defaults and keeps everything else). `/atw demo` (or the button of the card) plays an invented fight through the same
+  model, states and list as a real one, marked *Demo* in the window; it reads nothing from the game, saves nothing, and
+  stops with `/atw demo stop`, when the window closes or as soon as a real fight starts. Design previews of the card and
+  of the demo, and the wiki pages *Settings*, *Threat Monitor* and *Commands* updated.
+
 - M2.5: the threat list view in the Monitor tab, behind the `monitor` switch (off until v0.2.0; the M1 text stays
   while it is off). `UI/ThreatList.lua`: the header of the monitored mob (name, kind, your state, the tank, the
   margin), one row per unit on its threat list (class colour, role and holder icons, bar, scaled percentage, margin in

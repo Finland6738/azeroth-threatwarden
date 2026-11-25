@@ -27,8 +27,8 @@
 -- (the pair (unit, mob) is new). THREAT_MODE_CHANGED(mode, reason) is emitted when ThreatScanner.mode or its reason
 -- changes (MON-04).
 --
--- Thresholds: DEFAULTS (Q7, the one place), overridden by account.settings.monitor.warning and .danger when they exist
--- (schema 2, M2.6) and valid (warning 50-99, danger 60-100 and at least warning + 5; otherwise both defaults).
+-- Thresholds: account.settings.monitor.warning and .danger (schema 2; their defaults, Q7, and ranges are the one place
+-- Core/Config.lua), valid when warning is 50-99, danger 60-100 and at least warning + 5; otherwise both defaults.
 -- Allocation-free per update (ARC-06).
 local ADDON_NAME, ns = ...
 ns = ns or {}
@@ -39,11 +39,12 @@ ns.ThreatState, ns.modules.ThreatState = ThreatState, ThreatState
 
 local type, floor = type, math.floor
 
--- Provisional (SPEC-09 Q7): tuned with the M2 checklist; the player's settings (M2.6) override warning and danger.
-ThreatState.DEFAULTS = { warning = 80, danger = 95, hysteresis = 3, dwell = 1 }
-ThreatState.MIN_WARNING, ThreatState.MAX_WARNING = 50, 99
-ThreatState.MIN_DANGER, ThreatState.MAX_DANGER = 60, 100
-ThreatState.MIN_GAP = 5          -- danger at least warning + MIN_GAP
+-- Provisional (SPEC-09 Q7): tuned with the M2 checklist; the player's settings override warning and danger.
+local Limits, Defaults = ns.Config.MONITOR, ns.Config.MONITOR_DEFAULTS
+ThreatState.DEFAULTS = { warning = Defaults.warning, danger = Defaults.danger, hysteresis = 3, dwell = 1 }
+ThreatState.MIN_WARNING, ThreatState.MAX_WARNING = Limits.warning.min, Limits.warning.max
+ThreatState.MIN_DANGER, ThreatState.MAX_DANGER = Limits.danger.min, Limits.danger.max
+ThreatState.MIN_GAP = Limits.gap   -- danger at least warning + MIN_GAP
 local WARNING_PATH, DANGER_PATH = "account.settings.monitor.warning", "account.settings.monitor.danger"
 
 ThreatState.STATES = { "SAFE", "WARNING", "DANGER", "UNKNOWN" }

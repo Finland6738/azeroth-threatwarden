@@ -1,4 +1,4 @@
--- Config: the two SavedVariables, schema 1, typed rules, defaults, migrations, read-only on a newer schema and damaged
+-- Config: the two SavedVariables, their schemas (account 2, character 1), typed rules, defaults, migrations, read-only on a newer schema and damaged
 -- tables set aside under `corrupt` (SPEC-02 §3, ADR 0005). Lua 5.1, no game API but Compat.ServerTime.
 -- Adapted from Azeroth Accord (Core/Config.lua), same owner, GPL-3.0 (ADR 0012). Kept from there: the copy, the rules
 -- by path checked parents first, the merge of the defaults, the migrations on a copy, read-only on a newer schema, Get
@@ -8,7 +8,9 @@
 -- emits only when the value changes; the token, the guild maps and the Base64 helpers of Accord are not needed here.
 --
 --   AzerothThreatwardenDB      (account)   = { schema, settings = { language, theme, effects, animations, font,
---                                               minimap = { hide, minimapPos } }, corrupt = { ... } }
+--                                               minimap = { hide, minimapPos }, monitor = { warning, danger, rate,
+--                                               maxUnits, show, sort, pinSelf, followTargetOfTarget } },
+--                                               corrupt = { ... } }
 --   AzerothThreatwardenCharDB  (character) = { schema, ui = { shown, locked, scale, pos, size, lastTab, lastPage } }
 --
 -- Load() runs at ADDON_LOADED (Core/Init.lua, before Locale.Apply): the defaults are added without overwriting, old data
@@ -29,7 +31,8 @@ local type, pairs, ipairs, pcall, tostring, next, select = type, pairs, ipairs, 
 local floor, huge, abs = math.floor, math.huge, math.abs
 local concat, sort = table.concat, table.sort
 
-Config.SCHEMA = 1           -- the schema this version of the addon knows (SPEC-02 §3.2, §3.3)
+-- The schema of each variable that this version of the addon knows (SPEC-02 §3.2, §3.3, §3.5).
+Config.SCHEMAS = { account = 2, char = 1 }
 
 -- Development build. A checkout of the repository is one; the BigWigs packager comments out the block between the
 -- debug markers below in every packaged build, so a release has DEV = false (tools/check_package.py checks it).
@@ -47,6 +50,28 @@ Config.THEMES = { "nebula", "aurora", "warden" }
 Config.FONT_SOURCES = { "addon", "game" }
 Config.TABS = { "monitor", "settings" }          -- "reports" from M4
 Config.PAGES = { "settings", "about" }
+-- The monitor (schema 2, SPEC-02 §3.5): when the window shows itself (SPEC-03 §5.1) and the list orders (§3).
+Config.SHOW_MODES = { "auto", "always", "manual" }
+Config.SORTS = { "relative", "absolute", "risk", "change" }
+
+-- The ranges of the monitor's settings. `gap`: danger is at least that many points above warning (more than the
+-- hysteresis of Data/ThreatState.lua); a pair that breaks it goes back to both defaults.
+Config.MONITOR = {
+	warning = { min = 50, max = 99 },
+	danger = { min = 60, max = 100 },
+	rate = { min = 2, max = 10 },
+	maxUnits = { min = 5, max = 40 },
+	gap = 5,
+}
+-- The one place of the defaults the owner still has to decide (SPEC-09): the thresholds (Q7), when the window shows
+-- itself (Q13), the sampling rate and the units read per scan (Q14, provisional until the probe P10 and M2.7).
+Config.MONITOR_DEFAULTS = {
+	warning = 80, danger = 95,
+	rate = 5, maxUnits = 40,
+	show = "auto",
+	sort = "relative", pinSelf = false,
+	followTargetOfTarget = true,
+}
 Config.POINTS = { "TOPLEFT", "TOP", "TOPRIGHT", "LEFT", "CENTER", "RIGHT", "BOTTOMLEFT", "BOTTOM", "BOTTOMRIGHT" }
 
 -- The window: scale 50-200 % in steps of 5 %; the sizes of the two layouts (SPEC-03 §4).
@@ -66,7 +91,7 @@ Config.MAX_ISSUES = 50      -- problems kept from one Load (the report shows the
 
 Config.defaults = {
 	account = {
-		schema = Config.SCHEMA,
+		schema = Config.SCHEMAS.account,
 		settings = {
 			language = "auto",        -- SPEC-09 Q5: follows the client; takes effect after /reload
 			theme = "nebula",         -- UI/Theme.lua (M1.6)
@@ -74,11 +99,12 @@ Config.defaults = {
 			animations = true,
 			font = "addon",           -- takes effect when the client restarts
 			minimap = { hide = false, minimapPos = 200 },   -- handed to LibDBIcon (M1.7), which may add keys of its own
+			monitor = {},             -- filled from MONITOR_DEFAULTS below
 		},
 		corrupt = {},
 	},
 	char = {
-		schema = Config.SCHEMA,
+		schema = Config.SCHEMAS.char,
 		ui = {
 			shown = true,
 			locked = false,
@@ -90,6 +116,8 @@ Config.defaults = {
 		},
 	},
 }
+
+for key, value in pairs(Config.MONITOR_DEFAULTS) do Config.defaults.account.settings.monitor[key] = value end
 
 ---------------------------------------------------------------------------------------------------------------------
 -- Helpers
@@ -204,6 +232,19 @@ Config.rules = {
 	["account.settings.minimap"] = { type = "table", container = true },
 	["account.settings.minimap.hide"] = { type = "boolean" },
 	["account.settings.minimap.minimapPos"] = { type = "number", min = 0, max = 360 },
+	["account.settings.monitor"] = { type = "table", container = true },
+	["account.settings.monitor.warning"] = { type = "number", integer = true, min = Config.MONITOR.warning.min,
+		max = Config.MONITOR.warning.max },
+	["account.settings.monitor.danger"] = { type = "number", integer = true, min = Config.MONITOR.danger.min,
+		max = Config.MONITOR.danger.max },
+	["account.settings.monitor.rate"] = { type = "number", integer = true, min = Config.MONITOR.rate.min,
+		max = Config.MONITOR.rate.max },
+	["account.settings.monitor.maxUnits"] = { type = "number", integer = true, min = Config.MONITOR.maxUnits.min,
+		max = Config.MONITOR.maxUnits.max },
+	["account.settings.monitor.show"] = { type = "string", enum = Config.SHOW_MODES },
+	["account.settings.monitor.sort"] = { type = "string", enum = Config.SORTS },
+	["account.settings.monitor.pinSelf"] = { type = "boolean" },
+	["account.settings.monitor.followTargetOfTarget"] = { type = "boolean" },
 	["account.corrupt"] = { type = "table", container = true, keep = false, validate = isArrayOfTables,
 		fix = function(v)
 			if #v <= Config.MAX_CORRUPT then return v end
@@ -241,6 +282,17 @@ local function violation(rule, value)
 	return nil
 end
 Config.Violation = violation
+
+local THRESHOLDS = { "account.settings.monitor.warning", "account.settings.monitor.danger" }
+Config.THRESHOLD_PATHS = THRESHOLDS
+
+-- nil when the two thresholds keep the gap, else the reason (fixed words).
+local function pairViolation(warning, danger)
+	if danger < warning + Config.MONITOR.gap then
+		return "danger less than " .. Config.MONITOR.gap .. " above warning"
+	end
+	return nil
+end
 
 -- The default of a path below its scope, a fresh copy.
 local function defaultAt(scope, parts, from)
@@ -371,6 +423,15 @@ function Config.Sanitize(scope, db)
 			end
 		end
 	end
+	-- the pair of the thresholds, once each of them is right by itself: if it breaks the gap, both go back
+	local monitor = scope == "account" and type(db.settings) == "table" and db.settings.monitor
+	if type(monitor) == "table" then
+		local why = pairViolation(monitor.warning, monitor.danger)
+		if why then
+			monitor.warning, monitor.danger = Config.MONITOR_DEFAULTS.warning, Config.MONITOR_DEFAULTS.danger
+			issue("account.settings.monitor: thresholds reset (" .. why .. ")")
+		end
+	end
 	return #Config.issues - before
 end
 
@@ -380,9 +441,11 @@ end
 -- Config.migrations[scope][n] brings the data from version n - 1 to n. Each step is idempotent (on data that already
 -- has the new shape it changes nothing) and has a test that starts from the data of the version before (DAT-20).
 -- Step 1: data without a version is version 0 and needs only the defaults and the rules, so it has nothing to do.
+-- Account step 2 (M2.6): `settings.monitor` is new, and the defaults add its keys: nothing to do either.
 Config.migrations = {
 	account = {
 		[1] = function(db) end,
+		[2] = function(db) end,
 	},
 	char = {
 		[1] = function(db) end,
@@ -418,7 +481,7 @@ end
 local function loadScope(scope)
 	local var = Config.VARIABLES[scope]
 	local raw = _G[var]       -- the addon's own SavedVariables (TOC), not a game API
-	local target = Config.SCHEMA
+	local target = Config.SCHEMAS[scope]
 	Config.readOnly[scope] = nil
 	local work
 
@@ -522,9 +585,32 @@ function Config:Set(path, value)
 	if rule.fix and value ~= nil then value = (rule.fix(value)) end
 	local parent, leaf = locate(Config.db[scope], parts, 2)
 	if not parent then return false, "parent missing" end
+	if path == THRESHOLDS[1] or path == THRESHOLDS[2] then
+		local w = path == THRESHOLDS[1] and value or parent.warning
+		local d = path == THRESHOLDS[2] and value or parent.danger
+		local broken = pairViolation(w, d)
+		if broken then return false, broken end
+	end
 	if same(parent[leaf], value) then return true end
 	parent[leaf] = copy(value)
 	emit("CONFIG_CHANGED", path)
+	return true
+end
+
+-- Both thresholds at once (the Settings card, where moving one may push the other). Each CONFIG_CHANGED is emitted
+-- when both are stored, so a listener never sees half of the pair. Returns true, or false and the reason.
+function Config:SetThresholds(warning, danger)
+	if not Config.db.account then return false, "unknown path" end
+	if Config.readOnly.account then return false, "read-only" end
+	local why = violation(Config.rules[THRESHOLDS[1]], warning) or violation(Config.rules[THRESHOLDS[2]], danger)
+		or pairViolation(warning, danger)
+	if why then return false, why end
+	local monitor = Config.db.account.settings.monitor
+	local changed = {}
+	if monitor.warning ~= warning then changed[#changed + 1] = THRESHOLDS[1] end
+	if monitor.danger ~= danger then changed[#changed + 1] = THRESHOLDS[2] end
+	monitor.warning, monitor.danger = warning, danger
+	for _, path in ipairs(changed) do emit("CONFIG_CHANGED", path) end
 	return true
 end
 
@@ -596,7 +682,7 @@ function Config:DebugLines()
 	for _, scope in ipairs(Config.SCOPES) do
 		local db = Config.db[scope]
 		lines[#lines + 1] = ("%s: schema found %s, current %d, about %.1f KB%s"):format(Config.VARIABLES[scope],
-			tostring(Config.found[scope]), Config.SCHEMA, (db and Config.EstimateSize(db) or 0) / 1024,
+			tostring(Config.found[scope]), Config.SCHEMAS[scope], (db and Config.EstimateSize(db) or 0) / 1024,
 			Config.readOnly[scope] and (" - " .. READ_ONLY_WHY[Config.readOnly[scope]]) or "")
 	end
 	local corrupt = Config.db.account and Config.db.account.corrupt or {}

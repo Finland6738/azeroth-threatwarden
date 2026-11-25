@@ -29,8 +29,8 @@ local Compat = ns.Compat
 local Unit = Compat.Unit
 local type = type
 
--- Used until schema 2 of Core/Config.lua (M2.6) stores account.settings.monitor.followTargetOfTarget.
-TargetTracker.DEFAULTS = { followTargetOfTarget = true }
+-- The setting account.settings.monitor.followTargetOfTarget and its default are Core/Config.lua's.
+TargetTracker.DEFAULTS = { followTargetOfTarget = ns.Config.MONITOR_DEFAULTS.followTargetOfTarget }
 local FOLLOW_PATH = "account.settings.monitor.followTargetOfTarget"
 
 TargetTracker.mobToken = nil   -- "target", "targettarget" or nil

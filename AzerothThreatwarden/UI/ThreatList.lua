@@ -14,8 +14,8 @@
 --
 -- Order (SPEC-03 §3): "relative" (default), "absolute", "risk", "change"; UNKNOWN rows last, ties in roster order, the
 -- player first with "pin me on top"; computed at most once a second and at once when a row enters DANGER (MON-13). The
--- order and the pin are `account.settings.monitor.sort` and `.pinSelf`, saved from schema 2 on (M2.6); until then
--- they last for the session.
+-- order and the pin are `account.settings.monitor.sort` and `.pinSelf`; on read-only data they last for the session.
+-- During the demo (Core/Demo.lua) the data modules it reads are the invented ones and the footer says so.
 local ADDON_NAME, ns = ...
 ns = ns or {}
 ns.modules = ns.modules or {}
@@ -32,8 +32,8 @@ ThreatList.LISTHEAD_HEIGHT, ThreatList.FOOTER_HEIGHT = 14, 16
 ThreatList.PAD_X, ThreatList.PAD_TOP = 8, 4
 ThreatList.RESORT = 1                -- seconds between two automatic orderings (MON-13)
 ThreatList.TREND_WIDTH = 28          -- the trend cell: an arrow, or "~4 s" for a predicted overtake
-ThreatList.SORTS = { "relative", "absolute", "risk", "change" }
-ThreatList.DEFAULTS = { sort = "relative", pinSelf = false }
+ThreatList.SORTS = ns.Config.SORTS
+ThreatList.DEFAULTS = { sort = ns.Config.MONITOR_DEFAULTS.sort, pinSelf = ns.Config.MONITOR_DEFAULTS.pinSelf }
 local SORT_PATH, PIN_PATH = "account.settings.monitor.sort", "account.settings.monitor.pinSelf"
 local MONITOR_PREFIX = "account.settings.monitor."
 
@@ -218,6 +218,7 @@ function ThreatList.RowTooltip(row, now)
 	if not rec then return nil end
 	now = now or Compat.Now()
 	local lines = { unitLabel(rec) }
+	if ns.Demo and ns.Demo.IsActive() then lines[#lines + 1] = L.MON_DEMO_TIP end
 	local def = Theme.State(STATE_ID[row.state or "UNKNOWN"])
 	local category = (rec.mode == "state") and "detected" or "calculated"
 	if row.state == "UNKNOWN" or not row.state then
@@ -688,7 +689,9 @@ end
 local function drawFooter(view, situation)
 	local Scanner, State = ns.ThreatScanner, ns.ThreatState
 	local text, token, valid = "", "text-3", nil
-	if situation == "idle" or situation == "ended" then
+	if ns.Demo and ns.Demo.IsActive() then
+		text, token = L.MON_DEMO, "warn"
+	elseif situation == "idle" or situation == "ended" then
 		text = L.MON_NOT_IN_COMBAT
 	elseif situation == "list" or situation == "unavailable" or situation == "empty" then
 		local now = Compat.Now()
@@ -931,6 +934,7 @@ function ThreatList.Build(page)
 	view.quality = line(footer, "RowMono", "text-3")
 	view.quality:SetPoint("LEFT", footer, "LEFT", 0, 0)
 	Widgets.Tooltip.Attach(footer, function()
+		if ns.Demo and ns.Demo.IsActive() then return L.MON_DEMO_TIP end
 		if view.valid == nil and (view.situation == "list" or view.situation == "unavailable") then
 			return L.WHY_NO_READS
 		end
@@ -956,6 +960,13 @@ if ns.Bus then
 	Bus.On("THREAT_UPDATED", redraw)
 	Bus.On("TARGET_STATUS", redraw)
 	Bus.On("THEME_CHANGED", redraw)
+	Bus.On("DEMO_CHANGED", function()
+		local view = ThreatList.view
+		if view then
+			view.forceSort, view.infoKey = true, nil
+			view:Redraw()
+		end
+	end)
 	Bus.On("CONFIG_LOADED", readSettings)
 	Bus.On("STATE_CHANGED", function(_, _, _, new)
 		local view = ThreatList.view

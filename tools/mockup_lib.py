@@ -161,6 +161,9 @@ body { font: 400 13px/1.35 'Outfit', 'Segoe UI', sans-serif; color: var(--text-1
 .btn.primary { border: 0; background: linear-gradient(90deg, var(--accent), var(--accent-2)); color: var(--on-accent); }
 .btn.off { opacity: .45; }
 .btn.wide { width: 240px; }
+.btn.mid { width: 200px; }
+.select { display: inline-flex; justify-content: space-between; align-items: center; width: 200px; height: 28px; padding: 0 8px 0 10px; border-radius: 8px; background: var(--surface-2); border: 1px solid var(--border); font: 400 13px/1 'Outfit', sans-serif; flex: none; }
+.select svg { color: var(--text-3); }
 .head { display: flex; gap: 16px; align-items: flex-start; }
 .head img { width: 64px; height: 64px; border-radius: 50%; flex: none; }
 .head img.square { border-radius: 0; object-fit: contain; }
@@ -259,6 +262,13 @@ def slider(fraction, value):
             f'<u style="left:{fraction * 100:.0f}%"></u></span><em>{esc(value)}</em></span>')
 
 
+def select(value):
+    return f'<span class="select">{esc(value)}{_svg(CHEVRON, 14)}</span>'
+
+
+CHEVRON = '<path d="M6 9l6 6 6-6"/>'
+
+
 def card(title, inner):
     heading = f"<h2>{esc(title)}</h2>" if title else ""
     return f'<div class="card">{heading}{inner}</div>'
@@ -266,11 +276,13 @@ def card(title, inner):
 
 # the pill of the module state (UI/Window.lua, Window.STATES): the icon, the word's key and the colour token
 MODULE = {"off": ("MODULE_OFF", "text-3"), "idle": ("MODULE_IDLE", "text-3"), "live": ("MODULE_LIVE", "ok"),
-          "state": ("MODULE_STATE", "warn"), "unavailable": ("MODULE_UNAVAILABLE", "err")}
+          "state": ("MODULE_STATE", "warn"), "unavailable": ("MODULE_UNAVAILABLE", "err"),
+          "demo": ("MODULE_DEMO", "warn")}
 MODULE_ICONS = {
     "off": '<path d="M5 12h14"/>', "idle": '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
     "live": '<path d="M4 12l5 5L20 6"/>', "state": '<path d="M12 3 22 20H2z"/><path d="M12 10v4M12 17v.01"/>',
     "unavailable": '<path d="M18 6 6 18M6 6l12 12"/>',
+    "demo": '<path d="M2 12h.01M8 12h.01"/><path d="M14 6l8 6-8 6z" fill="currentColor" stroke="none"/>',
 }
 
 

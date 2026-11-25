@@ -1,7 +1,8 @@
 -- Settings: the Settings tab of the window and the panel of the game's own Settings window (SPEC-03 §4.4 and §5,
 -- docs/specs/ui-style.md §2 and §3). Lua 5.1; no game API is named here (ARC-02): CreateFrame and Core/Compat.lua.
 -- Adapted from Azeroth Accord (UI/Settings.lua and the panel of UI/SettingsModel.lua), same owner, GPL-3.0 (ADR 0012).
--- Changes: the cards are Threatwarden's own (Appearance, Language, Window, Reset); no model file, because every value
+-- Changes: the cards are Threatwarden's own (Appearance, Language, Window, Monitor while the `monitor` switch is on,
+-- Reset); no model file, because every value
 -- is a path of Core/Config.lua; the cards follow the width they get; the scale is saved when the slider is released.
 --
 -- Every control writes through Config:Set and the change applies at once through CONFIG_CHANGED (Theme, Motion,
@@ -17,8 +18,8 @@
 --   Settings.RegisterPanel()               adds the panel to the game's Settings window (once); false when the client
 --                                          has none.
 --
--- Bus: emits SETTINGS_CHANGED(key) after the player changes an option; listens CONFIG_LOADED, CONFIG_CHANGED and
--- THEME_CHANGED to repaint the pages on screen.
+-- Bus: emits SETTINGS_CHANGED(key) after the player changes an option; listens CONFIG_LOADED, CONFIG_CHANGED,
+-- THEME_CHANGED and DEMO_CHANGED to repaint the pages on screen.
 local ADDON_NAME, ns = ...
 ns = ns or {}
 ns.modules = ns.modules or {}
@@ -40,6 +41,7 @@ View.pages = {}              -- { id, labelKey, order, build } in order
 
 local function config() return ns.Config end
 local function get(path) return config() and config():Get(path) end
+local function monitorOn() return ns.Features ~= nil and ns.Features.On("monitor") end
 
 ---------------------------------------------------------------------------------------------------------------------
 -- Cards and rows (also used by UI/About.lua)
@@ -142,18 +144,22 @@ local function say(card, text, token)
 	Theme.Text(card.status, token or "text-2")
 end
 
--- Writes `path` and says why when it is refused; the page goes back to the stored value. Returns ok.
-local function write(view, card, path, value)
-	if view.refreshing then return true end
-	local ok, why = config():Set(path, value)
+-- Says how a write went, tells the others and puts the page back to the stored values. Returns ok.
+local function wrote(view, card, key, ok, why)
 	if ok then
 		say(card, "")
-		if ns.Bus then ns.Bus.Emit("SETTINGS_CHANGED", path) end
+		if ns.Bus then ns.Bus.Emit("SETTINGS_CHANGED", key) end
 	else
 		say(card, L["SET_NOT_SAVED"]:format(tostring(why)), "warn")
 	end
 	view:Refresh()
 	return ok
+end
+
+-- Writes `path` and says why when it is refused. Returns ok.
+local function write(view, card, path, value)
+	if view.refreshing then return true end
+	return wrote(view, card, path, config():Set(path, value))
 end
 
 local function statusLine(card)
@@ -208,31 +214,46 @@ local function buildLanguage(view, f, page)
 	return card
 end
 
-local function buildWindowCard(view, f, page)
-	local card = View.StackCard(page.frame)
-	View.CardText(card, "H2", "text-1", L["SET_WINDOW"], 0)
-	f.lock = switch(view, card, "char.ui.locked", L["SET_LOCK"])
-
-	-- the scale is shown while the thumb moves and saved when it is released: the window scales under the mouse
+-- A slider with its value at the right, saved when the thumb is released (a click or a key saves at once).
+-- opts: min, max, step, format(v) -> text, commit(v). Returns the box: .slider, .value, .show(v), .dragging.
+local function sliderBox(card, opts)
 	local box = CreateFrame("Frame", nil, card)
 	box:SetSize(240, 24)
-	local scale = ns.Config.SCALE
 	box.value = Widgets.Text(box, "Mono", "text-1", "RIGHT")
 	box.value:SetPoint("RIGHT", box, "RIGHT", 0, 0)
 	box.value:SetWidth(48)
-	local function show(percent) box.value:SetText(L["SET_PERCENT"]:format(floor(percent + 0.5))) end
-	box.slider = Widgets.Slider(box, { min = scale.min * 100, max = scale.max * 100, step = scale.step * 100,
-		width = 180, value = 100, onChange = function(v, user)
+	local function show(v) box.value:SetText(opts.format(floor(v + 0.5))) end
+	box.slider = Widgets.Slider(box, { min = opts.min, max = opts.max, step = opts.step, width = 180, value = opts.min,
+		onChange = function(v, user)
 			show(v)
-			if user and not box.dragging then write(view, card, "char.ui.scale", v / 100) end
+			if user and not box.dragging then opts.commit(v) end
 		end })
 	box.slider:SetPoint("RIGHT", box.value, "LEFT", -8, 0)
 	box.slider:HookScript("OnMouseDown", function() box.dragging = true end)
 	box.slider:HookScript("OnMouseUp", function(self)
 		box.dragging = false
-		write(view, card, "char.ui.scale", self:GetValue() / 100)
+		opts.commit(self:GetValue())
 	end)
 	box.show = show
+	-- the stored value, unless the player is moving the thumb
+	function box:Update(v)
+		if self.dragging then return end
+		self.slider:Set(v)
+		show(v)
+	end
+	return box
+end
+
+local function buildWindowCard(view, f, page)
+	local card = View.StackCard(page.frame)
+	View.CardText(card, "H2", "text-1", L["SET_WINDOW"], 0)
+	f.lock = switch(view, card, "char.ui.locked", L["SET_LOCK"])
+
+	-- the scale is saved when the thumb is released: the window scales under the mouse
+	local scale = ns.Config.SCALE
+	local box = sliderBox(card, { min = scale.min * 100, max = scale.max * 100, step = scale.step * 100,
+		format = function(v) return L["SET_PERCENT"]:format(v) end,
+		commit = function(v) write(view, card, "char.ui.scale", v / 100) end })
 	f.scale = card:Add(controlRow(card, L["SET_SCALE"], box), 8, { stretch = true })
 	f.scaleBox = box
 
@@ -247,11 +268,87 @@ local function buildWindowCard(view, f, page)
 	return card
 end
 
+local MONITOR = "account.settings.monitor."
+
+-- Moving one threshold pushes the other when they would come closer than the gap (Core/Config.lua).
+local function setThresholds(view, card, warning, danger)
+	if view.refreshing then return true end
+	return wrote(view, card, MONITOR .. "thresholds", config():SetThresholds(warning, danger))
+end
+
+local function buildMonitor(view, f, page)
+	local Limits = ns.Config.MONITOR
+	local card = View.StackCard(page.frame)
+	View.CardText(card, "H2", "text-1", L["SET_MONITOR"], 0)
+	local function percent(v) return L["SET_PERCENT"]:format(v) end
+	local function row(label, box, gap)
+		return card:Add(controlRow(card, label, box), gap or 8, { stretch = true })
+	end
+
+	-- warning stops at the highest value that leaves danger room above it
+	local top = Limits.danger.max - Limits.gap
+	f.warning = sliderBox(card, { min = Limits.warning.min, max = top, step = 1, format = percent, commit = function(v)
+		v = min(floor(v + 0.5), top)
+		setThresholds(view, card, v, max(get(MONITOR .. "danger"), v + Limits.gap))
+	end })
+	row(L["SET_WARNING"], f.warning, 12)
+	f.danger = sliderBox(card, { min = Limits.danger.min, max = Limits.danger.max, step = 1, format = percent,
+		commit = function(v)
+			v = floor(v + 0.5)
+			setThresholds(view, card, min(get(MONITOR .. "warning"), v - Limits.gap), v)
+		end })
+	row(L["SET_DANGER"], f.danger)
+	View.CardText(card, "Small", "text-3", L["SET_THRESHOLDS_NOTE"]:format(Limits.gap), 2)
+
+	local function number(key, label, format, note)
+		f[key] = sliderBox(card, { min = Limits[key].min, max = Limits[key].max, step = 1, format = format,
+			commit = function(v) write(view, card, MONITOR .. key, floor(v + 0.5)) end })
+		row(label, f[key], 12)
+		View.CardText(card, "Small", "text-3", note, 2)
+	end
+	number("rate", L["SET_RATE"], function(v) return L["SET_HERTZ"]:format(v) end, L["SET_RATE_NOTE"])
+	number("maxUnits", L["SET_MAX_UNITS"], tostring, L["SET_MAX_UNITS_NOTE"])
+
+	View.CardText(card, "BodyMedium", "text-1", L["SET_SHOW"], 12)
+	local modes = {}
+	for i, id in ipairs(ns.Config.SHOW_MODES) do modes[i] = { id = id, text = L["SHOW_" .. id:upper()] } end
+	f.show = Widgets.Segmented(card, modes, function(id) write(view, card, MONITOR .. "show", id) end)
+	card:Add(f.show, 8)
+	View.CardText(card, "Small", "text-3", L["SET_SHOW_NOTE"]:format(ns.Window.AUTO_CLOSE), 8)
+
+	local orders = {}
+	for i, id in ipairs(ns.Config.SORTS) do orders[i] = { id = id, text = L["SORT_" .. id:upper()] } end
+	f.sort = Widgets.Select(card, { width = 200, rows = #orders, choices = orders,
+		onSelect = function(id) write(view, card, MONITOR .. "sort", id) end })
+	row(L["SET_SORT"], f.sort, 12)
+	f.pinSelf = switch(view, card, MONITOR .. "pinSelf", L["SET_PIN_SELF"])
+	f.follow = switch(view, card, MONITOR .. "followTargetOfTarget", L["SET_FOLLOW"])
+	View.CardText(card, "Small", "text-3", L["SET_FOLLOW_NOTE"], 2)
+
+	View.CardText(card, "Small", "text-2", L["SET_DEMO_NOTE"], 12)
+	f.demo = Widgets.Button(card, { text = L["SET_DEMO_START"], style = "secondary", width = 200, onClick = function()
+		ns.Demo.Toggle()
+		view:Refresh()
+	end })
+	card:Add(f.demo, 8)
+	statusLine(card)
+	return card
+end
+
+local function refreshMonitor(f)
+	for _, key in ipairs({ "warning", "danger", "rate", "maxUnits" }) do f[key]:Update(get(MONITOR .. key)) end
+	f.show:Select(get(MONITOR .. "show"))
+	f.sort:Select(get(MONITOR .. "sort"), true)
+	f.pinSelf.control:SetOn(get(MONITOR .. "pinSelf") == true, true)
+	f.follow.control:SetOn(get(MONITOR .. "followTargetOfTarget") == true, true)
+	f.demo:SetLabel(L[ns.Demo.IsActive() and "SET_DEMO_STOP" or "SET_DEMO_START"])
+end
+
 -- "Reset settings" asks twice: the first click arms the button, a second one within CONFIRM_SECONDS resets.
 local function buildReset(view, f, page)
 	local card = View.StackCard(page.frame)
 	View.CardText(card, "H2", "text-1", L["SET_RESET"], 0)
-	View.CardText(card, "Body", "text-2", L["SET_RESET_TEXT"], 8)
+	View.CardText(card, "Body", "text-2", L[monitorOn() and "SET_RESET_TEXT_MONITOR" or "SET_RESET_TEXT"], 8)
 	local armed = 0
 	local function disarm()
 		armed = armed + 1
@@ -297,12 +394,9 @@ local function refreshSettings(view, f)
 	-- Reload now helps only while the chosen language is not the one on screen
 	f.reload:SetEnabled(ns.Locale.Resolve(language) ~= ns.Locale.Active())
 	f.lock.control:SetOn(get("char.ui.locked") == true, true)
-	local percent = (get("char.ui.scale") or 1) * 100
-	if not f.scaleBox.dragging then
-		f.scaleBox.slider:Set(percent)
-		f.scaleBox.show(percent)
-	end
+	f.scaleBox:Update((get("char.ui.scale") or 1) * 100)
 	f.minimap.control:SetOn(get("account.settings.minimap.hide") ~= true, true)
+	if f.warning then refreshMonitor(f) end
 
 	local cfg = config()
 	local why = cfg and (cfg.readOnly.account or cfg.readOnly.char)
@@ -319,7 +413,9 @@ local function buildSettingsPage(holder, view)
 	view.settings = f
 	f.readOnlyCard = buildReadOnly(f, page)
 	page.cards = { f.readOnlyCard, buildAppearance(view, f, page), buildLanguage(view, f, page),
-		buildWindowCard(view, f, page), buildReset(view, f, page) }
+		buildWindowCard(view, f, page) }
+	if monitorOn() then page.cards[#page.cards + 1] = buildMonitor(view, f, page) end
+	page.cards[#page.cards + 1] = buildReset(view, f, page)
 	f.cards = page.cards
 	function page:Refresh() refreshSettings(view, f) end
 	return page
@@ -467,6 +563,7 @@ if ns.Bus then
 	ns.Bus.On("CONFIG_LOADED", View.RefreshAll)
 	ns.Bus.On("CONFIG_CHANGED", View.RefreshAll)
 	ns.Bus.On("THEME_CHANGED", View.RefreshAll)
+	ns.Bus.On("DEMO_CHANGED", View.RefreshAll)
 end
 if ns.OnEnable then ns.OnEnable(function() View.RegisterPanel() end) end
 if ns.addon then

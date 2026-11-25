@@ -12,7 +12,7 @@ local function titles(text)
 end
 
 local SECTIONS = { "Client", "Features", "APIs", "Capabilities", "Restrictions", "Saved data", "Memory", "Bus",
-	"Scheduler", "Look", "Window", "Settings",
+	"Scheduler", "Demo", "Look", "Window", "Settings",
 	"Last errors" }
 
 describe("the report (SPEC-01 §9)", function()
@@ -51,7 +51,7 @@ describe("the report (SPEC-01 §9)", function()
 
 	it("gives the saved data, the memory, the Bus and the Scheduler", function()
 		local text = D().Report()
-		contains(text, "AzerothThreatwardenDB: schema found none, current 1, about 0.")
+		contains(text, "AzerothThreatwardenDB: schema found none, current 2, about 0.")
 		contains(text, "AzerothThreatwardenCharDB: schema found none, current 1, about 0.")
 		contains(text, "corrupt entries: 0 (at most 5 kept)")
 		contains(text, "problems corrected at load: none")
@@ -104,7 +104,7 @@ describe("the report (SPEC-01 §9)", function()
 				AzerothThreatwardenCharDB = { schema = 9 } }
 		end)
 		local text = D().Report()
-		matches(text, "AzerothThreatwardenDB: schema found 1, current 1, about %d+%.%d KB\n")
+		matches(text, "AzerothThreatwardenDB: schema found 1, current 2, about %d+%.%d KB\n")
 		matches(text, "AzerothThreatwardenCharDB: schema found 9, current 1, about %d+%.%d KB %- READ%-ONLY")
 		contains(text, "problems corrected at load: 2")
 		contains(text, "  account.settings.theme: reset (not an allowed value)")

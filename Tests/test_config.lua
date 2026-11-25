@@ -17,11 +17,12 @@ local function changes()
 end
 
 describe("defaults (SPEC-02 §3.2, §3.3)", function()
-	it("creates both variables with schema 1 and every default, with no problem", function()
-		eq(AzerothThreatwardenDB.schema, 1)
+	it("creates both variables, account schema 2 and character schema 1, with every default, with no problem", function()
+		eq(AzerothThreatwardenDB.schema, 2)
 		eq(AzerothThreatwardenCharDB.schema, 1)
 		deepEq(AzerothThreatwardenDB.settings, { language = "auto", theme = "nebula", effects = true, animations = true,
-			font = "addon", minimap = { hide = false, minimapPos = 200 } })
+			font = "addon", minimap = { hide = false, minimapPos = 200 },
+			monitor = Mock.ns.Config.MONITOR_DEFAULTS })
 		deepEq(AzerothThreatwardenDB.corrupt, {})
 		deepEq(AzerothThreatwardenCharDB.ui, { shown = true, locked = false, scale = 1.0, size = {}, lastTab = "monitor",
 			lastPage = "settings" })
@@ -94,7 +95,8 @@ describe("wrong values (DAT-22)", function()
 	it("go back to their defaults without a Lua error", function()
 		eq(#Mock.errors, 0)
 		deepEq(AzerothThreatwardenDB.settings, { language = "auto", theme = "nebula", effects = true, animations = true,
-			font = "addon", minimap = { hide = false, minimapPos = 200 } })
+			font = "addon", minimap = { hide = false, minimapPos = 200 },
+			monitor = Mock.ns.Config.MONITOR_DEFAULTS })
 		local ui = AzerothThreatwardenCharDB.ui
 		eq(ui.shown, true)
 		eq(ui.locked, false)
@@ -295,7 +297,7 @@ describe("damaged data (DAT-24)", function()
 			M.saved = { AzerothThreatwardenDB = { settings = { theme = "aurora" } },
 				AzerothThreatwardenCharDB = { schema = "two", ui = { locked = true } } }
 		end)
-		eq(AzerothThreatwardenDB.schema, 1)
+		eq(AzerothThreatwardenDB.schema, 2)
 		eq(AzerothThreatwardenDB.settings.theme, "aurora")
 		eq(AzerothThreatwardenCharDB.schema, 1)
 		eq(AzerothThreatwardenCharDB.ui.locked, true)
@@ -307,7 +309,7 @@ describe("damaged data (DAT-24)", function()
 		for _, bad in ipairs({ -3, 1.5 }) do
 			boot(function(M) M.saved = { AzerothThreatwardenDB = { schema = bad } } end)
 			eq(C().found.account, "damaged", tostring(bad))
-			eq(AzerothThreatwardenDB.schema, 1)
+			eq(AzerothThreatwardenDB.schema, 2)
 		end
 	end)
 end)
@@ -315,7 +317,7 @@ end)
 describe("migrations (DAT-20)", function()
 	it("have one step per version for both variables", function()
 		for _, scope in ipairs({ "account", "char" }) do
-			for n = 1, C().SCHEMA do eq(type(C().migrations[scope][n]), "function", scope .. " " .. n) end
+			for n = 1, C().SCHEMAS[scope] do eq(type(C().migrations[scope][n]), "function", scope .. " " .. n) end
 		end
 	end)
 
@@ -340,7 +342,7 @@ describe("migrations (DAT-20)", function()
 				AzerothThreatwardenCharDB = { ui = { shown = false, lastTab = "settings", scale = 0.8 } },
 			}
 		end)
-		eq(AzerothThreatwardenDB.schema, 1)
+		eq(AzerothThreatwardenDB.schema, 2)
 		eq(C():Get("account.settings.language"), "itIT")
 		eq(C():Get("account.settings.theme"), "warden")
 		eq(C():Get("account.settings.effects"), false)
@@ -355,7 +357,7 @@ describe("migrations (DAT-20)", function()
 	local function laterSchema(M, steps)
 		M.OnFilesLoaded(function()
 			local Config = M.ns.Config
-			Config.SCHEMA = 3
+			Config.SCHEMAS.account = 3
 			for n, fn in pairs(steps) do Config.migrations.account[n] = fn end
 		end)
 	end
@@ -415,7 +417,7 @@ describe("migrations (DAT-20)", function()
 end)
 
 describe("a newer schema (DAT-21, DAT-25)", function()
-	local ACCOUNT = { schema = 2, settings = { language = "itIT", theme = "future", minimap = "x" }, future = { keep = true } }
+	local ACCOUNT = { schema = 3, settings = { language = "itIT", theme = "future", minimap = "x" }, future = { keep = true } }
 	local CHAR = { schema = 5, ui = { lastTab = "reports", newKey = 1 } }
 	before_boot(function(M) M.saved = { AzerothThreatwardenDB = ACCOUNT, AzerothThreatwardenCharDB = CHAR } end)
 
@@ -424,7 +426,7 @@ describe("a newer schema (DAT-21, DAT-25)", function()
 		truthy(C():IsReadOnly("char"))
 		deepEq(AzerothThreatwardenDB, ACCOUNT)
 		deepEq(AzerothThreatwardenCharDB, CHAR)
-		contains(issues(), "AzerothThreatwardenDB: schema 2 is newer than 1, read-only")
+		contains(issues(), "AzerothThreatwardenDB: schema 3 is newer than 2, read-only")
 		contains(issues(), "AzerothThreatwardenCharDB: schema 5 is newer than 1, read-only")
 	end)
 
@@ -453,7 +455,7 @@ describe("a newer schema (DAT-21, DAT-25)", function()
 		Mock.Relog(3600)
 		deepEq(AzerothThreatwardenCharDB, CHAR)
 		local text = report()
-		contains(text, "AzerothThreatwardenDB: schema found 2, current 1, about ")
+		contains(text, "AzerothThreatwardenDB: schema found 3, current 2, about ")
 		contains(text, "READ-ONLY: saved by a newer version, never rewritten")
 	end)
 end)
@@ -530,7 +532,7 @@ describe("the saved data in /atw debug (SPEC-01 §9)", function()
 		local loop = {}
 		loop.self = loop
 		truthy(C().EstimateSize(loop) > 0, "a circular table ends")
-		matches(report(), "AzerothThreatwardenDB: schema found none, current 1, about 0%.%d KB\n")
+		matches(report(), "AzerothThreatwardenDB: schema found none, current 2, about 0%.%d KB\n")
 	end)
 
 	it("lists the `corrupt` entries by path and type, never their content or a name", function()
@@ -542,5 +544,148 @@ describe("the saved data in /atw debug (SPEC-01 §9)", function()
 		contains(text, "corrupt entries: 1 (at most 5 kept)\n  char.ui.pos: table found")
 		contains(text, "problems corrected at load: 1\n  char.ui.pos: reset (bad shape)")
 		falsy(text:find("Uniquehero", 1, true))
+	end)
+end)
+
+describe("schema 2: the monitor settings (SPEC-02 §3.5)", function()
+	local P = "account.settings.monitor."
+	local DEFAULTS = { warning = 80, danger = 95, rate = 5, maxUnits = 40, show = "auto", sort = "relative",
+		pinSelf = false, followTargetOfTarget = true }
+
+	it("are added with their defaults, which are the one place of Q7, Q13 and Q14", function()
+		deepEq(C():Get("account.settings.monitor"), DEFAULTS)
+		deepEq(C().MONITOR_DEFAULTS, DEFAULTS)
+		eq(Mock.ns.ThreatState.DEFAULTS.warning, 80)
+		eq(Mock.ns.ThreatState.DEFAULTS.danger, 95)
+		eq(Mock.ns.ThreatScanner.DEFAULTS.rate, 5)
+		eq(Mock.ns.ThreatScanner.DEFAULTS.maxUnits, 40)
+	end)
+
+	it("migrate data of schema 1 (1 -> 2), keeping every value, once", function()
+		boot(function(M)
+			M.saved = { AzerothThreatwardenDB = { schema = 1, future = 7,
+				settings = { theme = "aurora", language = "itIT", minimap = { hide = true } } } }
+		end)
+		eq(AzerothThreatwardenDB.schema, 2)
+		eq(C().found.account, 1)
+		eq(AzerothThreatwardenDB.settings.theme, "aurora")
+		eq(AzerothThreatwardenDB.settings.language, "itIT")
+		eq(AzerothThreatwardenDB.settings.minimap.hide, true)
+		eq(AzerothThreatwardenDB.future, 7)
+		deepEq(AzerothThreatwardenDB.settings.monitor, DEFAULTS)
+		falsy(C():IsReadOnly())
+		eq(#C().issues, 0)
+		Mock.Reload()
+		eq(C().found.account, 2)
+		deepEq(AzerothThreatwardenDB.settings.monitor, DEFAULTS)
+	end)
+
+	it("step 2 is idempotent on data that already has the settings", function()
+		local data = { schema = 1, settings = { monitor = { warning = 60 } } }
+		truthy(C().Migrate("account", data, 1, 2))
+		local twice = C().Copy(data)
+		C().migrations.account[2](twice)
+		deepEq(twice, data)
+		eq(data.settings.monitor.warning, 60)
+		eq(data.schema, 2)
+	end)
+
+	it("leave the character's schema at 1", function()
+		eq(AzerothThreatwardenCharDB.schema, 1)
+		eq(C().SCHEMAS.char, 1)
+	end)
+
+	it("accept the values within their ranges and refuse the others", function()
+		local cases = {
+			{ "rate", { 2, 10 }, { 1, 11, 2.5, "5" } },
+			{ "maxUnits", { 5, 40 }, { 4, 41, 7.5, false } },
+			{ "show", { "auto", "always", "manual" }, { "never", 1 } },
+			{ "sort", { "relative", "absolute", "risk", "change" }, { "name", true } },
+			{ "pinSelf", { true, false }, { "yes", 1 } },
+			{ "followTargetOfTarget", { false, true }, { "no", 0 } },
+			{ "warning", { 50, 90 }, { 49, 100, 80.5, "80" } },
+			{ "danger", { 100, 95 }, { 59, 101, 95.5, nil } },
+		}
+		for _, case in ipairs(cases) do
+			local key, good, bad = case[1], case[2], case[3]
+			for _, value in ipairs(good) do
+				truthy(C():Set(P .. key, value), key .. " " .. tostring(value))
+				eq(C():Get(P .. key), value)
+			end
+			for _, value in pairs(bad) do
+				local stored = C():Get(P .. key)
+				falsy(C():Set(P .. key, value), key .. " " .. tostring(value))
+				eq(C():Get(P .. key), stored)
+			end
+		end
+		eq(select(2, C():Set("account.settings.monitor", {})), "not a value")
+	end)
+
+	it("keep danger at least 5 above warning in Set and SetThresholds", function()
+		eq(select(2, C():Set(P .. "warning", 91)), "danger less than 5 above warning")
+		eq(select(2, C():Set(P .. "danger", 84)), "danger less than 5 above warning")
+		truthy(C():Set(P .. "warning", 90))
+		local seen = {}
+		Mock.ns.Bus.On("CONFIG_CHANGED", function(path)
+			seen[#seen + 1] = path
+			eq(C():Get(P .. "warning"), 60, "both stored before anyone hears")
+			eq(C():Get(P .. "danger"), 65)
+		end)
+		truthy(C():SetThresholds(60, 65))
+		deepEq(seen, { P .. "warning", P .. "danger" })
+		truthy(C():SetThresholds(60, 65))
+		eq(#seen, 2, "nothing changed, nothing said")
+		falsy(C():SetThresholds(60, 64))
+		falsy(C():SetThresholds(45, 90))
+		falsy(C():SetThresholds(97, 102))
+		eq(C():Get(P .. "warning"), 60)
+		eq(#Mock.errors, 0)
+	end)
+
+	it("go back to the defaults at load when wrong, the thresholds together", function()
+		boot(function(M)
+			M.saved = { AzerothThreatwardenDB = { schema = 2, settings = { monitor = { warning = 90, danger = 92,
+				rate = 30, maxUnits = 2, show = "never", sort = 3, pinSelf = "x", followTargetOfTarget = 0,
+				other = 1 } } } }
+		end)
+		local want = C().Copy(DEFAULTS)
+		want.other = 1
+		deepEq(AzerothThreatwardenDB.settings.monitor, want)
+		contains(issues(), "account.settings.monitor: thresholds reset")
+		boot(function(M)
+			M.saved = { AzerothThreatwardenDB = { schema = 2, settings = { monitor = { warning = 70, danger = 59 } } } }
+		end)
+		eq(C():Get(P .. "warning"), 70)
+		eq(C():Get(P .. "danger"), 95, "a single wrong threshold keeps the other")
+		boot(function(M) M.saved = { AzerothThreatwardenDB = { schema = 2, settings = { monitor = "x" } } } end)
+		deepEq(AzerothThreatwardenDB.settings.monitor, DEFAULTS)
+		eq(AzerothThreatwardenDB.corrupt[1].path, "account.settings.monitor")
+	end)
+
+	it("come back with Reset settings", function()
+		truthy(C():SetThresholds(60, 70))
+		truthy(C():Set(P .. "show", "manual"))
+		truthy(C():ResetSettings())
+		deepEq(C():Get("account.settings.monitor"), DEFAULTS)
+	end)
+
+	it("are refused on read-only data", function()
+		boot(function(M) M.saved = { AzerothThreatwardenDB = { schema = 3 } } end)
+		eq(select(2, C():SetThresholds(60, 70)), "read-only")
+		eq(select(2, C():Set(P .. "rate", 3)), "read-only")
+	end)
+
+	it("survive a /reload and reach the monitor", function()
+		truthy(C():SetThresholds(70, 90))
+		truthy(C():Set(P .. "rate", 8))
+		truthy(C():Set(P .. "maxUnits", 12))
+		Mock.Reload()
+		deepEq({ Mock.ns.ThreatState.Thresholds() }, { 70, 90 })
+		boot(function(M)
+			M.features = { monitor = true }
+			M.saved = { AzerothThreatwardenDB = { schema = 2, settings = { monitor = { rate = 8, maxUnits = 12 } } } }
+		end)
+		eq(Mock.ns.ThreatScanner.Rate(), 8)
+		eq(Mock.ns.ThreatScanner.MaxUnits(), 12)
 	end)
 end)

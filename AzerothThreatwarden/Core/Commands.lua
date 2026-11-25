@@ -36,7 +36,8 @@ Commands.LIST = {
 	{ name = "about", help = "HELP_ABOUT", run = function() ns.Window:OpenPage("about") end },
 	{ name = "debug", help = "HELP_DEBUG", run = function() ns.Diagnostics.Show() end },
 	{ name = "help", help = "HELP_HELP", run = function() Commands.Help() end },
-	{ name = "demo", feature = "monitor", version = "v0.2.0" },     -- M2
+	{ name = "demo", help = "HELP_DEMO", feature = "monitor", version = "v0.2.0",
+		run = function(rest) ns.Demo.Command(rest) end },
 	{ name = "mute", feature = "alerts", version = "v0.3.0" },      -- M3
 	{ name = "reports", feature = "reports", version = "v0.4.0" },  -- M4
 }
@@ -53,9 +54,11 @@ function Commands.Help()
 	end
 end
 
--- `input`: what follows /atw. Only the first word counts, in any case; no word shows or hides the window.
+-- `input`: what follows /atw. The first word counts, in any case; no word shows or hides the window. The second word
+-- is passed to the command (`demo stop`).
 function Commands.Run(input)
-	local word = type(input) == "string" and input:match("^%s*(%S*)") or ""
+	local word, rest = "", ""
+	if type(input) == "string" then word, rest = input:match("^%s*(%S*)%s*(%S*)") end
 	local name = word:lower()
 	if name == "" then
 		ns.Window:Toggle()
@@ -63,7 +66,7 @@ function Commands.Run(input)
 	end
 	for _, c in ipairs(Commands.LIST) do
 		if c.name == name then
-			if available(c) then return c.run() end
+			if available(c) then return c.run(rest) end
 			return say(L["CMD_LATER"]:format(c.version))
 		end
 	end

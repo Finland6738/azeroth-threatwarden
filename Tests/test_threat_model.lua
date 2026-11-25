@@ -191,7 +191,7 @@ describe("staleness (SPEC-03 §1.5, DAT-12)", function()
 		local members = { { key = "m1", role = "TANK" } }
 		for i = 2, 39 do members[i] = { key = "m" .. i, class = "ROGUE", role = "DAMAGER" } end
 		local pull = newPull{ raid = true, party = members }
-		TS().DEFAULTS.maxUnits = 10
+		truthy(Mock.ns.Config:Set("account.settings.monitor.maxUnits", 10))
 		pull:at(0):start():threat("boss", "m2", 1000):threat("boss", "player", 10)
 		for i = 3, 39 do pull:threat("boss", "m" .. i, 5) end
 		pull:to(3)
@@ -207,7 +207,6 @@ describe("staleness (SPEC-03 §1.5, DAT-12)", function()
 		Mock.Advance(0.05)
 		TM().Update()
 		truthy(row("raid9").stale)
-		TS().DEFAULTS.maxUnits = 40
 	end)
 
 	it("makes every row stale at COMBAT_ENDED and publishes it", function()

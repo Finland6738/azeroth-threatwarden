@@ -345,8 +345,8 @@ tiene il mob).
 - Le righe visibili sono quante ne entrano (20 pt ciascuna); le altre si riassumono nell'ultima come *+N more*. La
   propria riga è sempre visibile: se cadrebbe sotto, prende l'ultimo posto visibile.
 - L'ordinamento si sceglie dalla card *Monitor* (§5) e cliccando l'intestazione dell'elenco (passa al successivo); si
-  salva in `settings.monitor.sort`. Nella stessa intestazione il pulsante *Me on top: on/off* cambia `pinSelf`. Fino
-  allo schema 2 (M2.6) le due scelte valgono per la sessione (M2.5).
+  salva in `settings.monitor.sort`. Nella stessa intestazione il pulsante *Me on top: on/off* cambia `pinSelf`. Con i
+  dati in sola lettura le due scelte valgono per la sessione (M2.5, M2.6).
 
 ## 4. Finestra
 
@@ -401,6 +401,7 @@ Lo **stato del modulo** è una pastiglia con icona e parola (mai solo colore), c
 | `state` | solo lo stato (MON-02, modalità `state`) | *State only* | `warn` |
 | `unavailable` | API mancanti o segrete (`none`) | *Unavailable* | `err` |
 | `unsupported` | client non riconosciuto (ARC-01) | *Unsupported client* | `err` |
+| `demo` | modalità demo in corso (§5.2, M2.6) | *Demo* | `warn` |
 
 Il tooltip della pastiglia dice il motivo (dalle capacità di Compat). Si controlla prima *Unsupported client*, poi
 l'interruttore `monitor`, poi le capacità. Quali di questi stati compaiono davvero in gruppo
@@ -486,7 +487,7 @@ si applica subito, tranne il font (al riavvio del client) e la lingua (dopo `/re
 | **Language** | *Automatic · English · Italiano*, nota e pulsante *Reload now* | `account.settings.language` | M1.8 |
 | **Window** | blocco (interruttore), scala (cursore 50–200 %, salvata al rilascio perché la finestra si scala sotto il mouse), *Show minimap button* (interruttore), *Reset window* | `char.ui.locked`, `scale`, `account.settings.minimap.hide` | M1.8 |
 | **Reset** | *Reset settings* con conferma: un secondo clic entro 8 s, o la prima è annullata anche cambiando pagina (riporta ai predefiniti `account.settings`, [SPEC-02 §3.4](SPEC-02-data-model-storage.md#34-caricamento-migrazioni-e-dati-danneggiati)) | — | M1.8 |
-| **Monitor** | soglie (cursori *Warning* 50–99 % e *Danger* 60–100 %, `danger ≥ warning + 5`), frequenza (cursore 2–10 Hz), unità massime (cursore 5–40), quando mostrare la finestra (segmentato *In group or combat · Always · Manually*), ordinamento (§3), *Pin me on top*, *Follow target of target* | `account.settings.monitor.*`, schema 2 ([SPEC-02 §3.5](SPEC-02-data-model-storage.md#35-schema-2-m2-le-impostazioni-del-monitor)) | M2.6 |
+| **Monitor** (solo con l'interruttore `monitor`, prima di *Reset*) | soglie (cursori *Warning threshold* 50–95 % e *Danger threshold* 60–100 %; spostandone uno l'altro si sposta per tenere `danger ≥ warning + 5`, quindi oltre 95 % la soglia WARNING non è utile), frequenza (cursore 2–10 Hz), unità massime (cursore 5–40), quando mostrare la finestra (segmentato *In group or combat · Always · Manually*), ordinamento (menu a tendina, §3), *Pin me on top*, *Follow the target of a friend*, pulsante *Start the demo* / *Stop the demo*; i cursori si salvano al rilascio | `account.settings.monitor.*`, schema 2 ([SPEC-02 §3.5](SPEC-02-data-model-storage.md#35-schema-2-m2-le-impostazioni-del-monitor)) | M2.6 |
 | **Alerts** | canali, cooldown, silenzio | M3.1 | M3 |
 | **Recording** | durata e limite delle registrazioni | M4.1 | M4 |
 
@@ -509,9 +510,40 @@ repository e Ko-fi, licenza, `docs/third-party.md` e l'avviso di progetto fan. `
 | `always` | aperta al login e dopo ogni `/reload`; si chiude solo a mano |
 | `manual` | il comportamento di M1: `char.ui.shown`, comandi, minimappa |
 
-Le aperture e chiusure automatiche non scrivono `char.ui.shown`, che resta la scelta a mano; con dati in sola lettura
-le regole sono le stesse. *Compact in combat* (nascondere le schede in combattimento, §4.2) resta
+Precisato in M2.6:
+
+- Valgono solo con l'interruttore `monitor` acceso su un client riconosciuto; altrimenti è `manual`.
+- Al login, con `auto`, la finestra si apre se `char.ui.shown` è vero o se il giocatore è in un gruppo (un `/reload` in
+  combattimento arriva come `COMBAT_STARTED`). *Entrare in un gruppo* è il passaggio da fuori a dentro
+  (`GROUP_ROSTER_UPDATE`, evento Bus `GROUP_CHANGED`).
+- La chiusura dopo 10 s si annulla se nel frattempo inizia un combattimento, il giocatore entra in un gruppo, riapre la
+  finestra a mano, passa a un'altra scheda o cambia l'opzione, e non chiude mai una demo in corso. Chiudere con Esc o la
+  croce durante un combattimento vale come chiusura del giocatore.
+- Un'apertura automatica mostra la scheda Monitor (se la finestra era chiusa).
+
+Le aperture e chiusure automatiche non scrivono `char.ui.shown` (che resta la scelta a mano), né la scheda o la
+posizione; con dati in sola lettura le regole sono le stesse. *Compact in combat* (nascondere le schede in combattimento, §4.2) resta
 un'opzione prevista, non in M2.
+
+### 5.2 Modalità demo (`/atw demo`, M2.6)
+
+`Core/Demo.lua` fa girare uno scontro **inventato** (`Data/Demo.lua`, funzione deterministica del tempo, 40 s per giro:
+un DPS in salita con la previsione e il DANGER, un altro che prende il mob e il tank che lo riprende) attraverso lo
+stesso `ThreatModel`, `ThreatState` e `ThreatList` di un combattimento vero: sostituisce solo `ns.TargetTracker` e
+`ns.ThreatScanner` con due fonti inventate, ed emette `THREAT_SCANNED` a ogni passo (tick `demo` alla frequenza
+configurata) e `DEMO_CHANGED(active)`.
+
+- **MON-14** MUST: la demo non legge nulla dal gioco (nessuna chiamata di `Compat.Unit`, `Group` o `Threat`) e non
+  scrive dati salvati: mostra la finestra senza registrarlo. Ciò che il giocatore cambia durante la demo (un'
+  impostazione, l'ordine dell'elenco, la posizione della finestra) si salva come sempre. Il colore di classe delle
+  unità inventate è quello del gioco.
+- **MON-15** MUST: la demo si ferma all'inizio di un combattimento vero, prima che i moduli del monitor reagiscano (il
+  suo ascoltatore è registrato per primo), con un messaggio in chat; si ferma anche con `/atw demo stop` (o `off`, o di
+  nuovo `/atw demo`) e quando la finestra si chiude. Non parte in combattimento, con `monitor` spento o su un client
+  non riconosciuto, e non sopravvive a un `/reload`.
+- Si vede che è una demo: pastiglia *Demo*, piede *DEMO · invented fight, not the game*, tooltip *Demo: invented values*,
+  mob *Demo golem*; la propria riga dice *You* (il nome del personaggio non si legge).
+- Avvisi (M3) e registrazione (M4) ignorano gli eventi durante `Demo.IsActive()`.
 
 ## 6. Piano di M2: moduli, eventi e test per step
 
@@ -532,4 +564,4 @@ mock sono **ipotesi** fino al probe (SPEC-08 §2), come i significati di §2.3.
 **Anteprime** (M2.5, `tools/make_mockups.py`, in inglese e italiano, tema Nebula più uno chiaro e uno Warden per la
 prima): `monitor-values` (party, un DPS in WARNING con la previsione e uno in DANGER), `monitor-state` (*state only*),
 `monitor-unknown` (`none`, *Threat data unavailable*), `monitor-no-target`, `monitor-tank` (la vista del tank con il
-margine). Non si fanno in M2.1: le scene si costruiscono dalle chiavi di lingua e dalla vista, che arrivano con M2.5.
+margine). M2.6 aggiunge `monitor-demo` e `settings-monitor` (Nebula e Warden, nelle due lingue). Non si fanno in M2.1: le scene si costruiscono dalle chiavi di lingua e dalla vista, che arrivano con M2.5.

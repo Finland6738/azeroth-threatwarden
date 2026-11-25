@@ -69,6 +69,8 @@ function ATW:OnEnable()   -- PLAYER_LOGIN
 	self:RegisterEvent("DISPLAY_SIZE_CHANGED", "OnDisplayChanged")
 	self:RegisterEvent("UI_SCALE_CHANGED", "OnDisplayChanged")
 	self:RegisterEvent("PLAYER_ENTERING_WORLD", "OnEnteringWorld")
+	-- joining a group shows the window (SPEC-03 §5.1): only while the monitor is part of the version (ADR 0014)
+	if ns.Features and ns.Features.On("monitor") then self:RegisterEvent("GROUP_ROSTER_UPDATE", "OnGroupChanged") end
 	for _, module in ipairs(ns.onEnable or {}) do
 		local ok, err = pcall(module)
 		if not ok then Compat.ReportError(err) end
@@ -89,6 +91,10 @@ end
 -- starts the combat here instead (SPEC-03 §1.4, M2.2).
 function ATW:OnEnteringWorld()
 	if not self.inCombat and Compat.Unit.AffectingCombat("player") == true then self:OnCombatStart() end
+end
+
+function ATW:OnGroupChanged()
+	emit("GROUP_CHANGED", Compat.Group.InGroup() == true)
 end
 
 function ATW:OnCombatStart()

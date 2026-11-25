@@ -115,8 +115,14 @@ closing on the tank goes WARNING then DANGER, and a target with no data shows UN
 - Scope: settings for thresholds, rate, max units, when to show the window; `/atw demo` plays an invented fight (no
   game reads) for previews and for trying the settings; previews of all states.
 - Done when:
-  - [ ] Demo mode never writes to saved data and stops on any real combat.
+  - [x] Demo mode never writes to saved data and stops on any real combat.
 - Tests: `test_demo.lua`, settings cases.
+- *Done (2026-11-25, before M0.7): account schema 2 with `settings.monitor` (defaults in one place,
+  `Config.MONITOR_DEFAULTS`; migration and its test), the *Monitor* card of Settings (thresholds kept 5 points apart,
+  rate, units, when the window shows, order, pin, target of target, demo button), the window rules of SPEC-03 §5.1,
+  `Core/Demo.lua` and `Data/Demo.lua` (`/atw demo`, SPEC-03 §5.2), previews `monitor-demo` and `settings-monitor`, wiki
+  pages; `test_demo.lua` and cases in `test_config.lua`, `test_settings.lua`, `test_window.lua`. The window's own
+  opening and closing and the card in the game wait for M2.8.*
 
 ### M2.7 — Performance and long tests
 - Branch: `step/m2-7-performance`

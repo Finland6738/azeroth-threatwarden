@@ -19,6 +19,8 @@
 --   DISPLAY_CHANGED()               Core/Init.lua (M1.7), from DISPLAY_SIZE_CHANGED / UI_SCALE_CHANGED.
 --   WINDOW_SHOWN(shown)             UI/Window.lua (M1.7).
 --   TAB_CHANGED(tabId)              UI/Window.lua (M1.7).
+--   GROUP_CHANGED(inGroup)          Core/Init.lua (M2.6), from GROUP_ROSTER_UPDATE (monitor switch on).
+--   DEMO_CHANGED(active)            Core/Demo.lua (M2.6); demo mode started or ended.
 --   TARGET_CHANGED, THREAT_SCANNED, THREAT_UPDATED, STATE_CHANGED, THREAT_MODE_CHANGED     Data/ (M2)
 --   ALERT_RAISED, COACH_TIP                                                                Data/ (M3)
 --   SESSION_STARTED, SESSION_ENDED, SESSIONS_CHANGED                                       Data/ (M4)
