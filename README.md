@@ -56,9 +56,11 @@ you can delete them ([ADR 0001](docs/adr/0001-local-only-addon-no-network.md)).
 ```bash
 python -I -X utf8 tools/fetch_libs.py
 python -I -X utf8 tools/check_docs.py
+python -X utf8 Tests/run_tests.py
 ```
 
-The first downloads the embedded libraries (never committed), the second checks documentation, addon and package.
+The first downloads the embedded libraries (never committed), the second checks documentation, addon and package, the
+third runs the offline tests (`python -m pip install --user lupa==2.8` once; [CONTRIBUTING](CONTRIBUTING.md#4-checks-and-tests)).
 [Releasing](docs/RELEASING.md) and [third-party material](docs/third-party.md).
 
 ## Contributing

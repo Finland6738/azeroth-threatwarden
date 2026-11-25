@@ -365,7 +365,7 @@ ogni file di test cita i requisiti che prova.
 | File di test | Modulo | Cosa prova | Step |
 |---|---|---|---|
 | `test_init.lua` | Init | avvio nel mock, client non Forever (ARC-01), `/reload` simulato, `ADDON_READY`, combattimento | M1.3 |
-| `test_features.lua` | Features | tutti spenti in `v0.1.0`; un comando di una parte spenta non agisce | M1.3 |
+| `test_features.lua` | Features | tutti spenti in `v0.1.0`; una parte spenta non registra eventi, non legge la threat e non scrive nulla (i comandi di una parte spenta li prova `test_commands.lua`, M1.7) | M1.3 |
 | `test_locales.lua` | Locales | ADR 0009 regola 3 (chiavi, segnaposti, stringhe vuote o uguali) | M1.3 |
 | `test_bus.lua` | Bus | ordine, duplicati, `Off` durante un `Emit`, errori isolati | M1.4 |
 | `test_compat.lua` | Compat | ogni voce di §8.2 `available`/`missing`/`restricted`/`error` nel mock; valori segreti mai letti; §8.3 con risposte scriptate (valori, solo stato, segreto, `nil`, errore) | M1.4 |

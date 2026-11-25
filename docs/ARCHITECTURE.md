@@ -3,8 +3,8 @@
 This document describes how the addon is built and where each later milestone plugs in. It follows the model of
 Azeroth Unspoken's `docs/ARCHITECTURE.md` ([ADR 0012](adr/0012-reuse-accord-and-unspoken-foundations.md)). It was
 written in step **M1.1**; since **M1.2** the addon has its skeleton (TOC, libraries, `Core/Init.lua`,
-`Core/Features.lua`, `Core/Locale.lua`, `Locales/`), and everything else below is the design that M1 builds and later
-milestones extend. Parts that are not there yet are marked
+`Core/Features.lua`, `Core/Locale.lua`, `Locales/`), since **M1.3** its offline tests on a mock client (`Tests/`), and
+everything else below is the design that M1 builds and later milestones extend. Parts that are not there yet are marked
 *planned*; parts whose behaviour depends on the M0 probe results are marked **[probe Pn]**. The detailed specification
 is in Italian: [SPEC-01](specs/SPEC-01-platform-architecture.md) (modules, Bus events, Compat), [SPEC-02](specs/SPEC-02-data-model-storage.md)
 (data), [SPEC-03](specs/SPEC-03-threat-monitor-ui.md) (window and commands) and [ui-style](specs/ui-style.md) (look).
@@ -204,8 +204,8 @@ sequenceDiagram
 6. The list repaints only what changed; a value that is not known is drawn as UNKNOWN with its reason in the tooltip.
 7. Combat ends: the tick stops. From M4 the Recorder has been writing the same records into a session.
 
-What the M1 code does today in this flow: steps 1 and the end (`COMBAT_STARTED`/`ENDED`), the Scheduler with no tick
-running, and `Compat.Threat.Read` tested against scripted answers in the mock client. The `monitor` switch is off.
+What M1 does in this flow: steps 1 and the end (`COMBAT_STARTED`/`ENDED`), the Scheduler with no tick running, and,
+from M1.4, `Compat.Threat.Read` tested against scripted answers in the mock client. The `monitor` switch is off.
 
 ## 4. Data and SavedVariables
 
@@ -253,6 +253,9 @@ flowchart LR
 6. Every visible string is a key in `Locales/enUS.lua` and `itIT.lua`; every colour a token of `UI/Theme.lua`.
 7. A part that belongs to a later milestone lands behind a switch in `Core/Features.lua`.
 8. Periodic work goes through `Core/Scheduler.lua`; nothing runs on a fixed `OnUpdate`.
+9. Test it offline ([ADR 0010](adr/0010-offline-tests-with-lupa-and-a-mock-client.md)): `Tests/test_<module>.lua` on
+   the mock client of `Tests/mock/` (add the API there, with its dump entry), with fight scripts (`Tests/lib/fight.lua`)
+   for what depends on a fight.
 
 ### For other addons, macros and players (no stability guarantee)
 
@@ -272,8 +275,8 @@ One more file in `Locales/` that calls `ns.Locale.Register("<code>", { … })`, 
 
 ## 6. What is planned and not there yet
 
-From the [roadmap](roadmap/README.md). `main` has the specification, the ADRs, the M0 probe and, since M1.2, the addon
-skeleton; M1 builds the rest of the `Core/` and `UI/` rows of §2.
+From the [roadmap](roadmap/README.md). `main` has the specification, the ADRs, the M0 probe, since M1.2 the addon
+skeleton and since M1.3 the offline tests; M1 builds the rest of the `Core/` and `UI/` rows of §2.
 
 | Milestone | What it adds | Where it hooks in |
 |---|---|---|

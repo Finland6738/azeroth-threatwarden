@@ -1,9 +1,9 @@
 name: Long tests
 
-# The long scenarios of the offline tests (Tests/run_tests.py --long, ADR 0010): a 40-player raid with many mobs sampled
-# for hours, recordings near the storage limit, reloads in the middle of a fight (SPEC-08 §3). They run when the threat
-# pipeline, the recorder, the harness or these tests change, every Monday, and on request; the CI workflow ("Tests")
-# stays quick. Until the harness exists (M1.3) every step is skipped and the job is green.
+# The offline tests with the long scenarios (Tests/run_tests.py --long, Tests/long/, ADR 0010): a 40-player raid with
+# many mobs and a /reload in the middle of the fight today; recordings near the storage limit and the rest of SPEC-08 §3
+# as their modules arrive. They run when the threat pipeline, the recorder, the harness or these tests change, every
+# Monday, and on request; the CI workflow ("Tests") stays quick.
 on:
   pull_request:
     paths:
@@ -40,14 +40,12 @@ jobs:
           python-version: "3.12"
 
       - name: Cache the libraries
-        if: hashFiles('Tests/run_tests.py') != ''
         uses: actions/cache@5a3ec84eff668545956fd18022155c47e93e2684 # v4.2.3
         with:
           path: AzerothThreatwarden/Libs
           key: libs-${{ hashFiles('.pkgmeta', 'tools/fetch_libs.py') }}
 
-      - name: Run the long scenarios
-        if: hashFiles('Tests/run_tests.py') != ''
+      - name: Run the tests with the long scenarios
         run: |
           python -m pip install lupa==2.8
           python -I -X utf8 tools/fetch_libs.py

@@ -72,10 +72,16 @@ in CI. Released as `v0.1.0`.
   answers, secret values and nil**, each file citing the dump), `/reload` simulation, `Tests/test_locales.lua`,
   `Tests/test_features.lua`, `Tests/test_init.lua`; CI and Long tests run them.
 - Done when:
-  - [ ] The addon boots in the mock and survives a simulated `/reload`.
-  - [ ] The locale test enforces ADR 0009 rule 3.
+  - [x] The addon boots in the mock and survives a simulated `/reload`.
+  - [x] The locale test enforces ADR 0009 rule 3.
 - Tests: the harness's own tests.
 - Real client: nothing.
+- *Done (2026-11-25): `Tests/run_tests.py`, `lib/` (assert, harness, fight scripts), `mock/` (core, secret values,
+  clock, frames and events, timers, client, units and groups, combat and instances, threat API), `test_init`,
+  `test_features`, `test_locales`, `test_mock`, `test_mock_game`, `test_fight`, `long/test_raid`; CI and *Long tests*
+  always run them. The threat numbers of the mock, `type()` of a secret and the restriction enum values are assumptions
+  until the probe (marked in the mock files). **Left for later:** the "a command of a part switched off does not act"
+  case (`test_commands.lua`, M1.7); the mock of each further API arrives with the step that calls it.*
 
 ### M1.4 — Compat (API adapter) and Diagnostics
 - Branch: `step/m1-4-compat-diagnostics`

@@ -21,6 +21,7 @@
     "SlashCmdList",
     "Mock",
     "T",
+    "Fight",
     "describe",
     "it",
     "before_boot",

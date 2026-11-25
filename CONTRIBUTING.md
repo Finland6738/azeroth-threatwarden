@@ -48,15 +48,25 @@ specification in `docs/specs/` is in Italian; the user manual in `docs/wiki/` is
 
 ```
 python -I -X utf8 tools/check_docs.py
-python -m pip install lupa==2.8            # once, from M1.3
-python -X utf8 Tests/run_tests.py          # all offline tests, from M1.3
-python -X utf8 Tests/run_tests.py --long   # the long scenarios
+python -m pip install --user lupa==2.8       # once
+python -X utf8 Tests/run_tests.py            # the quick tests
+python -X utf8 Tests/run_tests.py --long     # the quick tests and the long scenarios of Tests/long/
+python -X utf8 Tests/run_tests.py locale -v  # only the tests whose "file > group > test" name holds the text
 ```
 
 `check_docs.py` checks relative links, the wiki sidebar, links and Italian twins, the ADR index, personal data (emails
-and personal paths) and LF line endings; from M1.2 also the addon TOC and the package contents. The offline tests run
-Lua 5.1 through lupa on a mock client with scripted fights
-([ADR 0010](docs/adr/0010-offline-tests-with-lupa-and-a-mock-client.md)).
+and personal paths), LF line endings, the addon TOC and the package contents. The offline tests run Lua 5.1 through lupa
+on a mock client with scripted fights
+([ADR 0010](docs/adr/0010-offline-tests-with-lupa-and-a-mock-client.md)); they fetch the libraries when they are missing.
+Run them without `-I` when lupa is installed with `--user`: isolated mode hides it.
+
+- A test file is `Tests/test_<name>.lua` (`describe`, `it`, `before_boot`; each test starts on a fresh client). Long
+  scenarios go in `Tests/long/`.
+- `Tests/mock/` imitates the client, one area per file, and cites the dump entries it follows. A new API is added there
+  after checking the dump; what the dump does not say (what a function returns in a given case) is marked as an
+  assumption.
+- `Tests/lib/fight.lua` scripts a pull (who has how much threat when, the tank's death, a mob that vanishes or changes
+  GUID).
 
 ## 5. Git, issues and pull requests
 

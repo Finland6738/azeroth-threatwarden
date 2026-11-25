@@ -362,10 +362,27 @@ senza verdetto e M0.7 lo dice.
   GUID non disponibile; campioni mancanti; eventi doppi o fuori ordine; mob che scompare; target sostituito; valori
   segreti.
 
+Com'è fatto il banco di prova (M1.3, in `Tests/`, mai nel pacchetto):
+
+- `run_tests.py` carica nell'ordine del TOC le librerie vere e l'addon, ogni test su un client nuovo; filtro per nome,
+  `-v`, `--long` (o `AZTW_LONG=1`). Il dump delle API, se c'è, serve a rifiutare i nomi di evento inesistenti
+  (`AZTW_API_DUMP`; in CI non c'è).
+- `lib/harness.lua` simula `/reload` e nuovo accesso: scrive e rilegge le SavedVariables dichiarate nel TOC e rifiuta
+  ciò che il client non salva, valori segreti compresi; il mondo finto (tempo, unità, combattimento, threat) resta.
+- `mock/`: un file per area, ognuno con le voci del dump che imita. I valori segreti del mock sono **più severi del
+  client** (qualsiasi uso solleva un errore, ARC-11); `type()` ne restituisce il tipo rappresentato (**[verificare]**
+  P3). Il mock non può intercettare `==` con un valore normale né un valore segreto usato come condizione.
+- I numeri della threat calcolati dal mock (stato, percentuali, 110 %/130 %, margine) sono **ipotesi** fino al probe
+  (P2–P6); le risposte si possono scriptare (valori, `nil`, nessun valore, segreto, errore). Il mock non decide chi fa
+  da tank: lo dice lo script del combattimento (`lib/fight.lua`: threat, aggro, taunt, morti, mob che spariscono o
+  cambiano GUID, secondo il tempo del client).
+
 ## 3. Test lunghi
 
-`Tests/run_tests.py --long` (workflow *Long tests*): raid di 40 con molti mob per ore; storico vicino al limite;
-sessioni lunghe; apertura e chiusura ripetuta del replay; misura delle allocazioni per tick.
+`Tests/run_tests.py --long` (workflow *Long tests*, scenari in `Tests/long/`): raid di 40 con molti mob per ore;
+storico vicino al limite; sessioni lunghe; apertura e chiusura ripetuta del replay; misura delle allocazioni per tick.
+Ogni voce arriva con il modulo che prova; M1.3 ne ha una sola, sul client finto: dieci minuti di raid da 40 con cinque
+mob e un `/reload` a metà.
 
 ## 4. Prove nel client
 

@@ -1,0 +1,151 @@
+-- The fight scripts (Tests/lib/fight.lua, ADR 0010 point 4): who holds the mob when, the tank's death, a mob that
+-- vanishes or changes GUID, and the timeline with the client's clock (SPEC-08 §2 QA-03).
+
+local function newPull()
+	return Fight.new{
+		player = { class = "MAGE", role = "DAMAGER", ranged = true },
+		party = { { key = "tank", role = "TANK" }, { key = "healer", class = "PRIEST", role = "HEALER" } },
+		mobs = {
+			{ key = "boss", tokens = { "target", "boss1" }, classification = "worldboss" },
+			{ key = "add", tokens = { "nameplate2" } },
+		},
+	}
+end
+
+local function status(unit, mob) return UnitThreatSituation(unit, mob or "target") end
+
+describe("a scripted pull", function()
+	it("sets up the group, the mobs and the player", function()
+		newPull()
+		eq(GetNumGroupMembers(), 3)
+		eq(UnitName("target"), "Boss")
+		truthy(UnitIsUnit("target", "boss1"))
+		eq(UnitClassification("nameplate2"), "normal")
+		eq(Mock.player.class, "MAGE")
+		falsy(InCombatLockdown())
+	end)
+
+	it("plays its steps in time order while the client's clock runs", function()
+		local pull = newPull()
+		local t0, fired = GetTime(), {}
+		C_Timer.NewTicker(1, function() fired[#fired + 1] = status("player") or "none" end)
+		pull:at(0):start():threat("boss", "tank", 1000)
+		pull:at(2.5):threat("boss", "player", 1200)
+		pull:at(1.5):threat("boss", "player", 200)
+		pull:at(4):aggro("boss", "player")
+		pull:to(2)
+		near(GetTime() - t0, 2, 1e-6)
+		truthy(InCombatLockdown())
+		eq(status("player"), 0)
+		pull:to(3)
+		eq(status("player"), 1)
+		truthy(UnitIsUnit("targettarget", "party1"))
+		pull:finish()
+		near(GetTime() - t0, 4, 1e-6)
+		eq(status("player"), 3)
+		deepEq(fired, { "none", 0, 1, 1 }, "a step comes after the timers due at its time")
+		pull:at(6):stop()
+		pull:finish()
+		falsy(InCombatLockdown())
+		isNil(status("player"))
+	end)
+
+	it("refuses a time in the past and a verb it does not know", function()
+		local pull = newPull()
+		pull:at(2):start()
+		pull:to(2)
+		raises(function() pull:at(1) end, "not a time")
+		raises(function() pull:at(3):dance() end, "no verb")
+	end)
+
+	it("moves the mobs to the next in line when the tank dies", function()
+		local pull = newPull()
+		local deaths = {}
+		local f = CreateFrame("Frame")
+		f:RegisterEvent("UNIT_DIED")
+		f:SetScript("OnEvent", function(_, _, guid) deaths[#deaths + 1] = guid end)
+		pull:start()
+		pull:threat("boss", "tank", 1000):threat("boss", "healer", 100):threat("boss", "player", 700)
+		pull:threat("add", "tank", 300):threat("add", "healer", 200)
+		pull:die("tank")
+		truthy(UnitIsDead("party1"))
+		isNil(status("party1"))
+		eq(status("player"), 3)
+		eq(Mock.threat.Holder("add"), "healer")
+		truthy(UnitIsUnit("nameplate2target", "party2"))
+		deepEq(deaths, { UnitGUID("party1") })
+	end)
+
+	it("wipes the list of a mob that dies", function()
+		local pull = newPull():start()
+		pull:threat("boss", "tank", 1000):threat("add", "player", 50)
+		pull:die("boss")
+		truthy(UnitIsDead("target"))
+		isNil(status("party1"))
+		eq(status("player", "nameplate2"), 3)
+	end)
+
+	it("lets a taunt take the mob back", function()
+		local pull = newPull():start()
+		pull:threat("boss", "tank", 1000):threat("boss", "player", 1500):aggro("boss", "player")
+		pull:taunt("boss", "tank")
+		eq(Mock.threat.Holder("boss"), "tank")
+		eq(Mock.threat.Raw("boss", "tank"), 1500)
+		eq(status("party1"), 3)
+	end)
+
+	it("makes a mob disappear: no token, no target, no threat", function()
+		local pull = newPull():start()
+		pull:target("tank", "add"):threat("add", "tank", 100)
+		local removed = {}
+		local f = CreateFrame("Frame")
+		f:RegisterEvent("NAME_PLATE_UNIT_REMOVED")
+		f:SetScript("OnEvent", function(_, _, token) removed[#removed + 1] = token end)
+		pull:vanish("add")
+		deepEq(removed, { "nameplate2" })
+		falsy(UnitExists("nameplate2"))
+		falsy(UnitExists("party1target"))
+		deepEq(Mock.threat.Mobs(), {})
+		pull:vanish("boss")
+		falsy(UnitExists("target"))
+		falsy(UnitExists("boss1"))
+	end)
+
+	it("changes a mob's GUID behind the same tokens, with no event", function()
+		local pull = newPull():start()
+		pull:threat("boss", "tank", 100)
+		local before, events = UnitGUID("target"), 0
+		local f = CreateFrame("Frame")
+		f:RegisterAllEvents()
+		f:SetScript("OnEvent", function() events = events + 1 end)
+		pull:newGUID("boss")
+		ne(UnitGUID("target"), before)
+		eq(UnitGUID("boss1"), UnitGUID("target"))
+		isNil(UnitTokenFromGUID(before))
+		eq(events, 0)
+		eq(status("party1"), 3)
+	end)
+
+	it("keeps a fight going through a /reload", function()
+		local pull = newPull()
+		pull:at(0):start():threat("boss", "tank", 1000)
+		pull:at(2):threat("boss", "player", 800)
+		pull:at(5):die("tank")
+		pull:to(3)
+		Mock.Reload()
+		truthy(InCombatLockdown())
+		eq(select(5, UnitDetailedThreatSituation("player", "target")), 800)
+		pull:finish()
+		eq(status("player"), 3)
+	end)
+
+	it("runs any other step through call, and a raid", function()
+		local pull = Fight.new{ raid = true, party = { { key = "tank" } }, mobs = { { key = "boss" } } }
+		local seen
+		pull:at(1):token("focus", "boss"):call(function(p) seen = p end)
+		pull:finish()
+		eq(seen, pull)
+		truthy(IsInRaid())
+		eq(UnitName("focus"), "Boss")
+	end)
+end)

@@ -1,8 +1,9 @@
 name: CI
 
 # Checks on every pull request and on every push to main. The job name "Tests" is the status check required by the
-# branch protection of main (ADR 0008). It runs the documentation checks and, once they exist (M1), the package check
-# and the offline addon tests (Tests/run_tests.py: Lua 5.1 through lupa on a mock client, ADR 0010).
+# branch protection of main (ADR 0008). It runs the documentation checks, the package check and the offline addon tests
+# (Tests/run_tests.py: Lua 5.1 through lupa on a mock client, ADR 0010). The runner has no API dump, so the tests do not
+# validate event names here; they do on a PC with ../WoW-Addons next to the repository.
 on:
   pull_request:
   push:
@@ -29,7 +30,7 @@ jobs:
         with:
           python-version: "3.12"
 
-      # lupa embeds Lua 5.1: the probe syntax check and, from M1.3, the addon tests need it.
+      # lupa embeds Lua 5.1: the probe syntax check and the addon tests need it.
       - name: Install lupa
         run: python -m pip install lupa==2.8
 
@@ -46,17 +47,16 @@ jobs:
         if: hashFiles('tools/check_package.py') != ''
         run: python -I -X utf8 tools/check_package.py
 
-      # The libraries are pinned in .pkgmeta and never committed (from M1.3 on). They are cached on the pins, so a
-      # run only downloads when a pin changes; fetch_libs.py also retries with backoff on 429 and 5xx.
+      # The libraries are pinned in .pkgmeta and never committed. They are cached on the pins, so a run only downloads
+      # when a pin changes; fetch_libs.py also retries with backoff on 429 and 5xx.
       - name: Cache the libraries
-        if: hashFiles('Tests/run_tests.py') != ''
         uses: actions/cache@5a3ec84eff668545956fd18022155c47e93e2684 # v4.2.3
         with:
           path: AzerothThreatwarden/Libs
           key: libs-${{ hashFiles('.pkgmeta', 'tools/fetch_libs.py') }}
 
+      # The quick tests only; the long scenarios are the "Long tests" workflow.
       - name: Run the addon tests
-        if: hashFiles('Tests/run_tests.py') != ''
         run: |
           python -I -X utf8 tools/fetch_libs.py
           python -I -X utf8 Tests/run_tests.py

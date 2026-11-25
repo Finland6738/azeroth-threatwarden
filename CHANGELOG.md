@@ -7,6 +7,15 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
+- M1.3: the offline test harness `Tests/` (development only, never packaged), adapted from Azeroth Accord:
+  `run_tests.py` (lupa 2.8, Lua 5.1, the real libraries and the addon in TOC order, a name filter, `-v`, `--long`, the
+  libraries fetched when missing), assertions and harness with a `/reload` and re-login simulation of the SavedVariables,
+  and a mock client for the environment, secret values, clock and timers, frames and events, the client build, units and
+  groups, combat and instances, and the threat API (computed, scripted, secret and `nil` answers; each file cites the
+  Forever dump and marks what is an assumption until the probe). Fight scripts (`lib/fight.lua`) for scripted pulls.
+  Tests of the addon's start, `/reload`, feature switches (all off), the language tables (ADR 0009 rule 3) and of the
+  harness itself; the first long scenario (a 40-player raid). CI always runs the quick tests, the *Long tests* workflow
+  the long ones.
 - M1.2: the addon skeleton `AzerothThreatwarden/` — TOC for Interface 16001 with the two SavedVariables, the Addon
   Compartment functions, licence and credits; `embeds.xml` with LibStub, CallbackHandler, AceAddon, AceEvent,
   AceConsole, LibDataBroker and LibDBIcon; `Core/Init.lua` (addon object, Forever check, lifecycle, combat start and
