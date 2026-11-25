@@ -104,7 +104,9 @@ Principles everything else rests on:
 
 ## 2. Modules and responsibilities
 
-Files are loaded in the order of the TOC (`AzerothThreatwarden/AzerothThreatwarden.toc`). Every file
+Files are loaded in the order of the TOC (`AzerothThreatwarden/AzerothThreatwarden.toc`): the libraries, then `Bus` and
+`Compat` first (the language of the client is asked while `Locales/` load), `Locale`, `Locales/`, `Init`, `Features`,
+`Scheduler`, `Config`, `Diagnostics`, `Commands`, then `UI/`. Every file
 receives `ADDON_NAME, ns = ...`; modules attach to `ns` (`ns.Compat`, `ns.Config`…) and, for tests, to the addon object
 `AzerothThreatwarden`, the only global besides the SavedVariables, the three Addon Compartment functions, the key
 binding names and the frames named `AzerothThreatwarden…` that the game needs (ARC-04). Most of `Core/` and `UI/` is
@@ -116,11 +118,11 @@ copied from Azeroth Accord and renamed; each copied file says so in its header.
 | `Locales/enUS.lua`, `itIT.lua` | every visible string, one file per language ([ADR 0009](adr/0009-interface-and-documentation-languages.md)) | M1.2 → |
 | `Core/Init.lua` | the AceAddon object; the Forever check (diagnostic mode on another client); lifecycle (`ADDON_LOADED` → Config, Locale, Compat; `PLAYER_LOGIN` → interface); combat start and end from `PLAYER_REGEN_*`; `/atw debug` sections | M1.2 |
 | `Core/Features.lua` | the switches of later parts (`monitor`, `alerts`, `coach`, `recording`, `reports`, …), all off in `v0.1.0` | M1.2 |
-| `Core/Bus.lua` | internal publish/subscribe; a failing listener never stops the others | M1.4 |
+| `Core/Bus.lua` | internal publish/subscribe (`Bus.On`, `Off`, `Emit`); a failing listener never stops the others; an emit allocates nothing and refuses a secret argument | M1.4 |
 | `Core/Compat.lua` | the API table (state per API: available, missing, restricted, error), the capabilities (`threatValues`, `threatState`, `groupThreat`…: available, missing, restricted, unknown), guarded calls, secret-value checks, the normalized threat read, timers, restrictions | M1.4 |
 | `Core/Scheduler.lua` | named, bounded ticks (1–10 Hz), only while needed, each guarded and timed | M1.4 |
 | `Core/Config.lua` | the two SavedVariables: schema 1, typed rules, defaults, migrations, read-only on a newer schema, damaged tables set aside under `corrupt` | M1.5 |
-| `Core/Diagnostics.lua`, `UI/DiagnosticsBox.lua` | error ring buffer and the `/atw debug` report (English, no names), shown in a copy box | M1.4 |
+| `Core/Diagnostics.lua`, `UI/DiagnosticsBox.lua` | error ring buffer and the `/atw debug` report (English, no names), shown in a copy box (the client's own dialog look until the widget kit of M1.6) | M1.4 |
 | `Core/Commands.lua` | `/threatwarden` and `/atw` | M1.7 |
 | `UI/Assets.lua`, `Theme.lua`, `Motion.lua`, `Widgets/` | the ecosystem look: Nebula, Aurora and Warden themes, the four state tokens, fonts, 9-slice shapes, the widget kit plus `ThreatBar` and `StateBadge` | M1.6 |
 | `UI/Window.lua`, `UI/Launcher.lua` | the window (compact layout for Monitor, wide layout for Settings and Reports), tabs, move, lock, resize, scale; the minimap button and the Addon Compartment entry | M1.7 |

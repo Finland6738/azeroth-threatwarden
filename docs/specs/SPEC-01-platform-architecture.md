@@ -73,14 +73,18 @@ grafica, testabile offline), `UI/` (viste), `Locales/`.
 
 **ARC-04** MUST: nessuna variabile globale tranne `AzerothThreatwarden`, le SavedVariables, le funzioni del
 Compartment e i binding, più i frame con nome che il gioco richiede, tutti con il prefisso `AzerothThreatwarden`
-(la finestra, per chiuderla con Esc; il tooltip dell'addon; gli oggetti font `AzerothThreatwardenFont<Id>`).
+(la finestra, per chiuderla con Esc; il tooltip dell'addon; gli oggetti font `AzerothThreatwardenFont<Id>`). Unica
+eccezione senza prefisso: `SLASH_ACECONSOLE_ATW1` (e da M1.7 quello di `/threatwarden`), il nome che AceConsole dà al
+comando e che il client usa per trovarlo (M1.4).
 
 ### 3.1 I moduli di M1
 
 Ogni file riceve `ADDON_NAME, ns = ...`; i moduli si appendono a `ns` (`ns.Compat`, `ns.Config`…) e, per i test,
 all'oggetto dell'addon (`AzerothThreatwarden.Compat`…), come in Accord. Ordine di caricamento nel TOC: librerie
-(`embeds.xml`), `Core/Locale.lua`, `Locales/enUS.lua`, `Locales/itIT.lua`, `Core/Init.lua`, `Core/Features.lua`,
-`Core/Bus.lua`, `Core/Compat.lua`, `Core/Scheduler.lua`, `Core/Config.lua`, `Core/Diagnostics.lua`,
+(`embeds.xml`), `Core/Bus.lua`, `Core/Compat.lua` (prima della lingua, perché `Locale` chiede la lingua del client
+mentre si caricano i file di `Locales/`, M1.4), `Core/Locale.lua`, `Locales/enUS.lua`, `Locales/itIT.lua`,
+`Core/Init.lua` (che aggancia Bus, Compat e Locale all'oggetto dell'addon), `Core/Features.lua`,
+`Core/Scheduler.lua`, `Core/Config.lua`, `Core/Diagnostics.lua`,
 `Core/Commands.lua`, poi `UI/Assets.lua`, `UI/Theme.lua`, `UI/Motion.lua`, `UI/Widgets/*.lua`,
 `UI/DiagnosticsBox.lua`, `UI/Window.lua`, `UI/Launcher.lua`, `UI/Settings.lua`, `UI/About.lua`. Un modulo non usa un
 altro modulo caricato dopo di lui al caricamento del file, solo nei suoi gestori.
@@ -90,7 +94,7 @@ altro modulo caricato dopo di lui al caricamento del file, solo nei suoi gestori
 | `Core/Locale.lua` | tabelle delle lingue registrate dai file di `Locales/`; `ns.L`, una tabella che risponde nella lingua attiva con ripiego sull'inglese; `Locale.Apply(code)` al caricamento (§10) | — | `test_locales.lua`, `test_language.lua` | M1.2, M1.5 |
 | `Core/Init.lua` | oggetto AceAddon `AzerothThreatwarden`; le tre funzioni del Compartment nominate dal TOC (da M1.2, `UI/Launcher.lua` le completa in M1.7); controllo Forever (ARC-01); ciclo di vita: `ADDON_LOADED` → `Config:Load`, `Locale.Apply`, `Compat:Probe`; `PLAYER_LOGIN` → interfaccia; `PLAYER_LOGOUT`; stato del combattimento da `PLAYER_REGEN_DISABLED/ENABLED`; sezioni di `/atw debug` (`AddDebugSection`) | emette `ADDON_READY`, `COMBAT_STARTED`, `COMBAT_ENDED` | `test_init.lua` (avvio, client non Forever, `/reload`) | M1.2, M1.3 |
 | `Core/Features.lua` | interruttori delle parti non finite (§3.4); `Features.On(name)` si chiede quando si agisce, mai una volta sola al caricamento | — | `test_features.lua` | M1.2 |
-| `Core/Bus.lua` | publish/subscribe interno, copiato da Accord: `On`, `Off`, `Emit`; un ascoltatore che solleva un errore non ferma gli altri (l'errore va nell'anello degli errori) | — | `test_bus.lua` | M1.4 |
+| `Core/Bus.lua` | publish/subscribe interno, copiato da Accord: `Bus.On`, `Bus.Off`, `Bus.Emit` (chiamate con il punto); un ascoltatore che solleva un errore non ferma gli altri (l'errore va nell'anello degli errori); un `Emit` non alloca (ARC-06) e non consegna un evento con un argomento segreto | — | `test_bus.lua` | M1.4 |
 | `Core/Compat.lua` | unica porta verso le API del gioco: `Resolve`, `Call` sotto `pcall`, `IsSecret`/`Readable`, tabella delle API e delle capacità (§8), lettura normalizzata della threat (§8.3), timer, restrizioni | emette `CAPABILITY_CHANGED`; ascolta (dal gioco) `ADDON_RESTRICTION_STATE_CHANGED` | `test_compat.lua`, `test_api_boundary.lua` (nessun file di `UI/` chiama il gioco) | M1.4 |
 | `Core/Scheduler.lua` | tick limitati con nome (ARC-09): avvio, arresto, frequenza, misura del costo | ascolta `COMBAT_ENDED` (ferma i tick legati al combattimento) | `test_scheduler.lua` | M1.4 |
 | `Core/Config.lua` | SavedVariables, schema 1, regole tipizzate, predefiniti, migrazioni, sola lettura, `corrupt` ([SPEC-02 §3](SPEC-02-data-model-storage.md#3-savedvariables)); `Config:Get(path)`, `Config:Set(path, value)` | emette `CONFIG_LOADED`, `CONFIG_CHANGED(path)` | `test_config.lua` | M1.5 |
@@ -100,7 +104,7 @@ altro modulo caricato dopo di lui al caricamento del file, solo nei suoi gestori
 | `UI/Theme.lua` | token di Nebula, Aurora e Warden e i token di stato ([ui-style](ui-style.md)); registro delle regioni tinte; oggetti font `AzerothThreatwardenFont<Id>`; `Px()`; forme 9-slice | emette `THEME_CHANGED(themeId)`; ascolta `CONFIG_LOADED`, `CONFIG_CHANGED` | `test_theme.lua` (parità dei token, contrasti, nessun colore fuori dal tema) | M1.6 |
 | `UI/Motion.lua` | animazioni del tema (durate 120/200/320 ms), spente con `settings.animations` | — | `test_theme.lua` | M1.6 |
 | `UI/Widgets/` | il kit di Accord (`Core.lua`, `Controls.lua`, `Tooltip.lua`, `ThinBar.lua`), più `ThreatBar` e `StateBadge` (vuoti di dati fino a M2) | — | `test_widgets.lua` | M1.6 |
-| `UI/DiagnosticsBox.lua` | la finestra da cui copiare il rapporto di `/atw debug` (un `Widgets.Dialog`) | — | `test_diagnostics.lua` | M1.4 |
+| `UI/DiagnosticsBox.lua` | la finestra da cui copiare il rapporto di `/atw debug`: fino a M1.6 con le texture e i font del client, poi un `Widgets.Dialog` | — | `test_diagnostics.lua` | M1.4 |
 | `UI/Window.lua` | finestra principale ([SPEC-03 §4](SPEC-03-threat-monitor-ui.md#4-finestra)): barra del titolo, schede, spostamento, blocco, ridimensionamento, scala, posizione per personaggio, Esc | emette `WINDOW_SHOWN(shown)`, `TAB_CHANGED(tabId)`; ascolta `THEME_CHANGED`, `COMBAT_STARTED`, `COMBAT_ENDED`, `CAPABILITY_CHANGED` | `test_window.lua` | M1.7 |
 | `UI/Launcher.lua` | pulsante della minimappa (LibDataBroker + LibDBIcon, nascondibile) e voce dell'Addon Compartment (le tre funzioni globali del TOC) | ascolta `CONFIG_CHANGED` (`settings.minimap.hide`) | `test_launcher.lua` | M1.7 |
 | `UI/Settings.lua` | pagina Settings (Aspetto, Lingua, Finestra, ripristino) nella scheda e nel pannello Impostazioni del gioco | emette `SETTINGS_CHANGED(key)` | `test_settings.lua`, `test_ui_texts.lua` | M1.8 |
@@ -224,6 +228,13 @@ All'`ADDON_LOADED` `Compat:Probe()` riempie due tabelle, come in Accord:
   emette `CAPABILITY_CHANGED`.
 - Le funzioni dell'interfaccia del gioco che il dump non elenca (FrameXML: `Settings`, `SlashCmdList`, `UIParent`,
   `Enum`) si cercano a runtime con `Compat.Resolve`; "assente" è una risposta, come nel probe (PRB-05).
+- Il confine (M1.4, `test_api_boundary.lua`): nessun file tranne `Core/Compat.lua` nomina un'API del gioco, né una
+  funzione né una tabella né una costante (`GetTime`, `C_Timer`, `WOW_PROJECT_ID`, `print`…); i file di `UI/` possono
+  solo creare frame (`CreateFrame`, `CreateFont`) e chiamare i metodi dei propri frame. Anche `GameTooltip`,
+  `UIParent` e `UISpecialFrames` passano da Compat (`Compat.Tooltip`, `Compat.UIParent`, `Compat.CloseOnEscape`).
+  Sono ammesse la libreria di Lua e le sue funzioni di comodo del client (`format`, `wipe`, `tinsert`…).
+- `Compat.IsSecret(v)` passa il valore soltanto a `issecretvalue`, `canaccessvalue` e (per una tabella) a
+  `issecrettable`, e ne chiede `type()`: non lo confronta, non lo indicizza, non lo concatena e non lo conserva.
 
 ### 8.2 Tabella delle API
 
@@ -237,6 +248,7 @@ senza firma), **assente** (si cerca a runtime). In grassetto le voci il cui comp
 | `client.GetBuildInfo` | `GetBuildInfo` | chiamata | firma (6 valori) | ARC-01, `/atw debug` | M1 | P1 |
 | `client.GetLocale` | `GetLocale` | chiamata | firma | lingua `auto` (§10) | M1 | P1 |
 | `client.ProjectID` | `WOW_PROJECT_ID`, `WOW_PROJECT_CAMELOT` | lettura | assente | ARC-01 | M1 | **P1** |
+| `client.RealmName` | `GetRealmName` | esistenza | firma | solo per togliere il reame dagli errori del rapporto (§9), mai salvato | M1 | — |
 | `secret.issecretvalue` | `issecretvalue` | esistenza | firma | ARC-11 | M1 | P3 |
 | `secret.issecrettable` | `issecrettable` | esistenza | firma | ARC-11 | M1 | P3 |
 | `secret.canaccessvalue` | `canaccessvalue` | esistenza | firma | ARC-11 | M1 | P3 |
@@ -279,6 +291,7 @@ senza firma), **assente** (si cerca a runtime). In grassetto le voci il cui comp
 | `addon.Metadata` | `C_AddOns.GetAddOnMetadata` | chiamata | firma | versione nel rapporto e in Info | M1 | — |
 | `addon.Memory` | `UpdateAddOnMemoryUsage`, `GetAddOnMemoryUsage` | esistenza | firma | memoria in `/atw debug` | M1 | P10 |
 | `addon.Framerate` | `GetFramerate` | esistenza | firma | rapporto | M1 | P10 |
+| `addon.ErrorHandler` | `geterrorhandler`, `seterrorhandler` | esistenza | globale | anello degli errori dell'addon (§9) | M1 | — |
 | `ui.Reload` | `C_UI.Reload` (o il globale `ReloadUI`) | esistenza | firma / globale | pulsante "Reload now" dopo il cambio di lingua | M1 | — |
 | `ui.CreateFrame`, `ui.CreateFont` | `CreateFrame`, `CreateFont` | esistenza | globale | tutta l'interfaccia (solo da `UI/` attraverso il kit e il tema) | M1 | — |
 | `ui.ScreenSize` | `GetPhysicalScreenSize`, `GetScreenWidth`, `GetScreenHeight` | chiamata | firma | tenere la finestra nello schermo | M1 | — |
@@ -307,6 +320,14 @@ con AceEvent: `ADDON_LOADED`, `PLAYER_LOGIN`, `PLAYER_ENTERING_WORLD` (`isInitia
 3. Altrimenti `UnitDetailedThreatSituation(unit, mob)` → modalità `values`; ogni valore passa da ARC-11 (un valore
    segreto inatteso diventa `nil` con `reason = "secret"` e la lettura scende a `state` o `none`).
 4. Una funzione assente o in errore dà `reason = "missing"` o `"error"`; nessun risultato dà `reason = "nil"`.
+   Se manca o fallisce `UnitDetailedThreatSituation`, la lettura scende a `UnitThreatSituation` (modalità `state`, il
+   `reason` dice perché mancano i valori); se solo i numeri della risposta dettagliata sono segreti e lo stato no, si
+   tiene lo stato senza una seconda chiamata. Un argomento che non è un token leggibile dà `reason = "no-unit"` senza
+   chiamate. Una previsione `Should…` che fallisce o che è essa stessa segreta non conta (M1.4).
+
+La lettura non alloca (riempie il record del chiamante, `pcall` senza tabelle, ARC-06) e conta gli esiti per
+`/atw debug` (`Compat.Threat.stats`: numeri soltanto). `source` diventa `detected` (`values`, `state`) o `unknown`
+(`none`); `confidence` la decide il modello (M2).
 
 La forma degli argomenti (token del mob, come nel dump, o GUID) e quale previsione `Should…` è affidabile li dice il
 probe **[probe P2, P3]**: cambiano in questa sola funzione. Se `C_Secrets` manca, la lettura procede e conta solo il
@@ -369,7 +390,7 @@ ogni file di test cita i requisiti che prova.
 | `test_locales.lua` | Locales | ADR 0009 regola 3 (chiavi, segnaposti, stringhe vuote o uguali) | M1.3 |
 | `test_bus.lua` | Bus | ordine, duplicati, `Off` durante un `Emit`, errori isolati | M1.4 |
 | `test_compat.lua` | Compat | ogni voce di §8.2 `available`/`missing`/`restricted`/`error` nel mock; valori segreti mai letti; §8.3 con risposte scriptate (valori, solo stato, segreto, `nil`, errore) | M1.4 |
-| `test_api_boundary.lua` | tutti i file di `UI/` | nessuna chiamata diretta a un'API del gioco (ARC-02) | M1.4 |
+| `test_api_boundary.lua` | tutti i file dell'addon tranne Compat | nessuna chiamata diretta a un'API del gioco (ARC-02); `UI/` può solo creare frame | M1.4 |
 | `test_scheduler.lua` | Scheduler | un ticker per nome, limiti di frequenza, arresto a `COMBAT_ENDED`, errore in un tick | M1.4 |
 | `test_diagnostics.lua` | Diagnostics, DiagnosticsBox | sezioni del rapporto, nessun nome, errori ripuliti e contati | M1.4 |
 | `test_config.lua` | Config | DAT-20–DAT-25 di [SPEC-02 §3](SPEC-02-data-model-storage.md#3-savedvariables) | M1.5 |

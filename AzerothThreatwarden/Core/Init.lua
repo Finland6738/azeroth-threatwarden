@@ -1,29 +1,24 @@
 -- Init: the addon object, the Forever check, the lifecycle, combat start and end, the /atw debug sections and the Addon
 -- Compartment functions (SPEC-01 §3.1). Lua 5.1.
 -- Adapted from Azeroth Accord (Core/Init.lua), same owner, GPL-3.0 (ADR 0012).
--- Later modules attach themselves to the private namespace `ns` and, when they need to be reachable from tests, to the
--- addon object (AzerothThreatwarden.Compat, .Config, ...). Modules that do not exist yet (Bus, Compat: M1.4; Config:
--- M1.5; Window: M1.7) are asked for with `if ns.X`.
--- The game calls made here move behind Core/Compat.lua in M1.4.
+-- Modules attach themselves to the private namespace `ns`; the ones loaded before this file (Bus, Compat, Locale) are
+-- attached to the addon object here, the later ones attach themselves (AzerothThreatwarden.Scheduler, ...). Modules
+-- that do not exist yet (Config: M1.5; Window: M1.7) are asked for with `if ns.X`. Every game call goes through
+-- Core/Compat.lua (ARC-02).
 local ADDON_NAME, ns = ...
 ns = ns or {}
 ns.modules = ns.modules or {}
 
 local ATW = LibStub("AceAddon-3.0"):NewAddon(ADDON_NAME, "AceConsole-3.0", "AceEvent-3.0")
 local L = ns.L
+local Compat = ns.Compat
 ns.addon = ATW
-ATW.L, ATW.Locale = L, ns.Locale
+ATW.L, ATW.Locale, ATW.Bus, ATW.Compat = L, ns.Locale, ns.Bus, Compat
 _G.AzerothThreatwarden = ATW
-
-local FOREVER_MIN_INTERFACE, FOREVER_MAX_INTERFACE = 16001, 19999
 
 -- True on WoW Forever: the project id constants when the client has them, else the Interface number (ARC-01).
 function ATW:IsForever()
-	if WOW_PROJECT_ID ~= nil and WOW_PROJECT_CAMELOT ~= nil then
-		return WOW_PROJECT_ID == WOW_PROJECT_CAMELOT
-	end
-	local interface = GetBuildInfo and select(4, GetBuildInfo())
-	return type(interface) == "number" and interface >= FOREVER_MIN_INTERFACE and interface <= FOREVER_MAX_INTERFACE
+	return Compat.IsForever()
 end
 
 local function emit(event, ...)
@@ -57,8 +52,10 @@ end
 function ATW:OnInitialize()   -- ADDON_LOADED: the SavedVariables are available now
 	if ns.Config then ns.Config:Load() end
 	ns.Locale.Apply(ns.Config and ns.Config:Get("account.settings.language") or "auto")
-	if ns.Compat then ns.Compat:Probe() end
+	Compat:Probe()
 	self.isForever = self:IsForever()   -- false: diagnostic mode, no numbers (ARC-01)
+	-- Only /atw debug for now; Core/Commands.lua (M1.7) takes the command over with /threatwarden and the full set.
+	self:RegisterChatCommand("atw", "OnSlashCommand")
 	emit("ADDON_READY")
 end
 
@@ -66,9 +63,28 @@ function ATW:OnEnable()   -- PLAYER_LOGIN
 	self.inCombat = false
 	self:RegisterEvent("PLAYER_REGEN_DISABLED", "OnCombatStart")
 	self:RegisterEvent("PLAYER_REGEN_ENABLED", "OnCombatEnd")
+	self:RegisterEvent("ADDON_RESTRICTION_STATE_CHANGED", "OnRestrictionChanged")
 	for _, module in ipairs(ns.onEnable or {}) do
 		local ok, err = pcall(module)
-		if not ok and geterrorhandler then geterrorhandler()(err) end
+		if not ok then Compat.ReportError(err) end
+	end
+end
+
+-- The client is turning an addon restriction on or off [probe P11]: Compat updates the capability restricted.<Type>.
+function ATW:OnRestrictionChanged(_, kind)
+	Compat:OnRestrictionChanged(kind)
+end
+
+-- /atw: `debug` opens the diagnostic report; no argument toggles the window; anything else says the commands are
+-- coming (the full set is M1.7).
+function ATW:OnSlashCommand(input)
+	local command = type(input) == "string" and input:match("^%s*(%S*)"):lower() or ""
+	if command == "debug" then
+		if ns.Diagnostics then ns.Diagnostics.Show() end
+	elseif command == "" then
+		self:Toggle()
+	else
+		self:Print(L["COMMANDS_SOON"])
 	end
 end
 
@@ -87,15 +103,17 @@ function AzerothThreatwarden_OnAddonCompartmentClick()
 	ATW:Toggle()
 end
 
--- GameTooltip is part of the game's interface code, not of the API dump: looked up when used.
+-- GameTooltip is part of the game's interface code, not of the API dump: Compat looks it up when used.
 function AzerothThreatwarden_OnAddonCompartmentEnter(_, menuButtonFrame)
-	if not GameTooltip then return end
-	GameTooltip:SetOwner(menuButtonFrame or UIParent, "ANCHOR_LEFT")
-	GameTooltip:SetText(L["ADDON_TITLE"])
-	GameTooltip:AddLine(L["COMPARTMENT_HINT"])
-	GameTooltip:Show()
+	local tip = Compat.Tooltip()
+	if not tip then return end
+	tip:SetOwner(menuButtonFrame or Compat.UIParent(), "ANCHOR_LEFT")
+	tip:SetText(L["ADDON_TITLE"])
+	tip:AddLine(L["COMPARTMENT_HINT"])
+	tip:Show()
 end
 
 function AzerothThreatwarden_OnAddonCompartmentLeave()
-	if GameTooltip then GameTooltip:Hide() end
+	local tip = Compat.Tooltip()
+	if tip then tip:Hide() end
 end

@@ -18,8 +18,13 @@
 # ## X-Curse-Project-ID: 0
 
 embeds.xml
+Core\Bus.lua
+Core\Compat.lua
 Core\Locale.lua
 Locales\enUS.lua
 Locales\itIT.lua
 Core\Init.lua
 Core\Features.lua
+Core\Scheduler.lua
+Core\Diagnostics.lua
+UI\DiagnosticsBox.lua
