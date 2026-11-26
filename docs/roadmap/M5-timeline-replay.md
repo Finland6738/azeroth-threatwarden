@@ -185,7 +185,11 @@ M4.R. Nothing is added to the sessions and the account schema stays 5.
   timeline card; the line regions, the frame rate and the series colours in the three themes; the window at small sizes
   and scales; position and speed after a `/reload`); the checklists index; README status.
 - Done when:
-  - [ ] The checklist covers every "Real client" line of M5.2–M5.5 and the exit criterion.
+  - [x] The checklist covers every "Real client" line of M5.2–M5.5 and the exit criterion.
+- *Done (2026-11-26, before M0.7): [M5.md](../checklists/M5.md) with backup of both saved-data files, the switches
+  turned on in the installed copy, eleven sections, a table mapping every "Real client" line, the exit criterion and
+  the resize fix of the wide window to its step, Q18–Q21 tuning notes and a result table; checklists index, README
+  status and changelog. Not run by anyone.*
 
 ### M5.R — Release preparation `v0.5.0`
 - Branch: `chore/release-v0.5.0`

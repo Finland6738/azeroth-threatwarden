@@ -11,3 +11,4 @@ before `v1.0.0`. Results are reported with the *In-game test report* issue form.
 | [M2.md](M2.md) | M2 Threat Monitor | written, **not run yet** (run it with the [M0 probe](../spike/README.md)) |
 | [M3.md](M3.md) | M3 Alerts and Threat Coach | written, **not run yet** (after or with M2; the switches are on from `v0.3.0`) |
 | [M4.md](M4.md) | M4 Recording and report, MVP check | written, **not run yet** (after or with M2 and M3) |
+| [M5.md](M5.md) | M5 Threat Timeline and Replay | written, **not run yet** (after or with M4; switches off until `v0.5.0`) |

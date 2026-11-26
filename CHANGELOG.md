@@ -13,6 +13,11 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
+- M5.6: the [in-game checklist of M5](docs/checklists/M5.md) for the owner: how to back up the saved data and turn the
+  `timeline` and `replay` switches on in the installed copy, the report's *Timeline* card and the replay in a party,
+  dungeon and raid, the three outcomes, interrupted and truncated recordings, the controls, combat, keys, dashed lines
+  and gaps, line regions, frame rate, colours, window sizes (with the resize error fixed above) and the questions
+  Q18–Q21. Not run yet.
 - M5.5: the **window of the Threat Replay** (`UI/ReplayWindow.lua`), behind the `replay` and `timeline` switches, which
   stay off until `v0.5.0`: nothing of it is visible yet. A window of its own (`AzerothThreatwardenReplay`) with the
   fight in its title (date, zone, enemy, length, *Interrupted*, and links to the linked recording), the chart with its
