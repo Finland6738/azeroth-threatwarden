@@ -158,6 +158,25 @@ serie, in ogni tema: il minimo è fra la serie del giocatore e `state-unknown` i
 confondono in gioco lo dice la checklist M5.6. La tavolozza per il daltonismo (M8) potrà cambiare i valori senza cambiare
 queste regole.
 
+### 3.6 Analytics ed esportazione (M6)
+
+Fissato in M6.1; il comportamento è in [SPEC-06 §3 e §4.6](SPEC-06-analytics-export.md#3-la-vista-analytics-nella-scheda-reports-uianalyticslua-m64).
+Nessun token nuovo: la pagina Analytics e la card *Analytics* sono card della disposizione **ampia** come il report
+(M4.5); la casella dell'esportazione è un `Widgets.Dialog` come quella di `/atw debug`.
+
+| Elemento | Aspetto |
+|---|---|
+| Selettore *Recordings · Analytics* | `Widgets.Segmented` in testa alla scheda Reports, a sinistra della riga d'uso |
+| Righe della panoramica | 32 pt da pool, il nome del nemico in `Body` `text-1`, il resto in `Small` `text-2`, i numeri in `MonoSmall`; la riga scelta con lo sfondo `surface-2` e il bordo sinistro `accent` da 2 pt |
+| Tabella del confronto | righe da 22 pt, intestazione in `Th` `text-3`, numeri in `MonoSmall` allineati a destra; la riga *All fights* su `surface-2`; le colonne meno importanti spariscono da destra sotto la larghezza (mai testo tagliato a metà) |
+| Categorie | come la scheda Reports: l'indicatore accanto al valore; *stimata* nel colore `warn` con *at least* o `~`; *Insufficient data*, *Not available* e *Not comparable* in `text-3`, con il motivo nel tooltip |
+| Filtri | `Widgets.Switch` piccoli in una riga, con l'etichetta in `Small` `text-2` |
+| Intervalli instabili nella card | righe cliccabili `accent-text` quando il replay è acceso, `text-2` altrimenti |
+| Casella dell'esportazione | 640 × 460 pt; il campo `surface-2` con il bordo `border`, testo `MonoSmall` `text-1`; l'avviso dei nomi con l'icona `warn` in `state-warning` e il testo `Small` `text-2`; la riga di stato `MonoSmall` `text-3`, `warn` quando qualcosa è rimasto fuori |
+
+Un valore non si riconosce mai dal solo colore (ST-02, SR-03): la categoria ha sempre la parola nel tooltip e il prefisso
+nel testo.
+
 ## 4. Il tema Warden e i token di stato
 
 ### 4.1 Token del tema Warden
@@ -275,6 +294,8 @@ Il nome pubblico è solo "Finland": nessun nome reale, e-mail o percorso persona
 | **M3.4** striscia del Coach, effetto degli avvisi | — | §3.1, §3.3, §3.4, §4.2; [SPEC-04 §3](SPEC-04-alerts-coach.md#3-la-striscia-del-coach-e-leffetto-visivo-uicoachstriplua-uiwindowlua-m34) |
 | **M5.3** widget della timeline | §3 (card), §4 | §3.5, §4.2; [SPEC-05 §4.8](SPEC-05-recording-report-replay.md#48-il-widget-uitimelinelua-m53) |
 | **M5.5** finestra del replay, icone, anteprime | §3 (finestra autonoma), §8 | §3.5; [SPEC-05 §5.5–§5.6](SPEC-05-recording-report-replay.md#55-la-finestra-del-replay-uireplaywindowlua-m55) |
+| **M6.4** pagina e card Analytics, anteprime | §3 (card, tabelle, righe da pool), §8 | §3.6; [SPEC-06 §3](SPEC-06-analytics-export.md#3-la-vista-analytics-nella-scheda-reports-uianalyticslua-m64) |
+| **M6.5** casella dell'esportazione | §3 (`CopyBox`, dialogo) | §3.6; [SPEC-06 §4.6](SPEC-06-analytics-export.md#46-la-casella-uiexportboxlua) |
 
 ## 7. Cosa non è verificato nel client
 
@@ -292,3 +313,5 @@ elencano (TGA e font su Forever, 9-slice a scala frazionaria, fusione `ADD`, col
 - la larghezza delle schede compatte e dei distintivi in italiano (*ATTENZIONE*, *SCONOSCIUTO*).
 - da M5: le regioni `Line` (spessore 1,5 e 2 px, trattini da 4 px) a scale frazionarie; i sei colori delle serie nei
   tre temi; la finestra del replay a 640 × 420 pt.
+- da M6: la tabella del confronto alle larghezze piccole e in italiano; la casella dell'esportazione con 256 KB di
+  testo.

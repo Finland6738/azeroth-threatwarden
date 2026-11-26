@@ -7,6 +7,21 @@ All notable changes to this project are documented here. The format follows
 
 ### Documentation
 
+- M6.1: specification of **Threat Analytics** and the **export** (SPEC-06, Italian), written before the in-game M0
+  probe like M2–M5, with a new decision record
+  ([ADR 0018](docs/adr/0018-analytics-and-export-are-computed-in-memory-and-leave-only-through-a-copy-box.md)).
+  Analytics only read recorded fights and save nothing: where the combat report already has a figure (threshold
+  crossings, time in Warning and Danger, highest recorded percentage, aggro taken, tank changes, data quality) it is
+  the report's own number, and Analytics adds the time with a unit in Warning or Danger, how often the enemy changed
+  hands, the threat closest to the tank, unstable intervals and risk situations per minute. A figure with fewer than
+  half the samples readable, or an enemy monitored for less than half the fight, says *Insufficient data*; *state
+  only* fights are described with game states and no percentages. Fights are compared only against the same enemy,
+  with the same group size, difficulty and role by default and the same recorded thresholds, as medians and ranges;
+  nothing ranks people. The export is text (code blocks for a chat) or CSV in a read-only box that you copy yourself,
+  at most 256 KB, with a warning about your group's names and an option to replace them with *Player 1, Player 2…*;
+  nothing is sent, posted or written to a file. Also: SPEC-00 D17–D20, SPEC-09 Q15 (proposed answer for the export),
+  Q22–Q24 (when a metric is insufficient, what is compared, what is exported) and R12, ui-style §3.6, and the M6 steps
+  detailed in the milestone file. Nothing changes in the addon yet.
 - M5.R: `v0.5.0` released on GitHub; the release step is ticked in the M5 milestone file. CurseForge was skipped (no
   project yet).
 

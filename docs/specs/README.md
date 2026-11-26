@@ -6,7 +6,7 @@ distinguono ciò che è rilevato da ciò che è stimato.
 
 - Stato: **Bozza 1** (2026-11-25), da rivedere dopo il probe M0; SPEC-01, SPEC-02 §3, SPEC-03 §4–§5 e `ui-style.md`
   completati in M1.1; SPEC-03 in M2.1; SPEC-04 in M3.1; SPEC-02 §3.7–§4 e SPEC-05 §1–§3 in M4.1; SPEC-05 §4–§5 e
-  SPEC-02 §3.9 in M5.1 (le righe che aspettano il probe sono marcate **[probe Pn]**)
+  SPEC-02 §3.9 in M5.1; SPEC-06 in M6.1 (le righe che aspettano il probe sono marcate **[probe Pn]**)
 - Architettura in inglese, con i diagrammi: [docs/ARCHITECTURE.md](../ARCHITECTURE.md)
 - Fonte: le [specifiche originali del proprietario](source-specification.md), che restano la fonte di verità su
   **cosa** fa l'addon; questi file le dettagliano e le collegano a roadmap e ADR
@@ -25,7 +25,7 @@ distinguono ciò che è rilevato da ciò che è stimato.
 | 03 | [Threat Monitor e interfaccia](SPEC-03-threat-monitor-ui.md) | stati SAFE/WARNING/DANGER/UNKNOWN, soglie, ordinamenti, finestra (disposizioni compatta e ampia), minimappa e Compartment, comandi, pagina Settings | M1, M2 |
 | 04 | [Avvisi e Threat Coach](SPEC-04-alerts-coach.md) | canali, cooldown, regole, motivazione e confidenza | M3 |
 | 05 | [Registrazione, report, timeline e replay](SPEC-05-recording-report-replay.md) | recorder, sessioni, report di fine combattimento, timeline, replay | M4, M5 |
-| 06 | [Analytics ed esportazione](SPEC-06-analytics-export.md) | metriche descrittive, confronto tra scontri, esportazione testo e CSV | M6 |
+| 06 | [Analytics ed esportazione](SPEC-06-analytics-export.md) | metriche descrittive per scontro (con le definizioni del report e ANA-02), confronto fra scontri con lo stesso nemico e aggregati, vista Analytics nella scheda Reports, esportazione testo e CSV in una casella da copiare, nomi sostituibili | M6 |
 | 07 | [Multi-target, heatmap e profili](SPEC-07-multi-target-heatmap-profiles.md) | più mob, dungeon focus, heatmap, profili per ruolo | M7, M8 |
 | 08 | [Qualità, probe e rilascio](SPEC-08-quality-probe-release.md) | probe M0 (P1–P12), test offline e lunghi, prove nel client, Definition of Done | M0, tutte |
 | 09 | [Rischi e domande aperte](SPEC-09-risks-open-questions.md) | rischi R1…, domande per il proprietario Q1… con risposta proposta | tutte |

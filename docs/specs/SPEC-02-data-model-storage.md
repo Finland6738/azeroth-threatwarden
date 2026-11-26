@@ -477,3 +477,6 @@ sessione interrotta lo fa Storage al caricamento seguente (SPEC-05 §2.2).
 Controlli al caricamento, sessioni danneggiate, limiti e potatura, stima della dimensione ed eliminazione:
 [SPEC-05 §2](SPEC-05-recording-report-replay.md#2-storage-datastoragelua-m43). Come si calcola il report da queste
 colonne: [SPEC-05 §3](SPEC-05-recording-report-replay.md#3-report-di-fine-combattimento-datareportlua-m44).
+Timeline e replay (M5) e Analytics ed esportazione (M6) **leggono** le sessioni e non vi scrivono nulla: nessuna chiave
+nuova, nessuno schema nuovo ([SPEC-06 §0](SPEC-06-analytics-export.md#0-principi),
+[ADR 0018](../adr/0018-analytics-and-export-are-computed-in-memory-and-leave-only-through-a-copy-box.md)).
