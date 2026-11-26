@@ -23,7 +23,7 @@ gaps are visibly different from detected samples. Released as `v0.5.0`.
 | M5.6 In-game checklist M5 | Sonnet | low |
 | M5.R Release preparation `v0.5.0` | Sonnet | medium |
 
-*State (2026-11-26): M5 is complete in code (steps M5.1–M5.6, offline tests in CI) and switched on for `v0.5.0`
+*State (2026-11-26): M5 is complete in code (steps M5.1–M5.6, offline tests in CI) and released as `v0.5.0`
 (M5.R). The exit criterion needs the game and is **open** until the owner runs [the M5 checklist](../checklists/M5.md).*
 
 **Switches.** `timeline` (the model, the chart widget, the report's *Timeline* card) and `replay` (the controller, the
@@ -203,7 +203,14 @@ M4.R. Nothing is added to the sessions and the account schema stays 5.
   ([ADR 0014](../adr/0014-one-version-per-milestone-and-feature-switches.md)); CurseForge only if the owner has set up
   the project and `CF_API_KEY` (SPEC-09 Q6).
 - Done when:
-  - [ ] The `timeline` and `replay` switches are on, the later ones off; changelog promoted, status updated; the checks
+  - [x] The `timeline` and `replay` switches are on, the later ones off; changelog promoted, status updated; the checks
     are green (quick and long).
-  - [ ] The dry run is green, and the tag `v0.5.0` and its GitHub Release (changelog section as notes, zip with only
+  - [x] The dry run is green, and the tag `v0.5.0` and its GitHub Release (changelog section as notes, zip with only
     the addon) exist.
+- *Done (2026-11-26): `timeline` and `replay` switched on, changelog promoted, status and the CurseForge draft updated
+  (commit `355bc7b`, every later switch off, 1367 quick tests and 1408 with `--long`). The dry run of the Release
+  workflow was green; annotated tag `v0.5.0` on that commit,
+  [GitHub Release](https://github.com/Finland6738/azeroth-threatwarden/releases/tag/v0.5.0) with the changelog section
+  as notes and `AzerothThreatwarden-v0.5.0-forever.zip` (189 entries, all in `AzerothThreatwarden/`; `## Version: v0.5.0`).
+  CurseForge skipped (no project ID and no `CF_API_KEY`, SPEC-09 Q6). The zip has not been installed or run in the
+  game; the M0 probe and the M1–M5 checklists are still open.*

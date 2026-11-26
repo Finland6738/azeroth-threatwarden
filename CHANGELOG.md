@@ -5,6 +5,11 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Documentation
+
+- M5.R: `v0.5.0` released on GitHub; the release step is ticked in the M5 milestone file. CurseForge was skipped (no
+  project yet).
+
 ## [0.5.0] - 2026-11-26
 
 The fifth test version: the **Threat Timeline** and the **Threat Replay** (milestone M5), switched on. The report of a
