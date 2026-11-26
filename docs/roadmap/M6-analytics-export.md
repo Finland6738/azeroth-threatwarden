@@ -71,10 +71,19 @@ character schema 2.
   metrics lines of a new *Analytics and export* section of `/atw debug`; `Data/Metrics.lua` in the TOC after
   `Data/Timeline.lua`.
 - Done when:
-  - [ ] Known sessions give known metrics in the three outcomes and in a mixed, an interrupted, a truncated and a linked
+  - [x] Known sessions give known metrics in the three outcomes and in a mixed, an interrupted, a truncated and a linked
     one; every metric the report has equals the report's cell on the same session; ANA-02 switches at 50 % on each base
     and on the coverage; the build in slices equals the one-pass build; the session is unchanged afterwards; nothing is
     built with the switch off.
+- *Done (2026-11-26, before M0.7): `Data/Metrics.lua` behind `analytics` (off): `Metrics.Compute` with the report's
+  cells, a `Report.Walk` pass with the hooks `state`, `cross`, `watch` and the new `holder` (the report's results and
+  tests unchanged), a short pass over the events for the pull of each change and the outcome (the timeline's), a pass
+  over the rows for the closest-to-the-tank percentage; the bases and coverage, ANA-02 compared without rounding, the
+  metrics of §1.4 with their categories, lower bounds and reasons (`low-valid`, `little-monitored`, `no-units`,
+  `few-not-holding`, `short-known`), unstable intervals, interrupted, truncated, `Z e`, linked and mixed sessions;
+  `Metrics.Build` in slices with an LRU cache of 25 dropped at `SESSIONS_CHANGED`; `Metrics.Key`; the `ANALYTICS_*`
+  words in both languages; the *Analytics and export* section of `/atw debug`; the TOC. `test_metrics.lua` (45 tests)
+  and the ANA-01 check of the wording test; SPEC-06 §1.7 *Realizzato in M6.2*.*
 - Tests: `test_metrics.lua` (SPEC-06 §6); `test_report.lua` unchanged and passing; `test_coach_wording.lua` extended to
   the `ANALYTICS_*` keys and the forbidden words of merit (ANA-01).
 - Real client: how long `Metrics.Build` takes on a real raid session (P10); how many metrics are *Insufficient data* or

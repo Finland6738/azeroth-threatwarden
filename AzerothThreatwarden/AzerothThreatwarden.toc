@@ -45,6 +45,7 @@ Data\Storage.lua
 Data\Recorder.lua
 Data\Report.lua
 Data\Timeline.lua
+Data\Metrics.lua
 Data\Replay.lua
 UI\Assets.lua
 UI\Theme.lua

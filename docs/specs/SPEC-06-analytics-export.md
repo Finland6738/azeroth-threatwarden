@@ -189,6 +189,36 @@ metrics = {
   sono più. Mai salvata.
 - `Metrics.Text(metrics, cell)`, `Metrics.Tooltip(…)` danno le parole (chiavi `ANALYTICS_*`).
 
+**Realizzato in M6.2** (`Data/Metrics.lua`, il cambio di `Data/Report.lua`), con queste precisazioni:
+
+- `Report.Walk` ha un quinto richiamo facoltativo, `holder(u, m, t, evento)`, chiamato dove il report conta un `A` (in
+  combattimento, mob > 0, unità con una voce); `Report.Compute` non lo passa e i risultati del report non cambiano.
+  `Metrics.Compute` usa i richiami `state`, `cross`, `watch` e `holder` (`hold` non serve: il tempo tenuto è già nel
+  report). Oltre ai due passaggi di §1.7 fa un **passaggio breve sugli eventi** per il pull di ogni cambio (§1.5) e per
+  le bande della modalità, con le quali l'esito (`values`, `state`, `none`, `mixed`) è quello della timeline (SPEC-05
+  §4.6) sulla stessa sessione (test).
+- ANA-02 confronta **senza arrotondare**: 49,6 % è sotto il 50 %; le percentuali mostrate (`valid`, `coverage`) sono
+  arrotondate. Ogni cella della sessione porta `valid` (sulla sua base) e `coverage` per il tooltip.
+- Motivi nuovi, oltre a quelli del report: `low-valid`, `little-monitored`, `no-units` (nessuna unità `ok` per
+  `crossings`), `few-not-holding` (meno di 3 righe `0`/`1`), `short-known` (meno di `MIN_RATE_TIME` noti per `risk`).
+  `risk` prende lo stato non `ok` di `crossings` o di `aggroTaken`, se ce n'è uno.
+- Il limite inferiore dice perché in `lowerBy`: `unknown` (tempo sconosciuto del mob), `events` (`Z e`), `units`
+  (unità escluse da `crossings`), `partial` (una cella del report già limite inferiore), `cap` (`p = 3843`).
+- `holders.value` è `{ total, tankToTank, toOther, backToTank, other, targets }`: `other` conta i cambi con il segno del
+  tank sconosciuto (`-`), `targets` i cambi del nemico monitorato nello stesso combattimento. `aggroTaken` è il numero
+  delle perdite dell'aggro del report, quindi conta anche una presa con il vecchio detentore sconosciuto.
+- `unstable.value` è `{ count, total, list, changes }` (`total` è il tempo in decimi); `stateTime.value` è
+  `{ warningAny, dangerAny, unknownTime }`; `risk.value` è `{ situations, perMinute, known }`.
+- Le unità (`units`) hanno le celle del report copiate, con ANA-02 sui contatori dell'unità (`no-ticks` senza
+  contatori); `quality` resta quella del report. L'ordine è il giocatore, i tank designati, poi l'indice.
+- `Metrics.Key(s, mob)` dà la chiave di §2.1 (per M6.3); `Metrics.Cached(id)` il calcolo in memoria;
+  `Metrics.ReasonText(cell)` il motivo breve; `Metrics.IntervalText(iv)` un intervallo instabile. Morti e avvisi hanno
+  le parole del report (`Report.CellText`).
+- La sezione *Analytics and export* di `/atw debug` si aggiunge al `PLAYER_LOGIN`, dopo *Timeline and replay*, con gli
+  interruttori, la cache (sessioni su `CACHE`) e l'ultima costruzione (millisecondi, frame, costruzioni); M6.3 e M6.5
+  aggiungono le loro righe. L'ascoltatore di `SESSIONS_CHANGED` si registra alla prima costruzione con l'interruttore
+  acceso.
+
 ## 2. Confronto e aggregati (`Data/Compare.lua`, M6.3)
 
 ### 2.1 Che cosa si può confrontare onestamente

@@ -16,7 +16,8 @@
 --   Report.Walk(session, decoded, step, hooks)  the pass over the events alone (periods, states, holders, crossings),
 --                                           with optional hooks, so that Data/Timeline.lua (M5.2) uses the same
 --                                           functions: hooks.state(u, m, state, from, to), hooks.hold(u, m, from, to),
---                                           hooks.cross(u, m, t, state, event), hooks.watch(m, from, to)
+--                                           hooks.cross(u, m, t, state, event), hooks.watch(m, from, to),
+--                                           hooks.holder(u, m, t, event) where the report counts an A (M6.2)
 --   Report.Intervals, Report.Prevailing(acc) the interval helpers and the prevailing reason, shared with the timeline
 --   Report.CellText(report, cell) ...       the words of the report, for the Reports tab (M4.5)
 --
@@ -228,6 +229,7 @@ local function walkEvents(s, d, acc, step)
 				closeHolder(m, t)
 				if units[u] and m == curMob then holders[m] = { u = u, from = t } end
 				if units[u] then
+					if hooks.holder then hooks.holder(u, m, t, e) end
 					if not acc.heldOrder[u] then
 						acc.heldOrder[u] = true
 						acc.holderList[#acc.holderList + 1] = u

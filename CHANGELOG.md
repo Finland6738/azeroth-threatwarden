@@ -5,6 +5,22 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Added
+
+- M6.2: the **metrics of one fight** for Threat Analytics (`Data/Metrics.lua`), behind the `analytics` switch, which
+  stays off until `v0.6.0`: nothing of it is visible yet. It reads a recorded fight and gives its context, the readable
+  samples and how much of combat the enemy was monitored, the threshold crossings of the units with enough data, the
+  time with a unit in Warning or Danger, how often the enemy changed hands (tank to tank, to a non-tank, back to a
+  tank; never the first holder), how often a non-tank took it, the highest percentage of a unit not holding the enemy,
+  the unstable intervals (3 changes of state or holder within 10 s in one pull), the risk situations per minute of
+  known combat, deaths and alerts. Every figure keeps its category and is *at least* when data were missing; with
+  fewer than half the samples readable, or the enemy monitored for less than half of combat, it says *Insufficient
+  data*, and *Not available* where the client gave nothing. Where the combat report has the same figure it is the
+  report's own number: the report gets one more hook for the changes of holder and its results do not change. Results
+  are built a slice at a time and kept in memory for the 25 latest fights; nothing is saved. `/atw debug` has an
+  *Analytics and export* section (switches and counts only).
+- Tests: `test_metrics.lua`; the wording test covers the new words and forbids words of merit or ranking (ANA-01).
+
 ### Documentation
 
 - M6.1: specification of **Threat Analytics** and the **export** (SPEC-06, Italian), written before the in-game M0

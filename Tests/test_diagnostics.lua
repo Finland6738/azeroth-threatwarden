@@ -13,7 +13,7 @@ end
 
 local SECTIONS = { "Client", "Features", "APIs", "Capabilities", "Restrictions", "Saved data", "Memory", "Bus",
 	"Scheduler", "Demo", "Alerts and Coach", "Look", "Window", "Settings",
-	"Target", "Threat scanner", "Recording", "Timeline and replay", "Last errors" }
+	"Target", "Threat scanner", "Recording", "Timeline and replay", "Analytics and export", "Last errors" }
 
 describe("the report (SPEC-01 §9)", function()
 	it("has the header and the sections in order", function()
