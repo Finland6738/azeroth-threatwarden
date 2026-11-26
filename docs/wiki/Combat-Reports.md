@@ -58,7 +58,7 @@ The report says what happened and when; it never says why.
 
 ## Timeline and replay
 
-> **Coming in `v0.5.0`**: not in the released version yet, and not verified in game.
+> **New in `v0.5.0`**, not verified in game.
 
 Under the first card of a report a **Timeline** card shows the whole fight: the threat of up to six members, who held the
 enemy and the events. A click on it opens the [[Threat Replay|Threat-Replay]] at that moment; the **Replay** button of

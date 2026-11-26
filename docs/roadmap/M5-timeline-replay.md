@@ -23,8 +23,11 @@ gaps are visibly different from detected samples. Released as `v0.5.0`.
 | M5.6 In-game checklist M5 | Sonnet | low |
 | M5.R Release preparation `v0.5.0` | Sonnet | medium |
 
+*State (2026-11-26): M5 is complete in code (steps M5.1–M5.6, offline tests in CI) and switched on for `v0.5.0`
+(M5.R). The exit criterion needs the game and is **open** until the owner runs [the M5 checklist](../checklists/M5.md).*
+
 **Switches.** `timeline` (the model, the chart widget, the report's *Timeline* card) and `replay` (the controller, the
-replay window, the *Replay* button, `/atw replay`) in `Core/Features.lua` stay **off** until M5.R; the replay needs
+replay window, the *Replay* button, `/atw replay`) in `Core/Features.lua` stayed **off** until M5.R; the replay needs
 both. Every step works and is tested behind them (SPEC-05 §9); tests that need them set them to `true` in
 `M.features`. Character schema 2 (`ui.replay`) is written even with the switches off, as the defaults of M4 were before
 M4.R. Nothing is added to the sessions and the account schema stays 5.

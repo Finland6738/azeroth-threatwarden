@@ -2,7 +2,7 @@
 
 *English: [[Threat Replay|Threat-Replay]]*
 
-> **In arrivo con la `v0.5.0`**: non è ancora nella versione pubblicata, e nulla è stato verificato in gioco.
+> **Nuovo nella `v0.5.0`**, non verificato in gioco.
 
 Il replay mostra come si è mossa la threat durante uno scontro che l'addon ha [[registrato|Combat-Reports-it]]: un
 grafico nel tempo, gli eventi e ciò che era registrato nel momento che scegli. Legge soltanto la registrazione: non

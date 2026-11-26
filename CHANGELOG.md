@@ -5,6 +5,20 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-11-26
+
+The fifth test version: the **Threat Timeline** and the **Threat Replay** (milestone M5), switched on. The report of a
+recorded fight gets a *Timeline* card, and a window of its own replays the fight (`/atw replay`) with play, pause, seek,
+step and the events; estimates and gaps are drawn differently from detected readings, and nothing is filled in. It also
+**fixes the Lua error raised when the main window changed size** on its wide layout, present in `v0.4.0`.
+
+It has been checked by offline tests only. The M0 probe (which threat data the client gives an addon) and the in-game
+checklists of [M1](https://github.com/Finland6738/azeroth-threatwarden/blob/v0.5.0/docs/checklists/M1.md), [M2](https://github.com/Finland6738/azeroth-threatwarden/blob/v0.5.0/docs/checklists/M2.md), [M3](https://github.com/Finland6738/azeroth-threatwarden/blob/v0.5.0/docs/checklists/M3.md), [M4](https://github.com/Finland6738/azeroth-threatwarden/blob/v0.5.0/docs/checklists/M4.md) and [M5](https://github.com/Finland6738/azeroth-threatwarden/blob/v0.5.0/docs/checklists/M5.md) were **not run** before this tag, so
+nothing below has been verified in the real client and the
+[MVP check](https://github.com/Finland6738/azeroth-threatwarden/blob/v0.5.0/docs/checklists/M4.md#12-mvp-check) is **not met yet**. What the timeline and the replay can show depends on
+what the game gives an addon (probe P3 and P10). The later parts stay switched off. The probe is a development tool in
+the repository and is not part of this package.
+
 ### Fixed
 
 - The main window no longer raises a Lua error when its wide layout (**Reports** or **Settings**) changes size, and the
@@ -13,7 +27,7 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
-- M5.6: the [in-game checklist of M5](docs/checklists/M5.md) for the owner: how to back up the saved data and turn the
+- M5.6: the [in-game checklist of M5](https://github.com/Finland6738/azeroth-threatwarden/blob/v0.5.0/docs/checklists/M5.md) for the owner: how to back up the saved data and turn the
   `timeline` and `replay` switches on in the installed copy, the report's *Timeline* card and the replay in a party,
   dungeon and raid, the three outcomes, interrupted and truncated recordings, the controls, combat, keys, dashed lines
   and gaps, line regions, frame rate, colours, window sizes (with the resize error fixed above) and the questions
@@ -67,11 +81,18 @@ All notable changes to this project are documented here. The format follows
   section (switches and counts only).
 - Tests: `test_timeline.lua` and the long test of the cost of a view at 30 000 rows.
 
+### Changed
+
+- M5.R: the `timeline` and `replay` switches are on: the timeline model and chart, the report's *Timeline* card, the
+  replay controller and window, the **Replay** button and `/atw replay` of M5.2–M5.5 are part of this version. Entries
+  above that say a part is "behind the switch (off until `v0.5.0`)" or that the switches have to be turned on by hand
+  describe it before this release.
+
 ### Documentation
 
 - M5.1: specification of the **Threat Timeline** and the **Threat Replay** (SPEC-05 §4–§5 and §8–§10, SPEC-02 §3.9,
   Italian), written before the in-game M0 probe like M2–M4, with a new decision record
-  ([ADR 0017](docs/adr/0017-timeline-and-replay-are-views-over-the-recorded-session.md)). Both only read a recorded
+  ([ADR 0017](https://github.com/Finland6738/azeroth-threatwarden/blob/v0.5.0/docs/adr/0017-timeline-and-replay-are-views-over-the-recorded-session.md)). Both only read a recorded
   fight: every point of the chart is a reading the monitor made, the chart never averages or fills in, and a line
   between two readings is solid when they were taken at the recording's own pace, dashed as an *estimate* when they
   are further apart with nothing unknown in between, and absent over a gap, which stays visible with its reason

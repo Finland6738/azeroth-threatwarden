@@ -936,11 +936,12 @@ Ogni test che passa per il monitor gira sui tre esiti (`Fight.OUTCOMES`, [SPEC-0
 | `UI/Assets.lua`, `tools/make_media.py` (cambio) | le icone `play`, `pause`, `step-back`, `step-forward`, `skip-back`, `skip-forward` | — | M5.5 |
 
 - **Interruttori** (`Core/Features.lua`, ADR 0014): `timeline` (il modello, il widget, la card *Timeline* del report) e
-  `replay` (il controllore, la finestra, il pulsante *Replay*, `/atw replay`) restano **spenti** fino a M5.R; il replay
+  `replay` (il controllore, la finestra, il pulsante *Replay*, `/atw replay`) sono rimasti **spenti** fino a M5.R e sono
+  **accesi** dalla `v0.5.0`; il replay
   chiede tutti e due (senza la timeline non ha grafico). Spento vuol dire: nessun ascoltatore e nessuna regione,
   `Timeline.Build` e `Replay.Open` rispondono `off`, nessuna card né pulsante, `/atw replay` risponde *This arrives in
   v0.5.0.* Lo schema 2 del personaggio si scrive comunque, come i predefiniti di M4 prima di M4.R. I test che li
-  vogliono accesi li mettono a `true` in `M.features`.
+  vogliono spenti li mettono a `false` in `M.features`.
 - **`/atw debug`**, sezione *Timeline and replay*: interruttori; il modello in memoria (righe, eventi, serie, esito,
   millisecondi della costruzione); le regioni dei pool (linee, texture, quante volte si è raggiunto il limite e si è
   raddoppiato `BUCKET_PX`, `lines` di `Theme.Probes`); il replay (aperto, in riproduzione, velocità) e

@@ -59,7 +59,7 @@ Il report dice cosa è successo e quando; non dice mai perché.
 
 ## Timeline e replay
 
-> **In arrivo con la `v0.5.0`**: non è ancora nella versione pubblicata, e non è verificato in gioco.
+> **Nuovo nella `v0.5.0`**, non verificato in gioco.
 
 Sotto la prima card di un report, la card **Timeline** mostra lo scontro intero: la threat di al più sei membri, chi
 teneva il nemico e gli eventi. Un clic apre il [[Replay della threat|Threat-Replay-it]] in quel momento; il pulsante

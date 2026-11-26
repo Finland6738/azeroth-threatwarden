@@ -663,7 +663,7 @@ describe("Build (SPEC-05 §4.2)", function()
 		local s = add(build(known()))
 		local text = Mock.ns.Diagnostics.Report()
 		contains(text, "== Timeline and replay ==")
-		contains(text, "switches: timeline on, replay off")
+		contains(text, "switches: timeline on, replay on")
 		contains(text, "model: none in memory")
 		TL().Build(s.id, function() end)
 		text = Mock.ns.Diagnostics.Report()
@@ -675,7 +675,8 @@ end)
 
 describe("with the `timeline` switch off (ADR 0014)", function()
 	before_boot(function(M)
-		M.features = { monitor = true, alerts = true, coach = true, recording = true, reports = true, timeline = false }
+		M.features = { monitor = true, alerts = true, coach = true, recording = true, reports = true, timeline = false,
+			replay = false }
 	end)
 
 	it("builds nothing and listens to nothing", function()

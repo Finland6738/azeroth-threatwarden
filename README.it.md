@@ -7,25 +7,24 @@ della threat, di coaching e di analisi dei combattimenti per **World of Warcraft
 quale mob, ti avvisa prima che tu prenda l'aggro, registra i combattimenti e spiega cosa è successo, distinguendo sempre
 ciò che è **noto** da ciò che è **stimato**.
 
-> **Stato: sviluppo iniziale. La [`v0.4.0`](https://github.com/Finland6738/azeroth-threatwarden/releases/tag/v0.4.0) è
-> la quarta versione di prova e completa l'MVP nel codice: aggiunge la registrazione dei combattimenti e il report al
-> monitor della threat, agli avvisi e al Threat Coach, non verificati in gioco.**
+> **Stato: sviluppo iniziale. La [`v0.5.0`](https://github.com/Finland6738/azeroth-threatwarden/releases/tag/v0.5.0) è
+> la quinta versione di prova: aggiunge la Timeline e il Replay della threat al monitor della threat, agli avvisi, al
+> Threat Coach, alla registrazione dei combattimenti e al report, non verificati in gioco.**
 > Si scarica da [GitHub Releases](https://github.com/Finland6738/azeroth-threatwarden/releases)
 > ([come installarla](docs/wiki/Installation-it.md)). La scheda Monitor mostra chi minaccia il nemico che selezioni, il
 > tank, la percentuale, il margine, la tendenza e uno stato, oppure *solo stato* / *sconosciuto* con il motivo quando il
 > client non dà numeri; `/atw demo` riproduce uno scontro inventato. Una striscia in quella scheda ti avvisa una volta
 > quando un rischio comincia e dà un breve consiglio con il suo motivo ([Avvisi e Coach](docs/wiki/Alerts-and-Coach-it.md)),
 > mai in chat; `/atw mute` silenzia gli avvisi. I combattimenti in gruppo o in istanza si registrano sul tuo computer, e
-> la scheda Report (`/atw reports`) ne mostra il [report](docs/wiki/Combat-Reports-it.md). Soglie (Attenzione 82 %,
+> la scheda Report (`/atw reports`) ne mostra il [report](docs/wiki/Combat-Reports-it.md), con la timeline della threat; il
+> [replay](docs/wiki/Threat-Replay-it.md) (`/atw replay`) ripercorre uno scontro registrato. Soglie (Attenzione 82 %,
 > Pericolo 91 %), cooldown e frequenza di lettura sono provvisori
 > ([Monitor della threat](docs/wiki/Threat-Monitor-it.md)). Ha anche le impostazioni salvate (con versione e
 > migrazioni), l'aspetto dell'ecosistema, una finestra spostabile con le Impostazioni e la pagina Info con i crediti, i
 > [comandi](docs/wiki/Commands-it.md) `/atw` e `/threatwarden`, il pulsante della minimappa e la voce nell'Addon
 > Compartment. È controllata solo da test offline: la sonda M0 e le verifiche in gioco della
-> [M1](docs/checklists/M1.md), della [M2](docs/checklists/M2.md), della [M3](docs/checklists/M3.md) e della
-> [M4](docs/checklists/M4.md) (in inglese) sono ancora aperte. Timeline e
-> Replay della threat sono su `main`, spenti fino alla `v0.5.0`; anche la loro
-> [verifica in gioco](docs/checklists/M5.md) è aperta. La
+> [M1](docs/checklists/M1.md), della [M2](docs/checklists/M2.md), della [M3](docs/checklists/M3.md), della
+> [M4](docs/checklists/M4.md) e della [M5](docs/checklists/M5.md) (in inglese) sono ancora aperte. La
 > [sonda](docs/spike/README.md) (uno strumento di sviluppo, mai distribuito) verifica nel client vero quali dati di
 > threat WoW Forever dà a un addon, perché in alcune situazioni il client può nascondere i valori agli addon: il client e
 > le funzioni della threat, compreso se i loro valori sono segreti (P1–P4), quali unità e mob rispondono, gli eventi

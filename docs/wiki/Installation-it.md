@@ -2,9 +2,9 @@
 
 *English: [[Installation|Installation]]*
 
-> **La `v0.4.0` è la quarta versione di prova: aggiunge i [[report dei combattimenti|Combat-Reports-it]] al
-> [[monitor della threat|Threat-Monitor-it]] e ad [[Avvisi e Coach|Alerts-and-Coach-it]].** Non è ancora stata
-> verificata nel client vero.
+> **La `v0.5.0` è la quinta versione di prova: aggiunge la Timeline e il [[Replay della threat|Threat-Replay-it]] al
+> [[monitor della threat|Threat-Monitor-it]], ad [[Avvisi e Coach|Alerts-and-Coach-it]] e ai
+> [[report dei combattimenti|Combat-Reports-it]].** Non è ancora stata verificata nel client vero.
 
 ## Da una versione pubblicata
 

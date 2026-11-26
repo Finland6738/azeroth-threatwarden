@@ -7,10 +7,11 @@
 local function A() return AzerothThreatwarden end
 
 -- SPEC-01 §3.4: the switches, and those on in this version (M2.R: the threat monitor; M3.R: alerts
--- and Coach; M4.R: recording and report).
+-- and Coach; M4.R: recording and report; M5.R: timeline and replay).
 local SWITCHES = { "alerts", "analytics", "coach", "export", "heatmap", "monitor", "multitarget", "profiles",
 	"recording", "replay", "reports", "timeline" }
-local SHIPPED_ON = { alerts = true, coach = true, monitor = true, recording = true, reports = true }
+local SHIPPED_ON = { alerts = true, coach = true, monitor = true, recording = true, reports = true, replay = true,
+	timeline = true }
 
 local function switchNames()
 	local names = {}
@@ -59,7 +60,8 @@ describe("a part that is switched off", function()
 		"UNIT_TARGET", "GROUP_ROSTER_UPDATE", "ENCOUNTER_START", "ENCOUNTER_END" }
 
 	before_boot(function(M)
-		M.features = { monitor = false, alerts = false, coach = false, recording = false, reports = false }
+		M.features = { monitor = false, alerts = false, coach = false, recording = false, reports = false,
+			timeline = false, replay = false }
 	end)
 
 	it("registers none of the game events of the later parts (SPEC-01 §8.2)", function()

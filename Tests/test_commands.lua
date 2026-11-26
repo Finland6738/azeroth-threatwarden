@@ -103,7 +103,8 @@ for _, code in ipairs({ "enUS", "itIT" }) do
 			contains(out, "/atw demo - ")
 			contains(out, "/atw mute - ")
 			contains(out, "/atw reports - ")
-			eq(#Mock.output, #NAMES + 5)
+			contains(out, "/atw replay - ")
+			eq(#Mock.output, #NAMES + 6)
 		end)
 
 		it("say what an unknown word is", function()

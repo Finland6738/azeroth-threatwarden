@@ -399,7 +399,7 @@ end)
 describe("the Timeline card (SPEC-05 §4.8, M5.3)", function()
 	before_boot(function(M)
 		local on = ALL()
-		on.timeline = true
+		on.timeline, on.replay = true, false
 		M.features = on
 	end)
 
@@ -525,7 +525,11 @@ describe("the Timeline card (SPEC-05 §4.8, M5.3)", function()
 	end)
 
 	it("has no card with the switch off", function()
-		T.boot(function(M) M.features = ALL() end)
+		T.boot(function(M)
+			local off = ALL()
+			off.timeline, off.replay = false, false
+			M.features = off
+		end)
 		local s = add{}
 		local view = openTab()
 		view:Select(s.id)

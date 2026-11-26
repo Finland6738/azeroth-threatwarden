@@ -2,7 +2,7 @@
 
 *Italiano: [[Replay della threat|Threat-Replay-it]]*
 
-> **Coming in `v0.5.0`**: it is not in the released version yet, and nothing of it has been verified in game.
+> **New in `v0.5.0`**, not verified in game.
 
 The replay shows how threat moved during a fight the addon [[recorded|Combat-Reports]]: a chart over time, the events,
 and what was recorded at the moment you choose. It only reads the recording: it never reads the game and changes

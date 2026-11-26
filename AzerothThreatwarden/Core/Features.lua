@@ -3,7 +3,8 @@
 -- While a switch is off nothing of the part is visible, it registers no game event and it writes no data; a command of
 -- it answers that it arrives in a later version. Modules ask Features.On(name) when they act, never once at load.
 -- Each switch is turned on by the release step of its milestone: `monitor` is on since v0.2.0, `alerts` and `coach`
--- since v0.3.0, `recording` and `reports` since v0.4.0, the others are off.
+-- since v0.3.0, `recording` and `reports` since v0.4.0, `timeline` and `replay` since v0.5.0,
+-- the others are off.
 --
 --   monitor          threat reading, threat list, states, demo      M2.R
 --   alerts, coach    alerts; Threat Coach                            M3.R
@@ -23,8 +24,8 @@ local Features = {
 	coach = true,
 	recording = true,
 	reports = true,
-	timeline = false,
-	replay = false,
+	timeline = true,
+	replay = true,
 	analytics = false,
 	export = false,
 	multitarget = false,

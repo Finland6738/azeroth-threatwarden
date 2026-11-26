@@ -21,7 +21,7 @@ own chat window, in the addon's language; nothing is ever posted to other player
 | `/atw demo stop` | ends demo mode (`/atw demo off` too) |
 | `/atw mute` | mutes the [alerts](Alerts-and-Coach#muting) until the end of this fight, or of the next one; typed again, unmutes them |
 | `/atw reports` | opens the [Reports tab](Combat-Reports) |
-| `/atw replay` | opens the [Threat Replay](Threat-Replay) of the latest finished fight (from `v0.5.0`) |
+| `/atw replay` | opens the [Threat Replay](Threat-Replay) of the latest finished fight |
 | `/atw replay 2` | the replay of the second fight of the list (1 is the newest) |
 
 Until its version, `/atw reports` and `/atw replay` answer with the version that will bring them.
