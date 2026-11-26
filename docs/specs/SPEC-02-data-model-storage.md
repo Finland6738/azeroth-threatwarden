@@ -1,8 +1,8 @@
 # SPEC-02: Modello dati e salvataggio
 
 > Fonte: [specifiche originali](source-specification.md) §5.4, §7.3–§7.5. Impostazioni e schema 1 completati in
-> **M1.1** (§3); modello della threat (§1–§2) e schema 2 (§3.5) in **M2.1**; registrazioni da completare in **M4.1**
-> (§4).
+> **M1.1** (§3); modello della threat (§1–§2) e schema 2 (§3.5) in **M2.1**; schema 3 (§3.6) in **M3.1**; schema 4 e sessioni
+> registrate (§3.7, §4) in **M4.1**.
 
 ## 1. `ThreatRecord` (in memoria)
 
@@ -107,9 +107,9 @@ lo **schema 1** qui sotto è quello che M1.5 realizza; nessuna chiave dipende da
 
 | Chiave | Contenuto | Da |
 |---|---|---|
-| `db.schema` | numero di versione dello schema | M1 (schema 1), M2 (schema 2, §3.5), M3 (schema 3, §3.6) |
-| `db.settings` | lingua, aspetto, minimappa (M1); soglie, frequenza, quando mostrare la finestra, ordinamento (M2); avvisi e Coach (M3, §3.6); limiti delle registrazioni (M4) | M1 → |
-| `db.sessions` | registrazioni (§4) | M4 |
+| `db.schema` | numero di versione dello schema | M1 (schema 1), M2 (schema 2, §3.5), M3 (schema 3, §3.6), M4 (schema 4, §3.7) |
+| `db.settings` | lingua, aspetto, minimappa (M1); soglie, frequenza, quando mostrare la finestra, ordinamento (M2); avvisi e Coach (M3, §3.6); registrazione e suoi limiti (M4, §3.7) | M1 → |
+| `db.sessions` | registrazioni (§4), la più vecchia prima; il contenuto lo controlla `Data/Storage.lua` | M4 (schema 4, §3.7) |
 | `db.profiles` | preset per ruolo | M8 |
 | `db.corrupt` | tabelle danneggiate messe da parte (§3.4) | M1 |
 | `char.schema`, `char.ui` | finestra: aperta, blocco, scala, posizione, dimensioni, ultima scheda | M1 (schema 1) |
@@ -255,22 +255,183 @@ solo posto, `Config.ALERTS_DEFAULTS` e `Config.COACH_DEFAULTS` (intervalli `Conf
 Il silenzio di `/atw mute`, l'esclusione di un'unità per la sessione e i cooldown in corso **non** si salvano; nessun
 nome di giocatore nelle impostazioni (§3.3): l'esclusione per sessione si tiene in memoria per `unitKey`.
 
-## 4. Sessioni registrate **[da completare in M4.1]**
+### 3.7 Schema 4 (M4): registrazione e sessioni
+
+Fissato in **M4.1**, realizzato da **M4.2** (le chiavi, la migrazione, `sessions`) e **M4.3** (le regole del contenuto di
+`sessions`, che controlla `Data/Storage.lua`); la card *Recording* è di M4.5
+([SPEC-05 §3.6](SPEC-05-recording-report-replay.md#36-la-scheda-reports-e-la-card-recording-m45)). Lo schema
+dell'account passa a **4** con la tabella `settings.recording` e la tabella `sessions` alla radice; quello del
+personaggio resta 1 (l'enumerazione `Config.TABS` guadagna `reports`, il che non cambia la forma dei dati: una versione
+precedente dell'addon che legge `reports` lo riporta al predefinito come qualsiasi valore sconosciuto). La migrazione
+`Config.migrations.account[4]` non fa nulla (i predefiniti aggiungono `settings.recording` e `sessions = {}`), ma esiste
+e ha il suo test, che parte dai dati dello schema 3 (DAT-20). I predefiniti hanno un solo posto,
+`Config.RECORDING_DEFAULTS` (intervalli `Config.RECORDING`, enumerazione `Config.RECORD_WHEN`): sono le risposte
+proposte di [Q8](SPEC-09-risks-open-questions.md) (numero e dimensione) e [Q16](SPEC-09-risks-open-questions.md) (quando,
+frequenza, avviso).
+
+| Percorso | Tipo | Predefinito | Regola | Uso |
+|---|---|---|---|---|
+| `settings.recording` | tabella | `{}` | — | |
+| `settings.recording.enabled` | booleano | `true` | — | registrazione accesa ([SPEC-05 §1.1](SPEC-05-recording-report-replay.md#11-quando-si-registra)) |
+| `settings.recording.when` | stringa | `"group"` | enum `group`, `instance`, `always` | in gruppo o in istanza; solo in istanza; sempre (Q16) |
+| `settings.recording.rate` | intero | `2` | 1–5 (Hz) | frequenza del tick di registrazione ([SPEC-05 §1.3](SPEC-05-recording-report-replay.md#13-campioni-il-tick-di-registrazione)) |
+| `settings.recording.maxSessions` | intero | `25` | 5–100 | sessioni tenute (Q8) |
+| `settings.recording.maxKB` | intero | `2048` | 512–8192 (KB) | dimensione stimata massima di tutte le sessioni (Q8) |
+| `settings.recording.notice` | booleano | `false` | — | avviso di fine scontro nella finestra ([SPEC-05 §3.5](SPEC-05-recording-report-replay.md#35-avviso-di-fine-scontro)) |
+| `sessions` | array | `{}` | tabella; il contenuto lo controlla `Storage` (§4.6) | le sessioni registrate, la più vecchia prima |
+
+`Config` controlla di `sessions` solo che sia una tabella (altrimenti voce in `corrupt` con il solo tipo e tabella
+nuova); ogni sessione la controlla `Data/Storage.lua` al caricamento e una sessione danneggiata va in `corrupt` da sola
+(§4.6), senza toccare le altre né le impostazioni. Per questo `Config` offre `Config:SetAside(path, value)` (la stessa
+copia limitata di §3.4, M4.3). *Reset settings* non tocca `sessions` (§3.4); le sessioni si eliminano solo da Reports o
+dalla card *Recording* ([SPEC-05 §2.5](SPEC-05-recording-report-replay.md#25-eliminare-una-o-tutte-le-registrazioni)).
+
+## 4. Sessioni registrate (schema 4, M4)
+
+Fissato in **M4.1** ([ADR 0016](../adr/0016-recordings-are-the-monitors-readings-in-compact-columns.md)). Una sessione
+è ciò che il monitor **ha letto** durante uno scontro (o una catena di pull), nel formato che la scrive il recorder
+(M4.2) e la controlla lo storage (M4.3); il comportamento (quando si apre, che cosa si scrive, limiti, eliminazione) è
+in [SPEC-05 §1–§2](SPEC-05-recording-report-replay.md). Tutti i tempi sono in **decimi di secondo** dall'inizio della
+sessione (`GetTime()` al primo `COMBAT_STARTED`); la data dell'elenco è `GetServerTime()`.
+
+### 4.1 Intestazione
 
 ```lua
 Session = {
-    id = "s-<time>-<n>", startedAt = 0, endedAt = nil, complete = false,
-    zone = nil, instanceType = nil,          -- "none", "party", "raid"…
-    mobs = { [mobKey] = { name, guid } },    -- mobKey stabile per sessione
-    units = { [unitKey] = { name, role } },   -- nomi del gruppo, solo in locale (Q15)
-    samples = { ... },                       -- colonne compatte: t, unitKey, mobKey, pct, situation, src
-    events = { ... },                        -- t, tipo, dati: combat start/end, target change, death, threshold, tank change
-    stats = { ... },                         -- riepilogo calcolato a fine scontro
+    id = "1764100000-1",     -- GetServerTime() all'apertura, "-", contatore delle sessioni aperte da questo caricamento;
+                             -- unico nell'account (Storage aggiunge "-b", "-c"… a un doppione, §4.6)
+    started = 1764100000,    -- GetServerTime() all'apertura: la data mostrata nell'elenco
+    dur = 0,                 -- decimi: dal primo evento C all'ultimo c; in una sessione interrotta all'ultimo t scritto
+    fight = 0,               -- decimi in combattimento: la somma dei periodi C…c (i pull a catena tolgono le pause)
+    state = "open",          -- open (solo mentre si registra) | complete | interrupted
+    ended = nil,             -- combat (finita normalmente) | reload | login | unknown (interrotta, SPEC-05 §1.6)
+    stamp = false,           -- true: l'evento X è stato scritto a PLAYER_LOGOUT
+    after = nil,             -- id della sessione interrotta che questa continua (reload in combattimento)
+    trunc = nil,             -- t dal quale i campioni si sono fermati per un limite (evento Z)
+    group = "solo",          -- solo | party | raid all'apertura
+    zone = nil,              -- GetRealZoneText() all'apertura; nil se assente, vuoto o segreto
+    inst = "none",           -- tipo d'istanza (GetInstanceInfo / IsInInstance): none, party, raid, pvp, arena, scenario
+    diff = nil,              -- difficultyID di GetInstanceInfo, nil se non leggibile
+    rec = {                  -- le condizioni della registrazione all'apertura, perché il report le dica
+        hz = 2, monitorHz = 5, maxUnits = 40,   -- frequenza di registrazione e del monitor, unità per scansione
+        warning = 80, danger = 95,              -- soglie in vigore (gli stati di values dipendono da loro)
+        mode = "values",                        -- modalità del monitor all'apertura (MON-04)
+        version = "v0.4.0",                     -- versione dell'addon che ha registrato
+    },
+    units = { { name = "Thrall", class = "SHAMAN", role = "TANK", token = "party1", me = nil, pet = nil }, … },
+    mobs = { { name = "Hogger", class = "elite", npc = 448 }, … },
+    n = 0,                   -- righe di campioni
+    cols = { t = "", m = "", u = "", p = "", s = "" },   -- §4.2: stringhe in una sessione chiusa
+    ne = 0,                  -- eventi
+    ev = "",                 -- §4.3: una stringa in una sessione chiusa
+    q = { v = {}, s = {}, x = {} },   -- per indice di unità: tick con valori, con il solo stato, sconosciuti (SPEC-05 §1.3)
+    sum = nil,               -- riepilogo per l'elenco, calcolato alla chiusura (SPEC-05 §3.4); nil finché manca
+    -- solo mentre la sessione è aperta (o interrotta e non ancora finita da Storage, SPEC-05 §2.2):
+    parts = { t = {}, m = {}, u = {}, p = {}, s = {}, ev = {} },   -- pezzi già impacchettati (stringhe)
+    buf = { t = {}, m = {}, u = {}, p = {}, s = {}, ev = {} },     -- al più CHUNK righe ed eventi non ancora impacchettati
 }
 ```
 
-- Timestamp relativi all'inizio dello scontro; identificativo univoco; nessun campione inventato per i buchi (i buchi
-  sono registrati come tali).
-- Limiti predefiniti proposti: 25 sessioni, circa 2 MB stimati in tutto, le più vecchie eliminate per prime (Q8).
-- Sessioni incomplete (reload, disconnessione) chiuse al caricamento successivo e marcate `complete = false`.
-- Eliminazione di una o di tutte le registrazioni dall'interfaccia.
+- `units[i]`: il nome (`nil` se segreto o assente), `classFile`, il ruolo (`TANK`, `HEALER`, `DAMAGER`, `nil`), il token
+  della prima lettura (`player`, `pet`, `party2`, `raid13`: l'etichetta quando il nome manca), `me = true` per il
+  giocatore e `pet = true` per il suo famiglio. Le voci si aggiungono alla prima riga o al primo evento dell'unità, in
+  quell'ordine; al più **61** (`Storage.LIMITS.units`). Nessun GUID di un giocatore si salva: `unitKey` resta in memoria
+  (DAT-13), e i nomi stanno solo qui ([Q15](SPEC-09-risks-open-questions.md)).
+- `mobs[i]`: il nome (`nil` se segreto), la classificazione (`UnitClassification`) e `npc`, il numero della creatura
+  letto dal sesto campo di un GUID leggibile `Creature-…` o `Vehicle-…` (`nil` altrimenti); mai il GUID intero. Un
+  `mobKey` nuovo (anche lo stesso mob ritrovato come `tgt:n` senza GUID) è una voce nuova; al più **61**.
+- `q.v[i]`, `q.s[i]`, `q.x[i]`: interi ≥ 0, uno per unità; danno la qualità dei dati del report (SPEC-05 §3.2).
+- `sum`: `{ mob, worst, cross, aggro, valid }` (indice del mob principale, stato peggiore del giocatore `S W D U` o
+  `nil`, salite a WARNING e DANGER di tutte le unità, prese dell'aggro da parte di un non tank, percentuale di tick con
+  dati leggibili): solo per l'elenco; il report lo ricalcola sempre dalle colonne.
+- Chiavi sconosciute di una sessione restano come sono (DAT-25).
+
+### 4.2 Colonne compatte dei campioni
+
+Ogni colonna è **una stringa** di campi a larghezza fissa nell'alfabeto in base 62
+`0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz` (cifra = posizione − 1, la più significativa prima);
+`-` riempie un campo senza valore. La riga `i` di una colonna larga `w` sta ai caratteri `(i − 1)·w + 1 … i·w`: si
+legge senza decodificare il resto (M5 cerca un tempo con una ricerca binaria su `t`). Solo caratteri alfanumerici e `-`:
+il client li salva senza sequenze di escape.
+
+| Colonna | Larghezza | Contenuto | Intervallo |
+|---|---|---|---|
+| `t` | 3 | tempo della **lettura** (`observedAt`), in decimi dall'inizio, mai minore del precedente | 0–238 327 (6 h 37 min) |
+| `m` | 1 | indice in `mobs` | 1–61 |
+| `u` | 1 | indice in `units` | 1–61 |
+| `p` | 2 | `scaledPercent` × 10 arrotondato, fra 0 e 3843 (oltre: 3843); `--` senza valore | 0–384,3 % |
+| `s` | 1 | codice della lettura (tabella sotto) | |
+
+| Codice `s` | Lettura | `p` | Categoria |
+|---|---|---|---|
+| `0` `1` `2` `3` | `values`, situazione 0–3 (2 e 3: tiene il mob) | il valore | rilevata |
+| `4` | `values`, percentuale leggibile ma situazione no | il valore | rilevata |
+| `a` `b` `c` `d` | `state` (*state only*), situazione 0–3 | `--` | rilevata |
+| `S` `E` `M` `U` `X` | sconosciuta: `secret`, `error`, `missing`, `no-unit`, altro motivo | `--` | sconosciuta |
+| `T` | la lettura è diventata vecchia (`stale`, DAT-12) | `--` | sconosciuta |
+
+Un'unità **assente** dalla lista del mob (motivo `nil`, MON-05) non ha righe: la sua entrata e la sua uscita sono negli
+eventi `S` (§4.3). Margine, trend e tempo al superamento **non** si salvano: il report li ricalcola dai valori rilevati,
+come calcolati o stimati (DAT-04). Una riga costa 8 caratteri: 30 000 righe (il limite di una sessione) sono circa
+240 KB.
+
+### 4.3 Eventi
+
+`ev` è una stringa di record da **12** caratteri, uno per evento, nello stesso alfabeto:
+
+| Campo | Larghezza | Contenuto |
+|---|---|---|
+| `t` | 3 | tempo dell'evento (`GetTime()` quando l'addon lo riceve), in decimi, mai minore del precedente |
+| `k` | 1 | tipo (tabella sotto) |
+| `m`, `u`, `v` | 1 ciascuno | mob, unità, seconda unità: indici, `0` = nessuno |
+| `a`, `b`, `c` | 1 ciascuno | codici del tipo, `-` = nessuno |
+| `n` | 2 | numero in base 62 (0–3843) o due codici, `--` = nessuno |
+
+| `k` | Evento | `m` | `u` | `v` | `a` | `b` | `c` | `n` | Da | Categoria |
+|---|---|---|---|---|---|---|---|---|---|---|
+| `C` | combattimento iniziato | — | — | — | `1` primo, `2` pull a catena, `r` dopo un reload in combattimento | — | — | — | `COMBAT_STARTED` | rilevata |
+| `c` | combattimento finito | — | — | — | — | — | — | — | `COMBAT_ENDED` | rilevata |
+| `T` | mob monitorato cambiato | nuovo, `0` nessuno | — | — | senza mob: `n` nessuno, `d` morto, `l` perso; `-` con un mob | — | — | — | `TARGET_CHANGED`, `TargetTracker.status` | rilevata |
+| `S` | stato mostrato | mob | unità | — | nuovo `S` `W` `D` `U`, `-` uscita dalla lista | vecchio, `-` entrata | motivo (tabella dei motivi) | — | `STATE_CHANGED`, `row.stateReason` | calcolata in `values`, rilevata in `state` (dalla modalità in vigore, evento `M`) |
+| `A` | chi tiene il mob | mob | nuovo | vecchio, `0` il primo | `1` il nuovo è trattato da tank, `0` no | lo stesso per il vecchio | — | — | `AGGRO_CHANGED`, `row.isTank` | rilevata |
+| `M` | modalità del monitor | — | — | — | `v` values, `s` state, `n` none | motivo | — | — | `THREAT_MODE_CHANGED` | rilevata |
+| `D` | morte | il mob (se è il mob) | l'unità, `0` se è il mob | — | `g` `UNIT_DIED`, `p` `PLAYER_DEAD`, `t` TargetTracker | — | — | — | **[probe P7]** | rilevata |
+| `L` | avviso | mob | soggetto | altra unità | tipo `w d a m l p o` (`warning`, `danger`, `aggro`, `margin`, `lost`, `pet`, `other`) | gravità `1`–`3` | `1` silenziato, `0` | categoria e confidenza dell'avviso (codici) | `ALERT_RAISED` | quella dell'avviso |
+| `H` | consiglio del Coach | — | giocatore | — | regola: `1`–`7` T1–T7, `8`–`C` D1–D5, `D` A1 | categoria (codice) | confidenza (codice) | — | `COACH_TIP`, solo quando la regola cambia | quella del consiglio |
+| `N` | incontro | — | — | — | `s` inizio, `e` fine | `1` riuscito, `0` no (fine) | — | `encounterID` se ≤ 3843 | `ENCOUNTER_START`, `ENCOUNTER_END` **[probe P7]** | rilevata |
+| `G` | buco del tick di registrazione | — | — | — | `t` | — | — | durata in decimi (al più 3843) | Recorder | rilevata |
+| `X` | sessione interrotta | — | — | — | `o` `PLAYER_LOGOUT` | — | — | — | Recorder | rilevata |
+| `Z` | limite raggiunto | — | — | — | `r` righe, `u` unità, `m` mob, `t` tempo, `e` eventi | — | — | — | Recorder | — |
+
+Codici comuni: **categoria** `d` rilevata, `c` calcolata, `e` stimata, `p` prevista, `h` ipotesi, `u` sconosciuta;
+**confidenza** `h` alta, `m` media, `l` bassa, `u` sconosciuta. **Motivi** (di `S` e `M`): `-` nessuno, `p` predicted,
+`a` aggro, `l` lost-aggro, `b` behind, `o` alone, `g` margin-unknown, `s` state-only, `S` secret, `M` missing, `E`
+error, `U` no-unit, `T` stale, `X` altro. Gli stati di `S` sono quelli **mostrati**, dopo isteresi e permanenza
+(SPEC-03 §2.4), gli stessi che vedono il monitor e gli avvisi. Taunt e abilità **non** si registrano in M4 (REC-03:
+nessun modo affidabile prima di P7). Un evento costa 12 caratteri: 6 000 eventi (il limite) sono circa 72 KB.
+
+### 4.4 Mentre la sessione è aperta
+
+Il recorder scrive righe ed eventi in `buf` (array di numeri e di codici, riusati); ogni **256** righe (`CHUNK`) le
+impacchetta in un pezzo per colonna, aggiunto a `parts`, e svuota `buf` (lo stesso per gli eventi). La sessione aperta
+sta **già** in `sessions`, quindi un `/reload` o un logout la salvano com'è, con al più 255 righe in forma estesa
+(**[probe P12]**). Alla chiusura i pezzi e `buf` diventano una stringa per colonna e `parts` e `buf` spariscono; per una
+sessione interrotta lo fa Storage al caricamento seguente (SPEC-05 §2.2).
+
+### 4.5 Requisiti
+
+- **DAT-30** MUST: ogni riga e ogni evento sono ricavati da una lettura o da un evento avvenuti durante lo scontro;
+  nessun campione è inventato, interpolato o ricostruito dopo ([ADR 0004](../adr/0004-threat-from-the-unit-threat-api-sampled-in-combat.md)
+  punto 4).
+- **DAT-31** MUST: un valore sconosciuto si salva come codice con il motivo, mai come numero; un'unità assente dalla
+  lista non ha righe.
+- **DAT-32** MUST: in una sessione chiusa `#cols.t = 3n`, `#cols.p = 2n`, `#cols.m = #cols.u = #cols.s = n`,
+  `#ev = 12·ne`, solo caratteri dell'alfabeto e `-`, `t` non decrescente, indici dentro `units` e `mobs`.
+- **DAT-33** MUST: nessun GUID di un giocatore, nessun valore segreto, nessun testo che non sia un nome di unità, di mob
+  o di zona; i nomi solo nelle sessioni.
+
+### 4.6 Riferimenti
+
+Controlli al caricamento, sessioni danneggiate, limiti e potatura, stima della dimensione ed eliminazione:
+[SPEC-05 §2](SPEC-05-recording-report-replay.md#2-storage-datastoragelua-m43). Come si calcola il report da queste
+colonne: [SPEC-05 §3](SPEC-05-recording-report-replay.md#3-report-di-fine-combattimento-datareportlua-m44).

@@ -472,7 +472,7 @@ inglese.
 | `help` | elenca i comandi disponibili, con una riga ciascuno | M1 |
 | `demo` | combattimento inventato per provare il monitor | M2 |
 | `mute` | silenzia gli avvisi fino alla fine del combattimento (fuori dal combattimento, del prossimo); di nuovo li riaccende ([SPEC-04 §1.5](SPEC-04-alerts-coach.md#15-opzioni-esclusioni-e-silenzio)) | M3 |
-| `reports` | apre la scheda Reports | M4 |
+| `reports` | apre la scheda Reports ([SPEC-05 §3.6](SPEC-05-recording-report-replay.md#36-la-scheda-reports-e-la-card-recording-m45)); con l'interruttore spento risponde *This arrives in v0.4.0.* | M4.5 |
 
 Un comando sconosciuto risponde *Unknown command: <x>. Type /atw help.*; un comando di una parte spenta in `Features`
 risponde *This arrives in v0.N.0.* e non fa nulla.
@@ -492,7 +492,7 @@ si applica subito, tranne il font (al riavvio del client) e la lingua (dopo `/re
 | **Reset** | *Reset settings* con conferma: un secondo clic entro 8 s, o la prima è annullata anche cambiando pagina (riporta ai predefiniti `account.settings`, [SPEC-02 §3.4](SPEC-02-data-model-storage.md#34-caricamento-migrazioni-e-dati-danneggiati)) | — | M1.8 |
 | **Monitor** (solo con l'interruttore `monitor`, prima di *Reset*) | soglie (cursori *Warning threshold* 50–95 % e *Danger threshold* 60–100 %; spostandone uno l'altro si sposta per tenere `danger ≥ warning + 5`, quindi oltre 95 % la soglia WARNING non è utile), frequenza (cursore 2–10 Hz), unità massime (cursore 5–40), quando mostrare la finestra (segmentato *In group or combat · Always · Manually*), ordinamento (menu a tendina, §3), *Pin me on top*, *Follow the target of a friend*, pulsante *Start the demo* / *Stop the demo*; i cursori si salvano al rilascio | `account.settings.monitor.*`, schema 2 ([SPEC-02 §3.5](SPEC-02-data-model-storage.md#35-schema-2-m2-le-impostazioni-del-monitor)) | M2.6 |
 | **Alerts** (solo con l'interruttore `alerts`, dopo *Monitor*) | avvisi, canali (finestra, effetto, suono), cooldown (cursore 3–30 s), avvisi su altre unità, famiglio, riga delle soglie con il collegamento a *Monitor*, nota dell'avviso nativo, Threat Coach ([SPEC-04 §4.2](SPEC-04-alerts-coach.md#42-la-card-alerts-m35)) | `account.settings.alerts.*`, `account.settings.coach.enabled`, schema 3 ([SPEC-02 §3.6](SPEC-02-data-model-storage.md#36-schema-3-m3-avvisi-e-coach)) | M3.5 |
-| **Recording** | durata e limite delle registrazioni | M4.1 | M4 |
+| **Recording** (solo con l'interruttore `recording`, dopo *Alerts*) | registrazione (interruttore), quando (segmentato *In a group or instance · In instances · Always*), frequenza (cursore 1–5 Hz), sessioni tenute (cursore 5–100), dimensione massima (cursore 0,5–8 MB), avviso di fine scontro, uso stimato, *Delete all recordings* con conferma ([SPEC-05 §3.6](SPEC-05-recording-report-replay.md#36-la-scheda-reports-e-la-card-recording-m45)) | `account.settings.recording.*`, schema 4 ([SPEC-02 §3.7](SPEC-02-data-model-storage.md#37-schema-4-m4-registrazione-e-sessioni)) | M4.5 |
 
 *Reload now* è attivo solo quando la lingua scelta è diversa da quella a schermo. Con dati in sola lettura la pagina
 mostra un avviso (versione più nuova, o migrazione fallita), i controlli tornano al valore salvato e la card dice

@@ -7,6 +7,21 @@ All notable changes to this project are documented here. The format follows
 
 ### Documentation
 
+- M4.1: specification of the recorder, the storage and the combat report (SPEC-05 §1–§3 and SPEC-02 §3.7–§4,
+  Italian), written before the in-game M0 probe like M2 and M3, with a new decision record
+  ([ADR 0016](docs/adr/0016-recordings-are-the-monitors-readings-in-compact-columns.md)). A fight in a group or an
+  instance becomes a **session** that records only what the monitor read (never a second reading of its own, never
+  anything filled in afterwards), chained pulls within 5 s stay one session, and fights under 3 s are not kept. Samples
+  are stored as compact columns (8 characters each) together with the monitor's events (states, who holds the mob,
+  target changes, deaths, alerts, Coach tips); a `/reload` or a logout in combat leaves an *interrupted* session that
+  says so. Storage keeps at most 25 sessions and about 2 MB by default (both settings), removes the oldest first, sets a
+  damaged session aside on its own, and lets you delete one or all. The report lists duration, main mob, tanks and tank
+  changes, aggro losses, threshold crossings and time in Warning and Danger per player, the highest percentage
+  recorded and the data quality, each with its data category, saying *Not available*, *Insufficient data* or a lower
+  bound where the data is missing, and never a cause. Also: account schema 4 (`settings.recording`, `sessions`), the
+  *Recording* card and the *Reports* tab, `/atw reports`, the tests per step, SPEC-09 Q8 and Q15 refined and a new Q16
+  (record only in a group or an instance by default), and the M4 steps detailed in the milestone file. Nothing changes
+  in the addon yet.
 - M3.R: `v0.3.0` released on GitHub; the release step is ticked in the M3 milestone file.
 
 ## [0.3.0] - 2026-11-26

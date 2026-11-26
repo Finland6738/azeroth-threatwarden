@@ -135,7 +135,7 @@ copied from Azeroth Accord and renamed; each copied file says so in its header.
 | `Data/Coach.lua`, `Data/CoachRules.lua` | rule-based tips (T1–T7, D1–D5, A1) with reason, category and confidence, one at a time, cooldowns, numbers at most once a second ([SPEC-04](specs/SPEC-04-alerts-coach.md), Italian) | M3.3 (switch `coach`, on since `v0.3.0`) |
 | `UI/CoachStrip.lua` | the Coach strip | M3.4 (switches `alerts`, `coach`) |
 | `Bindings.xml` | the key binding of the quick mute (loaded by the client by its name, not listed in the TOC); with `UI/Settings.lua` (*Alerts* card), `Core/Commands.lua` (`/atw mute`) and the row menu of `UI/ThreatList.lua` | M3.5 (switch `alerts`) |
-| `Data/Recorder.lua`, `Data/Session.lua`, `Data/Storage.lua`, `Data/Report.lua` | sessions, samples, events, limits, the combat report | *planned*, M4 |
+| `Data/Recorder.lua`, `Data/Session.lua`, `Data/Storage.lua`, `Data/Report.lua`, `UI/Reports.lua` | sessions holding what the monitor read, as compact columns; events, `/reload` and logout, limits and pruning, damaged sessions set aside; the combat report with categories and *Insufficient data*; the Reports tab ([SPEC-05](specs/SPEC-05-recording-report-replay.md), Italian; [ADR 0016](adr/0016-recordings-are-the-monitors-readings-in-compact-columns.md)) | *planned*, M4 (switches `recording`, `reports`) |
 | `Data/Replay.lua`, `UI/Timeline.lua`, `UI/ReplayWindow.lua` | timeline and replay | *planned*, M5 |
 | `Data/Metrics.lua`, `Data/Export.lua` | descriptive metrics, comparison, text and CSV export | *planned*, M6 |
 
@@ -157,7 +157,7 @@ copied from Azeroth Accord and renamed; each copied file says so in its header.
 | `AGGRO_CHANGED(mobKey, unitKey, oldUnitKey)` | ThreatState, before the `STATE_CHANGED` of the same update | Alerts; Coach later | M3.2 (switch `monitor`) |
 | `ALERT_RAISED(alert)`, `MUTE_CHANGED(muted)` | Alerts | Window, Coach strip, Recorder later | M3.2 (switch `alerts`, on since `v0.3.0`) |
 | `COACH_TIP(tip)` | Coach, after each `THREAT_UPDATED` when the tip changes (`nil`: no tip) | Coach strip, Recorder later | M3.3 (switch `coach`, on since `v0.3.0`) |
-| `SESSION_STARTED`, `SESSION_ENDED`, `SESSIONS_CHANGED` | Recorder, Storage | Reports | *planned*, M4 |
+| `SESSION_STARTED(id)`, `SESSION_ENDED(id, state)`, `SESSIONS_CHANGED()` | Recorder, Storage | Reports, Report, Coach strip (end-of-fight notice) | *planned*, M4 |
 
 Event arguments never hold a secret value or a player name: threat events pass keys (`unitKey`, `mobKey`) into the
 model.
@@ -213,7 +213,9 @@ sequenceDiagram
 5. ThreatState applies the thresholds (provisional WARNING 80 %, DANGER 95 %, hysteresis 3 points, Q7) and emits
    `STATE_CHANGED` only on a transition.
 6. The list repaints only what changed; a value that is not known is drawn as UNKNOWN with its reason in the tooltip.
-7. Combat ends: the tick stops. From M4 the Recorder has been writing the same records into a session.
+7. Combat ends: the tick stops. From M4 the Recorder has been sampling the Model's rows on its own bounded tick and
+   recording the Bus events of steps 4–5 into a session (it never calls the threat functions itself, ADR 0016); 5 s
+   after the end, unless a chained pull continues it, the session closes and Storage applies the limits.
 
 What M1 does in this flow: steps 1 and the end (`COMBAT_STARTED`/`ENDED`), the Scheduler with no tick running, and,
 from M1.4, `Compat.Threat.Read` tested against scripted answers in the mock client. The `monitor` switch is off.
@@ -237,7 +239,7 @@ flowchart LR
 
 | Variable | Schema 1 (M1) | Later |
 |---|---|---|
-| `AzerothThreatwardenDB` | `schema`, `settings` (`language`, `theme`, `effects`, `animations`, `font`, `minimap`), `corrupt` | schema 2 (M2): `settings.monitor`; alerts (M3), `sessions` and recording limits (M4), `profiles` (M8) |
+| `AzerothThreatwardenDB` | `schema`, `settings` (`language`, `theme`, `effects`, `animations`, `font`, `minimap`), `corrupt` | schema 2 (M2): `settings.monitor`; schema 3 (M3): `settings.alerts`, `settings.coach`; schema 4 (M4): `settings.recording`, `sessions`; `profiles` (M8) |
 | `AzerothThreatwardenCharDB` | `schema`, `ui` (`shown`, `locked`, `scale`, `pos`, `size.compact`, `size.wide`, `lastTab`, `lastPage`) | — |
 
 - Defaults, rules (type, range, enum) and migrations live in `Config` ([SPEC-02 §3](specs/SPEC-02-data-model-storage.md#3-savedvariables)).
@@ -246,8 +248,10 @@ flowchart LR
   deleted.
 - Every shape change raises the schema by one with an idempotent migration and a test that starts from the previous
   version's data.
-- Threat records live in memory only, in a pool; from M4 sessions store compact samples with their category, and gaps
-  are recorded as gaps. Player names are saved only inside sessions, locally ([SPEC-09 Q15](specs/SPEC-09-risks-open-questions.md)).
+- Threat records live in memory only, in a pool; from M4 sessions store compact samples (one string per column,
+  8 characters a sample, [SPEC-02 §4](specs/SPEC-02-data-model-storage.md#4-sessioni-registrate-schema-4-m4)) with a
+  code that keeps the category and the reason, and gaps are recorded as gaps. `Data/Storage.lua` checks each session
+  at load and sets a damaged one aside on its own. Player names are saved only inside sessions, locally ([SPEC-09 Q15](specs/SPEC-09-risks-open-questions.md)).
 
 ## 5. Extension points
 

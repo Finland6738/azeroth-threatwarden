@@ -121,7 +121,7 @@ altro modulo caricato dopo di lui al caricamento del file, solo nei suoi gestori
 | `Data/ThreatModel.lua`, `Data/ThreatCalc.lua` | `ThreatRecord` e `ThreatRow`, categorie, freschezza; margine, trend, tempo al superamento ([SPEC-02 §1–§2](SPEC-02-data-model-storage.md#1-threatrecord-in-memoria), [SPEC-03 §1.5, §2.5](SPEC-03-threat-monitor-ui.md#25-trend-e-tempo-al-superamento-datathreatcalclua)) | emette `THREAT_UPDATED(mobKey)`; ascolta `THREAT_SCANNED`, `TARGET_CHANGED`, `COMBAT_STARTED`, `COMBAT_ENDED` | M2.3 |
 | `Data/ThreatState.lua` | SAFE / WARNING / DANGER / UNKNOWN con isteresi e permanenza; tank designati; modalità del monitor ([SPEC-03 §2](SPEC-03-threat-monitor-ui.md#2-stati-e-soglie)) | emette `STATE_CHANGED(unitKey, mobKey, old, new)`, `THREAT_MODE_CHANGED(mode, reason)`; ascolta `THREAT_UPDATED`, `CONFIG_CHANGED` | M2.4 |
 | `Data/Alerts.lua`, `Data/Coach.lua`, `Data/CoachRules.lua`; `UI/CoachStrip.lua` | avvisi alle entrate di stato e di aggro, con cooldown per tipo e unità, canali e silenzio; regole del Coach con motivazione e confidenza; la striscia del Coach ([SPEC-04](SPEC-04-alerts-coach.md), moduli e test per step in §5–§6) | Alerts emette `ALERT_RAISED(alert)`, `MUTE_CHANGED(muted)`, ascolta `STATE_CHANGED`, `AGGRO_CHANGED`, `COMBAT_ENDED`, `CONFIG_LOADED`, `CONFIG_CHANGED`, `DEMO_CHANGED`; Coach emette `COACH_TIP(tip)`, ascolta `THREAT_UPDATED`, `COMBAT_ENDED`, `DEMO_CHANGED`, `CONFIG_LOADED`, `CONFIG_CHANGED` (M3.3); ThreatState emette `AGGRO_CHANGED(mobKey, unitKey, oldUnitKey)` (M3.2) | M3 |
-| `Data/Recorder.lua`, `Data/Session.lua`, `Data/Storage.lua`, `Data/Report.lua` | sessioni, campioni, eventi, limiti, report | emette `SESSION_STARTED(id)`, `SESSION_ENDED(id, complete)`, `SESSIONS_CHANGED()` | M4 |
+| `Data/Recorder.lua`, `Data/Session.lua`, `Data/Storage.lua`, `Data/Report.lua`; `UI/Reports.lua` | sessioni con le letture del monitor in colonne compatte, eventi, reload e logout, limiti e potatura, sessioni danneggiate messe da parte, report con categorie e *Insufficient data*; la scheda Reports ([SPEC-05](SPEC-05-recording-report-replay.md), moduli e test per step in §6–§7, [ADR 0016](../adr/0016-recordings-are-the-monitors-readings-in-compact-columns.md)) | Recorder emette `SESSION_STARTED(id)`, `SESSION_ENDED(id, state)`, ascolta `COMBAT_*`, `TARGET_CHANGED`, `STATE_CHANGED`, `AGGRO_CHANGED`, `THREAT_MODE_CHANGED`, `ALERT_RAISED`, `COACH_TIP`, `DEMO_CHANGED`, `CONFIG_*`, `ENTERING_WORLD`; Storage emette `SESSIONS_CHANGED()` | M4 |
 | `Data/Replay.lua`, `UI/Timeline.lua`, `UI/ReplayWindow.lua` | timeline e riproduzione | emette `REPLAY_POSITION(t)` | M5 |
 | `Data/Metrics.lua`, `Data/Export.lua` | metriche descrittive, esportazione | — | M6 |
 | `UI/ThreatList.lua` | elenco della threat nella scheda Monitor ([SPEC-03 §2.6, §3](SPEC-03-threat-monitor-ui.md#26-cosa-si-vede-in-ogni-stato)) | ascolta `THREAT_UPDATED`, `STATE_CHANGED`, `THREAT_MODE_CHANGED`, `TARGET_CHANGED`, `CONFIG_CHANGED`, `THEME_CHANGED` | M2.5 |
@@ -145,13 +145,13 @@ Accord.
 | `CAPABILITY_CHANGED` | `id`, `state` | `Core/Compat.lua` (`Compat:SetCapability`, cambio di una restrizione) | Window (stato del modulo), ThreatState (M2) | M1.4 |
 | `COMBAT_STARTED` / `COMBAT_ENDED` | — | `Core/Init.lua` da `PLAYER_REGEN_DISABLED/ENABLED` | Scheduler, Window, Scanner (M2), Recorder (M4) | M1.2 |
 | `DISPLAY_CHANGED` | — | `Core/Init.lua` da `DISPLAY_SIZE_CHANGED` e `UI_SCALE_CHANGED` | Window (torna nello schermo) | M1.7 |
-| `ENTERING_WORLD` | — | `Core/Init.lua` da `PLAYER_ENTERING_WORLD` | Settings (rilegge l'avviso della threat del gioco) | M3.5 |
+| `ENTERING_WORLD` | — (da M4.2: `isInitialLogin`, `isReloadingUi`) | `Core/Init.lua` da `PLAYER_ENTERING_WORLD` | Settings (rilegge l'avviso della threat del gioco); Recorder e Storage (M4: com'è finita una sessione interrotta) | M3.5 |
 | `WINDOW_SHOWN` | `shown` (bool) | `UI/Window.lua` | Scanner (M2: legge solo se serve) | M1.7 |
 | `TAB_CHANGED` | `tabId` | `UI/Window.lua` | le schede | M1.7 |
 | `TARGET_CHANGED`, `THREAT_SCANNED`, `THREAT_UPDATED`, `STATE_CHANGED`, `THREAT_MODE_CHANGED` | vedi §3.2 | `Data/` | UI, Alerts, Recorder | M2 |
 | `AGGRO_CHANGED` | `mobKey`, `unitKey`, `oldUnitKey` (chi tiene il mob, prima e dopo; mai il motivo) | `Data/ThreatState.lua` | Alerts, Coach | M3.2 |
 | `ALERT_RAISED`, `COACH_TIP`, `MUTE_CHANGED` | vedi §3.2 e [SPEC-04 §5](SPEC-04-alerts-coach.md#5-moduli-eventi-e-diagnostica) | `Data/` | Window, striscia del Coach, Recorder (M4) | M3 |
-| `SESSION_STARTED`, `SESSION_ENDED`, `SESSIONS_CHANGED` | vedi §3.2 | `Data/Recorder.lua`, `Data/Storage.lua` | Reports | M4 |
+| `SESSION_STARTED`, `SESSION_ENDED`, `SESSIONS_CHANGED` | `id`; `id`, `state` (`complete`, `interrupted`, `dropped`); nessuno ([SPEC-05 §6](SPEC-05-recording-report-replay.md#6-moduli-eventi-interruttori-e-diagnostica-m4)) | `Data/Recorder.lua`, `Data/Storage.lua` | Reports, striscia del Coach (avviso di fine scontro), Report | M4 |
 
 `/atw debug` mostra per ogni evento il numero di ascoltatori e gli ultimi errori degli ascoltatori.
 
@@ -324,7 +324,8 @@ senza firma), **assente** (si cerca a runtime). In grassetto le voci il cui comp
 | `group.Size` | `GetNumGroupMembers` | chiamata | globale | unità da leggere | M2 | P5 |
 | `group.RaidIndex` | `UnitInRaid` | esistenza | firma, risultato nilable | l'indice `raidN` del giocatore, da saltare ([SPEC-03 §1.3](SPEC-03-threat-monitor-ui.md#13-unità-osservate-e-limite-datathreatscannerlua)) | M2 | P5 |
 | `instance.InInstance` | `IsInInstance` | chiamata | firma | contesto in `/atw debug` e nelle sessioni | M1 | P3 |
-| `instance.Info` | `GetInstanceInfo` | esistenza | firma | tipo e difficoltà (mai il nome nel rapporto) | M4 | P3 |
+| `instance.Info` | `GetInstanceInfo` | esistenza | firma | tipo e difficoltà delle sessioni (mai il nome nel rapporto) | M4 | P3 |
+| `zone.RealZoneText` | `GetRealZoneText` | esistenza | firma `(mapID?)` | la zona di una sessione (solo nella sessione, [SPEC-02 §4.1](SPEC-02-data-model-storage.md#41-intestazione)) | M4 | — |
 | `restriction.InCombatLockdown` | `C_RestrictedActions.InCombatLockdown` (o il globale `InCombatLockdown`) | chiamata | firma / globale | nessuna azione protetta in combattimento | M1 | P11 |
 | `restriction.IsActive` | `C_RestrictedActions.IsAddOnRestrictionActive` | per ogni tipo | firma | restrizioni attive (una voce `restriction.<Tipo>`) | M1 | **P11** |
 | `restriction.Types` | `Enum.AddOnRestrictionType` | lettura | assente (FrameXML) | i tipi di restrizione | M1 | **P11** |
@@ -353,7 +354,9 @@ con AceEvent: `ADDON_LOADED`, `PLAYER_LOGIN`, `PLAYER_ENTERING_WORLD` (`isInitia
 `PLAYER_LOGOUT`, `PLAYER_REGEN_DISABLED`, `PLAYER_REGEN_ENABLED`, `ADDON_RESTRICTION_STATE_CHANGED` (`type`, `state`),
 `UI_SCALE_CHANGED`, `DISPLAY_SIZE_CHANGED` (M1); `UNIT_THREAT_LIST_UPDATE`, `UNIT_THREAT_SITUATION_UPDATE`
 (`unitTarget`), `PLAYER_TARGET_CHANGED`, `UNIT_TARGET`, `GROUP_ROSTER_UPDATE`, `UNIT_PET` (M2, **[probe P6, P7]**);
-`ENCOUNTER_START`, `ENCOUNTER_END` (M4, **[probe P7]**).
+`ENCOUNTER_START`, `ENCOUNTER_END`, `UNIT_DIED` (`unitGUID`), `PLAYER_DEAD` (M4, **[probe P7]**), registrati da
+`Data/Recorder.lua` con `PLAYER_LOGOUT` ([SPEC-05 §1.4, §1.6](SPEC-05-recording-report-replay.md#14-eventi)); in M4
+`PLAYER_ENTERING_WORLD` passa `isInitialLogin` e `isReloadingUi` nell'evento `ENTERING_WORLD` del Bus.
 
 ### 8.3 Lettura normalizzata della threat (M1.4, usata da M2)
 

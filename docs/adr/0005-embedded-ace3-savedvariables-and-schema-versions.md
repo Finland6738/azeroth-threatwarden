@@ -35,3 +35,9 @@ Compat and the Scheduler), **AceConfig** (Settings is a page in the ecosystem st
 and **AceLocale** (its language choice is global, see the update of [ADR 0009](0009-interface-and-documentation-languages.md)).
 Points 2–4 are unchanged; the keys, defaults and rules of schema 1 are in
 [SPEC-02 §3](../specs/SPEC-02-data-model-storage.md#3-savedvariables).
+
+## Update (2026-11-26, M4.1)
+
+Points 2 and 4 are kept for the recordings of M4: they stay in `AzerothThreatwardenDB.sessions` (account schema 4),
+stored as compact columns, each session checked on its own and set aside under `corrupt` when damaged; the limits are
+settings with the proposed defaults of SPEC-09 Q8 ([ADR 0016](0016-recordings-are-the-monitors-readings-in-compact-columns.md)).
