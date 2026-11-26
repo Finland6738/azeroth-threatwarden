@@ -5,6 +5,18 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Added
+
+- M3.2: the alert manager, behind the `alerts` switch (off until `v0.3.0`, so nothing changes yet for players). An alert
+  is raised only when a risk **enters**: your state rises to Warning or Danger, or the unit holding the mob changes (a
+  new `AGGRO_CHANGED` event of the monitor). Seven kinds (Warning, Danger, aggro, margin, lost mob, pet, others), one
+  alert per transition, a cooldown per kind and unit that survives target changes and fights, at most one alert about
+  others and one sound every 3 s; only in combat and for the monitored mob. Channels: a message and a visual effect for
+  the window (drawn from M3.4), a game sound for Danger and aggro (off by default), never anything in chat. A mute until
+  the end of the fight and a per-session exclusion of a unit (their command, key and menu arrive with M3.5). Account
+  saved data move to schema 3 (`settings.alerts`; a migration adds the defaults and keeps everything else). `/atw debug`
+  has a new *Alerts and Coach* section.
+
 ### Documentation
 
 - M3.1: specification of alerts and the Threat Coach (SPEC-04, Italian), written before the in-game M0 probe like M2.

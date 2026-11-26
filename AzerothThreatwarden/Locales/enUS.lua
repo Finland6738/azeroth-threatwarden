@@ -177,6 +177,22 @@ ns.Locale.Register("enUS", {
 	WHY_TANK_UNWATCHED = "Held by a unit that is not in the list",
 	WHY_TANK_UNKNOWN = "Nothing readable says who holds it",
 
+	-- Alerts (SPEC-04 §1.2, §2.4): short, no cause and no ability named; a %s (a unit) comes before the numbers
+	ALERT_WARNING = "Threat %d %%: close to taking aggro",
+	ALERT_WARNING_PREDICTED = "Threat rising: you may reach Danger in about %d s",
+	ALERT_WARNING_STATE = "Your threat is above the tank's",
+	ALERT_DANGER = "Threat %d %%: very close to taking aggro",
+	ALERT_AGGRO = "You have aggro",
+	ALERT_MARGIN_WARNING = "Margin shrinking: %s at %d %%",
+	ALERT_MARGIN_WARNING_STATE = "Your margin is getting small",
+	ALERT_MARGIN_DANGER = "%s is very close to taking the mob",
+	ALERT_MARGIN_DANGER_STATE = "Your margin is very small",
+	ALERT_BEHIND = "Someone has more threat than you",
+	ALERT_LOST = "%s has the mob",
+	ALERT_PET = "Your pet has the mob",
+	ALERT_OTHER_DANGER = "%s is very close to taking aggro",
+	ALERT_OTHER_AGGRO = "%s has the mob",
+
 	-- Settings (SPEC-03 §5): the two pages of the tab and of the game's panel
 	PAGE_SETTINGS = "Settings",
 	PAGE_ABOUT = "Info",

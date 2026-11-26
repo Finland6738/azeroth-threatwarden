@@ -264,7 +264,8 @@ margine = `100 − s`:
   (morte, `drop`); entrare e uscire non sono cambi di stato e non aspettano la permanenza. A un nuovo mob o a un nuovo
   combattimento gli stati ripartono senza evento per la coppia vecchia (M2.4). Da M3.2 `ThreatState` emette anche
   `AGGRO_CHANGED(mobKey, unitKey, oldUnitKey)` quando cambia chi tiene il mob, perché un passaggio di aggro non sempre
-  cambia lo stato mostrato ([SPEC-04 §1.1](SPEC-04-alerts-coach.md#11-quando-scatta-un-avviso)).
+  cambia lo stato mostrato ([SPEC-04 §1.1](SPEC-04-alerts-coach.md#11-quando-scatta-un-avviso)); nello stesso
+  aggiornamento viene prima degli `STATE_CHANGED`.
 - Una discesa trattenuta dalla permanenza si ricontrolla con un solo timer (`Compat.After`): avviene anche quando non
   arrivano più scansioni, per esempio a `COMBAT_ENDED` (righe `stale` → UNKNOWN) (M2.4).
 - Il motivo dello stato (`row.stateReason`): nessuno per una soglia; `predicted`, `aggro` (un non tank tiene il mob),

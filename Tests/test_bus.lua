@@ -131,7 +131,8 @@ describe("the report and the lifecycle", function()
 		local lines = Bus().DebugLines()
 		matches(lines[1], "^events with listeners: %d+, listener errors: 1$")
 		contains(lines, "TEST_EVENT: 1 listener(s)")
-		contains(lines, "COMBAT_ENDED: 5 listener(s)", "the Scheduler, TargetTracker, ThreatScanner, ThreatModel and the window")
+		contains(lines, "COMBAT_ENDED: 6 listener(s)",
+			"the Scheduler, TargetTracker, ThreatScanner, ThreatModel, the alerts and the window")
 	end)
 
 	it("carries COMBAT_STARTED and COMBAT_ENDED from Init", function()

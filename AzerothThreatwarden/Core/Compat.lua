@@ -230,7 +230,7 @@ Compat.APIS = {
 	{ id = "ui.SpecialFrames", paths = { "UISpecialFrames" }, check = "read", since = "M1", probe = "game" },
 	{ id = "ui.SlashCmdList", paths = { "SlashCmdList" }, check = "read", since = "M1", probe = "game" },
 	{ id = "ui.ClassColor", paths = { "C_ClassColor.GetClassColor" }, check = "exists", since = "M2", probe = "-" },
-	{ id = "ui.PlaySound", paths = { "PlaySound" }, check = "exists", since = "M3", probe = "-" },
+	{ id = "ui.PlaySound", paths = { "PlaySound", "C_Sound.PlaySound" }, check = "exists", since = "M3", probe = "-" },
 }
 
 local apiById = {}
@@ -591,6 +591,21 @@ end
 function Compat.SliceModeStretched()
 	local mode = Resolve("Enum.UITextureSliceMode.Stretched")
 	return type(mode) == "number" and mode or 0
+end
+
+-- Plays the sound kit `kit` of the game (the sound of an alert, Data/Alerts.lua, SPEC-04 §1.4): true when the client
+-- took the call, else false and why ("no-kit", "missing", "error", or "refused" when the client answers that it did not
+-- play it). Both paths of the dump take the kit first; every other argument keeps its default. Never raises and
+-- allocates nothing. Whether the kit exists and is heard on Forever is [to be tried in game].
+function Compat.PlaySound(kit)
+	if IsSecret(kit) or plainNumber(kit) == nil then return false, "no-kit" end
+	local fn = Resolve("PlaySound")
+	if type(fn) ~= "function" then fn = Resolve("C_Sound.PlaySound") end
+	if type(fn) ~= "function" then return false, "missing" end
+	local ok, played = pcall(fn, kit)
+	if not ok then return false, "error" end
+	if not IsSecret(played) and played == false then return false, "refused" end
+	return true, nil
 end
 
 -- Reloads the interface (the *Reload now* button of Settings): true when the client took the call. A click is the

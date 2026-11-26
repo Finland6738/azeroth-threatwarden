@@ -32,7 +32,9 @@ la lettura di `IsThreatWarningEnabled`, attraverso `Core/Compat.lua`.
 - `AGGRO_CHANGED` si emette quando la riga che tiene il mob (`ThreatState.tank`) è **nota** e diversa dall'ultima nota
   per lo stesso mob; un detentore che diventa sconosciuto (*Unknown tank*) non emette nulla e, se torna lo stesso, non
   è un cambio. Al primo detentore noto di un mob o di un combattimento `oldUnitKey` è `nil`. Il motivo del cambio non
-  si conosce mai (COA-05): l'evento dice solo chi, prima e dopo.
+  si conosce mai (COA-05): l'evento dice solo chi, prima e dopo. Nello stesso aggiornamento si emette **prima** degli
+  `STATE_CHANGED` (i tank sono già stabiliti, gli stati delle righe non ancora): così Alerts dà un solo avviso per il
+  cambio (§1.2) (M3.2).
 - Sono **entrate** solo le salite: SAFE → WARNING → DANGER, `nil` (l'unità entra nella lista) → WARNING o DANGER.
   Le discese non avvisano mai. Da UNKNOWN a uno stato noto si avvisa solo se è più alto dell'**ultimo stato noto**
   della stessa unità sullo stesso mob (una lettura che torna dopo un buco non ripete l'avviso di prima). Entrare in
@@ -43,8 +45,10 @@ la lettura di `IsThreatWarningEnabled`, attraverso `Core/Compat.lua`.
   regola possibile, senza interruttore; l'impostazione `alerts.onlyTarget` arriva con M7, quando l'addon potrà leggere
   altri mob (**[probe P5]**).
 - **Solo in combattimento**: lo Scanner legge solo in combattimento (SPEC-03 §1.4), quindi gli stati salgono solo lì;
-  in più Alerts ignora ogni evento fra `COMBAT_ENDED` e `COMBAT_STARTED`. Anche l'opzione della fonte *avviso solo in
-  combattimento* è quindi una regola fissa, senza interruttore (spenta non cambierebbe nulla).
+  in più Alerts ignora ogni evento arrivato fuori dal combattimento. Lo legge da `ThreatScanner.inCombat`, non da un
+  proprio ascolto di `COMBAT_STARTED`: lo Scanner fa la prima scansione dentro quell'evento, prima dei moduli che
+  vengono dopo (M3.2). Anche l'opzione della fonte *avviso solo in combattimento* è quindi una regola fissa, senza
+  interruttore (spenta non cambierebbe nulla).
 
 ### 1.2 Tipi di avviso
 
@@ -70,6 +74,13 @@ tank designati, chi tiene il mob. La **gravità** ordina gli avvisi: 1 WARNING, 
 - Un passaggio che vale per due righe della tabella (per esempio SAFE → DANGER con motivo `aggro` e, nello stesso
   aggiornamento, `AGGRO_CHANGED`) dà **un** avviso, quello di gravità più alta: `STATE_CHANGED` con motivo `aggro` o
   `lost-aggro` non avvisa da solo, perché lo fa `AGGRO_CHANGED`.
+- Precisato in M3.2 per *un passaggio, un avviso*: un cambio di chi tiene il mob dà al più un avviso, prima quello sul
+  giocatore (`aggro` o `lost`: chi perde il mob a favore del proprio famiglio riceve solo `lost`); gli avvisi sul
+  giocatore di gravità uguale o più bassa dello stesso aggiornamento si scartano (da soli, `aggro` e non anche
+  `margin`). Quando il tank riceve l'avviso `margin` di DANGER, lo stesso aggiornamento non dà anche `other` per il
+  DANGER del secondo; se quel `margin` non esce (cooldown), `other` esce.
+- Le chiavi `ALERT_*` sono quelle della tabella più `ALERT_MARGIN_WARNING_STATE` e `ALERT_MARGIN_DANGER_STATE` per le
+  forme `state` (usate anche quando nessun'altra riga è in `values`); i testi inglesi e italiani sono in `Locales/`.
 - `%s` è l'unità di cui parla l'avviso (il secondo, chi ha preso il mob): l'avviso ne porta la chiave (`otherKey`), mai
   il nome, e la vista scrive il nome o l'etichetta del token (*Party 2*) come l'elenco ([SPEC-03 §1.6](SPEC-03-threat-monitor-ui.md#16-i-campi-uno-per-uno)).
   `%d` sono numeri già mostrati dal monitor (percentuale scalata, secondi della previsione), arrotondati come lì.
@@ -91,6 +102,9 @@ tank designati, chi tiene il mob. La **gravità** ordina gli avvisi: 1 WARNING, 
 - Un avviso entro il cooldown non si emette e si conta (`Alerts.stats.cooled`, per `/atw debug`).
 - **Raffiche di altri**: al massimo un avviso `other` ogni **3 s** (`Alerts.OTHER_GAP`); gli altri si contano
   (`Alerts.stats.dropped`) e non si emettono. Gli avvisi sul giocatore e sul famiglio non hanno questo limite.
+- I tipi `margin` e `other` hanno più gravità con **un solo** cooldown: un DANGER dello stesso tipo entro il cooldown di
+  una WARNING non esce (per il margine esce allora l'`other` del secondo, se `others` lo permette). Se in gioco è
+  troppo, si decide con [Q12](SPEC-09-risks-open-questions.md) (checklist M3.6).
 - **Suono**: al massimo uno ogni **3 s** (`Alerts.SOUND_GAP`), qualunque sia il tipo; un avviso dentro l'intervallo
   si mostra senza suono.
 - **Oscillazioni**: `ThreatState` non cambia stato più di una volta al secondo per riga nelle discese (MON-12), e una
@@ -115,8 +129,9 @@ tank designati, chi tiene il mob. La **gravità** ordina gli avvisi: 1 WARNING, 
 - **Il suono** è `PlaySound(soundKitID)` del gioco (nel dump, sistema `Sound`, firma `(soundKitID, uiSoundSubType,
   forceNoDuplicates, …)`), con un solo suono del gioco, il kit `Alerts.SOUND_KIT` (proposta **8959**, il suono degli
   avvisi del raid nel client moderno) **[da provare in gioco]**: esiste su Forever? si sente? Il volume è quello degli
-  effetti del gioco. Nessun file sonoro nell'addon. Se `ui.PlaySound` manca o dà errore il suono si salta, senza
-  errore e con la causa in `/atw debug`.
+  effetti del gioco. Nessun file sonoro nell'addon. `Compat.PlaySound` usa `PlaySound` o, se manca,
+  `C_Sound.PlaySound` (M3.2). Se mancano, danno errore o rispondono *non suonato* il suono si salta, senza errore e con
+  la causa in `/atw debug`.
 - **Demo** ([SPEC-03 §5.2](SPEC-03-threat-monitor-ui.md#52-modalità-demo-atw-demo-m26)): durante `Demo.IsActive()`
   avvisi e Coach lavorano sui dati inventati per farli **provare**, ma solo nella finestra (messaggio ed effetto), mai
   con il suono (la demo non chiama il gioco, MON-14); l'avviso porta `demo = true` e la registrazione (M4) lo ignora.
@@ -159,6 +174,9 @@ tank designati, chi tiene il mob. La **gravità** ordina gli avvisi: 1 WARNING, 
     chiama la funzione globale `AzerothThreatwarden_ToggleMute()` (ARC-04), che fa e risponde come `/atw mute`.
     Nessun tasto predefinito. Come in Accord (`Bindings.xml`, ADR 0012) **[da provare in gioco]**.
 - `MUTE_CHANGED(muted)` sul Bus a ogni cambio (la striscia, `/atw debug`).
+- Interfaccia per M3.5 (M3.2): `Alerts.ToggleMute()` risponde `"muted-fight"`, `"muted-next"`, `"unmuted"`,
+  `"disabled"` (avvisi spenti nella card: nulla cambia) o `"off"` (interruttore); `Alerts.Exclude(unitKey, sì/no)` e
+  `Alerts.IsExcluded(unitKey)`.
 
 ### 1.6 L'avviso nativo del gioco
 
@@ -379,7 +397,7 @@ del monitor). I due interruttori sono indipendenti: il Coach senza avvisi e gli 
 | File | Responsabilità | Bus | Step |
 |---|---|---|---|
 | `Data/ThreatState.lua` (cambio) | `AGGRO_CHANGED` (§1.1): l'ultimo detentore noto per mob | emette `AGGRO_CHANGED(mobKey, unitKey, oldUnitKey)` | M3.2 |
-| `Data/Alerts.lua` | tipi (§1.2), cooldown e raffiche (§1.3), canali, suono attraverso Compat, silenzio, esclusioni, consumatore dello Scanner | ascolta `STATE_CHANGED`, `AGGRO_CHANGED`, `COMBAT_STARTED`, `COMBAT_ENDED`, `CONFIG_CHANGED`, `DEMO_CHANGED`; emette `ALERT_RAISED(alert)`, `MUTE_CHANGED(muted)` | M3.2 |
+| `Data/Alerts.lua` | tipi (§1.2), cooldown e raffiche (§1.3), canali, suono attraverso Compat, silenzio, esclusioni, consumatore dello Scanner | ascolta `STATE_CHANGED`, `AGGRO_CHANGED`, `COMBAT_ENDED`, `CONFIG_LOADED`, `CONFIG_CHANGED`, `DEMO_CHANGED`; emette `ALERT_RAISED(alert)`, `MUTE_CHANGED(muted)` | M3.2 |
 | `Data/CoachRules.lua` | la tabella di §2.2: dati e condizioni, senza stato | — | M3.3 |
 | `Data/Coach.lua` | ruolo, scelta, cooldown, numeri (§2.3) | ascolta `THREAT_UPDATED`, `STATE_CHANGED`, `AGGRO_CHANGED`, `TARGET_CHANGED`, `COMBAT_STARTED`, `COMBAT_ENDED`, `CONFIG_CHANGED`; emette `COACH_TIP(tip)` (`nil` = nessun consiglio) | M3.3 |
 | `UI/CoachStrip.lua` | la striscia (§3.1), costruita dalla vista di `UI/ThreatList.lua` | ascolta `ALERT_RAISED`, `COACH_TIP`, `MUTE_CHANGED`, `CONFIG_CHANGED`, `THEME_CHANGED` | M3.4 |
@@ -388,7 +406,8 @@ del monitor). I due interruttori sono indipendenti: il Coach senza avvisi e gli 
 
 - **L'avviso** (`ALERT_RAISED`) è una tabella da un anello di 8 riusate (chi la conserva la copia, come farà il
   Recorder): `{ kind, severity, state, reason, subject ("self", "pet", "other"), unitKey, otherKey, mobKey, message,
-  args, category, confidence, at, muted, demo, window, visual, sound }`, gli ultimi tre i canali davvero usati.
+  args, category, confidence, at, muted, demo, window, visual, sound }`, gli ultimi tre i canali davvero usati
+  (`sound` solo se il suono è partito). `args` ha al più un numero e il `%s`, quando c'è, viene prima.
 - **`/atw debug`** (sezione *Alerts and Coach*): interruttori e impostazioni, silenzio, avvisi emessi per tipo, in
   cooldown e scartati, età dell'ultimo, stato di `ui.PlaySound` e di `threat.WarningEnabled`, regola corrente del Coach
   e numero di consigli. Mai nomi.

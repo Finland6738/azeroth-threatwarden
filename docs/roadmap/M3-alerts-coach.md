@@ -51,12 +51,18 @@ them (SPEC-04 §4.3).
   `settings.alerts` (`Config.ALERTS_DEFAULTS`, migration and its test); the `ALERT_*` locale keys in both languages;
   the *Alerts and Coach* section of `/atw debug` (alerts part).
 - Done when:
-  - [ ] One alert per entry, none on a fall or into UNKNOWN; none while muted (emitted with `muted`); never chat; the
+  - [x] One alert per entry, none on a fall or into UNKNOWN; none while muted (emitted with `muted`); never chat; the
     cooldown holds across target changes.
 - Tests: `test_alerts.lua` (every case of SPEC-04 §6: bursts, oscillation, mute, exclusions, target change during the
   cooldown, the three probe outcomes, never chat, sound only when on), `AGGRO_CHANGED` cases in
   `test_threat_state.lua`, schema 3 in `test_config.lua`, `Tests/long/test_alerts_raid.lua`.
 - Real client: the sound kit (SPEC-04 §1.4), how soon an alert follows the real change (P6).
+- *Done (2026-11-26, before M0.7): `Data/Alerts.lua` as SPEC-04 §1, with `AGGRO_CHANGED` in `ThreatState` (emitted
+  before the `STATE_CHANGED` of the same update), `Compat.PlaySound`, account schema 3 (`settings.alerts`), the
+  `ALERT_*` keys and the debug section; `test_alerts.lua`, the new cases of `test_threat_state.lua`, `test_config.lua`
+  and `test_compat.lua`, a sound mock and `Tests/long/test_alerts_raid.lua`. Added to the specification: the tank's
+  Danger margin alert also stands for the same second's own Danger. Open for M3.6: the one cooldown of the `margin` and
+  `other` kinds can hold back a more severe alert of the same kind (SPEC-09 Q12).*
 
 ### M3.3 — Coach rules with reason and confidence
 - Branch: `step/m3-3-coach-rules`

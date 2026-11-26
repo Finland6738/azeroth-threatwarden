@@ -24,7 +24,7 @@ local SPEC_IDS = {
 }
 
 -- What the mock client does not imitate yet (Tests/mock headers): reported missing, never raised.
-local NOT_MOCKED = { ["ui.ClassColor"] = true, ["ui.PlaySound"] = true }
+local NOT_MOCKED = { ["ui.ClassColor"] = true }
 
 describe("the API table (SPEC-01 §8.2, ARC-02)", function()
 	it("has every API of the specification, once, in its order", function()
@@ -282,6 +282,34 @@ describe("client and addon facts", function()
 		eq(n, 1)
 		UISpecialFrames = nil
 		falsy(C().CloseOnEscape("AzerothThreatwardenTestFrame"))
+	end)
+end)
+
+describe("the sound of an alert (SPEC-04 §1.4, M3.2)", function()
+	it("plays the kit through the game, with PlaySound or else C_Sound.PlaySound", function()
+		deepEq({ C().PlaySound(8959) }, { true })
+		eq(#Mock.sound.calls, 1)
+		eq(Mock.sound.calls[1].kit, 8959)
+		boot(function(M) M.Remove("PlaySound") end)
+		truthy(C().PlaySound(12))
+		eq(Mock.sound.calls[1].kit, 12)
+		eq(api("ui.PlaySound").path, "C_Sound.PlaySound")
+	end)
+
+	it("answers false and why, never an error", function()
+		deepEq({ C().PlaySound(nil) }, { false, "no-kit" })
+		deepEq({ C().PlaySound(Mock.Secret("number")) }, { false, "no-kit" })
+		Mock.sound.refuse = true
+		deepEq({ C().PlaySound(1) }, { false, "refused" })
+		Mock.sound.refuse, Mock.sound.fail = false, true
+		deepEq({ C().PlaySound(1) }, { false, "error" })
+		boot(function(M)
+			M.Remove("PlaySound")
+			M.Remove("C_Sound.PlaySound")
+		end)
+		deepEq({ C().PlaySound(1) }, { false, "missing" })
+		eq(C().ApiState("ui.PlaySound"), "missing")
+		eq(#Mock.errors, 0)
 	end)
 end)
 

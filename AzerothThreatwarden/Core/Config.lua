@@ -1,4 +1,4 @@
--- Config: the two SavedVariables, their schemas (account 2, character 1), typed rules, defaults, migrations, read-only on a newer schema and damaged
+-- Config: the two SavedVariables, their schemas (account 3, character 1), typed rules, defaults, migrations, read-only on a newer schema and damaged
 -- tables set aside under `corrupt` (SPEC-02 §3, ADR 0005). Lua 5.1, no game API but Compat.ServerTime.
 -- Adapted from Azeroth Accord (Core/Config.lua), same owner, GPL-3.0 (ADR 0012). Kept from there: the copy, the rules
 -- by path checked parents first, the merge of the defaults, the migrations on a copy, read-only on a newer schema, Get
@@ -9,7 +9,8 @@
 --
 --   AzerothThreatwardenDB      (account)   = { schema, settings = { language, theme, effects, animations, font,
 --                                               minimap = { hide, minimapPos }, monitor = { warning, danger, rate,
---                                               maxUnits, show, sort, pinSelf, followTargetOfTarget } },
+--                                               maxUnits, show, sort, pinSelf, followTargetOfTarget },
+--                                               alerts = { enabled, window, visual, sound, cooldown, others, pet } },
 --                                               corrupt = { ... } }
 --   AzerothThreatwardenCharDB  (character) = { schema, ui = { shown, locked, scale, pos, size, lastTab, lastPage } }
 --
@@ -31,8 +32,8 @@ local type, pairs, ipairs, pcall, tostring, next, select = type, pairs, ipairs, 
 local floor, huge, abs = math.floor, math.huge, math.abs
 local concat, sort = table.concat, table.sort
 
--- The schema of each variable that this version of the addon knows (SPEC-02 §3.2, §3.3, §3.5).
-Config.SCHEMAS = { account = 2, char = 1 }
+-- The schema of each variable that this version of the addon knows (SPEC-02 §3.2, §3.3, §3.5, §3.6).
+Config.SCHEMAS = { account = 3, char = 1 }
 
 -- Development build. A checkout of the repository is one; the BigWigs packager comments out the block between the
 -- debug markers below in every packaged build, so a release has DEV = false (tools/check_package.py checks it).
@@ -73,6 +74,16 @@ Config.MONITOR_DEFAULTS = {
 	sort = "relative", pinSelf = false,
 	followTargetOfTarget = true,
 }
+-- The alerts (schema 3, SPEC-04 §4.1): who may be alerted about besides the player and the pet, the range of the
+-- cooldown (seconds) and the one place of their defaults, the proposed answers of Q12 (SPEC-09).
+Config.ALERT_OTHERS = { "tank", "always", "never" }
+Config.ALERTS = { cooldown = { min = 3, max = 30 } }
+Config.ALERTS_DEFAULTS = {
+	enabled = true,
+	window = true, visual = true, sound = false,
+	cooldown = 8,
+	others = "tank", pet = true,
+}
 Config.POINTS = { "TOPLEFT", "TOP", "TOPRIGHT", "LEFT", "CENTER", "RIGHT", "BOTTOMLEFT", "BOTTOM", "BOTTOMRIGHT" }
 
 -- The window: scale 50-200 % in steps of 5 %; the sizes of the two layouts (SPEC-03 §4).
@@ -101,6 +112,7 @@ Config.defaults = {
 			font = "addon",           -- takes effect when the client restarts
 			minimap = { hide = false, minimapPos = 200 },   -- handed to LibDBIcon (M1.7), which may add keys of its own
 			monitor = {},             -- filled from MONITOR_DEFAULTS below
+			alerts = {},              -- filled from ALERTS_DEFAULTS below
 		},
 		corrupt = {},
 	},
@@ -119,6 +131,7 @@ Config.defaults = {
 }
 
 for key, value in pairs(Config.MONITOR_DEFAULTS) do Config.defaults.account.settings.monitor[key] = value end
+for key, value in pairs(Config.ALERTS_DEFAULTS) do Config.defaults.account.settings.alerts[key] = value end
 
 ---------------------------------------------------------------------------------------------------------------------
 -- Helpers
@@ -246,6 +259,15 @@ Config.rules = {
 	["account.settings.monitor.sort"] = { type = "string", enum = Config.SORTS },
 	["account.settings.monitor.pinSelf"] = { type = "boolean" },
 	["account.settings.monitor.followTargetOfTarget"] = { type = "boolean" },
+	["account.settings.alerts"] = { type = "table", container = true },
+	["account.settings.alerts.enabled"] = { type = "boolean" },
+	["account.settings.alerts.window"] = { type = "boolean" },
+	["account.settings.alerts.visual"] = { type = "boolean" },
+	["account.settings.alerts.sound"] = { type = "boolean" },
+	["account.settings.alerts.cooldown"] = { type = "number", integer = true, min = Config.ALERTS.cooldown.min,
+		max = Config.ALERTS.cooldown.max },
+	["account.settings.alerts.others"] = { type = "string", enum = Config.ALERT_OTHERS },
+	["account.settings.alerts.pet"] = { type = "boolean" },
 	["account.corrupt"] = { type = "table", container = true, keep = false, validate = isArrayOfTables,
 		fix = function(v)
 			if #v <= Config.MAX_CORRUPT then return v end
@@ -443,10 +465,12 @@ end
 -- has the new shape it changes nothing) and has a test that starts from the data of the version before (DAT-20).
 -- Step 1: data without a version is version 0 and needs only the defaults and the rules, so it has nothing to do.
 -- Account step 2 (M2.6): `settings.monitor` is new, and the defaults add its keys: nothing to do either.
+-- Account step 3 (M3.2): `settings.alerts` is new (and, from M3.3, `settings.coach`): the defaults again.
 Config.migrations = {
 	account = {
 		[1] = function(db) end,
 		[2] = function(db) end,
+		[3] = function(db) end,
 	},
 	char = {
 		[1] = function(db) end,

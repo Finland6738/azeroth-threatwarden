@@ -175,6 +175,22 @@ ns.Locale.Register("itIT", {
 	WHY_TANK_UNWATCHED = "Lo tiene un'unità che non è in elenco",
 	WHY_TANK_UNKNOWN = "Nulla di leggibile dice chi lo tiene",
 
+	-- Avvisi (SPEC-04 §1.2, §2.4): brevi, senza cause e senza nomi di abilità; un %s (un'unità) viene prima dei numeri
+	ALERT_WARNING = "Threat %d %%: ti avvicini all'aggro",
+	ALERT_WARNING_PREDICTED = "Threat in aumento: potresti arrivare a Pericolo fra circa %d s",
+	ALERT_WARNING_STATE = "La tua threat è sopra quella del tank",
+	ALERT_DANGER = "Threat %d %%: sei a un passo dall'aggro",
+	ALERT_AGGRO = "Hai l'aggro",
+	ALERT_MARGIN_WARNING = "Margine in calo: %s a %d %%",
+	ALERT_MARGIN_WARNING_STATE = "Il tuo margine si sta riducendo",
+	ALERT_MARGIN_DANGER = "%s è a un passo dal prendere il nemico",
+	ALERT_MARGIN_DANGER_STATE = "Il tuo margine è molto ridotto",
+	ALERT_BEHIND = "Qualcuno ha più threat di te",
+	ALERT_LOST = "%s tiene il nemico",
+	ALERT_PET = "Il tuo famiglio tiene il nemico",
+	ALERT_OTHER_DANGER = "%s è a un passo dall'aggro",
+	ALERT_OTHER_AGGRO = "%s tiene il nemico",
+
 	-- Impostazioni (SPEC-03 §5): le due pagine della scheda e del pannello del gioco
 	PAGE_SETTINGS = "Impostazioni",
 	PAGE_ABOUT = "Info",

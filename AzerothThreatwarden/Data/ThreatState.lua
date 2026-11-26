@@ -27,6 +27,12 @@
 -- (the pair (unit, mob) is new). THREAT_MODE_CHANGED(mode, reason) is emitted when ThreatScanner.mode or its reason
 -- changes (MON-04).
 --
+-- AGGRO_CHANGED(mobKey, unitKey, oldUnitKey) is emitted when the row holding the mob (ThreatState.tank) is known and
+-- differs from the last one known for the same mob and fight (SPEC-04 §1.1): oldUnitKey is nil for the first holder
+-- known. A holder that becomes unknown says nothing, and its return is no change. It is emitted after the tanks are
+-- known (row.isTank, ThreatState.designated) and BEFORE the STATE_CHANGED of the same update, so that Data/Alerts.lua
+-- gives one alert for the change; the row states are not yet brought up to date then.
+--
 -- Thresholds: account.settings.monitor.warning and .danger (schema 2; their defaults, Q7, and ranges are the one place
 -- Core/Config.lua), valid when warning is 50-99, danger 60-100 and at least warning + 5; otherwise both defaults.
 -- Allocation-free per update (ARC-06).
@@ -57,9 +63,11 @@ ThreatState.tankReason = "unknown"   -- nil with a tank; "not-watched" (readable
 ThreatState.designated = 0      -- watched units with the TANK role
 ThreatState.self = nil          -- the player's row when on the list (the header's state, SPEC-03 §2.4)
 ThreatState.changes = 0         -- STATE_CHANGED emitted
+ThreatState.aggroChanges = 0    -- AGGRO_CHANGED emitted
 
 local warning, danger = ThreatState.DEFAULTS.warning, ThreatState.DEFAULTS.danger
 local lastMobKey, wasInCombat = nil, false
+local lastHolderKey = nil       -- the unitKey of the last holder known on this mob in this fight
 local timerPending, recheckAt = false, nil
 
 local function emit(event, ...)
@@ -176,8 +184,8 @@ end
 ---------------------------------------------------------------------------------------------------------------------
 -- Update
 ---------------------------------------------------------------------------------------------------------------------
--- Brings every row's state up to date with the model, emits STATE_CHANGED and THREAT_MODE_CHANGED. Returns the number
--- of shown state changes.
+-- Brings every row's state up to date with the model, emits AGGRO_CHANGED, STATE_CHANGED and THREAT_MODE_CHANGED.
+-- Returns the number of shown state changes.
 function ThreatState.Update()
 	local Model, Scanner = ns.ThreatModel, ns.ThreatScanner
 	if not Model or not Scanner then return 0 end
@@ -186,6 +194,7 @@ function ThreatState.Update()
 	local inCombat = Scanner.inCombat == true
 	if mobKey ~= lastMobKey or (inCombat and not wasInCombat) then
 		for i = 1, #rows do resetRow(rows[i]) end
+		lastHolderKey = nil
 	end
 	lastMobKey, wasInCombat = mobKey, inCombat
 
@@ -210,6 +219,15 @@ function ThreatState.Update()
 		local row = rows[i]
 		if designated > 0 then row.isTank = row.record.role == "TANK" else row.isTank = row.isHolder == true end
 		if row == holderRow then holderTank = row.isTank end
+	end
+
+	-- who holds the mob changed (SPEC-04 §1.1): a fact of the monitor, with or without the alerts
+	local holderKey = holderRow and mobKey ~= nil and holderRow.record.unitKey or nil
+	if holderKey and holderKey ~= lastHolderKey then
+		local oldKey = lastHolderKey
+		lastHolderKey = holderKey
+		ThreatState.aggroChanges = ThreatState.aggroChanges + 1
+		emit("AGGRO_CHANGED", mobKey, holderKey, oldKey)
 	end
 
 	local dwell, changes, selfRow = ThreatState.DEFAULTS.dwell, 0, nil

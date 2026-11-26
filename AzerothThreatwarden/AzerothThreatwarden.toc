@@ -37,6 +37,7 @@ Data\ThreatScanner.lua
 Data\ThreatCalc.lua
 Data\ThreatModel.lua
 Data\ThreatState.lua
+Data\Alerts.lua
 UI\Assets.lua
 UI\Theme.lua
 UI\Motion.lua

@@ -142,6 +142,99 @@ describe("values: the tank holding the mob, on its margin over the second (MON-1
 	end)
 end)
 
+describe("AGGRO_CHANGED (SPEC-04 §1.1, M3.2)", function()
+	-- Every AGGRO_CHANGED from now on, as "mob old>new" with the tokens of the watched units.
+	local function recordAggro()
+		local seen = {}
+		local function token(key)
+			if key == nil then return "nil" end
+			for i = 1, TS().count do
+				if TS().records[i].unitKey == key then return TS().records[i].unitToken end
+			end
+			return key
+		end
+		Mock.ns.Bus.On("AGGRO_CHANGED", function(mobKey, unitKey, oldUnitKey)
+			seen[#seen + 1] = { mob = mobKey, change = token(oldUnitKey) .. ">" .. token(unitKey) }
+		end)
+		return seen
+	end
+
+	local function changes(seen)
+		local out = {}
+		for i, c in ipairs(seen) do out[i] = c.change end
+		return table.concat(out, " ")
+	end
+
+	for _, outcome in ipairs({ "values", "state" }) do
+		it("says the first holder, then every change with the one before (" .. outcome .. ")", function()
+			local seen = recordAggro()
+			local pull = partyPull(40, 20, outcome)
+			pull:to(2)
+			eq(changes(seen), "nil>party1")
+			eq(seen[1].mob, TM().mobKey)
+			pull:at(3):aggro("boss", "rogue")
+			pull:at(5):aggro("boss", "tank")
+			pull:to(7)
+			eq(changes(seen), "nil>party1 party1>party3 party3>party1")
+			eq(ST().aggroChanges, 3)
+		end)
+	end
+
+	it("says nothing in the outcome none", function()
+		local seen = recordAggro()
+		local pull = partyPull(40, 20, "none")
+		pull:at(2):aggro("boss", "rogue")
+		pull:to(4)
+		eq(#seen, 0)
+	end)
+
+	it("says nothing while the holder is unknown, nor when the same one comes back", function()
+		local seen = recordAggro()
+		local pull = partyPull(40, 20)
+		pull:at(2):outcome("none")
+		pull:at(6):outcome("values")
+		pull:to(8)
+		eq(changes(seen), "nil>party1")
+		pull:at(9):outcome("none")
+		pull:at(10):aggro("boss", "rogue")
+		pull:at(12):outcome("values")
+		pull:to(14)
+		eq(changes(seen), "nil>party1 party1>party3", "another one after the gap is a change")
+	end)
+
+	it("starts again at a new mob and a new fight", function()
+		local seen = recordAggro()
+		local pull = partyPull(40, 20)
+		pull:threat("add", "rogue", 800):threat("add", "player", 100)
+		pull:to(2)
+		pull:at(3):target("player", "add")
+		pull:to(4)
+		pull:at(5):target("player", "boss")
+		pull:to(6)
+		eq(changes(seen), "nil>party1 nil>party3 nil>party1")
+		pull:at(7):stop()
+		pull:at(10):start():threat("boss", "tank", 1000)
+		pull:to(11)
+		eq(changes(seen), "nil>party1 nil>party3 nil>party1 nil>party1")
+	end)
+
+	it("comes before the STATE_CHANGED of the same update, with the tanks known", function()
+		local pull = partyPull(40, 20)
+		pull:to(2)
+		local order = {}
+		Mock.ns.Bus.On("AGGRO_CHANGED", function()
+			order[#order + 1] = "aggro"
+			eq(ST().designated, 1)
+			eq(ST().tank, row("party3"))
+		end)
+		Mock.ns.Bus.On("STATE_CHANGED", function() order[#order + 1] = "state" end)
+		pull:at(3):aggro("boss", "rogue")
+		pull:to(4)
+		eq(order[1], "aggro")
+		contains(order, "state")
+	end)
+end)
+
 describe("tank detection (SPEC-03 §2.1)", function()
 	it("takes the designated tanks from the assigned role", function()
 		local pull = partyPull()
