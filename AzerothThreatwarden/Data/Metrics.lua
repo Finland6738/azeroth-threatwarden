@@ -805,6 +805,9 @@ function Metrics.DebugLines()
 			st.ms and ("%.1f ms"):format(st.ms) or "unknown ms", st.frames, st.builds)
 	end
 	if Metrics.lastError then lines[#lines + 1] = "metrics last build error: " .. Metrics.lastError end
+	if Metrics.ExtraLines then   -- the comparison's (Data/Compare.lua)
+		for _, line in ipairs(Metrics.ExtraLines()) do lines[#lines + 1] = line end
+	end
 	return lines
 end
 

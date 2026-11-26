@@ -16,7 +16,7 @@ local SAME = {
 		REPORT_ALERT_KIND = true, REPORT_ALERT_AGGRO = true, REPORTS_KB = true, REPORTS_MB = true,
 		REPORTS_MB_WHOLE = true, REPORTS_TIP_LINE = true, TIMELINE_STATE = true, TIMELINE_WITH = true,
 		TIMELINE_PERCENT = true, TIMELINE_GROUP = true, REPLAY_SPEED_ITEM = true, REPLAY_TIME = true,
-		REPORTS_REPLAY = true },
+		REPORTS_REPLAY = true, ANALYTICS_PCT_WHOLE = true, ANALYTICS_APPROX = true },
 }
 
 -- The checks, as functions that return a list of problems: the group at the end proves they find them. -----------

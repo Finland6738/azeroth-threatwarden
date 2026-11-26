@@ -20,6 +20,22 @@ All notable changes to this project are documented here. The format follows
   are built a slice at a time and kept in memory for the 25 latest fights; nothing is saved. `/atw debug` has an
   *Analytics and export* section (switches and counts only).
 - Tests: `test_metrics.lua`; the wording test covers the new words and forbids words of merit or ranking (ANA-01).
+- M6.3: the **comparison of fights and its aggregates** for Threat Analytics (`Data/Compare.lua`), behind the same
+  `analytics` switch, still off: nothing of it is visible yet. Fights are compared only against the same enemy (its
+  creature number, else its name and classification; an unknown enemy is never compared), by default with the same
+  group size, difficulty (a fight with no recorded difficulty passes and says so) and role as the most recent one, at
+  most the 20 most recent (the older ones are counted). Threshold crossings, time in Warning or Danger, unstable
+  intervals and the risk rate are compared only between fights with the same recorded thresholds, or all with the game
+  states; percentages only where values were recorded; a fight that does not fit says *Not comparable* and why, and
+  stays out of that aggregate. The aggregates are a total, a median, the lowest and highest value with their fight, and
+  the risk situations per minute weighted on the known time; they need at least 2 comparable fights, and a lower bound
+  (*at least*, also the counts and times of an interrupted fight) stays a lower bound in every aggregate it enters.
+  Nothing ranks people or declares a trend. An overview lists every enemy from the recording headers alone (nothing
+  decoded). The comparison is built one fight at a time and pauses during combat; deleted fights leave it, damaged
+  ones are counted apart, new ones are announced. `/atw debug` gets the comparison's counts. The list of recordings
+  now carries each one's main enemy and the player's role in its header (nothing saved changes).
+- Tests: `test_compare.lua`; `Tests/long/test_compare_long.lua` (twenty fights at the row limit: every frame within
+  the report's, the memory within the cache of the metrics).
 
 ### Documentation
 

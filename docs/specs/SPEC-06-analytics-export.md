@@ -280,6 +280,48 @@ l'ultima registrazione prima (mai per rischio o per numeri della threat). Un cli
   sessioni al limite in una prova lunga (`Tests/long/test_compare_long.lua`): frame per fetta entro il budget del report,
   memoria che non cresce oltre la cache.
 
+**Realizzato in M6.3** (`Data/Compare.lua`, l'aggiunta a `Storage.List`), con queste precisazioni:
+
+- **Intestazioni**: `Storage.List()` dà anche `enemy` (`{ name, class, npc }` del mob `sum.mob`) e `role` (il ruolo
+  dell'unità `me`), senza decodificare nulla; `Compare.HeaderKey(h)` ne fa la chiave con `Compare.KEY` =
+  `Metrics.Key`, la stessa di `metrics.key` sulla stessa sessione (test). Una sessione senza `sum` non ha ancora un
+  nemico noto dalle intestazioni: sta nella riga *Unknown enemies* della panoramica e in nessun insieme finché il
+  riepilogo non c'è (Storage lo calcola fuori dal combattimento).
+- **Riferimento dei filtri**: lo scontro più recente della chiave dà gruppo e ruolo; la difficoltà è quella del più
+  recente con una difficoltà nota. `Compare.Set` dà `fights` (al più `MAX_FIGHTS`), `excluded` con il motivo (`group`,
+  `diff`, `role`), `older` e `total`; con i filtri spenti (`{ group = false, … }`) entrano tutti.
+- **Base di riferimento**: la base delle metriche di stato dello scontro più recente che ne ha una (`thresholds:80/95`,
+  `game`, `mixed:80/95`); una sessione *mista* si confronta solo con altre miste con le stesse soglie. Le metriche dello
+  scontro (contesto, cambi di detentore, prese, morti, campioni validi) si confrontano con tutti; quelle del giocatore
+  (`my*`) solo con lo stesso ruolo, quelle di stato anche con la stessa base.
+- **Misure** (`Compare.MEASURES`): tempo in combattimento, campioni validi (stato e valori), entrate in WARNING e in
+  DANGER, i due tempi di stato, cambi di detentore, prese di un non tank, la più vicina al tank, intervalli instabili
+  (numero e tempo), frequenza del rischio, morti; del giocatore entrate, tempi, percentuale massima e prese. Il totale
+  c'è solo per conteggi e tempi; per le percentuali e le frequenze no. Minimo e massimo portano lo scontro (`id`,
+  `started`); a parità vince il più recente. La mediana pari ha un decimale (2,5).
+- **Limiti inferiori**: un valore è *at least* se la cella lo è o se lo scontro è interrotto (solo conteggi e tempi);
+  un aggregato con uno di questi è *stimato* (*at least* per totale, minimo e massimo, *~* per la mediana); la frequenza
+  pesata è stimata se una cella `risk` lo è. Frequenze di registrazione diverse (`rec.hz`) si segnano sulle percentuali
+  (`hz`) senza escludere.
+- **Memoria**: una riga tiene solo i valori delle misure e poche voci dell'intestazione; il modello delle metriche resta
+  soltanto nella cache di `Data/Metrics.lua`, così la memoria segue la cache e non l'insieme (prova lunga: con
+  `CACHE` = 5 restano circa 1 MB, con le 20 sessioni in cache circa 3,5 MB).
+- **Coda**: una sessione alla volta, la successiva al frame dopo (dalla cache nello stesso frame); la pausa in
+  combattimento vale **fra** una sessione e l'altra: quella in costruzione finisce le sue fette (al più 7 frame per una
+  sessione al limite), come il calcolo della card del report. Un nuovo `Build` annulla quello in corso
+  (`done(nil, "cancelled")`). Una sessione eliminata prima del suo turno o dopo esce (`gone`), una danneggiata resta
+  con lo stato `damaged` e non conta. A `SESSIONS_CHANGED` l'ultimo confronto (`Compare.Current()`) perde le sessioni
+  eliminate, ricalcola gli aggregati e conta le nuove della chiave (`newFights`), con `Compare.OnChange(fn)` per la
+  pagina di M6.4.
+- **Costo** (prova lunga, 20 sessioni da 30 000 righe e 40 unità): il frame peggiore del confronto è quello del report
+  (circa 10 milioni di istruzioni: `Storage.Decode` e la prima fetta, rapporto 1,00), in circa 260 frame; lo stesso
+  confronto dalla cache in un frame.
+- **Parole**: chiavi `ANALYTICS_M_*` (le misure), `ANALYTICS_FILTER_*`, `ANALYTICS_AGG_*`, *Not comparable* con le basi,
+  *Only one comparable fight*, *Building 4 of 9…*, *Paused during combat*, le note degli scontri lasciati fuori,
+  eliminati, danneggiati e nuovi; `Compare.CellText`, `AggregateText`, `AggregateTip`, `NoteLines`, `RowNotes`,
+  `OverviewName`. `/atw debug` aggiunge alla sezione *Analytics and export* l'ultimo insieme, la coda e le costruzioni,
+  solo numeri.
+
 ## 3. La vista Analytics nella scheda Reports (`UI/Analytics.lua`, M6.4)
 
 ### 3.1 Dove si vede

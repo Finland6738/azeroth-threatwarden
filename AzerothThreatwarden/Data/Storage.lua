@@ -20,7 +20,8 @@
 -- fail the fast check are hidden and counted, never taken out. Deleting happens only on the player's action (Delete,
 -- DeleteAll), never at load. While the switch is off at CONFIG_LOADED nothing is listened to, checked or written.
 --
---   Storage.List()          the headers, newest first, never the columns
+--   Storage.List()          the headers, newest first, never the columns (with the main enemy of `sum` and the
+--                           player's role, for the comparison of SPEC-06 §2)
 --   Storage.Get(id)         the session (the live table: change it only through Storage), nil when unknown or hidden
 --   Storage.Usage()         { count, bytes, maxSessions, maxKB, pruned, damaged, dropped }
 --   Storage.Decode(id)      rows and events (Session.Decode) after the deep check, or nil and "unknown" / "damaged";
@@ -609,6 +610,12 @@ function Storage.List()
 		local h = { position = i, units = #s.units, mobs = #s.mobs, open = s == open or nil,
 			bytes = sizeOf(s), sum = s.sum, rec = s.rec }
 		for _, key in ipairs(Storage.HEADER) do h[key] = s[key] end
+		-- the main enemy of `sum` and the player's recorded role, for the comparison (SPEC-06 §2): nothing decoded
+		local mob = type(s.sum) == "table" and s.mobs[s.sum.mob or 0]
+		if type(mob) == "table" then h.enemy = { name = mob.name, class = mob.class, npc = mob.npc } end
+		for _, u in ipairs(s.units) do
+			if type(u) == "table" and u.me then h.role = u.role break end
+		end
 		out[#out + 1] = h
 	end
 	sort(out, function(a, b)

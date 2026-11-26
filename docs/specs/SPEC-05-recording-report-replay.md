@@ -271,7 +271,7 @@ e dice *Saved data comes from a newer version: recordings are read-only*.
 
 ### 2.7 Interfaccia di Storage
 
-`Storage.List()` (intestazioni, la più recente prima, mai le colonne), `Storage.Get(id)`, `Storage.Usage()`
+`Storage.List()` (intestazioni, la più recente prima, mai le colonne; da M6.3 con `enemy`, il nemico principale di `sum` come `{ name, class, npc }`, e `role`, il ruolo registrato del giocatore, per il confronto di [SPEC-06 §2](SPEC-06-analytics-export.md#2-confronto-e-aggregati-datacomparelua-m63)), `Storage.Get(id)`, `Storage.Usage()`
 (`count`, `bytes`, `maxSessions`, `maxKB`, `pruned`, `damaged`, `dropped`), `Storage.Delete(id)`, `Storage.DeleteAll()`,
 `Storage.Decode(id)` (le colonne di una sessione come array di numeri e codici, per il report e per M5; una alla volta
 in memoria). Il recorder usa `Storage.Add(session)` all'apertura e `Storage.Closed(session)` alla chiusura (potatura e

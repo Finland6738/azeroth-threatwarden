@@ -101,9 +101,19 @@ character schema 2.
   (`PAUSE_IN_COMBAT`) and resumed at `COMBAT_ENDED`, sessions deleted or damaged while building; the comparison lines of
   `/atw debug`; the `ANALYTICS_*` keys of the comparison.
 - Done when:
-  - [ ] Known sets of sessions give known comparisons and aggregates; fights with different thresholds, bases or
+  - [x] Known sets of sessions give known comparisons and aggregates; fights with different thresholds, bases or
     enemies are never aggregated together; the overview decodes nothing; the queue pauses in combat and resumes;
     twenty sessions at the limits build within the frame budget without the memory growing past the cache.
+- *Done (2026-11-27, before M0.7): `Data/Compare.lua` behind `analytics` (off): the key from the headers
+  (`Storage.List` now gives each header its main enemy and the player's role, nothing decoded), `Compare.Set` with the
+  group, difficulty and role filters against the most recent fight and `MAX_FIGHTS`, comparability by basis (the most
+  recent fight's thresholds or game states; mixed only with mixed) and by role for the player's columns, the
+  aggregates of §2.2 (total, median, lowest, highest, the weighted risk rate, `MIN_FIGHTS`, lower bounds and
+  interrupted fights passed on), the overview by enemy from the headers, `Compare.Build` as a queue of `Metrics.Build`
+  paused in combat between sessions and resumed at `COMBAT_ENDED`, deleted and damaged sessions, `Compare.Current` kept
+  up to date at `SESSIONS_CHANGED`; rows keep only their values, so the memory follows the metrics' cache; the
+  comparison lines of `/atw debug`; the `ANALYTICS_*` words. `test_compare.lua` (25 tests) and
+  `Tests/long/test_compare_long.lua`; SPEC-06 §2.4 *Realizzato in M6.3*.*
 - Tests: `test_compare.lua` (SPEC-06 §6); `Tests/long/test_compare_long.lua` (twenty sessions at the limits).
 - Real client: whether the creature number is readable (P9), so that the key is not the name; the time of a
   comparison of twenty real sessions out of combat.
