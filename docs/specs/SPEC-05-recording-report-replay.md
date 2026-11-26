@@ -384,7 +384,7 @@ dati attorno (±5 s); indicazione dei dati mancanti; eliminazione delle registra
 | `UI/Reports.lua`, `UI/Settings.lua` (card), `Core/Commands.lua` | la scheda, la card *Recording*, `/atw reports` | ascolta `SESSIONS_CHANGED`, `SESSION_STARTED`, `SESSION_ENDED` | M4.5 |
 | `Core/Init.lua` (cambio) | `ENTERING_WORLD(isInitialLogin, isReloadingUi)` con gli argomenti dell'evento del gioco | — | M4.2 |
 | `Data/ThreatModel.lua` (cambio) | `ThreatModel.IsStale(record, now)`: la regola di DAT-12 in una funzione | — | M4.2 |
-| `Core/Config.lua` (cambio) | schema 4 (`RECORDING_DEFAULTS`, `RECORDING`, `RECORD_WHEN`, la regola di `sessions`, la migrazione), `Config:SetAside(path, value)`, `TABS` con `reports` | — | M4.2, M4.3 |
+| `Core/Config.lua` (cambio) | schema 4 (`RECORDING_DEFAULTS`, `RECORDING`, `RECORD_WHEN`, la regola di `sessions`, la migrazione), `Config:SetAside(path, value, kind)`, `TABS` con `reports` | — | M4.2, M4.3 |
 | `Core/Compat.lua` (cambio) | `zone.RealZoneText` (`GetRealZoneText`), lettura di `instance.Info` (tipo e difficoltà), `Unit.NpcID` dal GUID; gli eventi `UNIT_DIED`, `PLAYER_DEAD`, `PLAYER_LOGOUT`, `ENCOUNTER_START`, `ENCOUNTER_END` nella tabella di SPEC-01 §8.2 | — | M4.2 |
 
 **Realizzato in M4.2** (`Data/Session.lua`, `Data/Recorder.lua`), con queste precisazioni:
@@ -401,6 +401,34 @@ dati attorno (±5 s); indicazione dei dati mancanti; eliminazione delle registra
   `/reload`.
 - Il collegamento `after` guarda la sessione interrotta (o aperta e mai finita) più recente: la sua fine è
   `started + dur / 10`.
+
+**Realizzato in M4.3** (`Data/Storage.lua`), con queste precisazioni:
+
+- Storage ascolta `CONFIG_LOADED` dal caricamento del file e fa i controlli solo con l'interruttore `recording` acceso;
+  solo allora registra `CONFIG_CHANGED`, `ENTERING_WORLD` e `COMBAT_ENDED`. Con l'interruttore spento non controlla,
+  non scrive e non toglie nulla, e `Delete`/`DeleteAll` rispondono `off`.
+- Il controllo veloce rifiuta anche `units` e `mobs` con buchi e, in `buf`, i valori che `Session.Join` non saprebbe
+  codificare (tempi, indici, codici, la forma di `buf.ev`); una sessione con pezzi si unisce, si riconta e si controlla
+  di nuovo come chiusa. Anche una sessione `complete` con pezzi (logout durante `END_DELAY`) si unisce e resta
+  `complete`.
+- `ended` vale `unknown` dal caricamento; al primo `ENTERING_WORLD` diventa `reload` o `login` per le sole sessioni con
+  `stamp`. `dur` diventa l'ultimo `t` scritto (righe ed eventi) se quello salvato è minore; `fight` resta quello salvato
+  (0 dopo un crash: sconosciuto, mai inventato).
+- La voce di `corrupt` di una sessione danneggiata ha il tipo `session` e, come `data`, i soli campi semplici
+  dell'intestazione (`id`, `started`, `dur`, `fight`, `state`, `ended`, `stamp`, `after`, `trunc`, `group`, `zone`,
+  `inst`, `diff`, `n`, `ne`) con `found` (il tipo trovato) e `why` (il primo campo che non passa); mai le colonne,
+  `units`, `mobs`, `q` o `rec`. `Config:SetAside(path, value, kind)` ha il terzo argomento facoltativo per il tipo (il
+  tipo trovato se manca) e rifiuta in sola lettura; `Config.AddIssue(text)` annota il problema in `Config.issues`.
+- Una sessione che fallisce il controllo profondo in combattimento si nasconde subito (`Get`, `List`) e si mette da
+  parte a `COMBAT_ENDED`; in sola lettura si nasconde e si conta soltanto.
+- Il recorder chiama `Storage.Add(session)` all'apertura e `Storage.Closed(session, kept)` alla chiusura, prima di
+  `SESSION_ENDED`: toglie la sessione scartata, stima di nuovo la dimensione, pota ed emette `SESSIONS_CHANGED`, che da
+  M4.3 emette solo Storage. `Storage.Prune()` restituisce quante sessioni sono uscite; `Storage.Check(s)` è il controllo
+  veloce di una voce.
+- `sum` resta `nil` finché non c'è `Report.Summary` (M4.4): Storage lo chiama fuori dal combattimento al caricamento,
+  alla chiusura e a `COMBAT_ENDED`.
+- `/atw debug`, sezione *Recording*: le righe *sessions kept* (numero, stima, limiti, sola lettura) e *storage this
+  load* (completate, rinominate, scartate, potate, danneggiate, messe da parte, nascoste, eliminate).
 
 - **Interruttori** (`Core/Features.lua`, ADR 0014): `recording` (recorder, Storage, card *Recording*) e `reports`
   (report, scheda, avviso, `/atw reports`) restano **spenti** fino a M4.R. Spento vuol dire: nessun ascoltatore e nessun

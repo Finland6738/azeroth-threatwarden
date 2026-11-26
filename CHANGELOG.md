@@ -14,6 +14,15 @@ All notable changes to this project are documented here. The format follows
   tick). Chained pulls within 5 s stay one session, fights under 3 s are dropped, a `/reload` or a logout in combat
   leaves an *interrupted* session and the next one says which one it continues. Account schema 4 adds
   `settings.recording` and `sessions` (migration 3 → 4); `/atw debug` has a *Recording* section.
+- M4.3: the storage of the sessions, behind the same `recording` switch (nothing changes in the game yet). At every
+  load each saved session is checked on its own: a session saved during a fight (a `/reload`, a logout or a crash) is
+  completed and marked *interrupted* with how it ended (reload, login or unknown), never left open; a damaged one is
+  set aside in the `corrupt` list with its header only, without touching the other sessions or the settings, and a
+  damaged one found when a report decodes it is set aside once out of combat; two sessions with the same id are told
+  apart. At most 25 sessions and about 2 MB (estimated) are kept: after every fight, at load and when the limits
+  change, the oldest go first, never the session being recorded. Sessions can be deleted one by one or all at once
+  (refused for the session being recorded and on read-only data); nothing is written while the saved data is
+  read-only. `/atw debug` counts kept, dropped, pruned, damaged and deleted sessions, never a name.
 
 ### Documentation
 

@@ -41,6 +41,7 @@ Data\Alerts.lua
 Data\CoachRules.lua
 Data\Coach.lua
 Data\Session.lua
+Data\Storage.lua
 Data\Recorder.lua
 UI\Assets.lua
 UI\Theme.lua

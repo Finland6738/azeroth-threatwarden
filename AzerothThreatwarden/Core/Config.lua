@@ -447,6 +447,35 @@ local function flushCorrupt()
 	pending = {}
 end
 
+-- A damaged value that another module checks sets itself aside (SPEC-02 §3.7, M4.3): a session of `account.sessions`
+-- that Data/Storage.lua finds damaged goes into `corrupt` on its own, with the bounded copy of §3.4 (the caller passes
+-- only what may be kept: for a session its header, never the columns). `kind` is the type found unless given
+-- ("session"). The oldest entries go beyond MAX_CORRUPT. Refused while the account is read-only (nothing is written).
+-- Returns true, or false and the reason.
+function Config:SetAside(path, value, kind)
+	if type(path) ~= "string" or path == "" then return false, "unknown path" end
+	local db = Config.db.account
+	if not db or type(db.corrupt) ~= "table" then return false, "not loaded" end
+	if Config.readOnly.account then return false, "read-only" end
+	local Compat = ns.Compat
+	local list = db.corrupt
+	list[#list + 1] = {
+		scope = path:match("^(%a+)%.") or path,
+		path = path,
+		at = Compat and Compat.ServerTime and Compat.ServerTime() or 0,
+		kind = type(kind) == "string" and kind or type(value),
+		data = type(value) == "table" and boundedCopy(value) or nil,
+	}
+	while #list > Config.MAX_CORRUPT do table.remove(list, 1) end
+	return true
+end
+
+-- A problem found and fixed by a module that checks its own data at CONFIG_LOADED (Storage): a path and fixed words,
+-- never a value or a name. Listed with those of the last Load (/atw debug).
+function Config.AddIssue(text)
+	if type(text) == "string" then issue(text) end
+end
+
 ---------------------------------------------------------------------------------------------------------------------
 -- Sanitize: the rules, parents first
 ---------------------------------------------------------------------------------------------------------------------

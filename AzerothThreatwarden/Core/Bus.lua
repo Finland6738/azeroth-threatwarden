@@ -28,7 +28,7 @@
 --   ENTERING_WORLD(isInitialLogin, isReloadingUi)  Core/Init.lua, from PLAYER_ENTERING_WORLD (the flags from M4.2; nil
 --                                   when the client gives none).
 --   SESSION_STARTED(id), SESSION_ENDED(id, state)                                          Data/Recorder.lua (M4.2)
---   SESSIONS_CHANGED()                                                                     Data/Recorder.lua, Storage (M4)
+--   SESSIONS_CHANGED()                                                                     Data/Storage.lua (M4.3)
 local ADDON_NAME, ns = ...
 ns = ns or {}
 ns.modules = ns.modules or {}

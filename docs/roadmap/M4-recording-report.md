@@ -92,9 +92,19 @@ notice, `/atw reports`) in `Core/Features.lua` stay **off** until M4.R; every st
   `DeleteAll` with their refusals; read-only; `List`, `Get`, `Usage`, `Decode`, `Add`, `Closed`; `SESSIONS_CHANGED`);
   `Config:SetAside(path, value)`; the storage part of the *Recording* section of `/atw debug`.
 - Done when:
-  - [ ] After every close and load both limits hold (the open session aside); a damaged session goes to `corrupt`
+  - [x] After every close and load both limits hold (the open session aside); a damaged session goes to `corrupt`
     without touching the others or the settings; an interrupted session is never left `open`; deleted sessions and
     their names are gone after a `/reload`; nothing is written while read-only.
+- *Done (2026-11-26, before M0.7): `Data/Storage.lua` behind `recording` (the load at `CONFIG_LOADED` with the fast
+  check, sessions with pieces joined and recounted, `ended` from the first `ENTERING_WORLD`, interrupted ones without
+  rows dropped, duplicate ids with `-b`, `-c`…, damaged ones set aside one by one with their header only; the deep
+  check at `Storage.Decode`, set aside out of combat; pruning by `maxSessions` and `maxKB` after every close, at load
+  and at a change of the limits, never the open session; the size per session with `Config.EstimateSize`; `Delete`,
+  `DeleteAll` with `off`, `read-only`, `unknown`, `recording`; read-only hides and counts; `List`, `Get`, `Usage`,
+  `Decode`, `Add`, `Closed`, `Prune`; `SESSIONS_CHANGED`); the recorder uses `Storage.Add` and `Storage.Closed`;
+  `Config:SetAside(path, value, kind)` and `Config.AddIssue`; the storage lines of the *Recording* section of
+  `/atw debug`. Tests: `test_storage.lua` (59 cases, a simulated `/reload` in each), `test_recorder.lua` updated (an
+  interrupted session is joined at the next load).*
 - Tests: `test_storage.lua` (migration from schema 3 data with and without `sessions`, every check, limits, pruning,
   corruption, duplicates, interrupted sessions, delete, read-only, a simulated `/reload` after each case).
 - Real client: the real size of the SavedVariables file against the estimate; a `/reload` and a logout during and after

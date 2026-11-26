@@ -282,7 +282,7 @@ frequenza, avviso).
 
 `Config` controlla di `sessions` solo che sia una tabella (altrimenti voce in `corrupt` con il solo tipo e tabella
 nuova); ogni sessione la controlla `Data/Storage.lua` al caricamento e una sessione danneggiata va in `corrupt` da sola
-(§4.6), senza toccare le altre né le impostazioni. Per questo `Config` offre `Config:SetAside(path, value)` (la stessa
+(§4.6), senza toccare le altre né le impostazioni. Per questo `Config` offre `Config:SetAside(path, value, kind)` (la stessa
 copia limitata di §3.4, M4.3). *Reset settings* non tocca `sessions` (§3.4); le sessioni si eliminano solo da Reports o
 dalla card *Recording* ([SPEC-05 §2.5](SPEC-05-recording-report-replay.md#25-eliminare-una-o-tutte-le-registrazioni)).
 

@@ -21,8 +21,9 @@
 -- session starts with C a = r and `after` = the id of the interrupted session it continues (SPEC-05 §1.6).
 --
 -- Bus: SESSION_STARTED(id), SESSION_ENDED(id, state) with "complete", "interrupted" or "dropped", SESSIONS_CHANGED()
--- when `sessions` changed; never a name. While the `recording` switch is off at login nothing is registered, no tick
--- runs and nothing is written (ADR 0014). Until M4.3 a closed session is only added, never pruned.
+-- when `sessions` changed (through Data/Storage.lua: Storage.Add at the opening, Storage.Closed at the close, which
+-- prunes, M4.3); never a name. While the `recording` switch is off at login nothing is registered, no tick runs and
+-- nothing is written (ADR 0014).
 local ADDON_NAME, ns = ...
 ns = ns or {}
 ns.modules = ns.modules or {}
@@ -30,7 +31,7 @@ ns.modules = ns.modules or {}
 local Recorder = {}
 ns.Recorder, ns.modules.Recorder = Recorder, Recorder
 
-local Compat, Config, Session = ns.Compat, ns.Config, ns.Session
+local Compat, Config, Session, Storage = ns.Compat, ns.Config, ns.Session, ns.Storage
 local type, floor, pairs, ipairs, tostring = type, math.floor, pairs, ipairs, tostring
 
 Recorder.END_DELAY = 5
@@ -316,8 +317,8 @@ local function open(kind)
 		rec = { hz = hz, monitorHz = Scanner.Rate(), maxUnits = Scanner.MaxUnits(), warning = warning, danger = danger,
 			mode = State.mode or "none", version = Compat.AddonVersion() },
 	}
-	list[#list + 1] = s
 	Recorder.current = s
+	Storage.Add(s)
 	resetRuntime(now)
 	Recorder.stats.opened = Recorder.stats.opened + 1
 	Session.AddEvent(s, 0, "C", 0, 0, 0, kind)
@@ -326,15 +327,6 @@ local function open(kind)
 	startTick()
 	Scanner.Want(Recorder.CONSUMER, true)
 	emit("SESSION_STARTED", s.id)
-	emit("SESSIONS_CHANGED")
-end
-
-local function removeSession(s)
-	local list = sessions()
-	if type(list) ~= "table" then return end
-	for i = #list, 1, -1 do
-		if list[i] == s then table.remove(list, i) return end
-	end
 end
 
 -- The end of a combat period: event c, the time in combat counted.
@@ -363,15 +355,14 @@ function Recorder.Close(why, join)
 	s.state, s.ended = "complete", "combat"
 	local state = "complete"
 	if s.fight < Session.LIMITS.minFight * 10 or s.n < 1 then
-		removeSession(s)
 		state = "dropped"
 		Recorder.stats.dropped = Recorder.stats.dropped + 1
 	else
 		Recorder.stats.kept = Recorder.stats.kept + 1
 	end
 	Recorder.stats.lastClose = why
+	Storage.Closed(s, state ~= "dropped")      -- a dropped one taken out; pruning; SESSIONS_CHANGED
 	emit("SESSION_ENDED", s.id, state)
-	emit("SESSIONS_CHANGED")
 	return state
 end
 
@@ -603,12 +594,10 @@ function Recorder.DebugLines()
 	else
 		lines[#lines + 1] = "no session open; last fight not recorded because: " .. tostring(Recorder.stats.lastSkip or "-")
 	end
-	local list, kb = sessions(), 0
-	local count = type(list) == "table" and #list or 0
-	if count > 0 then kb = Config.EstimateSize(list) / 1024 end
 	local st = Recorder.stats
-	lines[#lines + 1] = ("sessions kept: %d, about %.1f KB; this load: %d opened, %d kept, %d dropped, %d interrupted"):format(
-		count, kb, st.opened, st.kept, st.dropped, st.interrupted)
+	lines[#lines + 1] = ("recorder this load: %d opened, %d kept, %d dropped, %d interrupted"):format(st.opened, st.kept,
+		st.dropped, st.interrupted)
+	for _, line in ipairs(Storage.DebugLines()) do lines[#lines + 1] = line end
 	local median, max = ns.Scheduler.Cost(Recorder.TICK)
 	lines[#lines + 1] = ("record tick: %s ms median, %s ms max"):format(median and ("%.3f"):format(median) or "?",
 		max and ("%.3f"):format(max) or "?")
