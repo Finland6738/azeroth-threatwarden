@@ -24,7 +24,7 @@ limits hold. Released as `v0.4.0`, the first CurseForge candidate (SPEC-09 Q6).
 | M4.7 In-game checklist M4 and MVP check | Sonnet | low |
 | M4.R Release preparation `v0.4.0` | Sonnet | medium |
 
-*State (2026-11-26): M4 is complete in code (steps M4.1–M4.7, offline tests in CI) and switched on for `v0.4.0`
+*State (2026-11-26): M4 is complete in code (steps M4.1–M4.7, offline tests in CI) and released as `v0.4.0`
 (M4.R). The exit criterion needs the game and is **open** until the owner runs [the M4 checklist](../checklists/M4.md).*
 
 **Switches.** `recording` (recorder, storage, the *Recording* card) and `reports` (report, Reports tab, end-of-fight
@@ -198,7 +198,15 @@ notice, `/atw reports`) in `Core/Features.lua` stayed **off** until M4.R; every 
   ([ADR 0014](../adr/0014-one-version-per-milestone-and-feature-switches.md)); CurseForge only if the owner has set up
   the project and `CF_API_KEY` (SPEC-09 Q6).
 - Done when:
-  - [ ] The `recording` and `reports` switches are on, the later ones off; changelog promoted, status updated; the
+  - [x] The `recording` and `reports` switches are on, the later ones off; changelog promoted, status updated; the
     checks are green (quick and long).
-  - [ ] The dry run is green, and the tag `v0.4.0` and its GitHub Release (changelog section as notes, zip with only the
+  - [x] The dry run is green, and the tag `v0.4.0` and its GitHub Release (changelog section as notes, zip with only the
     addon) exist.
+- *Done (2026-11-26): `recording` and `reports` switched on, changelog promoted and status updated (commit `c6777af`,
+  every later switch off, 1144 quick tests and 1182 with `--long`); turning them on showed two bugs, fixed in the same
+  commit (the Monitor card's rate slider no longer filled in next to the Recording card; the size estimate without a
+  recording's summary). The dry run of the Release workflow was green; annotated tag `v0.4.0` on that commit,
+  [GitHub Release](https://github.com/Finland6738/azeroth-threatwarden/releases/tag/v0.4.0) with the changelog section
+  as notes and `AzerothThreatwarden-v0.4.0-forever.zip` (149 files, all in `AzerothThreatwarden/`;
+  `## Version: v0.4.0`). CurseForge skipped (no project ID and no `CF_API_KEY`, SPEC-09 Q6). The zip has not been
+  installed or run in the game; the M0 probe and the M1–M4 checklists are still open.*

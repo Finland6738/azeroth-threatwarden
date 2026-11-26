@@ -9,7 +9,7 @@ secret ([RELEASING](RELEASING.md#setting-up-curseforge-once)). Title, summary an
 
 - [ ] Approve the title ([Q17](specs/SPEC-09-risks-open-questions.md)): the title of the specification ends in *Combat
   Replay*, which `v0.4.0` does not have. The draft says *Combat Report* until replay exists (`v0.5.0`).
-- [ ] `v0.4.0` is released (M4.R), so the recording and report described below are switched on.
+- [x] `v0.4.0` is released (M4.R), so the recording and report described below are switched on.
 - [ ] Run the [probe](spike/README.md) and the in-game checklists ([M1](checklists/M1.md)–[M4](checklists/M4.md)), then
   rewrite *What is verified* and the feature list with what they showed. Remove every feature that did not work.
 - [ ] The game version **WoW Forever** exists in the project's choices.

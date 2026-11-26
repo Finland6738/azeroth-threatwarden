@@ -5,6 +5,11 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Documentation
+
+- M4.R: `v0.4.0` released on GitHub; the release step is ticked in the M4 milestone file. CurseForge was skipped (no
+  project yet).
+
 ## [0.4.0] - 2026-11-26
 
 The fourth test version: **recording and the combat report** (milestone M4), switched on. It completes the MVP
