@@ -9,3 +9,4 @@ before `v1.0.0`. Results are reported with the *In-game test report* issue form.
 |---|---|---|
 | [M1.md](M1.md) | M1 Foundations | written, **not run yet** |
 | [M2.md](M2.md) | M2 Threat Monitor | written, **not run yet** (run it with the [M0 probe](../spike/README.md)) |
+| [M3.md](M3.md) | M3 Alerts and Threat Coach | written, **not run yet** (after or with M2; the switches are on from `v0.3.0`) |

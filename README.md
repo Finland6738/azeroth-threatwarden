@@ -17,7 +17,8 @@ which mob, warns you before you pull aggro, records your fights and explains wha
 > ecosystem look, a movable window with Settings and an Info page with the credits, the
 > [commands](docs/wiki/Commands.md) `/atw` and `/threatwarden`, a minimap button and the Addon Compartment entry. It is
 > checked by offline tests only: the M0 probe and the in-game checks of [M1](docs/checklists/M1.md) and
-> [M2](docs/checklists/M2.md) are still open. The [probe](docs/spike/README.md) (a development tool, never distributed) checks in the real
+> [M2](docs/checklists/M2.md) are still open. Alerts and the Threat Coach (`v0.3.0`) are built and switched off, with
+> their [in-game checklist](docs/checklists/M3.md) written and not run. The [probe](docs/spike/README.md) (a development tool, never distributed) checks in the real
 > client which threat data WoW Forever gives an addon, because the client may hide threat values from addons in some
 > situations: the client and the threat functions, including whether their values are secret (P1–P4), which units and
 > mobs answer, the threat events, GUIDs and roles (P5, P6, P9), the combat events and the damage meter (P7, P8), the

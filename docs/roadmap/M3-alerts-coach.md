@@ -130,7 +130,11 @@ them (SPEC-04 §4.3).
   pet, *state only* and unknown data, mute and the key, the sound, the native warning, the demo; the tuning of the
   cooldown, Q12, and of the messages, Q11); README status.
 - Done when:
-  - [ ] The checklist covers every "Real client" line of M3.2–M3.5 and the exit criterion.
+  - [x] The checklist covers every "Real client" line of M3.2–M3.5 and the exit criterion.
+- *Done (2026-11-26, before M0.7): [docs/checklists/M3.md](../checklists/M3.md), with the exit criterion (step 2), the
+  sound kit and the delay of an alert (steps 8, 2.8), Q11 and the roles (steps 3.8, 4, 11), the strip and border
+  (step 10), the key binding and the game's own warning (steps 7, 9), Q12 (steps 3.3, 11). Written, **not run**: it
+  waits for the owner.*
 
 ### M3.R — Release preparation `v0.3.0`
 - Branch: `chore/release-v0.3.0`

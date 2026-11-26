@@ -42,6 +42,11 @@ All notable changes to this project are documented here. The format follows
 
 ### Documentation
 
+- M3.6: the in-game checklist of M3, [docs/checklists/M3.md](docs/checklists/M3.md): the demo and the Alerts card,
+  a damage dealer nearing the tank, the tank losing the margin and the mob, a healer, a hunter's pet, *state only* and
+  unknown data, mute and the key, the sound, the game's own warning, readability, and the tuning notes of the cooldown
+  (Q12) and of the messages (Q11); how to switch `alerts` and `coach` on in an installed development copy. **Not run
+  yet.** README and checklist index updated.
 - M3.1: specification of alerts and the Threat Coach (SPEC-04, Italian), written before the in-game M0 probe like M2.
   Alerts fire only when a risk **enters** (a state rises, or the unit holding the mob changes: a new `AGGRO_CHANGED`
   event of the monitor), never on every update, with a cooldown of 8 s per kind and unit, on three channels (a message
