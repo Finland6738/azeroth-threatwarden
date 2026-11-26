@@ -5,7 +5,8 @@
 -- no allocation per scan; the capabilities. Fight scripts: Tests/lib/fight.lua. The numbers of the mock are
 -- assumptions until the M0 probe (Tests/mock/70_threat.lua).
 
-before_boot(function(M) M.features = { monitor = true } end)
+-- recording off: the recorder is a scanner consumer of its own (test_recorder.lua)
+before_boot(function(M) M.features = { monitor = true, recording = false } end)
 
 local function TS() return Mock.ns.ThreatScanner end
 local function Cap(id) return (Mock.ns.Compat.Capability(id)) end

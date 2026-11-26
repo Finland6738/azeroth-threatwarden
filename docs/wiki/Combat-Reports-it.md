@@ -2,8 +2,7 @@
 
 *English: [[Combat Reports|Combat-Reports]]*
 
-> **Arriva con la `v0.4.0`** (non ancora pubblicata, quindi nella versione attuale non si vede nulla), non verificata
-> in gioco.
+> **Nuovo nella `v0.4.0`**, non verificato in gioco.
 
 L'addon registra ciò che il monitor ha letto durante uno scontro e ne mostra un breve report, nella scheda **Report**
 (`/atw reports`, o un clic su *Apri report* nell'avviso di fine scontro). Tutto resta sul tuo computer. Le

@@ -106,7 +106,7 @@ alerts about one unit, see [[Alerts and Coach|Alerts-and-Coach#muting]].
 
 ## Recording
 
-> **Arrives with `v0.4.0`** (not published yet, so the card is not there in the current version), not verified in game.
+> **New in `v0.4.0`**, not verified in game.
 
 Saved for the whole account, below *Alerts*. What the recordings are is on [[Combat Reports|Combat-Reports]]. Every
 change applies at once.
@@ -128,11 +128,9 @@ recordings take (an estimate) and reminds you that they keep the names of your c
 
 ## Reset
 
-**Reset settings** puts the appearance, the language, the minimap button, the monitor settings and the
-alerts and Coach back to the defaults, and drops the damaged
-data the addon had set aside for bug reports (from `v0.4.0` also the
-recording settings). It asks for a second
-click, within a few seconds. Your recordings (from `v0.4.0`) are not deleted here; the window's place is reset with
+**Reset settings** puts the appearance, the language, the minimap button, the monitor settings, the alerts and Coach
+and the recording settings back to the defaults, and drops the damaged data the addon had set aside for bug reports. It
+asks for a second click, within a few seconds. Your recordings are not deleted here; the window's place is reset with
 *Reset window*.
 
 ## Read-only data

@@ -2,7 +2,8 @@
 -- key from the GUID or a counter, death, disappearance, a GUID that changes without an event, UNIT_TARGET, the
 -- capability mobIdentity, and nothing at all while the monitor switch is off. Fight scripts: Tests/lib/fight.lua.
 
-before_boot(function(M) M.features = { monitor = true } end)
+-- recording off: the recorder would make the scanner read (test_recorder.lua)
+before_boot(function(M) M.features = { monitor = true, recording = false } end)
 
 local function TT() return Mock.ns.TargetTracker end
 

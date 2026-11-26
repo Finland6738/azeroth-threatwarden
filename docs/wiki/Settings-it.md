@@ -107,8 +107,7 @@ avvisi per un po', o quelli su una sola unità, vedi [[Avvisi e Coach|Alerts-and
 
 ## Registrazione
 
-> **Arriva con la `v0.4.0`** (non ancora pubblicata, quindi nella versione attuale la card non c'è), non verificata in
-> gioco.
+> **Nuova nella `v0.4.0`**, non verificata in gioco.
 
 Salvata per tutto l'account, sotto *Avvisi*. Che cosa sono le registrazioni è in
 [[Report dei combattimenti|Combat-Reports-it]]. Ogni modifica si applica subito.
@@ -131,10 +130,9 @@ occupano (una stima) e ricorda che contengono i nomi dei compagni, solo su quest
 ## Ripristino
 
 **Ripristina impostazioni** riporta ai valori predefiniti l'aspetto, la lingua, il pulsante della minimappa, le
-impostazioni del monitor e quelle di avvisi e Coach, ed
-elimina i dati danneggiati che l'addon aveva messo da parte per le segnalazioni. Chiede
-un secondo clic entro pochi secondi. Dalla `v0.4.0` riporta ai predefiniti anche le impostazioni della registrazione,
-ma le registrazioni non si eliminano da qui; la posizione della finestra si ripristina con *Ripristina finestra*.
+impostazioni del monitor, quelle di avvisi e Coach e quelle della registrazione, ed elimina i dati danneggiati che
+l'addon aveva messo da parte per le segnalazioni. Chiede un secondo clic entro pochi secondi. Le registrazioni non si
+eliminano da qui; la posizione della finestra si ripristina con *Ripristina finestra*.
 
 ## Dati in sola lettura
 

@@ -648,7 +648,7 @@ describe("the row menu with the alerts switched off", function()
 end)
 
 describe("the row menu", function()
-	before_boot(function(M) M.features = { monitor = true, alerts = true } end)
+	before_boot(function(M) M.features = { monitor = true, alerts = true, recording = false } end)
 
 	it("opens on a right click with the unit's name and the one choice", function()
 		partyPull():to(0.5)

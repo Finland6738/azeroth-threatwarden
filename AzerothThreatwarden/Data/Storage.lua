@@ -340,7 +340,10 @@ local function summarize()
 		for _, s in ipairs(waitingSum) do
 			if s.sum == nil and not hidden[s] then
 				local ok, sum = pcall(Report.Summary, s)
-				if ok and type(sum) == "table" then s.sum = sum end
+				if ok and type(sum) == "table" then
+					s.sum = sum
+					size[s] = nil   -- the summary is part of what is saved: estimated again
+				end
 			end
 		end
 	end

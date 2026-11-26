@@ -13,7 +13,7 @@ end
 
 local SECTIONS = { "Client", "Features", "APIs", "Capabilities", "Restrictions", "Saved data", "Memory", "Bus",
 	"Scheduler", "Demo", "Alerts and Coach", "Look", "Window", "Settings",
-	"Target", "Threat scanner", "Last errors" }
+	"Target", "Threat scanner", "Recording", "Last errors" }
 
 describe("the report (SPEC-01 §9)", function()
 	it("has the header and the sections in order", function()
@@ -32,9 +32,8 @@ describe("the report (SPEC-01 §9)", function()
 		contains(text, "language: setting auto, active enUS")
 		contains(text, "missing language keys: 0")
 		contains(text, "instance: none")
-		contains(text, "on: alerts, coach, monitor")
-		contains(text, "off: analytics, export, heatmap, multitarget, profiles, recording, " ..
-			"replay, reports, timeline")
+		contains(text, "on: alerts, coach, monitor, recording, reports")
+		contains(text, "off: analytics, export, heatmap, multitarget, profiles, replay, timeline")
 	end)
 
 	it("lists what Compat found: every API, the capabilities and the restrictions", function()
@@ -57,7 +56,7 @@ describe("the report (SPEC-01 §9)", function()
 		contains(text, "problems corrected at load: none")
 		contains(text, "addon memory: 2048.2 KB")
 		contains(text, "framerate: 60 fps")
-		contains(text, "COMBAT_ENDED: 8 listener(s)")
+		contains(text, "COMBAT_ENDED: 10 listener(s)")
 		contains(text, "no tick running")
 		contains(text, "no addon errors recorded this session")
 	end)

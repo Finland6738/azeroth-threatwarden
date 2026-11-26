@@ -439,14 +439,16 @@ local function buildRecording(view, f, page)
 	f.when = Widgets.Segmented(card, choices, function(id) write(view, card, RECORDING .. "when", id) end)
 	card:Add(f.when, 8)
 
-	local function slider(key, label, min_, max_, step, format, note)
-		f[key] = sliderBox(card, { min = min_, max = max_, step = step, format = format, valueWidth = 60,
+	-- `field`: the name of the control in `f` (the Monitor card has a `rate` of its own)
+	local function slider(key, label, min_, max_, step, format, note, field)
+		field = field or key
+		f[field] = sliderBox(card, { min = min_, max = max_, step = step, format = format, valueWidth = 60,
 			commit = function(v) write(view, card, RECORDING .. key, floor(v / step + 0.5) * step) end })
-		card:Add(controlRow(card, label, f[key]), 12, { stretch = true })
+		card:Add(controlRow(card, label, f[field]), 12, { stretch = true })
 		if note then View.CardText(card, "Small", "text-3", note, 2) end
 	end
 	slider("rate", L["SET_RECORDING_RATE"], Limits.rate.min, Limits.rate.max, 1,
-		function(v) return L["SET_HERTZ"]:format(v) end, L["SET_RECORDING_RATE_NOTE"])
+		function(v) return L["SET_HERTZ"]:format(v) end, L["SET_RECORDING_RATE_NOTE"], "recordingRate")
 	slider("maxSessions", L["SET_RECORDING_SESSIONS"], Limits.maxSessions.min, Limits.maxSessions.max, 1, tostring)
 	slider("maxKB", L["SET_RECORDING_SIZE"], Limits.maxKB.min, Limits.maxKB.max, KB_STEP,
 		function(v) return ns.Reports.SizeText(floor(v / KB_STEP + 0.5) * KB_STEP) end, L["SET_RECORDING_LIMITS_NOTE"])
@@ -502,7 +504,8 @@ local function refreshRecording(f)
 	end
 	f.recording.control:SetOn(value("enabled") == true, true)
 	f.when:Select(value("when"))
-	for _, key in ipairs({ "rate", "maxSessions", "maxKB" }) do f[key]:Update(value(key)) end
+	f.recordingRate:Update(value("rate"))
+	for _, key in ipairs({ "maxSessions", "maxKB" }) do f[key]:Update(value(key)) end
 	f.notice.control:SetOn(value("notice") == true, true)
 	paintUsage(f)
 	f.deleteAll:SetEnabled(not config():IsReadOnly("account"))

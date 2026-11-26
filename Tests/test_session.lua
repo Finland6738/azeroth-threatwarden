@@ -3,6 +3,9 @@
 -- was written (open, interrupted and closed), the limits (rows, events, units, mobs, time), and a session that the
 -- SavedVariables serializer accepts as the client would write it.
 
+-- recording off: these sessions are hand-made and Storage would check them at the load (test_storage.lua)
+before_boot(function(M) M.features = { recording = false } end)
+
 local function S() return Mock.ns.Session end
 
 local function newSession()

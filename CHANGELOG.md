@@ -5,6 +5,20 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-11-26
+
+The fourth test version: **recording and the combat report** (milestone M4), switched on. It completes the MVP
+milestones (M1–M4) in code. A fight in a group or an instance is recorded and kept through a `/reload`; the new
+**Reports** tab (`/atw reports`) lists the recordings and shows a short report of each, which says *Insufficient data*
+or *Not available* where it must and never names a cause. The default thresholds are now **Warning 82 % / Danger 91 %**
+(saved data schema 5).
+
+It has been checked by offline tests only. The M0 probe (which threat data the client gives an addon) and the in-game
+checklists of [M1](https://github.com/Finland6738/azeroth-threatwarden/blob/v0.4.0/docs/checklists/M1.md), [M2](https://github.com/Finland6738/azeroth-threatwarden/blob/v0.4.0/docs/checklists/M2.md), [M3](https://github.com/Finland6738/azeroth-threatwarden/blob/v0.4.0/docs/checklists/M3.md) and [M4](https://github.com/Finland6738/azeroth-threatwarden/blob/v0.4.0/docs/checklists/M4.md) were **not run** before this tag, so
+nothing below has been verified in the real client and the
+[MVP check](https://github.com/Finland6738/azeroth-threatwarden/blob/v0.4.0/docs/checklists/M4.md#12-mvp-check) is **not met yet**. Timeline, replay and the later parts stay switched off. The
+probe is a development tool in the repository and is not part of this package.
+
 ### Added
 
 - M4.2: the recorder and the sessions, behind the `recording` switch (off until `v0.4.0`, so nothing changes in the
@@ -44,12 +58,18 @@ All notable changes to this project are documented here. The format follows
 
 ### Fixed
 
+- M4.R: with the *Recording* card in Settings, the *Monitor* card's reading-rate slider was no longer filled in or
+  updated (both cards used the same internal name).
+- M4.R: the estimated space of a recording now includes its summary at once, not only after the next `/reload`.
 - M4.6: packing the recording every 256 rows (behind the `recording` switch, off until `v0.4.0`) made about 60 KB of
   short-lived garbage in combat; it now reuses one table and makes only the packed strings (about 3 KB). The saved form
   is unchanged.
 
 ### Changed
 
+- M4.R: the `recording` and `reports` switches are on: the recorder, the storage, the combat report, the end-of-fight
+  notice, the Reports tab, the *Recording* card and `/atw reports` of M4.2–M4.5 are part of this version. Entries above
+  that say a part is "behind the switch (off until `v0.4.0`)" describe it before this release.
 - The thresholds decided by the owner from play (SPEC-09 Q7): **Warning from 82 %** (was 80 %), **Danger from 91 %**
   (was 95 %); hysteresis and the 1 s dwell are unchanged. Account schema 5: a saved pair still at the old defaults
   80 / 95 becomes 82 / 91 once; thresholds you set yourself stay as they are.

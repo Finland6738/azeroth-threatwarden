@@ -20,7 +20,7 @@ own chat window, in the addon's language; nothing is ever posted to other player
 | `/atw demo` | starts [demo mode](Threat-Monitor#demo-mode), an invented fight (typed again, stops it) |
 | `/atw demo stop` | ends demo mode (`/atw demo off` too) |
 | `/atw mute` | mutes the [alerts](Alerts-and-Coach#muting) until the end of this fight, or of the next one; typed again, unmutes them |
-| `/atw reports` | opens the [Reports tab](Combat-Reports) (arrives with `v0.4.0`) |
+| `/atw reports` | opens the [Reports tab](Combat-Reports) |
 
 Until its version, `/atw reports` answers with the version that will bring it.
 

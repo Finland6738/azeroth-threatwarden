@@ -60,6 +60,7 @@ end)
 
 describe("existing data", function()
 	before_boot(function(M)
+		M.features = { recording = false }   -- Storage would set the unknown session aside (test_storage.lua)
 		M.saved = {
 			AzerothThreatwardenDB = { schema = 1, settings = { theme = "aurora", minimap = { lock = true } },
 				sessions = { { kept = true } } },
@@ -961,7 +962,10 @@ describe("schema 4: recording and sessions (SPEC-02 §3.7, SPEC-05 §2.3)", func
 
 	it("migrate data of schema 3 that already has `sessions`, which stays as it is (Storage checks it)", function()
 		local old = { { id = "1-1", state = "complete", odd = true }, "not a session" }
-		boot(function(M) M.saved = { AzerothThreatwardenDB = { schema = 3, sessions = old } } end)
+		boot(function(M)
+			M.features = { recording = false }   -- the migration alone, without the checks of Storage
+			M.saved = { AzerothThreatwardenDB = { schema = 3, sessions = old } }
+		end)
 		eq(AzerothThreatwardenDB.schema, 5)
 		deepEq(AzerothThreatwardenDB.sessions, old)
 		eq(#C().issues, 0)
@@ -1013,6 +1017,7 @@ describe("schema 4: recording and sessions (SPEC-02 §3.7, SPEC-05 §2.3)", func
 
 	it("go back to the defaults at load when wrong, and with Reset settings, which keeps the sessions", function()
 		boot(function(M)
+			M.features = { recording = false }
 			M.saved = { AzerothThreatwardenDB = { schema = 4, settings = { recording = { rate = 9, when = "x" } },
 				sessions = { { id = "keep" } } } }
 		end)

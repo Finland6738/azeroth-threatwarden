@@ -4,7 +4,7 @@
 -- every minute within the limits of §1.3 (a cooldown per kind and unit, one alert about others and one sound every 3 s),
 -- and the memory flat. The simulated raid is Tests/lib/raid.lua; its numbers are assumptions until the M0 probe.
 
-before_boot(function(M) M.features = { monitor = true, alerts = true } end)
+before_boot(function(M) M.features = { monitor = true, alerts = true, recording = false } end)
 
 local MINUTE = 60
 local MINUTES = 30

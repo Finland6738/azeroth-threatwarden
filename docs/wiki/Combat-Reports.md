@@ -2,8 +2,7 @@
 
 *Italiano: [[Report dei combattimenti|Combat-Reports-it]]*
 
-> **Arrives with `v0.4.0`** (not published yet, so nothing of it is visible in the current version), not verified in
-> game.
+> **New in `v0.4.0`**, not verified in game.
 
 The addon records what the monitor read during a fight and shows a short report of it, in the **Reports** tab
 (`/atw reports`, or a click on *Open report* in the notice after a fight). Everything stays on your computer. The

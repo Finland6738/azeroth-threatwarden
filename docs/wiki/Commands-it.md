@@ -20,7 +20,7 @@ compaiono solo nella tua finestra di chat, nella lingua dell'addon; nulla viene 
 | `/atw demo` | avvia la [modalità demo](Threat-Monitor-it#modalità-demo), uno scontro inventato (scritto di nuovo, la chiude) |
 | `/atw demo stop` | chiude la modalità demo (anche `/atw demo off`) |
 | `/atw mute` | silenzia gli [avvisi](Alerts-and-Coach-it#silenziare) fino alla fine di questo combattimento, o del prossimo; scritto di nuovo li riaccende |
-| `/atw reports` | apre la [scheda Report](Combat-Reports-it) (arriva con la `v0.4.0`) |
+| `/atw reports` | apre la [scheda Report](Combat-Reports-it) |
 
 Prima della sua versione, `/atw reports` risponde con la versione che lo porterà.
 

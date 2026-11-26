@@ -24,8 +24,11 @@ limits hold. Released as `v0.4.0`, the first CurseForge candidate (SPEC-09 Q6).
 | M4.7 In-game checklist M4 and MVP check | Sonnet | low |
 | M4.R Release preparation `v0.4.0` | Sonnet | medium |
 
+*State (2026-11-26): M4 is complete in code (steps M4.1–M4.7, offline tests in CI) and switched on for `v0.4.0`
+(M4.R). The exit criterion needs the game and is **open** until the owner runs [the M4 checklist](../checklists/M4.md).*
+
 **Switches.** `recording` (recorder, storage, the *Recording* card) and `reports` (report, Reports tab, end-of-fight
-notice, `/atw reports`) in `Core/Features.lua` stay **off** until M4.R; every step works and is tested behind them
+notice, `/atw reports`) in `Core/Features.lua` stayed **off** until M4.R; every step works and is tested behind them
 (SPEC-05 §6). Tests that need them set them to `true` in `M.features`. The defaults of account schema 4
 (`settings.recording`, `sessions = {}`) are written even with the switches off, as those of M3 were.
 

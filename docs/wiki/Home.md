@@ -7,19 +7,20 @@
 **Know your threat. Understand your mistakes. Prevent aggro loss.** Azeroth Threatwarden is a threat monitor, threat
 coach and combat analysis addon for World of Warcraft: Forever.
 
-> **Status: early development. `v0.3.0` is the third test version: it adds
-> [[Alerts and Coach|Alerts-and-Coach]] to the [[Threat Monitor|Threat-Monitor]], not verified in game.** Download it
+> **Status: early development. `v0.4.0` is the fourth test version and completes the MVP in code: it adds
+> [[Combat Reports|Combat-Reports]] to the [[Threat Monitor|Threat-Monitor]] and
+> [[Alerts and Coach|Alerts-and-Coach]], not verified in game.** Download it
 > from [GitHub Releases](https://github.com/Finland6738/azeroth-threatwarden/releases). It also has its window, its settings and
 > credits, its commands and its minimap button. It is checked by offline tests only: the check of which threat data the
-> game gives an addon and the in-game checks are still open. The MVP (threat monitor, alerts, Coach, recording and
-> combat report) is `v0.4.0`. This manual grows with each version.
+> game gives an addon and the in-game checks are still open. This manual grows with each version.
 
 ## What it will do
 
 - **Threat Monitor**: every group member's threat on your target, the tank, how close each one is to pulling aggro,
   and a state: *Safe*, *Warning*, *Danger* or *Unknown*.
 - **[[Alerts and Coach|Alerts-and-Coach]]**: a warning before you overtake the tank, and short advice with its reason.
-- **Combat Report, Timeline and Replay**: every fight recorded while it happens, to look at afterwards.
+- **[[Combat Reports|Combat-Reports]]**: every fight recorded while it happens, to look at afterwards.
+- **Timeline and Replay** (later versions): how threat moved during a fight.
 - **Honest data**: the addon always says whether a number is read from the game, calculated, estimated or predicted,
   and shows *Unknown* instead of guessing.
 

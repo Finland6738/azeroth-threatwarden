@@ -6,7 +6,7 @@
 -- memory stays flat. The simulated raid is Tests/lib/raid.lua; its numbers are assumptions until the M0 probe. What one
 -- tick may cost is the other file, test_monitor_budget.lua.
 
-before_boot(function(M) M.features = { monitor = true } end)
+before_boot(function(M) M.features = { monitor = true, recording = false } end)
 
 local MINUTE = 60
 local LEVEL = { SAFE = 1, WARNING = 2, DANGER = 3 }

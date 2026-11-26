@@ -473,7 +473,7 @@ dati attorno (±5 s); indicazione dei dati mancanti; eliminazione delle registra
   `REPORT_REQUESTED(id)` per M4.5.
 
 - **Interruttori** (`Core/Features.lua`, ADR 0014): `recording` (recorder, Storage, card *Recording*) e `reports`
-  (report, scheda, avviso, `/atw reports`) restano **spenti** fino a M4.R. Spento vuol dire: nessun ascoltatore e nessun
+  (report, scheda, avviso, `/atw reports`) sono rimasti **spenti** fino a M4.R e sono **accesi** dalla `v0.4.0`. Spento vuol dire: nessun ascoltatore e nessun
   evento del gioco registrati, nessun consumatore dello Scanner, nulla scritto in `sessions`, nessuna card né scheda;
   `/atw reports` risponde *This arrives in v0.4.0.* I predefiniti dello schema 4 (`settings.recording`, `sessions =
   {}`) si scrivono comunque, come quelli di M3 prima di M3.R. Con `recording` acceso e `reports` spento (non

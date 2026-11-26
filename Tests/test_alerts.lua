@@ -5,7 +5,8 @@
 -- consumer, the switch off, no allocation per event. The numbers of the mock are assumptions until the M0 probe
 -- (Tests/mock/70_threat.lua): where a number matters the script fixes the scaled % or the game's state.
 
-before_boot(function(M) M.features = { monitor = true, alerts = true, coach = false } end)
+-- recording off: the recorder is a scanner consumer of its own (test_recorder.lua)
+before_boot(function(M) M.features = { monitor = true, alerts = true, coach = false, recording = false } end)
 
 local P = "account.settings.alerts."
 
@@ -1048,7 +1049,7 @@ end)
 
 describe("the alerts switch off (ADR 0014)", function()
 	before_boot(function(M)
-		M.features = { monitor = true, alerts = false, coach = false }
+		M.features = { monitor = true, alerts = false, coach = false, recording = false }
 		M.saved = { AzerothThreatwardenDB = { schema = 3, settings = { alerts = { sound = true } } } }
 	end)
 

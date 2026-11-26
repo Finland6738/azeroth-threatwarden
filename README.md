@@ -7,16 +7,18 @@ threat coaching and combat analysis addon for **World of Warcraft: Forever**. It
 which mob, warns you before you pull aggro, records your fights and explains what happened, always telling what is
 **known** from what is **estimated**.
 
-> **Status: early development. [`v0.3.0`](https://github.com/Finland6738/azeroth-threatwarden/releases/tag/v0.3.0) is
-> the third test version: it adds Alerts and the Threat Coach to the Threat Monitor, not verified in game.** Download it
+> **Status: early development. [`v0.4.0`](https://github.com/Finland6738/azeroth-threatwarden/releases/tag/v0.4.0) is
+> the fourth test version and completes the MVP in code: it adds the recording of fights and the combat report to the
+> Threat Monitor, Alerts and the Threat Coach, not verified in game.** Download it
 > from [GitHub Releases](https://github.com/Finland6738/azeroth-threatwarden/releases)
 > ([how to install](docs/wiki/Installation.md)). The Monitor tab shows who threatens the mob you target, the tank, the
 > percentage, the margin, the trend and a state, or *state only* / *unknown* with the reason when the client gives no
 > numbers; `/atw demo` plays an invented fight. A strip in that tab warns you once when a risk begins and gives one
 > short tip with its reason ([Alerts and Coach](docs/wiki/Alerts-and-Coach.md)), never in chat; `/atw mute` silences
-> the alerts. Thresholds, cooldown and sampling rate are provisional
-> ([Threat Monitor](docs/wiki/Threat-Monitor.md)). It also has saved settings (versioned, with migrations), the
-> ecosystem look, a movable window with Settings and an Info page with the credits, the
+> the alerts. Fights in a group or an instance are recorded on your computer, and the Reports tab (`/atw reports`)
+> shows a [report of each](docs/wiki/Combat-Reports.md). Thresholds (Warning 82 %, Danger 91 %), cooldown and sampling
+> rate are provisional ([Threat Monitor](docs/wiki/Threat-Monitor.md)). It also has saved settings (versioned, with
+> migrations), the ecosystem look, a movable window with Settings and an Info page with the credits, the
 > [commands](docs/wiki/Commands.md) `/atw` and `/threatwarden`, a minimap button and the Addon Compartment entry. It is
 > checked by offline tests only: the M0 probe and the in-game checks of [M1](docs/checklists/M1.md),
 > [M2](docs/checklists/M2.md), [M3](docs/checklists/M3.md) and [M4](docs/checklists/M4.md) are still open. The
@@ -24,11 +26,8 @@ which mob, warns you before you pull aggro, records your fights and explains wha
 > client which threat data WoW Forever gives an addon, because the client may hide threat values from addons in some
 > situations: the client and the threat functions, including whether their values are secret (P1–P4), which units and
 > mobs answer, the threat events, GUIDs and roles (P5, P6, P9), the combat events and the damage meter (P7, P8), the
-> cost of sampling, the restrictions and what survives a reload (P10–P12). The MVP (monitor, alerts, Coach, recording
-> and combat report) is `v0.4.0`. Recording and the combat
-> report are built and tested offline but **switched off** until then; their
-> [in-game check](docs/checklists/M4.md) is written and not run, and the MVP is
-> [not complete yet](docs/checklists/M4.md#12-mvp-check): it waits for the checks in the real client.
+> cost of sampling, the restrictions and what survives a reload (P10–P12). So the
+> [MVP check](docs/checklists/M4.md#12-mvp-check) is not met yet: it waits for those checks in the real client.
 
 [Italiano](README.it.md) · [Roadmap](ROADMAP.md) · [Specification (Italian)](docs/specs/README.md) ·
 [Architecture](docs/ARCHITECTURE.md) · [Decisions](docs/adr/README.md) · [User manual](docs/wiki/Home.md)

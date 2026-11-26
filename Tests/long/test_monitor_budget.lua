@@ -31,7 +31,7 @@ local BUDGET = {
 }
 
 -- Three sets of switches: the monitor alone (the M2.7 measure), the one shipped since v0.3.0, with the alerts and the
--- Coach, and the one of v0.4.0, recording too. M3.R measured 39 to 113 bytes per tick with the alerts and the Coach
+-- Coach, and the one shipped since v0.4.0, recording too. M3.R measured 39 to 113 bytes per tick with the alerts and the Coach
 -- (the strip writes new texts as its numbers change, at most once a second, so fewer reads per second cost more per
 -- tick); work and time stayed as for the monitor alone. M4.6 measured with a recording open, its tick among the
 -- monitor's: 162 000 to 181 000 instructions (the budget of work stays), 9 to 11 reference units, and 110 to 610 bytes
@@ -200,8 +200,8 @@ end
 for _, config in ipairs(CONFIGS) do
 describe("the budget of one tick in a raid of 40, " .. config.name, function()
 	before_boot(function(M)
-		M.features = { monitor = true, alerts = config.alerts, coach = config.coach, recording = config.recording,
-			reports = config.recording }
+		M.features = { monitor = true, alerts = config.alerts, coach = config.coach, recording = config.recording == true,
+			reports = config.recording == true }
 	end)
 
 	for _, case in ipairs({ { id = "one", name = "on one mob" }, { id = "switching", name = "with new targets" } }) do

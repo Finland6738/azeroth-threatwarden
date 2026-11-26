@@ -468,7 +468,9 @@ describe("Build (SPEC-05 §3.4)", function()
 end)
 
 describe("with the `reports` switch off (ADR 0014)", function()
-	before_boot(function(M) M.features = { monitor = true, alerts = true, coach = true, recording = true } end)
+	before_boot(function(M)
+		M.features = { monitor = true, alerts = true, coach = true, recording = true, reports = false }
+	end)
 
 	it("builds nothing and writes no summary", function()
 		local s = add(build(known()))

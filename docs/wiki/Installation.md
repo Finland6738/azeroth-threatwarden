@@ -2,8 +2,9 @@
 
 *Italiano: [[Installazione|Installation-it]]*
 
-> **`v0.3.0` is the third test version: it adds [[Alerts and Coach|Alerts-and-Coach]] to the
-> [[Threat Monitor|Threat-Monitor]].** It has not been checked in the real client yet.
+> **`v0.4.0` is the fourth test version: it adds [[Combat Reports|Combat-Reports]] to the
+> [[Threat Monitor|Threat-Monitor]] and [[Alerts and Coach|Alerts-and-Coach]].** It has not been checked in the real
+> client yet.
 
 ## From a release
 

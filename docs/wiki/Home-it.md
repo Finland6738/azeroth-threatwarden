@@ -7,19 +7,20 @@
 **Conosci la tua threat. Capisci i tuoi errori. Non perdere l'aggro.** Azeroth Threatwarden è un addon di monitoraggio
 della threat, di coaching e di analisi dei combattimenti per World of Warcraft: Forever.
 
-> **Stato: sviluppo iniziale. La `v0.3.0` è la terza versione di prova: aggiunge
-> [[Avvisi e Coach|Alerts-and-Coach-it]] al [[monitor della threat|Threat-Monitor-it]], non verificati in gioco.** Si
+> **Stato: sviluppo iniziale. La `v0.4.0` è la quarta versione di prova e completa l'MVP nel codice: aggiunge i
+> [[report dei combattimenti|Combat-Reports-it]] al [[monitor della threat|Threat-Monitor-it]] e ad
+> [[Avvisi e Coach|Alerts-and-Coach-it]], non verificati in gioco.** Si
 > scarica da [GitHub Releases](https://github.com/Finland6738/azeroth-threatwarden/releases). Ha anche la finestra, le impostazioni e
 > i crediti, i comandi e il pulsante della minimappa. È controllata solo da test offline: la verifica di quali dati di
-> threat il gioco dà a un addon e le verifiche in gioco sono ancora aperte. L'MVP (monitor della threat, avvisi, Coach,
-> registrazione e report di combattimento) è la `v0.4.0`. Questo manuale cresce a ogni versione.
+> threat il gioco dà a un addon e le verifiche in gioco sono ancora aperte. Questo manuale cresce a ogni versione.
 
 ## Cosa farà
 
 - **Threat Monitor**: la threat di ogni membro del gruppo sul tuo target, il tank, quanto manca a ciascuno per prendere
   l'aggro, e uno stato: *Safe*, *Warning*, *Danger* o *Unknown*.
 - **[[Avvisi e Coach|Alerts-and-Coach-it]]**: un avviso prima di superare il tank, e brevi consigli con il loro motivo.
-- **Combat Report, Timeline e Replay**: ogni combattimento registrato mentre accade, da rivedere dopo.
+- **[[Report dei combattimenti|Combat-Reports-it]]**: ogni combattimento registrato mentre accade, da rivedere dopo.
+- **Timeline e Replay** (versioni successive): come si è mossa la threat durante uno scontro.
 - **Dati onesti**: l'addon dice sempre se un numero è letto dal gioco, calcolato, stimato o previsto, e mostra
   *Unknown* invece di indovinare.
 
