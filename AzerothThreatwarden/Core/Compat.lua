@@ -209,6 +209,7 @@ Compat.APIS = {
 		since = "M4", probe = "P8" },
 	{ id = "time.GetTime", paths = { "GetTime" }, check = "call", since = "M1", probe = "-" },
 	{ id = "time.ServerTime", paths = { "GetServerTime" }, check = "call", since = "M1", probe = "P12" },
+	{ id = "time.Date", paths = { "date" }, check = "exists", since = "M4", probe = "-" },
 	{ id = "time.After", paths = { "C_Timer.After" }, check = "exists", since = "M1", probe = "P11" },
 	{ id = "time.NewTicker", paths = { "C_Timer.NewTicker" }, check = "exists", since = "M1", probe = "P11" },
 	{ id = "time.NewTimer", paths = { "C_Timer.NewTimer" }, check = "exists", since = "M1", probe = "P11" },
@@ -453,6 +454,13 @@ end
 -- Core/Config.lua (SPEC-02 §3.4) and, from M4, of the recorded sessions.
 function Compat.ServerTime()
 	return plainNumber((first("GetServerTime")))
+end
+
+-- `epoch` written with the strftime pattern `format` in the PC's own time zone (`date`), nil for an unknown time
+-- (0 or no number) or a client that cannot say: the date of a recording in the Reports tab.
+function Compat.DateText(format, epoch)
+	if type(format) ~= "string" or not plainNumber(epoch) or epoch <= 0 then return nil end
+	return plainString((first("date", format, epoch)))
 end
 
 -- The Version field of the TOC ("@project-version@" in a development copy), nil when unknown.

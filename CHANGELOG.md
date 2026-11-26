@@ -30,6 +30,13 @@ All notable changes to this project are documented here. The format follows
   of the fight was unknown, marks interrupted and truncated recordings, and never states a cause. Long reports are built
   over several frames. With *Notice after a fight* on (off by default), the Coach strip shows *Fight recorded · …* for
   8 s with *Open report*.
+- M4.5: the **Reports** tab and the **Recording** card, behind the `reports` and `recording` switches (off until
+  `v0.4.0`, so nothing changes in the game yet). The tab shows how much space the recordings take (an estimate), the
+  list newest first (date, zone, main enemy, length, your worst state, badges *Recording*, *Interrupted*, *Limit
+  reached* and *Continues*) and, under it, the report of the recording clicked, every metric with its category marker
+  and, in its tooltip, the category and the reason. *Delete recording* asks twice; read-only data are shown and not
+  changed; an empty list says why. The card chooses when and how often fights are recorded, the number and size limits
+  (the oldest recordings go at once), the notice after a fight and *Delete all recordings*. `/atw reports` opens the tab.
 
 ### Documentation
 

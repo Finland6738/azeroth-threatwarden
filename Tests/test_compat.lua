@@ -16,7 +16,7 @@ local SPEC_IDS = {
 	"unit.IsDead", "unit.IsUnit", "unit.AffectingCombat", "unit.Role", "group.InGroup", "group.InRaid", "group.Size",
 	"group.RaidIndex",
 	"instance.InInstance", "instance.Info", "zone.RealZoneText", "restriction.InCombatLockdown", "restriction.IsActive",
-	"restriction.Types", "combatlog.Restricted", "damagemeter.Available", "time.GetTime", "time.ServerTime",
+	"restriction.Types", "combatlog.Restricted", "damagemeter.Available", "time.GetTime", "time.ServerTime", "time.Date",
 	"time.After", "time.NewTicker", "time.NewTimer", "time.ProfileStop", "addon.Metadata", "addon.Memory",
 	"addon.Framerate", "addon.ErrorHandler", "ui.Reload", "ui.CreateFrame", "ui.CreateFont", "ui.CreateColor",
 	"ui.ScreenSize",

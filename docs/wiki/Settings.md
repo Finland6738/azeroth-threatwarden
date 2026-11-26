@@ -104,12 +104,35 @@ If the game's own threat warning is on (in the game's options), the card says th
 same thing, and lets you choose: the addon never changes the game's setting. To mute the alerts for a while, or the
 alerts about one unit, see [[Alerts and Coach|Alerts-and-Coach#muting]].
 
+## Recording
+
+> **Arrives with `v0.4.0`** (not published yet, so the card is not there in the current version), not verified in game.
+
+Saved for the whole account, below *Alerts*. What the recordings are is on [[Combat Reports|Combat-Reports]]. Every
+change applies at once.
+
+![The Recording card of Settings, theme Nebula: the top and the page scrolled down](../specs/mockups/previews/settings-recording-nebula.webp)
+
+| Option | What it does | Choices | Default |
+|---|---|---|---|
+| Record fights | recording on or off | on / off | on |
+| When | which fights are recorded | In a group or instance, In instances, Always | In a group or instance |
+| Recording rate | how many times a second the readings are saved; saved when you release the slider | 1 to 5 Hz | 2 Hz |
+| Keep at most | how many recordings are kept | 5 to 100 | 25 |
+| Size limit | the estimated space they may take, in steps of 0.5 MB | 0.5 to 8 MB | 2 MB |
+| Notice after a fight | a line in the window with *Open report*; never in chat, never a sound | on / off | off |
+| Delete all recordings | removes every closed recording; asks for a second click within 8 seconds | button | |
+
+Past the number or the size limit the **oldest recordings are removed at once**. The card says how much space the
+recordings take (an estimate) and reminds you that they keep the names of your companions, on this computer only.
+
 ## Reset
 
 **Reset settings** puts the appearance, the language, the minimap button, the monitor settings and the
 alerts and Coach back to the defaults, and drops the damaged
-data the addon had set aside for bug reports. It asks for a second
-click, within a few seconds. Your recordings (from a later version) are not touched; the window's place is reset with
+data the addon had set aside for bug reports (from `v0.4.0` also the
+recording settings). It asks for a second
+click, within a few seconds. Your recordings (from `v0.4.0`) are not deleted here; the window's place is reset with
 *Reset window*.
 
 ## Read-only data

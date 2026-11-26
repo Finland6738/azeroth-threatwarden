@@ -209,6 +209,26 @@ body { font: 400 13px/1.35 'Outfit', 'Segoe UI', sans-serif; color: var(--text-1
 .mmsg small { font: 400 11px/14px 'Outfit', sans-serif; color: var(--text-3); }
 .mfoot { position: absolute; left: 0; right: 12px; bottom: 0; height: 16px; font: 400 10px/16px 'JetBrains Mono', monospace; color: var(--text-3); white-space: nowrap; overflow: hidden; }
 .mfoot.warn { color: var(--warn); }
+.usage { display: flex; align-items: center; gap: 8px; height: 20px; font: 500 13px/16px 'Outfit', sans-serif; }
+.cat { display: inline-block; height: 16px; padding: 0 6px; border-radius: 8px; color: var(--text-2); background: color-mix(in srgb, var(--text-2) 16%, transparent); font: 600 9px/16px 'Outfit', sans-serif; white-space: nowrap; }
+.cat.estimated, .cat.warn { color: var(--warn); background: color-mix(in srgb, var(--warn) 16%, transparent); }
+.cat.unknown { color: var(--text-3); background: color-mix(in srgb, var(--text-3) 16%, transparent); }
+.cat.live { color: var(--accent-text); background: color-mix(in srgb, var(--accent-text) 16%, transparent); }
+.rrow { position: relative; height: 44px; margin-bottom: 2px; padding: 5px 8px 0; }
+.rrow.on { background: var(--raised); }
+.rrow .line { display: flex; justify-content: space-between; align-items: center; gap: 8px; height: 18px; }
+.rrow .line b { font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.rrow .line em { font: normal 400 13px/1 'JetBrains Mono', monospace; }
+.rrow .line.low { color: var(--text-2); font-size: 11px; margin-top: 2px; }
+.rrow .right { display: flex; gap: 4px; align-items: center; }
+.metric { margin-top: 10px; }
+.metric .head2 { display: flex; justify-content: space-between; align-items: center; height: 16px; font-weight: 500; }
+.metric .val { color: var(--text-2); margin-top: 3px; white-space: pre-line; }
+.metric .val.off { color: var(--text-3); }
+.buttons { display: flex; gap: 8px; }
+.empty2 { text-align: center; margin-top: 70px; }
+.empty2 h2 { font: 600 14px/17px 'Outfit', sans-serif; }
+.empty2 p { color: var(--text-2); margin-top: 8px; }
 .tip { position: absolute; width: 440px; padding: 14px 18px; border-radius: 14px; background: var(--text-1); color: var(--bg); font: 400 18px/1.55 'Outfit', sans-serif; box-shadow: 0 20px 40px -16px rgba(0,0,0,.6); }
 .tip b { display: block; font-weight: 500; font-size: 20px; }
 """
@@ -293,7 +313,7 @@ MODULE_ICONS = {
 }
 
 
-def window(theme, tab, body, x, y, scale=1.0, module="off", title_hidden=False):
+def window(theme, tab, body, x, y, scale=1.0, module="off", title_hidden=False, reports=False):
     """The window: wide (Settings, Info) or compact (Monitor); `x`, `y` its top-left corner on the stage."""
     compact = tab == "monitor"
     layout = "compact" if compact else "wide"
@@ -309,6 +329,6 @@ def window(theme, tab, body, x, y, scale=1.0, module="off", title_hidden=False):
     else:
         title = f'<span><span class="name">{esc(T("WINDOW_TITLE"))}</span>{state}</span>'
     tabs = "".join(f'<span class="{"on" if t == tab else ""}">{esc(T("TAB_" + t.upper()))}</span>'
-                   for t in ("monitor", "settings"))
+                   for t in (("monitor", "reports", "settings") if reports else ("monitor", "settings")))
     return (f'<div class="win {layout} {theme}" style="left:{x}px;top:{y}px;transform:scale({scale});transform-origin:0 0">'
             f'<div class="bar">{logo()}{title}{icons}</div><div class="tabs">{tabs}</div>{body}{GRIP}</div>')

@@ -145,11 +145,12 @@ notice, `/atw reports`) in `Core/Features.lua` stay **off** until M4.R; every st
   `report-values`, `report-state`, `report-unknown`, `settings-recording`; wiki page *Combat Reports* and the *Settings*
   and *Commands* pages, in both languages.
 - Done when:
-  - [ ] The list and the report show every metric with its category marker and reason; delete needs a second click and
+  - [x] The list and the report show every metric with its category marker and reason; delete needs a second click and
     survives a `/reload`; the card changes the limits at once (pruning applies); nothing of the tab or the card shows
     while the switches are off.
 - Tests: `test_reports.lua`, `test_settings.lua` (the card), `test_commands.lua` (`/atw reports`).
 - Real client: readability of the list and the report at small sizes and scales; the tab in combat.
+- *Done (2026-11-26): `UI/Reports.lua` (header with the estimated use, list newest first with badges and worst state, report under the list with category markers and tooltips, delete with a second click, empty list with its reason, read-only), the *Recording* card in `UI/Settings.lua`, `/atw reports`, `Compat.DateText`; previews and the wiki page *Combat Reports*; both switches stay off; 1146 tests with `--long`. Not verified in the game.*
 
 ### M4.6 — Long tests of recording
 - Branch: `step/m4-6-long-tests`

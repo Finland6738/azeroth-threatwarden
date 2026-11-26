@@ -51,7 +51,8 @@ Commands.LIST = {
 	{ name = "demo", help = "HELP_DEMO", feature = "monitor", version = "v0.2.0",
 		run = function(rest) ns.Demo.Command(rest) end },
 	{ name = "mute", help = "HELP_MUTE", feature = "alerts", version = "v0.3.0", run = mute },
-	{ name = "reports", feature = "reports", version = "v0.4.0" },  -- M4
+	{ name = "reports", help = "HELP_REPORTS", feature = "reports", version = "v0.4.0",
+		run = function() ns.Window:Open() ns.Window:SelectTab("reports") end },
 }
 
 local function available(c)

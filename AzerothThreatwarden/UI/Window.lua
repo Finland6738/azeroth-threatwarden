@@ -302,27 +302,21 @@ local function titleBar(f, compact)
 	return bar
 end
 
--- A centred line of text (and, on the Monitor, the dimmed logo above it).
-local function placeholder(page, key, logo)
-	if logo then
-		page.logo = page:CreateTexture(nil, "ARTWORK")
-		page.logo:SetTexture(Assets.logos.logo_64.path)
-		page.logo:SetSize(32, 32)
-		page.logo:SetPoint("CENTER", page, "CENTER", 0, 16)
-		page.logo:SetAlpha(0.35)
-		if page.logo.SetMaskTexture then page.logo:SetMaskTexture(Assets.textures.circle.path) end
-	end
-	page.text = Theme.NewText(page, logo and "BodyMedium" or "Body", "text-2")
+-- A centred line of text and, above it, the dimmed logo (the Monitor tab while the monitor is off).
+local function placeholder(page, key)
+	page.logo = page:CreateTexture(nil, "ARTWORK")
+	page.logo:SetTexture(Assets.logos.logo_64.path)
+	page.logo:SetSize(32, 32)
+	page.logo:SetPoint("CENTER", page, "CENTER", 0, 16)
+	page.logo:SetAlpha(0.35)
+	if page.logo.SetMaskTexture then page.logo:SetMaskTexture(Assets.textures.circle.path) end
+	page.text = Theme.NewText(page, "BodyMedium", "text-2")
 	page.text:SetJustifyH("CENTER")
 	if page.text.SetWordWrap then page.text:SetWordWrap(true) end
-	if logo then
-		page.text:SetPoint("TOP", page.logo, "BOTTOM", 0, -8)
-	else
-		page.text:SetPoint("CENTER", page, "CENTER", 0, 0)
-	end
+	page.text:SetPoint("TOP", page.logo, "BOTTOM", 0, -8)
 	page.text:SetPoint("LEFT", page, "LEFT", 12, 0)
 	page.text:SetPoint("RIGHT", page, "RIGHT", -12, 0)
-	page.text:SetText(key and L[key] or "")
+	page.text:SetText(L[key])
 end
 
 local function buildPages(f)
@@ -336,9 +330,7 @@ local function buildPages(f)
 		page:Hide()
 		f.pages[t.id] = page
 	end
-	placeholder(f.pages.monitor, "MONITOR_COMING", true)   -- shown while the `monitor` switch is off (paintMonitor)
-	placeholder(f.pages.reports, nil)
-	f.pages.reports.text:SetText(L["CMD_LATER"]:format("v0.4.0"))
+	placeholder(f.pages.monitor, "MONITOR_COMING")   -- shown while the `monitor` switch is off (paintMonitor)
 end
 
 local function buildGrip(f)
@@ -419,6 +411,7 @@ local function build()
 
 	f:SetScript("OnSizeChanged", function()
 		Window:LayoutTitle()
+		if f.layout == "wide" then layoutReports(f) end
 		local view = f.pages.monitor.view
 		if view and f.layout == "compact" and featureOn("monitor") then
 			view:Layout(f:GetWidth(), f:GetHeight() - Widgets.TITLE_HEIGHT_COMPACT - Widgets.TAB_HEIGHT_COMPACT)
@@ -504,6 +497,29 @@ local function paintPage(f)
 	page.view:ShowPage(Window.page or get("char.ui.lastPage") or "settings")
 end
 
+-- The size of the Reports tab inside the window.
+local function layoutReports(f)
+	local view = f.pages.reports.view
+	if not view then return end
+	view:Layout(f:GetWidth() - 2 * Window.PAGE_MARGIN,
+		f:GetHeight() - Widgets.TITLE_HEIGHT - Widgets.TAB_HEIGHT - 10 - Window.PAGE_MARGIN)
+end
+
+-- The Reports tab (UI/Reports.lua), built the first time it is shown, only while the `reports` switch is on (the tab
+-- cannot be selected without it).
+local function paintReports(f)
+	if f.tab ~= "reports" or not featureOn("reports") or not ns.Reports then return end
+	local page = f.pages.reports
+	if not page.view then
+		local holder = CreateFrame("Frame", nil, page)
+		holder:SetPoint("TOPLEFT", page, "TOPLEFT", Window.PAGE_MARGIN, -10)
+		holder:SetPoint("BOTTOMRIGHT", page, "BOTTOMRIGHT", -Window.PAGE_MARGIN, Window.PAGE_MARGIN)
+		page.view = ns.Reports.Build(holder)
+	end
+	layoutReports(f)
+	page.view:Refresh()
+end
+
 -- The compact bar gives up its title before the state loses its word.
 function Window:LayoutTitle()
 	local f = self.frame
@@ -533,6 +549,7 @@ function Window:Refresh()
 	applyTabSwitches(f)
 	refreshLock(f)
 	paintPage(f)
+	paintReports(f)
 	paintMonitor(f)
 	self:RefreshState()
 end

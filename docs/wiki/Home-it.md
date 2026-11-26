@@ -31,6 +31,7 @@ della threat, di coaching e di analisi dei combattimenti per World of Warcraft: 
 | Vedere com'è fatto | [[Giro dell'interfaccia|Interface-Tour-it]] |
 | Capire l'elenco della threat | [[Monitor della threat|Threat-Monitor-it]] |
 | Capire gli avvisi e i consigli | [[Avvisi e Coach|Alerts-and-Coach-it]] |
+| Guardare uno scontro passato (dalla `v0.4.0`) | [[Report dei combattimenti|Combat-Reports-it]] |
 | Cambiarne aspetto, lingua o finestra | [[Impostazioni|Settings-it]] |
 | Sapere chi l'ha fatto | [[Informazioni e crediti|About-it]] |
 | Sapere cosa posso scrivere e cosa fa la finestra | [[Comandi|Commands-it]] |

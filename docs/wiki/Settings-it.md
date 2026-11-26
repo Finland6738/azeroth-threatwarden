@@ -105,13 +105,36 @@ Se l'avviso della threat del gioco è acceso (nelle opzioni del gioco), la card 
 per la stessa cosa, e lascia a te la scelta: l'addon non cambia mai l'impostazione del gioco. Per silenziare gli
 avvisi per un po', o quelli su una sola unità, vedi [[Avvisi e Coach|Alerts-and-Coach-it#silenziare]].
 
+## Registrazione
+
+> **Arriva con la `v0.4.0`** (non ancora pubblicata, quindi nella versione attuale la card non c'è), non verificata in
+> gioco.
+
+Salvata per tutto l'account, sotto *Avvisi*. Che cosa sono le registrazioni è in
+[[Report dei combattimenti|Combat-Reports-it]]. Ogni modifica si applica subito.
+
+![La card Registrazione delle Impostazioni, tema Nebula: la parte alta e la pagina scorsa in basso](../specs/mockups/previews/settings-recording-nebula.webp)
+
+| Opzione | Cosa fa | Scelte | Predefinito |
+|---|---|---|---|
+| Registra gli scontri | registrazione accesa o spenta | sì / no | sì |
+| Quando | quali scontri si registrano | In gruppo o istanza, In istanza, Sempre | In gruppo o istanza |
+| Frequenza | quante volte al secondo si salvano le letture; si salva quando rilasci il cursore | da 1 a 5 Hz | 2 Hz |
+| Tieni al massimo | quante registrazioni si tengono | da 5 a 100 | 25 |
+| Limite di spazio | lo spazio stimato che possono occupare, a passi di 0,5 MB | da 0,5 a 8 MB | 2 MB |
+| Avviso a fine scontro | una riga nella finestra con *Apri report*; mai in chat, mai un suono | sì / no | no |
+| Elimina tutte le registrazioni | toglie tutte le registrazioni chiuse; chiede un secondo clic entro 8 secondi | pulsante | |
+
+Oltre il numero o il limite di spazio le **registrazioni più vecchie si tolgono subito**. La card dice quanto spazio
+occupano (una stima) e ricorda che contengono i nomi dei compagni, solo su questo computer.
+
 ## Ripristino
 
 **Ripristina impostazioni** riporta ai valori predefiniti l'aspetto, la lingua, il pulsante della minimappa, le
 impostazioni del monitor e quelle di avvisi e Coach, ed
 elimina i dati danneggiati che l'addon aveva messo da parte per le segnalazioni. Chiede
-un secondo clic entro pochi secondi. Le registrazioni (di una versione futura) non vengono toccate; la posizione della
-finestra si ripristina con *Ripristina finestra*.
+un secondo clic entro pochi secondi. Dalla `v0.4.0` riporta ai predefiniti anche le impostazioni della registrazione,
+ma le registrazioni non si eliminano da qui; la posizione della finestra si ripristina con *Ripristina finestra*.
 
 ## Dati in sola lettura
 

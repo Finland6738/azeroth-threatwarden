@@ -42,6 +42,7 @@ describe("loading the addon", function()
 			"AzerothThreatwarden/UI/Widgets/Tooltip.lua", "AzerothThreatwarden/UI/Widgets/Threat.lua",
 			"AzerothThreatwarden/UI/CoachStrip.lua", "AzerothThreatwarden/UI/ThreatList.lua", "AzerothThreatwarden/UI/DiagnosticsBox.lua", "AzerothThreatwarden/UI/Window.lua",
 			"AzerothThreatwarden/UI/Launcher.lua", "AzerothThreatwarden/UI/Settings.lua",
+			"AzerothThreatwarden/UI/Reports.lua",
 			"AzerothThreatwarden/UI/About.lua",
 		})
 	end)

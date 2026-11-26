@@ -361,6 +361,21 @@ avviso.
 - **Anteprime** (ADR 0013, dati inventati): `reports-list`, `report-values`, `report-state`, `report-unknown`,
   `settings-recording`.
 
+**Realizzato in M4.5** (`UI/Reports.lua`, la card in `UI/Settings.lua`, `/atw reports`):
+
+- Il report si apre **sotto** l'elenco: con un report aperto l'elenco tiene tre righe e scorre, il resto è del report
+  (card di testa con *Delete recording* e *Close report*, card *Fight*, una card per unità; un'unità senza dati ha una
+  nota con il motivo e la sola qualità). Un solo punto: `Reports.ROWS_WITH_REPORT`.
+- Ogni metrica ha un indicatore con la categoria (*stimato* nel colore di avviso, *sconosciuto* attenuato); il tooltip
+  dice categoria, che cosa vuol dire, motivo, *limite inferiore*, soglie o stati del gioco, categoria del tempo dei
+  tank, campioni fermi al limite. Il tooltip di una riga dell'elenco dà durata, mob principale e stato peggiore con la
+  loro categoria e il motivo. La testata ha l'indicatore *stimato*.
+- La registrazione aperta compare nell'elenco con *Recording* e non si elimina né si apre; il report si costruisce quando
+  finisce. Una registrazione eliminata mentre il report si costruisce lo chiude; una danneggiata tiene il messaggio.
+- La data è scritta con `Compat.DateText` (`date`), con il formato della lingua; senza orario, *Unknown date*.
+- La scheda registra i suoi ascoltatori quando si costruisce (la prima volta che si mostra); la card *Recording* quando
+  si costruisce. Con gli interruttori spenti non c'è nulla.
+
 ## 4. Timeline (M5)
 
 Rappresenta nel tempo: threat del tank, giocatori più vicini alla soglia, percentuale relativa, cambi di target,

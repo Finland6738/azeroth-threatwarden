@@ -5,6 +5,7 @@
 - [[Interface tour|Interface-Tour]]
 - [[Threat Monitor|Threat-Monitor]]
 - [[Alerts and Coach|Alerts-and-Coach]]
+- [[Combat Reports|Combat-Reports]]
 
 **Reference**
 - [[Commands|Commands]]
@@ -20,6 +21,7 @@
 - [[Giro dell'interfaccia|Interface-Tour-it]]
 - [[Monitor della threat|Threat-Monitor-it]]
 - [[Avvisi e Coach|Alerts-and-Coach-it]]
+- [[Report dei combattimenti|Combat-Reports-it]]
 - [[Comandi|Commands-it]]
 - [[Impostazioni|Settings-it]]
 - [[Informazioni e crediti|About-it]]

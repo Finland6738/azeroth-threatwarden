@@ -334,6 +334,7 @@ senza firma), **assente** (si cerca a runtime). In grassetto le voci il cui comp
 | `damagemeter.Available` | `C_DamageMeter.IsDamageMeterAvailable` | chiamata | firma | morti e durata (forse, M4) | M4 | **P8** |
 | `time.GetTime` | `GetTime` | chiamata | firma | tempo dei campioni | M1 | — |
 | `time.ServerTime` | `GetServerTime` | chiamata | firma | data delle voci `corrupt` (M1.5) e delle sessioni | M1 | P12 |
+| `time.Date` | `date` | esistenza | globale | la data di una registrazione nella scheda Reports (`Compat.DateText`, M4.5); senza, *data sconosciuta* | M4 | — |
 | `time.After`, `time.NewTicker`, `time.NewTimer` | `C_Timer.After`, `NewTicker`, `NewTimer` | esistenza | firma | Scheduler | M1 | P11 |
 | `time.ProfileStop` | `debugprofilestop` | esistenza | firma | costo dei tick (ARC-09) | M1 | P10 |
 | `addon.Metadata` | `C_AddOns.GetAddOnMetadata` | chiamata | firma | versione nel rapporto e in Info | M1 | — |

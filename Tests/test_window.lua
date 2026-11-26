@@ -178,7 +178,7 @@ describe("tabs and the two layouts", function()
 		truthy(F().tabs.compact.buttons.reports:IsShown())
 		truthy(W():SelectTab("reports"))
 		eq(W():Layout(), "wide")
-		eq(F().pages.reports.text:GetText(), "This arrives in v0.4.0.")
+		notNil(F().pages.reports.view, "the view of UI/Reports.lua")
 		eq(#Mock.errors, 0)
 	end)
 

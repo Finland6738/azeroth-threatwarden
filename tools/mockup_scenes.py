@@ -244,10 +244,10 @@ def pager(on):
     return f'<div class="pager">{seg([T("PAGE_SETTINGS"), T("PAGE_ABOUT")], on)}</div>'
 
 
-def page(theme, selected, cards, x, scroll=0, module="off"):
+def page(theme, selected, cards, x, scroll=0, module="off", reports=False):
     body = (f'<div class="page">{pager(selected)}<div class="scroll"><div class="column" style="margin-top:-{scroll}px">'
             f'{"".join(cards)}</div></div></div>')
-    return window(theme, "settings", body, x, TOP, module=module)
+    return window(theme, "settings", body, x, TOP, module=module, reports=reports)
 
 
 def settings_cards(theme):
@@ -319,6 +319,141 @@ def settings_alerts(theme):
                  + button(T("SET_RESET_BUTTON"), "wide"))
     cards = [alerts_card(), reset]
     return page(theme, 0, cards, LEFT, module="idle") + page(theme, 0, cards, RIGHT, 330, "idle")
+
+
+# ---- the Reports tab (UI/Reports.lua). Invented data: the places, the players and the fights do not exist. -----------
+
+def cat(kind, label=None):
+    return f'<span class="cat {kind}">{esc(label or T("CAT_" + kind.upper()))}</span>'
+
+
+def report_date(day, hour):
+    pattern = T("REPORTS_DATE_FORMAT")
+    return (pattern.replace("{Y}", "2026").replace("{m}", "11").replace("{d}", day).replace("{H}", hour[:2])
+            .replace("{M}", hour[3:]))
+
+
+def report_row(day, hour, zone, mob, length, state, badges=(), on=False):
+    pills = "".join(cat(kind, T(key)) for key, kind in badges)
+    return (f'<div class="rrow{" on" if on else ""}"><div class="line"><b>{esc(report_date(day, hour))} · {esc(zone)}</b>'
+            f'<em>{esc(length)}</em></div><div class="line low"><span>{esc(mob)}</span>'
+            f'<span class="right">{pills}{badge(state)}</span></div></div>')
+
+
+def report_list(count=4, selected=None):
+    rows = [("26", "21:14", "Gloomhold", "Gorrak", "1:42", "warning", ()),
+            ("26", "21:09", "Gloomhold", "Gloom whelp", "0:31", "safe", (("REPORTS_BADGE_CONTINUES", "detected"),)),
+            ("26", "21:05", "Gloomhold", "Gloom whelp", T("REPORT_AT_LEAST", "0:18"), "unknown",
+             (("REPORTS_BADGE_INTERRUPTED", "warn"),)),
+            ("25", "22:40", "Frostpeak", "Old Skarn", "6:03", "danger", (("REPORTS_BADGE_LIMIT", "warn"),))]
+    return "".join(report_row(*r, on=(i == selected)) for i, r in enumerate(rows[:count]))
+
+
+def usage_line():
+    text = T("REPORTS_USAGE", T("REPORTS_COUNT", 12), T("REPORTS_KB", 640), T("REPORTS_MB_WHOLE", 2))
+    return f'<div class="usage">{esc(text)}{cat("estimated")}</div>'
+
+
+def metric(key, kind, value, off=False):
+    return (f'<div class="metric"><div class="head2"><span>{esc(T(key))}</span>{cat(kind)}</div>'
+            f'<div class="val{" off" if off else ""}">{esc(value)}</div></div>')
+
+
+def report_head(mob, headline=None):
+    extra = f'<div class="body" style="color:var(--warn)">{esc(headline)}</div>' if headline else ""
+    return card(None, f'<h2>{esc(mob)}</h2><div class="note">{esc(report_date("26", "21:14"))} · Gloomhold</div>{extra}'
+                f'<div class="buttons">{button(T("REPORTS_DELETE"))}{button(T("REPORTS_CLOSE"), "ghost")}</div>')
+
+
+def report_page(theme, cards, x, scroll, module):
+    body = (f'<div class="page">{usage_line()}<div style="margin-top:6px">{report_list(3, 0)}</div>'
+            f'<div style="position:absolute;left:0;right:0;top:172px;bottom:0;overflow:hidden">'
+            f'<div class="column" style="margin-top:-{scroll}px">{"".join(cards)}</div></div></div>')
+    return window(theme, "reports", body, x, TOP, module=module, reports=True)
+
+
+def reports_list(theme):
+    full = f'<div class="page">{usage_line()}<div style="margin-top:6px">{report_list()}</div></div>'
+    empty = (f'<div class="page"><div class="empty2"><h2>{esc(T("REPORTS_EMPTY"))}</h2>'
+             f'<p>{esc(T("REPORTS_EMPTY_GROUP"))}</p></div></div>')
+    return (window(theme, "reports", full, LEFT, TOP, module="idle", reports=True)
+            + window(theme, "reports", empty, RIGHT, TOP, module="idle", reports=True))
+
+
+def report_scene(theme, kind):
+    na = T("REPORT_NA")
+    quality = {"values": (96, 0, 4), "state": (0, 93, 7), "unknown": (0, 0, 100)}[kind]
+    fight = [metric("REPORT_METRIC_DURATION", "detected", "1:42 · " + T("REPORT_IN_COMBAT", "1:38"))]
+    if kind == "unknown":
+        fight += [metric("REPORT_METRIC_TANKS", "unknown", T("REPORT_NA_TANKS"), True),
+                  metric("REPORT_METRIC_AGGRO_LOSSES", "unknown", na, True),
+                  metric("REPORT_METRIC_QUALITY", "calculated", T("REPORT_QUALITY", *quality)),
+                  metric("REPORT_METRIC_DEATHS", "detected", T("REPORT_NO_DEATH"))]
+    else:
+        held = T("REPORT_DESIGNATED", T("REPORT_HELD", "Bram", T("REPORT_SECONDS", 84.0)))
+        loss = T("REPORT_AGGRO_FROM", "1:02", "Kor", "Bram")
+        if kind == "values":
+            loss = T("REPORT_WITH_POINTS", loss, T("REPORT_POINTS", 24))
+        fight += [metric("REPORT_METRIC_TANKS", "detected", held),
+                  metric("REPORT_METRIC_AGGRO_LOSSES", "detected", loss),
+                  metric("REPORT_METRIC_QUALITY", "calculated", T("REPORT_QUALITY", *quality))]
+    cards = [report_head("Gorrak · " + T("MON_CLASS_BOSS")), card(T("REPORTS_SECTION_FIGHT"), "".join(fight))]
+    sub = f'<div class="note">{esc(T("ROLE_DAMAGER"))}</div>'
+    if kind == "unknown":
+        mine = (f'<div class="body" style="color:var(--text-3)">{esc(na)} · {esc(T("REPORT_WHY_SECRET"))}</div>'
+                + metric("REPORT_METRIC_QUALITY", "calculated", T("REPORT_QUALITY", *quality)))
+    else:
+        warning = T("REPORT_AT_LEAST", T("REPORT_SECONDS", 12.0)) + " · " + T("REPORT_UNKNOWN_TIME",
+                                                                              T("REPORT_SECONDS", 4.0))
+        mine = (metric("REPORT_METRIC_WARNING_CROSS", "estimated", T("REPORT_AT_LEAST", "2"))
+                + metric("REPORT_METRIC_WARNING_TIME", "estimated", warning))
+        if kind == "values":
+            mine += metric("REPORT_METRIC_MAX", "detected", T("REPORT_MAX", 96, "1:01"))
+        else:
+            mine += metric("REPORT_METRIC_MAX", "unknown", na, True)
+    cards.append(card(T("UNIT_YOU"), sub + mine))
+    scroll = 300 if kind == "unknown" else 360
+    return report_page(theme, cards, LEFT, 0, "idle") + report_page(theme, cards, RIGHT, scroll, "idle")
+
+
+def report_values(theme):
+    return report_scene(theme, "values")
+
+
+def report_state(theme):
+    return report_scene(theme, "state")
+
+
+def report_unknown(theme):
+    return report_scene(theme, "unknown")
+
+
+# The Recording card of Settings (M4.5, with the `recording` switch on) and the Reset card below it.
+def recording_card():
+    def slide(label, fraction, value):
+        return row(T(label), lib.slider(fraction, value))
+
+    usage = T("SET_RECORDING_USAGE", T("REPORTS_USAGE", T("REPORTS_COUNT", 12), T("REPORTS_KB", 640),
+                                       T("REPORTS_MB_WHOLE", 2)))
+    inner = (row(T("SET_RECORDING_ENABLED"), switch(True))
+             + f'<div class="row"><b>{esc(T("SET_RECORDING_WHEN"))}</b></div>'
+             + seg([T("SET_WHEN_GROUP"), T("SET_WHEN_INSTANCE"), T("SET_WHEN_ALWAYS")], 0, "margin-top:4px")
+             + slide("SET_RECORDING_RATE", (2 - 1) / 4, T("SET_HERTZ", 2)) + note(T("SET_RECORDING_RATE_NOTE"))
+             + slide("SET_RECORDING_SESSIONS", (25 - 5) / 95, "25")
+             + slide("SET_RECORDING_SIZE", (2048 - 512) / 7680, T("REPORTS_MB_WHOLE", 2))
+             + note(T("SET_RECORDING_LIMITS_NOTE")) + row(T("SET_RECORDING_NOTICE"), switch(False))
+             + note(T("SET_RECORDING_NOTICE_NOTE")) + note(usage, "margin-top:12px;color:var(--text-2)")
+             + button(T("SET_RECORDING_DELETE"), "wide", "margin-top:12px;width:300px")
+             + note(T("SET_RECORDING_NAMES"), "margin-top:12px"))
+    return card(T("SET_RECORDING"), inner)
+
+
+def settings_recording(theme):
+    reset = card(T("SET_RESET"), f'<div class="body">{esc(T("SET_RESET_TEXT_RECORDING"))}</div>'
+                 + button(T("SET_RESET_BUTTON"), "wide"))
+    cards = [recording_card(), reset]
+    return (page(theme, 0, cards, LEFT, module="idle", reports=True)
+            + page(theme, 0, cards, RIGHT, 300, "idle", reports=True))
 
 
 def about_cards(theme):
@@ -393,6 +528,22 @@ MONITOR_KINDS = [
      "Impostazioni: la card Avvisi con la nota dell'avviso della threat del gioco"),
 ]
 
+REPORT_KINDS = [
+    ("reports-list", reports_list, ["nebula", "warden"],
+     "The Reports tab: the list of recordings, and the empty list with its reason",
+     "La scheda Report: l'elenco delle registrazioni, e l'elenco vuoto con il motivo"),
+    ("report-values", report_values, ["nebula", "warden"],
+     "A report with threat values, each metric with its category",
+     "Un report con i valori di threat, ogni metrica con la sua categoria"),
+    ("report-state", report_state, ["nebula", "warden"],
+     "A report when only the state is readable: no percentages", "Un report quando si legge solo lo stato: niente percentuali"),
+    ("report-unknown", report_unknown, ["nebula", "warden"], "A report when nothing was readable, and why",
+     "Un report quando nulla era leggibile, e perché"),
+    ("settings-recording", settings_recording, ["nebula", "warden"],
+     "Settings: the Recording card, its top and the page scrolled down",
+     "Impostazioni: la card Registrazione, la parte alta e la pagina scorsa in basso"),
+]
+
 KINDS = [
     ("window", monitor, "The window of v0.1.0: the Monitor tab before threat monitoring arrives",
      "La finestra della v0.1.0: la scheda Monitor prima che arrivi il monitor della threat"),
@@ -410,7 +561,7 @@ for _lang in ("enUS", "itIT"):
             _name = f"{_kind}-{_theme}" + ("-it" if _lang == "itIT" else "")
             _caption = f"{_en if _lang == 'enUS' else _it} ({THEME_NAMES[_theme]})"
             SCENES.append((_name, _caption, (lambda f=_fn, t=_theme: f(t)), _lang, _theme))
-    for _kind, _fn, _themes, _en, _it in MONITOR_KINDS + COACH_KINDS:
+    for _kind, _fn, _themes, _en, _it in MONITOR_KINDS + COACH_KINDS + REPORT_KINDS:
         for _theme in _themes:
             _name = f"{_kind}-{_theme}" + ("-it" if _lang == "itIT" else "")
             _caption = f"{_en if _lang == 'enUS' else _it} ({THEME_NAMES[_theme]})"

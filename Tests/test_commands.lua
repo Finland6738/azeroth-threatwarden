@@ -245,3 +245,32 @@ describe("the way a command is typed", function()
 		falsy(AzerothThreatwarden.Demo.IsActive())
 	end)
 end)
+
+describe("/atw reports (SPEC-05 §3.6)", function()
+	before_boot(function(M) M.features = { monitor = true, recording = true, reports = true } end)
+
+	it("opens the window on the Reports tab, from closed too, and help lists it", function()
+		W():Close()
+		eq(run("/atw reports"), "")
+		truthy(W():IsShown())
+		eq(W():Tab(), "reports")
+		notNil(W():Frame().pages.reports.view)
+		contains(run("/atw help"), "/atw reports - open the recorded fights and their reports")
+	end)
+
+	it("works on read-only data", function()
+		boot(function(M)
+			M.features = { reports = true }
+			M.saved = { AzerothThreatwardenCharDB = { schema = 99, ui = { locked = false } } }
+		end)
+		run("/atw reports")
+		eq(W():Tab(), "reports")
+	end)
+end)
+
+describe("/atw reports in Italian", function()
+	before_boot(function(M) M.features = { reports = true, recording = true } M.player.locale = "itIT" end)
+	it("says it in the help", function()
+		contains(run("/atw help"), "/atw reports - apre i combattimenti registrati e i loro report")
+	end)
+end)

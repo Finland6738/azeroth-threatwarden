@@ -2,7 +2,8 @@
 -- docs/specs/ui-style.md §2 and §3). Lua 5.1; no game API is named here (ARC-02): CreateFrame and Core/Compat.lua.
 -- Adapted from Azeroth Accord (UI/Settings.lua and the panel of UI/SettingsModel.lua), same owner, GPL-3.0 (ADR 0012).
 -- Changes: the cards are Threatwarden's own (Appearance, Language, Window, Monitor while the `monitor` switch is on,
--- Alerts while the `alerts` switch is on (SPEC-04 §4.2, its Coach switch with `coach`), Reset); no model file, because every value
+-- Alerts while the `alerts` switch is on (SPEC-04 §4.2, its Coach switch with `coach`), Recording while the
+-- `recording` switch is on (SPEC-05 §3.6), Reset); no model file, because every value
 -- is a path of Core/Config.lua; the cards follow the width they get; the scale is saved when the slider is released.
 --
 -- Every control writes through Config:Set and the change applies at once through CONFIG_CHANGED (Theme, Motion,
@@ -19,7 +20,8 @@
 --                                          has none.
 --
 -- Bus: emits SETTINGS_CHANGED(key) after the player changes an option; listens CONFIG_LOADED, CONFIG_CHANGED,
--- THEME_CHANGED, DEMO_CHANGED and ENTERING_WORLD (the game's own threat warning is read again) to repaint the pages
+-- THEME_CHANGED, DEMO_CHANGED, ENTERING_WORLD and, with the Recording card, SESSIONS_CHANGED, SESSION_STARTED and
+-- SESSION_ENDED; ENTERING_WORLD (the game's own threat warning is read again) to repaint the pages
 -- on screen.
 local ADDON_NAME, ns = ...
 ns = ns or {}
@@ -45,6 +47,7 @@ local function get(path) return config() and config():Get(path) end
 local function monitorOn() return ns.Features ~= nil and ns.Features.On("monitor") end
 local function alertsOn() return ns.Features ~= nil and ns.Features.On("alerts") end
 local function coachOn() return ns.Features ~= nil and ns.Features.On("coach") end
+local function recordingOn() return ns.Features ~= nil and ns.Features.On("recording") end
 
 ---------------------------------------------------------------------------------------------------------------------
 -- Cards and rows (also used by UI/About.lua)
@@ -227,13 +230,13 @@ local function buildLanguage(view, f, page)
 end
 
 -- A slider with its value at the right, saved when the thumb is released (a click or a key saves at once).
--- opts: min, max, step, format(v) -> text, commit(v). Returns the box: .slider, .value, .show(v), .dragging.
+-- opts: min, max, step, format(v) -> text, commit(v), valueWidth (48). Returns the box: .slider, .value, .show(v), .dragging.
 local function sliderBox(card, opts)
 	local box = CreateFrame("Frame", nil, card)
 	box:SetSize(240, 24)
 	box.value = Widgets.Text(box, "Mono", "text-1", "RIGHT")
 	box.value:SetPoint("RIGHT", box, "RIGHT", 0, 0)
-	box.value:SetWidth(48)
+	box.value:SetWidth(opts.valueWidth or 48)
 	local function show(v) box.value:SetText(opts.format(floor(v + 0.5))) end
 	box.slider = Widgets.Slider(box, { min = opts.min, max = opts.max, step = opts.step, width = 180, value = opts.min,
 		onChange = function(v, user)
@@ -414,12 +417,104 @@ local function refreshAlerts(f)
 	if f.coach then f.coach.control:SetOn(get("account.settings.coach.enabled") ~= false, true) end
 end
 
+local RECORDING = "account.settings.recording."
+local KB_STEP = 512      -- the size limit moves in steps of 0.5 MB
+
+local function paintUsage(f)
+	local Storage = ns.Storage
+	f.usage:SetText(L["SET_RECORDING_USAGE"]:format(ns.Reports.UsageText(Storage.Usage())))
+end
+
+-- The *Recording* card (SPEC-05 §3.6): when and how often a fight is recorded, the limits (pruning applies at once),
+-- the end-of-fight notice, the use of the store and *Delete all recordings*, which asks twice.
+local function buildRecording(view, f, page)
+	local Limits, defaults = ns.Config.RECORDING, ns.Config.RECORDING_DEFAULTS
+	local card = View.StackCard(page.frame)
+	View.CardText(card, "H2", "text-1", L["SET_RECORDING"], 0)
+	f.recording = switch(view, card, RECORDING .. "enabled", L["SET_RECORDING_ENABLED"])
+
+	View.CardText(card, "BodyMedium", "text-1", L["SET_RECORDING_WHEN"], 12)
+	local choices = {}
+	for i, id in ipairs(ns.Config.RECORD_WHEN) do choices[i] = { id = id, text = L["SET_WHEN_" .. id:upper()] } end
+	f.when = Widgets.Segmented(card, choices, function(id) write(view, card, RECORDING .. "when", id) end)
+	card:Add(f.when, 8)
+
+	local function slider(key, label, min_, max_, step, format, note)
+		f[key] = sliderBox(card, { min = min_, max = max_, step = step, format = format, valueWidth = 60,
+			commit = function(v) write(view, card, RECORDING .. key, floor(v / step + 0.5) * step) end })
+		card:Add(controlRow(card, label, f[key]), 12, { stretch = true })
+		if note then View.CardText(card, "Small", "text-3", note, 2) end
+	end
+	slider("rate", L["SET_RECORDING_RATE"], Limits.rate.min, Limits.rate.max, 1,
+		function(v) return L["SET_HERTZ"]:format(v) end, L["SET_RECORDING_RATE_NOTE"])
+	slider("maxSessions", L["SET_RECORDING_SESSIONS"], Limits.maxSessions.min, Limits.maxSessions.max, 1, tostring)
+	slider("maxKB", L["SET_RECORDING_SIZE"], Limits.maxKB.min, Limits.maxKB.max, KB_STEP,
+		function(v) return ns.Reports.SizeText(floor(v / KB_STEP + 0.5) * KB_STEP) end, L["SET_RECORDING_LIMITS_NOTE"])
+
+	f.notice = switch(view, card, RECORDING .. "notice", L["SET_RECORDING_NOTICE"])
+	View.CardText(card, "Small", "text-3", L["SET_RECORDING_NOTICE_NOTE"], 2)
+	f.usage = View.CardText(card, "Small", "text-2", "", 12)
+
+	local armed = 0
+	local function disarm()
+		armed = armed + 1
+		f.deleteAll.armed = false
+		f.deleteAll:SetLabel(L["SET_RECORDING_DELETE"])
+	end
+	f.deleteAll = Widgets.Button(card, { text = L["SET_RECORDING_DELETE"], style = "secondary", width = 300,
+		onClick = function()
+			if not f.deleteAll.armed then
+				disarm()
+				f.deleteAll.armed = true
+				f.deleteAll:SetLabel(L["SET_RECORDING_DELETE_CONFIRM"])
+				local mine = armed
+				Compat.After(View.CONFIRM_SECONDS, function() if mine == armed then disarm() end end)
+				return
+			end
+			disarm()
+			local ok, why = ns.Storage.DeleteAll()
+			if ok then say(card, L["SET_RECORDING_DELETED"], nil)
+			elseif why == "read-only" then say(card, L["CMD_READ_ONLY"], "warn")
+			else say(card, L["SET_NOT_SAVED"]:format(tostring(why)), "warn") end
+			view:Refresh()
+		end })
+	card:Add(f.deleteAll, 12)
+	f.disarmDelete = disarm
+	View.CardText(card, "Small", "text-3", L["SET_RECORDING_NAMES"], 12)
+	statusLine(card)
+	f.recordingDefaults = defaults
+
+	-- the use of the store follows the recordings (registered once, only with the card there is to repaint)
+	if ns.Bus and not View.listensSessions then
+		View.listensSessions = true
+		ns.Bus.On("SESSIONS_CHANGED", View.RefreshAll)
+		ns.Bus.On("SESSION_STARTED", View.RefreshAll)
+		ns.Bus.On("SESSION_ENDED", View.RefreshAll)
+	end
+	return card
+end
+
+local function refreshRecording(f)
+	local function value(key)
+		local v = get(RECORDING .. key)
+		if v == nil then v = f.recordingDefaults[key] end
+		return v
+	end
+	f.recording.control:SetOn(value("enabled") == true, true)
+	f.when:Select(value("when"))
+	for _, key in ipairs({ "rate", "maxSessions", "maxKB" }) do f[key]:Update(value(key)) end
+	f.notice.control:SetOn(value("notice") == true, true)
+	paintUsage(f)
+	f.deleteAll:SetEnabled(not config():IsReadOnly("account"))
+end
+
 -- "Reset settings" asks twice: the first click arms the button, a second one within CONFIRM_SECONDS resets.
 local function buildReset(view, f, page)
 	local card = View.StackCard(page.frame)
 	View.CardText(card, "H2", "text-1", L["SET_RESET"], 0)
 	local text = monitorOn() and "SET_RESET_TEXT_MONITOR" or "SET_RESET_TEXT"
 	if alertsOn() then text = "SET_RESET_TEXT_ALERTS" end
+	if recordingOn() then text = "SET_RESET_TEXT_RECORDING" end
 	View.CardText(card, "Body", "text-2", L[text], 8)
 	local armed = 0
 	local function disarm()
@@ -470,6 +565,7 @@ local function refreshSettings(view, f)
 	f.minimap.control:SetOn(get("account.settings.minimap.hide") ~= true, true)
 	if f.warning then refreshMonitor(f) end
 	if f.cooldown then refreshAlerts(f) end
+	if f.when then refreshRecording(f) end
 
 	local cfg = config()
 	local why = cfg and (cfg.readOnly.account or cfg.readOnly.char)
@@ -495,6 +591,10 @@ local function buildSettingsPage(holder, view)
 		f.alertsCard = buildAlerts(view, f, page)
 		page.cards[#page.cards + 1] = f.alertsCard
 	end
+	if recordingOn() then
+		f.recordingCard = buildRecording(view, f, page)
+		page.cards[#page.cards + 1] = f.recordingCard
+	end
 	page.cards[#page.cards + 1] = buildReset(view, f, page)
 	f.cards = page.cards
 	function page:Refresh() refreshSettings(view, f) end
@@ -517,6 +617,12 @@ View.AddPage("settings", { labelKey = "PAGE_SETTINGS", order = 10, build = build
 
 local function pageDef(id)
 	for _, p in ipairs(View.pages) do if p.id == id then return p end end
+end
+
+-- Leaving the page cancels a first click on either of the buttons that ask twice.
+local function disarmAll(f)
+	f.disarmReset()
+	if f.disarmDelete then f.disarmDelete() end
 end
 
 function View.Build(parent, opts)
@@ -553,7 +659,7 @@ function View.Build(parent, opts)
 	function view:ShowPage(id)
 		local def = pageDef(id)
 		if not def then return false end
-		if self.pageId and self.pageId ~= id and self.settings then self.settings.disarmReset() end
+		if self.pageId and self.pageId ~= id and self.settings then disarmAll(self.settings) end
 		self.pageId = id
 		for other, holder in pairs(self.holders) do holder:SetShown(other == id) end
 		if not self.holders[id] then
@@ -582,7 +688,7 @@ function View.Build(parent, opts)
 
 	view:SetScript("OnSizeChanged", function(self, width) self.width = width; self:Layout() end)
 	view:SetScript("OnShow", function(self) self:Refresh() end)
-	view:SetScript("OnHide", function(self) if self.settings then self.settings.disarmReset() end end)
+	view:SetScript("OnHide", function(self) if self.settings then disarmAll(self.settings) end end)
 	View.instances[#View.instances + 1] = view
 	view:ShowPage("settings")
 	return view

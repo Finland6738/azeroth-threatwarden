@@ -31,6 +31,7 @@ coach and combat analysis addon for World of Warcraft: Forever.
 | See what it looks like | [[Interface tour|Interface-Tour]] |
 | Understand the threat list | [[Threat Monitor|Threat-Monitor]] |
 | Understand the warnings and the advice | [[Alerts and Coach|Alerts-and-Coach]] |
+| Look at a past fight (from `v0.4.0`) | [[Combat Reports|Combat-Reports]] |
 | Change its look, language or window | [[Settings|Settings]] |
 | Know who made it | [[About and credits|About]] |
 | See what I can type, and what the window does | [[Commands|Commands]] |
