@@ -71,10 +71,17 @@ M4.R. Nothing is added to the sessions and the account schema stays 5.
   locale keys of markers, gaps and outcomes in both languages; the model lines of the *Timeline and replay* section of
   `/atw debug`; `Data/Timeline.lua` in the TOC after `Data/Report.lua`.
 - Done when:
-  - [ ] Known sessions give known models in the three outcomes and in a mixed, an interrupted and a truncated one; every
+  - [x] Known sessions give known models in the three outcomes and in a mixed, an interrupted and a truncated one; every
     segment kind and every gap kind of §4.3–§4.4 is produced with its category and reason; crossings equal the
     report's; `View` equals a brute-force pass and keeps every peak; the build in slices equals the one-pass build;
     nothing is built with the switch off.
+- *Done (2026-11-26, before M0.7): `Data/Timeline.lua` behind `timeline` (`Compute`, `Build` in slices with one model
+  in memory, `View`, `Summary`, `Group`, `Reading`, the words of markers, gaps and outcomes as `TIMELINE_*` keys in both
+  languages, the *Timeline and replay* section of `/atw debug`); `Report.Walk` with four hooks, `Report.Intervals` and
+  `Report.Prevailing` exposed, the report and its tests unchanged; a leading `none` band (the tenth before the
+  monitor's first read) does not make a session mixed (SPEC-05 §4.6); `test_timeline.lua` (38 tests) and
+  `Tests/long/test_timeline_budget.lua` (a whole view at 30 000 rows: 132 000 instructions with the default series,
+  884 000 with all 40 units, budget 2 000 000, nothing allocated once warm).*
 - Tests: `test_timeline.lua` (SPEC-05 §10, sessions from the real recorder in the three `Fight.OUTCOMES` and hand-made
   ones for exact cases); the report tests unchanged; the budget of `View` over 30 000 rows in a long test.
 - Real client: how long `Timeline.Build` takes on a real raid session (P10); which outcome real groups give (P3).

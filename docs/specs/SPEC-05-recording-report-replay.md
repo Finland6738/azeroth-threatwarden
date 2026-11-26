@@ -532,7 +532,9 @@ Valori e assi:
 
 L'**esito** di una sessione si calcola dalle righe: `values` se ha righe con un numero e nessuna `a`–`d`; `state` se
 ha righe `a`–`d` e nessuna con un numero; `none` se non ha né le une né le altre; `mixed` altrimenti (o se le bande di
-modalità cambiano).
+modalità cambiano dentro il combattimento). Una banda `none` **prima** della prima banda leggibile non rende la sessione
+`mixed` (precisazione di M5.2): il recorder si apre con la modalità in vigore, che è `none` per il decimo prima della
+prima lettura del monitor; quel decimo resta un buco `mode` con il suo motivo.
 
 | Esito | Grafico delle percentuali | Corsie | Testo al posto del grafico |
 |---|---|---|---|
@@ -560,8 +562,11 @@ modalità cambiano).
   stretta abbastanza (una lettura per colonna) il disegno è la linea esatta delle letture.
 - **Costo**: `View` cerca `a` con una ricerca binaria sulla colonna `t` (larghezza fissa, SPEC-02 §4.2) e passa solo le
   righe della vista; scrive in `out`, riusato (nessuna allocazione dopo il riscaldamento per una vista della stessa
-  larghezza). È sincrona; M5.2 ne fissa il budget con una prova lunga (proposta: una vista dell'intera sessione a 30 000
-  righe entro 2 000 000 di istruzioni della VM) e, se un raid da 40 lo supera, la fa a fette come `Build`.
+  larghezza). È sincrona; M5.2 ne fissa il budget con una prova lunga (`Tests/long/test_timeline_budget.lua`): una vista
+  dell'intera sessione a 30 000 righe (40 unità per 750 tick) entro **2 000 000** di istruzioni della VM e 512 byte. M5.2
+  ha misurato circa 132 000 istruzioni con le 6 serie predefinite e 884 000 con tutte le 40 unità come serie (ogni riga
+  passata), 0 byte dopo il riscaldamento: non serve farla a fette. Costruire il modello di quella sessione costa circa
+  2,5 milioni di istruzioni, a fette di `SLICE`.
 - **Zoom**: *Zoom to selection* (§4.8) e la rotella sopra il grafico (×2 avanti o indietro intorno al puntatore, entro
   `MIN_VIEW` e la sessione intera); *Whole fight* torna alla sessione intera.
 
@@ -941,6 +946,42 @@ Ogni test che passa per il monitor gira sui tre esiti (`Fight.OUTCOMES`, [SPEC-0
 - **Eventi del Bus**: `REPLAY_REQUESTED(id, t)` (`t` facoltativo, in decimi); nessun evento a ogni tick (la finestra
   ascolta il controllore con `Replay.OnChange`); nessun nome negli argomenti. Prende il posto del `REPLAY_POSITION(t)`
   previsto in SPEC-01 §3.2.
+
+**Realizzato in M5.2** (`Data/Timeline.lua`, il cambio di `Data/Report.lua`), con queste precisazioni:
+
+- `Report.Walk(s, d, step, hooks)` è il passaggio sugli eventi del report, esposto con quattro richiami facoltativi:
+  `state(u, m, stato, from, to)` a ogni intervallo di stato chiuso, `hold(u, m, from, to)` a ogni detentore,
+  `cross(u, m, t, stato, evento)` a ogni superamento contato dal report, `watch(m, from, to)` a ogni periodo di mob
+  monitorato in combattimento. `Report.Compute` non li passa: le celle e i test del report non cambiano.
+  `Report.Intervals` (`add`, `merge`, `intersect`, `length`) e `Report.Prevailing` sono le funzioni del report sugli
+  intervalli e sul motivo prevalente, usate anche dalla timeline.
+- Il **tratto** si tiene sulla lettura dove finisce: per la `k`-esima lettura di una serie `segs[k]` è `solid`, `dashed`
+  o `none` (dalla lettura `k − 1`) e `why[k]` il motivo di `none`: `first`, `mob`, `row`, `target`, `tick`, `mode`,
+  `combat`, `limit`, `exit`, `far`. Le categorie sono in `Timeline.SEGMENT_CATEGORY` (rilevata, stimata, sconosciuta).
+  Un evento rompe il tratto se cade **strettamente** fra le due letture; un `G` vale ai suoi due estremi.
+- Un **buco** è `{ from, to, kind, reason }` (categoria sconosciuta, `Timeline.GAP_CATEGORY`); quelli di un'unità
+  (`unknown`, `stale`) sono in `units[u].unknown`, quelli del grafico intero (`mode`, `nomob`, `tick`, `limit`) in
+  `gaps`; `mode` e `nomob` si tagliano ai periodi di combattimento. Il buco di un'unità finisce alla riga seguente sullo
+  stesso mob o alla fine del suo periodo di mob (o di combattimento).
+- Un **marcatore** è uno per evento: `{ t, k, kind, place (track, chart, series, lane), category, confidence, prio, … }`;
+  `Timeline.Group(markers, a, b, width, out)` raggruppa quelli della traccia a meno di `MARKER_PX` dal primo del
+  gruppo, con in `top` il più importante (a pari importanza il primo). Le parole sono le chiavi `TIMELINE_*`
+  (`MarkerText`, `GapText`, `OutcomeText`, `ModeText`, `GroupLines`); il consiglio del Coach si nomina con l'id della
+  regola (*Coach tip (rule T1)*), perché le parole non sono registrate. Nel testo inglese il mob è *enemy*, come nel
+  report.
+- `Timeline.View` scrive per ogni serie le colonne `first`, `last`, `lo`, `hi` (posizioni nelle letture della serie,
+  `0` senza letture; a pari valore la prima) e `cut` (un tratto assente dentro la colonna); la vista si allarga a
+  `MIN_VIEW` (`Timeline.Clamp`) e le colonne vanno da 1 a `MAX_BUCKETS` (`Timeline.Buckets(larghezza)`).
+  `Timeline.Reading` dà valore, ora e categoria di una lettura (`3843`: stimata, limite inferiore).
+- `Timeline.Summary(model, a, b, out, serie)` dà, per serie, letture, la più alta con la sua categoria, superamenti,
+  tempo in WARNING e DANGER, tempo sconosciuto (stati UNKNOWN, buchi dell'unità, modalità `none` e buchi del tick mentre
+  era nella lista) con `lower` e la categoria stimata quando ce n'è; gli eventi per tipo.
+- Serie predefinite e corsie: il giocatore, poi chi ha tenuto il mob per tempo tenuto, poi le altre per percentuale
+  massima (le corsie: per tempo in WARNING e DANGER), a parità l'indice; una corsia solo per chi ha stati noti.
+- `Timeline.Build` registra l'ascoltatore di `SESSIONS_CHANGED` alla prima costruzione con l'interruttore acceso; la
+  sezione *Timeline and replay* di `/atw debug` si aggiunge al `PLAYER_LOGIN`, dopo *Recording*, con gli interruttori e
+  il modello in memoria (righe, eventi, serie, corsie, esito, millisecondi e frame della costruzione); M5.3 e M5.4
+  aggiungono le loro righe.
 
 ## 10. Piano di M5: test per step
 

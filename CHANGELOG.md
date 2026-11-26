@@ -5,6 +5,21 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Added
+
+- M5.2: the **model of the Threat Timeline** (`Data/Timeline.lua`), behind the `timeline` switch, which stays off until
+  `v0.5.0`: nothing of it is visible yet. It reads a recorded fight and keeps, per unit, the readings with a number,
+  the line between two of them as solid (taken at the recording's pace), dashed (an estimate, up to 10 s with nothing
+  unknown in between) or absent with the reason (another enemy, a read without a value, a target change, a paused
+  recording, a change to *state only* or *nothing readable*, the end of combat, leaving the threat list, the sample
+  limit, too far apart); the gaps of each unit and of the whole chart with their reason; a marker for every recorded
+  event; the outcome (values, state only, nothing readable or mixed); the default series and lanes; for the chart's
+  width the first, last, lowest and highest reading of each column, never an average, so every peak stays; and the
+  summary of an interval. Periods, holders and crossings come from the combat report's own functions, now shared, so
+  report and timeline cannot disagree; the report itself does not change. `/atw debug` has a *Timeline and replay*
+  section (switches and counts only).
+- Tests: `test_timeline.lua` and the long test of the cost of a view at 30 000 rows.
+
 ### Documentation
 
 - M5.1: specification of the **Threat Timeline** and the **Threat Replay** (SPEC-05 §4–§5 and §8–§10, SPEC-02 §3.9,

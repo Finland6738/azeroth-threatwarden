@@ -13,6 +13,11 @@
 --                                           done(report) or done(nil, "off" / "unknown" / "recording" / "damaged" /
 --                                           "error"); the last report is kept in memory
 --   Report.Summary(session)                 `sum` (SPEC-02 §4.1) for the list, nil while the switch is off
+--   Report.Walk(session, decoded, step, hooks)  the pass over the events alone (periods, states, holders, crossings),
+--                                           with optional hooks, so that Data/Timeline.lua (M5.2) uses the same
+--                                           functions: hooks.state(u, m, state, from, to), hooks.hold(u, m, from, to),
+--                                           hooks.cross(u, m, t, state, event), hooks.watch(m, from, to)
+--   Report.Intervals, Report.Prevailing(acc) the interval helpers and the prevailing reason, shared with the timeline
 --   Report.CellText(report, cell) ...       the words of the report, for the Reports tab (M4.5)
 --
 -- A cell is { key, category, status ("ok", "na", "insufficient", "unknown"), value, reason, lower, unknownTime
@@ -115,6 +120,7 @@ local function walkEvents(s, d, acc, step)
 	local lastKnown = {}                -- unit * 100 + mob -> level of the last known state
 	local deathAt = {}
 
+	local hooks = acc.hooks or {}
 	local function closeState(key, t)
 		local o = open[key]
 		if not o then return end
@@ -126,12 +132,16 @@ local function walkEvents(s, d, acc, step)
 		elseif o.state == "D" then add(u.danger, o.from, t)
 		elseif o.state == "S" then add(u.safe, o.from, t)
 		else add(u.unknownState, o.from, t) end
+		if hooks.state then hooks.state(o.u, o.m, o.state, o.from, t) end
 	end
 	local function closeHolder(m, t)
 		local h = holders[m]
 		if not h then return end
 		holders[m] = nil
-		if t > h.from then acc.held[h.u] = (acc.held[h.u] or 0) + t - h.from end
+		if t > h.from then
+			acc.held[h.u] = (acc.held[h.u] or 0) + t - h.from
+			if hooks.hold then hooks.hold(h.u, m, h.from, t) end
+		end
 	end
 	-- The monitored mob stops being watched (combat ends or another mob): what rested on it ends.
 	local function endWatch(t)
@@ -140,6 +150,7 @@ local function walkEvents(s, d, acc, step)
 		end
 		closeHolder(curMob, t)
 		if monFrom then
+			if hooks.watch and t > monFrom then hooks.watch(curMob, monFrom, t) end
 			if mobs[curMob] then mobs[curMob].monitored = mobs[curMob].monitored + t - monFrom end
 			acc.monitored = acc.monitored + t - monFrom
 			monFrom = nil
@@ -199,6 +210,7 @@ local function walkEvents(s, d, acc, step)
 						if entry then
 							if new == "W" then unit.warningCross = unit.warningCross + 1
 							else unit.dangerCross = unit.dangerCross + 1 end
+							if hooks.cross then hooks.cross(u, m, t, new, e) end
 						end
 					end
 					lastKnown[key] = level
@@ -406,10 +418,7 @@ local function mainMob(acc, readable)
 	return best
 end
 
--- The report of `s` from its decoded rows and events `d`. `step` (may be nil) is called once per event and row, so the
--- work can be cut into slices.
-function Report.Compute(s, d, step)
-	step = step or function() end
+local function newAcc(s, d)
 	local units, mobs = {}, {}
 	for i, entry in ipairs(s.units) do units[i] = newUnit(i, entry) end
 	for i, entry in ipairs(s.mobs) do
@@ -423,6 +432,27 @@ function Report.Compute(s, d, step)
 		held = {}, heldOrder = {}, holderList = {}, changes = {}, losses = {}, deaths = {}, reasons = {},
 		alerts = { count = 0, muted = 0, kinds = {} },
 	}
+	return acc
+end
+
+Report.Intervals = { add = add, merge = merge, intersect = intersect, length = length }
+Report.Prevailing = prevailing
+
+-- The pass over the events of `s` alone, with the hooks of the timeline (see the head of the file): the periods
+-- (acc.combat, acc.none, acc.gaps), the states, the holders and the crossings by the report's own rules.
+function Report.Walk(s, d, step, hooks)
+	local acc = newAcc(s, d)
+	acc.hooks = hooks
+	walkEvents(s, d, acc, step or function() end)
+	return acc
+end
+
+-- The report of `s` from its decoded rows and events `d`. `step` (may be nil) is called once per event and row, so the
+-- work can be cut into slices.
+function Report.Compute(s, d, step)
+	step = step or function() end
+	local acc = newAcc(s, d)
+	local units, mobs, last = acc.units, acc.mobs, acc.last
 	walkEvents(s, d, acc, step)
 	walkRows(d, acc, step)
 

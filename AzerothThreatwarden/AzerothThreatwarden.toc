@@ -44,6 +44,7 @@ Data\Session.lua
 Data\Storage.lua
 Data\Recorder.lua
 Data\Report.lua
+Data\Timeline.lua
 UI\Assets.lua
 UI\Theme.lua
 UI\Motion.lua
