@@ -62,6 +62,11 @@ All notable changes to this project are documented here. The format follows
 
 ### Documentation
 
+- M4.7: the [in-game checklist of recording and the combat report](docs/checklists/M4.md) (how to turn the two
+  switches on for the test, a backup of the saved data first), ending with the walk through the MVP Definition of Done
+  (three items done, one open, eight waiting for the owner: the MVP is not complete), and a
+  [draft of the CurseForge page](docs/curseforge.md) that says what is not verified (not published; title in SPEC-09
+  Q17). Not run in the game.
 - M4.1: specification of the recorder, the storage and the combat report (SPEC-05 §1–§3 and SPEC-02 §3.7–§4,
   Italian), written before the in-game M0 probe like M2 and M3, with a new decision record
   ([ADR 0016](docs/adr/0016-recordings-are-the-monitors-readings-in-compact-columns.md)). A fight in a group or an

@@ -19,12 +19,16 @@ which mob, warns you before you pull aggro, records your fights and explains wha
 > ecosystem look, a movable window with Settings and an Info page with the credits, the
 > [commands](docs/wiki/Commands.md) `/atw` and `/threatwarden`, a minimap button and the Addon Compartment entry. It is
 > checked by offline tests only: the M0 probe and the in-game checks of [M1](docs/checklists/M1.md),
-> [M2](docs/checklists/M2.md) and [M3](docs/checklists/M3.md) are still open. The [probe](docs/spike/README.md) (a development tool, never distributed) checks in the real
+> [M2](docs/checklists/M2.md), [M3](docs/checklists/M3.md) and [M4](docs/checklists/M4.md) are still open. The
+> [probe](docs/spike/README.md) (a development tool, never distributed) checks in the real
 > client which threat data WoW Forever gives an addon, because the client may hide threat values from addons in some
 > situations: the client and the threat functions, including whether their values are secret (P1–P4), which units and
 > mobs answer, the threat events, GUIDs and roles (P5, P6, P9), the combat events and the damage meter (P7, P8), the
 > cost of sampling, the restrictions and what survives a reload (P10–P12). The MVP (monitor, alerts, Coach, recording
-> and combat report) is `v0.4.0`.
+> and combat report) is `v0.4.0`. Recording and the combat
+> report are built and tested offline but **switched off** until then; their
+> [in-game check](docs/checklists/M4.md) is written and not run, and the MVP is
+> [not complete yet](docs/checklists/M4.md#12-mvp-check): it waits for the checks in the real client.
 
 [Italiano](README.it.md) · [Roadmap](ROADMAP.md) · [Specification (Italian)](docs/specs/README.md) ·
 [Architecture](docs/ARCHITECTURE.md) · [Decisions](docs/adr/README.md) · [User manual](docs/wiki/Home.md)

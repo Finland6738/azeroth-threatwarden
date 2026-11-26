@@ -449,6 +449,9 @@ riportano con il modulo *In-game test report*.
 
 ## 5. Definition of Done dell'MVP (fonte §18)
 
+Stato voce per voce (fatta, aperta o in attesa del proprietario), aggiornato in M4.7:
+[checklist M4 §12](../checklists/M4.md#12-mvp-check). Le caselle qui sotto si spuntano quando la voce è chiusa.
+
 - [ ] Client target identificato e documentato.
 - [ ] Probe API completato.
 - [ ] API usate verificate sul client.

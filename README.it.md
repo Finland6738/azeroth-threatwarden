@@ -19,14 +19,17 @@ ciò che è **noto** da ciò che è **stimato**.
 > migrazioni), l'aspetto dell'ecosistema, una finestra spostabile con le Impostazioni e la pagina Info con i crediti, i
 > [comandi](docs/wiki/Commands-it.md) `/atw` e `/threatwarden`, il pulsante della minimappa e la voce nell'Addon
 > Compartment. È controllata solo da test offline: la sonda M0 e le verifiche in gioco della
-> [M1](docs/checklists/M1.md), della [M2](docs/checklists/M2.md) e della [M3](docs/checklists/M3.md) (in inglese) sono
-> ancora aperte. La
+> [M1](docs/checklists/M1.md), della [M2](docs/checklists/M2.md), della [M3](docs/checklists/M3.md) e della
+> [M4](docs/checklists/M4.md) (in inglese) sono ancora aperte. La
 > [sonda](docs/spike/README.md) (uno strumento di sviluppo, mai distribuito) verifica nel client vero quali dati di
 > threat WoW Forever dà a un addon, perché in alcune situazioni il client può nascondere i valori agli addon: il client e
 > le funzioni della threat, compreso se i loro valori sono segreti (P1–P4), quali unità e mob rispondono, gli eventi
 > della threat, i GUID e i ruoli (P5, P6, P9), gli eventi di combattimento e il damage meter (P7, P8), il costo del
 > campionamento, le restrizioni e cosa sopravvive a un ricaricamento (P10–P12). L'MVP (monitor, avvisi, Coach,
-> registrazione e report di combattimento) è la `v0.4.0`.
+> registrazione e report di combattimento) è la `v0.4.0`. Registrazione e report sono costruiti e
+> provati offline ma **spenti** fino ad allora; la loro [verifica in gioco](docs/checklists/M4.md) (in inglese) è
+> scritta e non eseguita, e l'MVP [non è ancora completo](docs/checklists/M4.md#12-mvp-check): aspetta le prove nel
+> client vero.
 
 [English](README.md) · [Roadmap](ROADMAP.md) · [Specifiche](docs/specs/README.md) ·
 [Architettura (in inglese)](docs/ARCHITECTURE.md) · [Decisioni](docs/adr/README.md) · [Manuale](docs/wiki/Home-it.md)

@@ -88,7 +88,8 @@ milestone ([ADR 0014](../adr/0014-one-version-per-milestone-and-feature-switches
 - Crediti: *Created and designed by Finland. Made with the Italian guild NEBULA.* con i loghi NEBULA (Q4).
 - Nessun asset copiato da Omen o da altri addon.
 - Titolo CurseForge proposto: **Azeroth Threatwarden — Threat Meter, Coach & Combat Replay**; descrizione breve e
-  parole chiave come nella fonte §16, **senza promettere funzioni non verificate** né versioni diverse da quella provata.
+  parole chiave come nella fonte §16, **senza promettere funzioni non verificate** né versioni diverse da quella
+  provata. Bozza della pagina: [docs/curseforge.md](../curseforge.md) (il titolo per `v0.4.0` è in [Q17](SPEC-09-risks-open-questions.md)).
 
 ## 7. Registro delle decisioni
 

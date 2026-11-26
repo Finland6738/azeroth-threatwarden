@@ -73,8 +73,8 @@ commented out and the repository has no `CF_API_KEY` secret, so a tag publishes 
 
 1. Create a project on [CurseForge](https://www.curseforge.com/wow/addons) for World of Warcraft addons: name
    *Azeroth Threatwarden*, licence GPL-3.0, the unofficial notice and the privacy summary
-   ([Privacy and Data](wiki/Privacy-and-Data.md)) on the description. Make sure the project's game versions include
-   **WoW Forever**.
+   ([Privacy and Data](wiki/Privacy-and-Data.md)) on the description (draft:
+   [curseforge.md](curseforge.md)). Make sure the project's game versions include **WoW Forever**.
 2. Copy the **Project ID** (a number, on the project's *About* panel) into the TOC: in
    `AzerothThreatwarden/AzerothThreatwarden.toc` replace the commented line `# ## X-Curse-Project-ID: 0` with
    `## X-Curse-Project-ID: 12345` (your number, two `#` signs, no space in front). Ship that in a normal pull request.

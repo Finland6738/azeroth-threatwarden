@@ -179,8 +179,13 @@ notice, `/atw reports`) in `Core/Features.lua` stay **off** until M4.R; every st
   Done of SPEC-08 §5 walked through; CurseForge page draft for the owner (title and description of SPEC-00 §6, limits
   stated); README status.
 - Done when:
-  - [ ] The checklist covers every "Real client" line of M4.2–M4.6 and the exit criterion; every item of SPEC-08 §5 is
+  - [x] The checklist covers every "Real client" line of M4.2–M4.6 and the exit criterion; every item of SPEC-08 §5 is
     marked done, open (with the step that closes it) or waiting for the owner.
+- *Done (2026-11-26): `docs/checklists/M4.md` (switches on in the installed copy, backup of the saved data, twelve
+  parts, a table that maps every "Real client" line and the exit criterion to its steps); the MVP Definition of Done in
+  its §12: 3 done, 1 open (documentation: M4.R and M0.7), 8 waiting for the owner; CurseForge draft in
+  `docs/curseforge.md` and new SPEC-09 Q17 (title without *Replay*); checklists index and README status updated. The
+  checklist has not been run; nothing in the addon changed.*
 
 ### M4.R — Release preparation `v0.4.0`
 - Branch: `chore/release-v0.4.0`
