@@ -113,6 +113,37 @@ Nel foglio di icone (bianco, celle di 16 px, generato da `tools/make_media.py`, 
 | `stale` | dato vecchio |
 | `coach` (un fumetto con un punto), `mute` (una campana barrata) | striscia del Coach e silenzio degli avvisi (M3.4, [SPEC-04 §3.1](SPEC-04-alerts-coach.md#31-la-striscia)) |
 
+### 3.5 Timeline e replay (M5)
+
+Fissato in M5.1; il comportamento è in [SPEC-05 §4.8 e §5.5](SPEC-05-recording-report-replay.md#48-il-widget-uitimelinelua-m53).
+La timeline e la finestra del replay seguono la disposizione **ampia** (Accord §3): barra del titolo da 52 pt, card su
+`bg`, raggio 12, ombra, un solo elemento neon (il logo).
+
+| Elemento | Aspetto |
+|---|---|
+| Serie | linee dalle regioni `Line` del client: 2 px la serie del giocatore, 1,5 px le altre, 1 px le barre minima–massima; colori dai token **`series-1`…`series-6`** (il giocatore è sempre `series-1`) |
+| Stima | la stessa linea a trattini da 4 px con spazi da 3 px, nel colore della serie |
+| Buco | la texture `dash` ripetuta, tinta `state-unknown` al 50 % sopra `surface-2`, con il motivo in `Small` `text-2` se la banda è larga almeno 40 px |
+| Fuori combattimento | banda `surface-2` senza tratteggio |
+| Griglia, 100 %, cambi di mob | `border-subtle`; `border-strong`; `border-strong` su tutta l'altezza |
+| Soglie | 1 px `state-warning` e `state-danger`, etichetta in `MonoSmall` `text-3` |
+| Corsie | 6 pt (il detentore 10 pt) nei token di stato; UNKNOWN tratteggiato |
+| Cursore, selezione | 1 px `accent`; `accent` al 15 % |
+| Testi | legenda `Small` `text-1`, numeri e tempi `MonoSmall`, etichette degli assi `text-3` |
+| Marcatori | icone da 10 px del foglio (`flag`, `tank`, `warn`, `skull`, `bell`, `mute`, `coach`, `star`, `cross`, le quattro di stato); il raggruppamento con il numero in `Badge` |
+| Comandi del replay | pulsanti quadrati da 28 pt con le icone nuove `play`, `pause`, `step-back`, `step-forward`, `skip-back`, `skip-forward` (M5.5); la velocità con `Widgets.Segmented` |
+
+**Token delle serie.** `series-1`…`series-6` sono token **dei temi** (come `accent`, non come gli stati): ogni tema li
+definisce, più chiari in Nebula e Warden, più scuri in Aurora. Regole (le controllerà `Tests/test_theme.lua` da M5.3):
+
+- **SR-01** MUST: contrasto ≥ 3:1 su `bg` e `surface-1` in ogni tema (elementi non testuali);
+- **SR-02** MUST: tinte lontane dai quattro token di stato (che restano per stati e marcatori) e fra loro;
+- **SR-03** MUST: una serie non si riconosce mai dal solo colore: legenda, nome alla fine della linea quando c'è posto
+  e tooltip la nominano (come ST-02 per gli stati).
+
+M5.3 sceglie i valori e li scrive qui con i contrasti calcolati; la tavolozza per il daltonismo (M8) potrà cambiarli
+senza cambiare queste regole.
+
 ## 4. Il tema Warden e i token di stato
 
 ### 4.1 Token del tema Warden
@@ -228,6 +259,8 @@ Il nome pubblico è solo "Finland": nessun nome reale, e-mail o percorso persona
 | **M1.8** Settings, Info, anteprime | §3 (Settings), §5, §8 | §2, §5; anteprime in Nebula, Aurora e Warden, in inglese e italiano ([ADR 0013](../adr/0013-design-previews-original-art-invented-data.md)) |
 | **M2.5** elenco della threat | §3 (tabella, righe da pool) | §3.2, §3.3, §4.2 |
 | **M3.4** striscia del Coach, effetto degli avvisi | — | §3.1, §3.3, §3.4, §4.2; [SPEC-04 §3](SPEC-04-alerts-coach.md#3-la-striscia-del-coach-e-leffetto-visivo-uicoachstriplua-uiwindowlua-m34) |
+| **M5.3** widget della timeline | §3 (card), §4 | §3.5, §4.2; [SPEC-05 §4.8](SPEC-05-recording-report-replay.md#48-il-widget-uitimelinelua-m53) |
+| **M5.5** finestra del replay, icone, anteprime | §3 (finestra autonoma), §8 | §3.5; [SPEC-05 §5.5–§5.6](SPEC-05-recording-report-replay.md#55-la-finestra-del-replay-uireplaywindowlua-m55) |
 
 ## 7. Cosa non è verificato nel client
 
@@ -243,3 +276,5 @@ elencano (TGA e font su Forever, 9-slice a scala frazionaria, fusione `ADD`, col
 - il tratteggio della barra sconosciuta (texture ripetuta alta 1 pt) e il raggio 4 della barra;
 - il logo come icona del Compartment e della minimappa;
 - la larghezza delle schede compatte e dei distintivi in italiano (*ATTENZIONE*, *SCONOSCIUTO*).
+- da M5: le regioni `Line` (spessore 1,5 e 2 px, trattini da 4 px) a scale frazionarie; i sei colori delle serie nei
+  tre temi; la finestra del replay a 640 × 420 pt.

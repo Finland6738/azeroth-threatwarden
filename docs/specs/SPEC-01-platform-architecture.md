@@ -77,7 +77,8 @@ Compartment e i binding, più i frame con nome che il gioco richiede, tutti con 
 eccezione senza prefisso: `SLASH_ACECONSOLE_ATW1` (e da M1.7 quello di `/threatwarden`), il nome che AceConsole dà al
 comando e che il client usa per trovarlo (M1.4). Da M3.5 ci sono anche le due globali con cui il client legge i nomi
 del binding, `BINDING_HEADER_AZEROTHTHREATWARDEN` e `BINDING_NAME_AZEROTHTHREATWARDEN_MUTE`, la funzione
-`AzerothThreatwarden_ToggleMute` e il menu `AzerothThreatwardenMenu` (frame con nome per Esc, creato al primo uso).
+`AzerothThreatwarden_ToggleMute` e il menu `AzerothThreatwardenMenu` (frame con nome per Esc, creato al primo uso). Da M5.5
+c'è anche la finestra del replay `AzerothThreatwardenReplay` (frame con nome per Esc, [SPEC-05 §5.5](SPEC-05-recording-report-replay.md#55-la-finestra-del-replay-uireplaywindowlua-m55)).
 
 ### 3.1 I moduli di M1
 
@@ -122,7 +123,7 @@ altro modulo caricato dopo di lui al caricamento del file, solo nei suoi gestori
 | `Data/ThreatState.lua` | SAFE / WARNING / DANGER / UNKNOWN con isteresi e permanenza; tank designati; modalità del monitor ([SPEC-03 §2](SPEC-03-threat-monitor-ui.md#2-stati-e-soglie)) | emette `STATE_CHANGED(unitKey, mobKey, old, new)`, `THREAT_MODE_CHANGED(mode, reason)`; ascolta `THREAT_UPDATED`, `CONFIG_CHANGED` | M2.4 |
 | `Data/Alerts.lua`, `Data/Coach.lua`, `Data/CoachRules.lua`; `UI/CoachStrip.lua` | avvisi alle entrate di stato e di aggro, con cooldown per tipo e unità, canali e silenzio; regole del Coach con motivazione e confidenza; la striscia del Coach ([SPEC-04](SPEC-04-alerts-coach.md), moduli e test per step in §5–§6) | Alerts emette `ALERT_RAISED(alert)`, `MUTE_CHANGED(muted)`, ascolta `STATE_CHANGED`, `AGGRO_CHANGED`, `COMBAT_ENDED`, `CONFIG_LOADED`, `CONFIG_CHANGED`, `DEMO_CHANGED`; Coach emette `COACH_TIP(tip)`, ascolta `THREAT_UPDATED`, `COMBAT_ENDED`, `DEMO_CHANGED`, `CONFIG_LOADED`, `CONFIG_CHANGED` (M3.3); ThreatState emette `AGGRO_CHANGED(mobKey, unitKey, oldUnitKey)` (M3.2) | M3 |
 | `Data/Recorder.lua`, `Data/Session.lua`, `Data/Storage.lua`, `Data/Report.lua`; `UI/Reports.lua` | sessioni con le letture del monitor in colonne compatte, eventi, reload e logout, limiti e potatura, sessioni danneggiate messe da parte, report con categorie e *Insufficient data*; la scheda Reports ([SPEC-05](SPEC-05-recording-report-replay.md), moduli e test per step in §6–§7, [ADR 0016](../adr/0016-recordings-are-the-monitors-readings-in-compact-columns.md)) | Recorder emette `SESSION_STARTED(id)`, `SESSION_ENDED(id, state)`, ascolta `COMBAT_*`, `TARGET_CHANGED`, `STATE_CHANGED`, `AGGRO_CHANGED`, `THREAT_MODE_CHANGED`, `ALERT_RAISED`, `COACH_TIP`, `DEMO_CHANGED`, `CONFIG_*`, `ENTERING_WORLD`; Storage emette `SESSIONS_CHANGED()` | M4 |
-| `Data/Replay.lua`, `UI/Timeline.lua`, `UI/ReplayWindow.lua` | timeline e riproduzione | emette `REPLAY_POSITION(t)` | M5 |
+| `Data/Timeline.lua`, `Data/Replay.lua`, `UI/Timeline.lua`, `UI/ReplayWindow.lua` | modello della timeline (serie, riassunto per la larghezza, buchi, marcatori), widget del grafico da pool limitati, controllore del replay (cursore, riproduzione, passi, ±5 s, dettaglio, dati mancanti) e la sua finestra `AzerothThreatwardenReplay` ([SPEC-05 §4–§5](SPEC-05-recording-report-replay.md#4-threat-timeline-datatimelinelua-uitimelinelua-m52m53), moduli e test per step in §9–§10, [ADR 0017](../adr/0017-timeline-and-replay-are-views-over-the-recorded-session.md)) | Timeline ascolta `SESSIONS_CHANGED`; Replay ascolta `COMBAT_*`, `SESSIONS_CHANGED`; il widget, Reports e `/atw replay` emettono `REPLAY_REQUESTED(id, t)`, che la finestra del replay ascolta | M5 |
 | `Data/Metrics.lua`, `Data/Export.lua` | metriche descrittive, esportazione | — | M6 |
 | `UI/ThreatList.lua` | elenco della threat nella scheda Monitor ([SPEC-03 §2.6, §3](SPEC-03-threat-monitor-ui.md#26-cosa-si-vede-in-ogni-stato)) | ascolta `THREAT_UPDATED`, `STATE_CHANGED`, `THREAT_MODE_CHANGED`, `TARGET_CHANGED`, `CONFIG_CHANGED`, `THEME_CHANGED` | M2.5 |
 
@@ -153,6 +154,7 @@ Accord.
 | `ALERT_RAISED`, `COACH_TIP`, `MUTE_CHANGED` | vedi §3.2 e [SPEC-04 §5](SPEC-04-alerts-coach.md#5-moduli-eventi-e-diagnostica) | `Data/` | Window, striscia del Coach, Recorder (M4) | M3 |
 | `REPORT_REQUESTED` | `id` | striscia del Coach (clic sull'avviso di fine scontro) | Reports (M4.5) | M4.4 |
 | `SESSION_STARTED`, `SESSION_ENDED`, `SESSIONS_CHANGED` | `id`; `id`, `state` (`complete`, `interrupted`, `dropped`); nessuno ([SPEC-05 §6](SPEC-05-recording-report-replay.md#6-moduli-eventi-interruttori-e-diagnostica-m4)) | `Data/Recorder.lua`, `Data/Storage.lua` | Reports, striscia del Coach (avviso di fine scontro), Report | M4 |
+| `REPLAY_REQUESTED` | `id`, `t` (facoltativo, decimi) | card *Timeline* e pulsante *Replay* di Reports, `/atw replay` | `UI/ReplayWindow.lua` ([SPEC-05 §9](SPEC-05-recording-report-replay.md#9-moduli-eventi-interruttori-e-diagnostica-m5)) | M5 |
 
 `/atw debug` mostra per ogni evento il numero di ascoltatori e gli ultimi errori degli ascoltatori.
 
@@ -374,6 +376,8 @@ senza firma), **assente** (si cerca a runtime). In grassetto le voci il cui comp
 | `ui.SlashCmdList` | `SlashCmdList` (attraverso AceConsole) | esistenza | assente (FrameXML) | comandi | M1 | da provare in gioco |
 | `ui.ClassColor` | `C_ClassColor.GetClassColor` | esistenza | firma | colore di classe nell'elenco | M2 | — |
 | `ui.PlaySound` | `PlaySound`, altrimenti `C_Sound.PlaySound` | esistenza | firma `(soundKitID, uiSoundSubType, …)` (sistema `Sound`); `Compat.PlaySound` (M3.2) | avviso sonoro (spento di predefinito, [SPEC-04 §1.4](SPEC-04-alerts-coach.md#14-canali)) | M3 | — |
+| `ui.CursorPosition` | `GetCursorPosition` | esistenza | globale | passaggio del mouse, clic e trascinamento sulla timeline (`Compat.CursorPosition`, [SPEC-05 §4.8](SPEC-05-recording-report-replay.md#48-il-widget-uitimelinelua-m53)) | M5 | da provare in gioco (scala) |
+| `ui.Modifiers` | `IsShiftKeyDown`, `IsControlKeyDown` | esistenza | globale | tasti del replay (`Compat.ModifierDown`, [SPEC-05 §5.5](SPEC-05-recording-report-replay.md#55-la-finestra-del-replay-uireplaywindowlua-m55)) | M5 | — |
 
 Eventi del gioco (tutti nel dump con il loro payload), registrati solo attraverso `Core/Init.lua` e i moduli `Data/`
 con AceEvent: `ADDON_LOADED`, `PLAYER_LOGIN`, `PLAYER_ENTERING_WORLD` (`isInitialLogin`, `isReloadingUi`),

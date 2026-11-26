@@ -7,6 +7,19 @@ All notable changes to this project are documented here. The format follows
 
 ### Documentation
 
+- M5.1: specification of the **Threat Timeline** and the **Threat Replay** (SPEC-05 §4–§5 and §8–§10, SPEC-02 §3.9,
+  Italian), written before the in-game M0 probe like M2–M4, with a new decision record
+  ([ADR 0017](docs/adr/0017-timeline-and-replay-are-views-over-the-recorded-session.md)). Both only read a recorded
+  fight: every point of the chart is a reading the monitor made, the chart never averages or fills in, and a line
+  between two readings is solid when they were taken at the recording's own pace, dashed as an *estimate* when they
+  are further apart with nothing unknown in between, and absent over a gap, which stays visible with its reason
+  (secret value, stale reading, nothing readable, no monitored mob, recording paused, limit reached). *State only* and
+  unreadable fights say so instead of showing an empty chart. The replay opens in its own window from the Reports tab,
+  the report's new *Timeline* card or `/atw replay`: play and pause (paused during combat), speeds 1–8×, steps to the
+  next recorded moment, 5 s jumps, an event list, and an event selected shows the 5 s before and after with the data
+  that is missing there. Also: character schema 2 for the replay window's position, size and speed, six series colours
+  per theme, SPEC-00 D13–D16, SPEC-09 Q18–Q20 (the replay in combat, the controls, what the chart shows and when a line
+  is an estimate) and R11, and the M5 steps detailed in the milestone file. Nothing changes in the addon yet.
 - M4.R: `v0.4.0` released on GitHub; the release step is ticked in the M4 milestone file. CurseForge was skipped (no
   project yet).
 

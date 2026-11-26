@@ -27,3 +27,4 @@ detailed design is in the [specification](../specs/README.md) (Italian).
 | [0014](0014-one-version-per-milestone-and-feature-switches.md) | One version per milestone, feature switches for unfinished parts; `v1.0.0` after the last milestone | accepted |
 | [0015](0015-interface-follows-the-ecosystem-style.md) | The interface follows the ecosystem style of FDCP and Accord, with a Warden theme from the logo | accepted |
 | [0016](0016-recordings-are-the-monitors-readings-in-compact-columns.md) | Recordings are the monitor's own readings, kept as compact columns in the account variable | accepted (to verify in M0: P7, P10, P12) |
+| [0017](0017-timeline-and-replay-are-views-over-the-recorded-session.md) | Timeline and replay are views over the recorded session, drawn from bounded pools in a window of their own | accepted (to verify in the game: line regions, cost, keyboard) |

@@ -2,7 +2,7 @@
 
 > Fonte: [specifiche originali](source-specification.md) §5.4, §7.3–§7.5. Impostazioni e schema 1 completati in
 > **M1.1** (§3); modello della threat (§1–§2) e schema 2 (§3.5) in **M2.1**; schema 3 (§3.6) in **M3.1**; schema 4 e sessioni
-> registrate (§3.7, §4) in **M4.1**.
+> registrate (§3.7, §4) in **M4.1**; schema 2 del personaggio (§3.9) in **M5.1**.
 
 ## 1. `ThreatRecord` (in memoria)
 
@@ -112,10 +112,10 @@ lo **schema 1** qui sotto è quello che M1.5 realizza; nessuna chiave dipende da
 | `db.sessions` | registrazioni (§4), la più vecchia prima; il contenuto lo controlla `Data/Storage.lua` | M4 (schema 4, §3.7) |
 | `db.profiles` | preset per ruolo | M8 |
 | `db.corrupt` | tabelle danneggiate messe da parte (§3.4) | M1 |
-| `char.schema`, `char.ui` | finestra: aperta, blocco, scala, posizione, dimensioni, ultima scheda | M1 (schema 1) |
+| `char.schema`, `char.ui` | finestra: aperta, blocco, scala, posizione, dimensioni, ultima scheda; finestra del replay (M5, §3.9) | M1 (schema 1), M5 (schema 2, §3.9) |
 
 Ogni milestone che cambia la forma dei dati alza lo schema di uno con una migrazione (DAT-20); il numero esatto lo
-fissa lo step di specifica di quella milestone (M2.1, M3.1, M4.1, M8.1). Le impostazioni dell'aspetto e la lingua sono
+fissa lo step di specifica di quella milestone (M2.1, M3.1, M4.1, M5.1, M8.1). Le impostazioni dell'aspetto e la lingua sono
 per **account** (gusti della persona, come in Accord); la finestra è per **personaggio**.
 
 ### 3.2 Schema 1: account (`AzerothThreatwardenDB`)
@@ -299,6 +299,27 @@ dati dello schema 4 (DAT-20). Nessuna chiave nuova; il personaggio resta allo sc
 dell'addon (`v0.3.0` o prima) che trova lo schema 5 lavora in sola lettura (§3.4, punto 4). Chi aveva scelto proprio
 80 e 95 a mano li vede diventare 82 e 91 una volta: i dati non lo distinguono dai predefiniti, e la card *Monitor* li
 riporta dove li vuole (proposta, [Q7](SPEC-09-risks-open-questions.md)).
+
+### 3.9 Schema 2 del personaggio (M5): la finestra del replay
+
+Fissato in **M5.1** ([SPEC-05 §5.5](SPEC-05-recording-report-replay.md#55-la-finestra-del-replay-uireplaywindowlua-m55)).
+La finestra del replay è un frame suo, separato dalla finestra principale, e ricorda posizione, dimensione e velocità
+per **personaggio**, come la finestra principale: lo schema di `AzerothThreatwardenCharDB` passa da 1 a **2** con una
+chiave nuova. Lo schema dell'account resta **5**: timeline e replay **leggono** le sessioni (§4) e non vi scrivono
+nulla.
+
+| Percorso | Tipo | Predefinito | Regola | Uso |
+|---|---|---|---|---|
+| `ui.replay` | tabella | `{}` | — | finestra del replay |
+| `ui.replay.pos` | tabella, facoltativa | `nil` (al centro) | la regola di `ui.pos` (§3.3) | posizione rispetto a `UIParent` |
+| `ui.replay.size` | tabella, facoltativa | `nil` (820 × 520) | `{ w, h }` fra 640 × 420 e 1400 × 1000 | dimensione |
+| `ui.replay.speed` | numero | `1` | enum `Replay.SPEEDS` = 1, 2, 4, 8 ([Q19](SPEC-09-risks-open-questions.md)) | velocità della riproduzione |
+
+La migrazione `Config.migrations.char[2]` non fa nulla (i predefiniti aggiungono `ui.replay`); il suo test parte dai
+dati dello schema 1 con e senza una chiave `ui.replay` già presente. Una versione precedente (`v0.4.0` o prima) che
+trova lo schema 2 del personaggio lavora in sola lettura su quei dati (§3.4, punto 4): la finestra principale si apre ma
+non salva posizione e dimensione. M5.5 la realizza insieme alla finestra, dietro l'interruttore `replay`; lo schema si
+scrive anche con l'interruttore spento, come i predefiniti di M4 prima di M4.R.
 
 ## 4. Sessioni registrate (schema 4, M4)
 

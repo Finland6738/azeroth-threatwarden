@@ -423,6 +423,8 @@ bloccata.
 | **Reports** | ampia | sessioni registrate e report; non compare finché l'interruttore `reports` è spento | M4 |
 | **Settings** | ampia | pagina *Settings* (card Aspetto, Lingua, Finestra, ripristino) e pagina *Info* (logo, versione, crediti, link) | M1.8 |
 
+Il **replay** (M5) non è una scheda: ha una finestra sua, `AzerothThreatwardenReplay`, che si apre dalla scheda
+Reports e lascia la finestra principale com'è ([SPEC-05 §5.5](SPEC-05-recording-report-replay.md#55-la-finestra-del-replay-uireplaywindowlua-m55)).
 La scheda e la pagina aperte per ultime si ricordano per personaggio (`char.ui.lastTab`, `lastPage`). La scheda
 Settings si costruisce la prima volta che si mostra; il pannello del gioco ha lo stesso contenuto e non cambia la
 pagina ricordata. Le card si restringono con la finestra (al massimo 520 pt) e la pagina scorre con la rotella.

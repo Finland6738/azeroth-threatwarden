@@ -136,7 +136,7 @@ copied from Azeroth Accord and renamed; each copied file says so in its header.
 | `UI/CoachStrip.lua` | the Coach strip | M3.4 (switches `alerts`, `coach`) |
 | `Bindings.xml` | the key binding of the quick mute (loaded by the client by its name, not listed in the TOC); with `UI/Settings.lua` (*Alerts* card), `Core/Commands.lua` (`/atw mute`) and the row menu of `UI/ThreatList.lua` | M3.5 (switch `alerts`) |
 | `Data/Recorder.lua`, `Data/Session.lua`, `Data/Storage.lua`, `Data/Report.lua`, `UI/Reports.lua` | sessions holding what the monitor read, as compact columns; events, `/reload` and logout, limits and pruning, damaged sessions set aside; the combat report with categories and *Insufficient data*; the Reports tab ([SPEC-05](specs/SPEC-05-recording-report-replay.md), Italian; [ADR 0016](adr/0016-recordings-are-the-monitors-readings-in-compact-columns.md)) | Recorder and Session since M4.2, Storage since M4.3, Report since M4.4, the Reports tab and the *Recording* card since M4.5 (switches `recording`, `reports`, on since `v0.4.0`) |
-| `Data/Replay.lua`, `UI/Timeline.lua`, `UI/ReplayWindow.lua` | timeline and replay | *planned*, M5 |
+| `Data/Timeline.lua`, `Data/Replay.lua`, `UI/Timeline.lua`, `UI/ReplayWindow.lua` | read-only views over a recorded session: the timeline model (series of real readings, first/last/min/max per column for the width, solid, dashed and absent segments, gaps with their reason, event markers), the chart drawn from bounded pools of line regions and textures, the replay controller (cursor, playback paused in combat, steps, ±5 s around an event, missing data) and its own window `AzerothThreatwardenReplay`, opened from the Reports tab ([SPEC-05 §4–§5](specs/SPEC-05-recording-report-replay.md), Italian; [ADR 0017](adr/0017-timeline-and-replay-are-views-over-the-recorded-session.md)) | *planned*, M5.2–M5.5 (switches `timeline`, `replay`) |
 | `Data/Metrics.lua`, `Data/Export.lua` | descriptive metrics, comparison, text and CSV export | *planned*, M6 |
 
 ### Internal events (Bus)
@@ -157,7 +157,8 @@ copied from Azeroth Accord and renamed; each copied file says so in its header.
 | `AGGRO_CHANGED(mobKey, unitKey, oldUnitKey)` | ThreatState, before the `STATE_CHANGED` of the same update | Alerts; Coach later | M3.2 (switch `monitor`) |
 | `ALERT_RAISED(alert)`, `MUTE_CHANGED(muted)` | Alerts | Window, Coach strip, Recorder later | M3.2 (switch `alerts`, on since `v0.3.0`) |
 | `COACH_TIP(tip)` | Coach, after each `THREAT_UPDATED` when the tip changes (`nil`: no tip) | Coach strip, Recorder later | M3.3 (switch `coach`, on since `v0.3.0`) |
-| `SESSION_STARTED(id)`, `SESSION_ENDED(id, state)`, `SESSIONS_CHANGED()` | Recorder, Storage | Reports, Report, Coach strip (end-of-fight notice) | *planned*, M4 |
+| `SESSION_STARTED(id)`, `SESSION_ENDED(id, state)`, `SESSIONS_CHANGED()` | Recorder, Storage | Reports, Report, Coach strip (end-of-fight notice); Timeline and Replay from M5 | M4 (switch `recording`, on since `v0.4.0`) |
+| `REPLAY_REQUESTED(id, t)` | the report's timeline card, the *Replay* button, `/atw replay` | the replay window | *planned*, M5 (switch `replay`) |
 
 Event arguments never hold a secret value or a player name: threat events pass keys (`unitKey`, `mobKey`) into the
 model.
@@ -240,7 +241,7 @@ flowchart LR
 | Variable | Schema 1 (M1) | Later |
 |---|---|---|
 | `AzerothThreatwardenDB` | `schema`, `settings` (`language`, `theme`, `effects`, `animations`, `font`, `minimap`), `corrupt` | schema 2 (M2): `settings.monitor`; schema 3 (M3): `settings.alerts`, `settings.coach`; schema 4 (M4): `settings.recording`, `sessions`; schema 5 (fix Q7): the old default thresholds 80/95 become 82/91; `profiles` (M8) |
-| `AzerothThreatwardenCharDB` | `schema`, `ui` (`shown`, `locked`, `scale`, `pos`, `size.compact`, `size.wide`, `lastTab`, `lastPage`) | — |
+| `AzerothThreatwardenCharDB` | `schema`, `ui` (`shown`, `locked`, `scale`, `pos`, `size.compact`, `size.wide`, `lastTab`, `lastPage`) | schema 2 (M5): `ui.replay` (`pos`, `size`, `speed` of the replay window) |
 
 - Defaults, rules (type, range, enum) and migrations live in `Config` ([SPEC-02 §3](specs/SPEC-02-data-model-storage.md#3-savedvariables)).
   A wrong value goes back to its default; a damaged table is set aside under `corrupt` (at most 5 entries); a newer
@@ -300,7 +301,8 @@ skeleton and since M1.3 the offline tests; M1 builds the rest of the `Core/` and
 | M2 (`v0.2.0`) | threat on the target, tank, percentages, states, trend, threat list, demo mode | `Data/` scanner, model, state; `UI/ThreatList.lua`; switch `monitor` |
 | M3 (`v0.3.0`) | thresholds, alert channels, cooldowns, rule-based Coach | listens to `STATE_CHANGED` and the new `AGGRO_CHANGED`; account schema 3; switches `alerts`, `coach` |
 | M4 (`v0.4.0`, MVP) | recorder, sessions, storage limits, combat report | listens to the model and `COMBAT_*`; `db.sessions`; Reports tab |
-| M5–M6 | timeline, replay, metrics, export | read sessions only |
+| M5 (`v0.5.0`) | timeline and replay of a recorded fight | read sessions only (same period functions as the report); character schema 2; switches `timeline`, `replay` |
+| M6 | metrics, export | read sessions only |
 | M7 | several mobs and dungeon focus, **only if the probe allows it** | Scanner and TargetTracker; capability `otherMobs` |
 | M8 | role profiles, heatmap, accessibility, translations, `v1.0.0` | `db.profiles`; colour-blind palette in Theme |
 

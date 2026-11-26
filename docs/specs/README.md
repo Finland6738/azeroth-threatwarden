@@ -5,8 +5,8 @@ quale mob, quanto manca a prendere l'aggro, avvisi prima che succeda, registrazi
 distinguono ciò che è rilevato da ciò che è stimato.
 
 - Stato: **Bozza 1** (2026-11-25), da rivedere dopo il probe M0; SPEC-01, SPEC-02 §3, SPEC-03 §4–§5 e `ui-style.md`
-  completati in M1.1; SPEC-03 in M2.1; SPEC-04 in M3.1; SPEC-02 §3.7–§4 e SPEC-05 §1–§3 in M4.1 (le righe che
-  aspettano il probe sono marcate **[probe Pn]**)
+  completati in M1.1; SPEC-03 in M2.1; SPEC-04 in M3.1; SPEC-02 §3.7–§4 e SPEC-05 §1–§3 in M4.1; SPEC-05 §4–§5 e
+  SPEC-02 §3.9 in M5.1 (le righe che aspettano il probe sono marcate **[probe Pn]**)
 - Architettura in inglese, con i diagrammi: [docs/ARCHITECTURE.md](../ARCHITECTURE.md)
 - Fonte: le [specifiche originali del proprietario](source-specification.md), che restano la fonte di verità su
   **cosa** fa l'addon; questi file le dettagliano e le collegano a roadmap e ADR
@@ -21,7 +21,7 @@ distinguono ciò che è rilevato da ciò che è stimato.
 |---|---|---|---|
 | 00 | [Visione, ambito e affidabilità dei dati](SPEC-00-vision-scope.md) | obiettivi e non-obiettivi, pubblico, categorie dei dati, funzioni per versione, registro delle decisioni | tutte |
 | 01 | [Piattaforma e architettura](SPEC-01-platform-architecture.md) | vincoli del client, API dal dump, moduli con eventi e test, Bus, interruttori, librerie, Compat (API, capacità, lettura della threat), diagnostica, lingue | M1 |
-| 02 | [Modello dati e salvataggio](SPEC-02-data-model-storage.md) | `ThreatRecord`, campioni, sessioni in colonne compatte, SavedVariables (schemi 1–4 con chiavi, tipi e predefiniti), migrazioni, dati danneggiati, limiti | M1–M4 |
+| 02 | [Modello dati e salvataggio](SPEC-02-data-model-storage.md) | `ThreatRecord`, campioni, sessioni in colonne compatte, SavedVariables (schemi 1–5 dell'account e 1–2 del personaggio, con chiavi, tipi e predefiniti), migrazioni, dati danneggiati, limiti | M1–M4 |
 | 03 | [Threat Monitor e interfaccia](SPEC-03-threat-monitor-ui.md) | stati SAFE/WARNING/DANGER/UNKNOWN, soglie, ordinamenti, finestra (disposizioni compatta e ampia), minimappa e Compartment, comandi, pagina Settings | M1, M2 |
 | 04 | [Avvisi e Threat Coach](SPEC-04-alerts-coach.md) | canali, cooldown, regole, motivazione e confidenza | M3 |
 | 05 | [Registrazione, report, timeline e replay](SPEC-05-recording-report-replay.md) | recorder, sessioni, report di fine combattimento, timeline, replay | M4, M5 |

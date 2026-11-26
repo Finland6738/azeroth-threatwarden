@@ -3,7 +3,9 @@
 > Fonte: [specifiche originali](source-specification.md) §5.3, §5.4, §7.4, §7.5, §9, §10, §13. §1–§3 completati in
 > **M4.1** (prima del probe M0, come M2 e M3: decisione D7), con il formato dei dati in
 > [SPEC-02 §3.7 e §4](SPEC-02-data-model-storage.md#4-sessioni-registrate-schema-4-m4) e la decisione di architettura
-> in [ADR 0016](../adr/0016-recordings-are-the-monitors-readings-in-compact-columns.md); §4–§5 da completare in **M5.1**.
+> in [ADR 0016](../adr/0016-recordings-are-the-monitors-readings-in-compact-columns.md); §4–§5 (timeline e replay)
+> completati in **M5.1**, con i moduli e i test per step in §9–§10 e la decisione di architettura in
+> [ADR 0017](../adr/0017-timeline-and-replay-are-views-over-the-recorded-session.md).
 
 ## 0. Principi
 
@@ -379,16 +381,411 @@ avviso.
 - La scheda registra i suoi ascoltatori quando si costruisce (la prima volta che si mostra); la card *Recording* quando
   si costruisce. Con gli interruttori spenti non c'è nulla.
 
-## 4. Timeline (M5)
+## 4. Threat Timeline (`Data/Timeline.lua`, `UI/Timeline.lua`, M5.2–M5.3)
 
-Rappresenta nel tempo: threat del tank, giocatori più vicini alla soglia, percentuale relativa, cambi di target,
-eventi, momenti di superamento. Supporta selezione di un intervallo, pausa e riproduzione, salto avanti e indietro,
-dettaglio del campione, **distinzione visiva tra dati rilevati e stime** (linea piena e tratteggiata) e buchi visibili.
+> Completato in **M5.1**, prima del probe M0 come M2–M4 (decisione D7). La timeline e il replay **leggono** una
+> sessione registrata (SPEC-02 §4) e non scrivono nulla: nessuna chiave nuova nelle sessioni, nessuno schema nuovo
+> dell'account; l'unico dato nuovo è la posizione della finestra del replay (schema 2 del personaggio,
+> [SPEC-02 §3.9](SPEC-02-data-model-storage.md#39-schema-2-del-personaggio-m5-la-finestra-del-replay)). La decisione di
+> architettura è in [ADR 0017](../adr/0017-timeline-and-replay-are-views-over-the-recorded-session.md).
 
-## 5. Replay (M5)
+Fonte §5.3: threat del tank, giocatori più vicini alla soglia, percentuale relativa, cambi di target, eventi registrati,
+superamenti di soglia; selezione di un intervallo, pausa e riproduzione, salto avanti e indietro, dettaglio del
+campione, distinzione visiva fra dati rilevati e stime. Qui la timeline è il **grafico** (modello e widget); pausa,
+riproduzione e salti sono del replay (§5), che la usa.
 
-Elenco degli ultimi scontri con durata; timeline; eventi in ordine cronologico; selezione di un evento per vedere i
-dati attorno (±5 s); indicazione dei dati mancanti; eliminazione delle registrazioni.
+### 4.1 Regole
+
+- **RPL-01** MUST: ciò che timeline e replay mostrano viene **solo** dalle righe e dagli eventi della sessione
+  (`Storage.Decode`), con i periodi di §3.3 (combattimento, mob, detentore): gli stessi dati danno la stessa figura
+  (test). Nessun valore si interpola, si media o si ricostruisce (DAT-30, ADR 0004 punto 4): **ogni vertice di una
+  linea è una lettura registrata**, e il riassunto per la larghezza (§4.7) sceglie letture, non le calcola.
+- **RPL-02** MUST: ogni elemento disegnato ha la sua categoria (ADR 0003) e il suo tooltip la dice:
+
+| Elemento | Da | Categoria | Come si vede |
+|---|---|---|---|
+| **vertice** | riga con un numero (codici `0`–`4`) | rilevata | punto della linea; il tooltip dà numero e ora della lettura |
+| **tratto pieno** | due letture consecutive vicine (§4.3) | rilevata: unisce due letture prese al passo della registrazione | linea piena |
+| **tratto tratteggiato** | due letture consecutive lontane, senza nulla di sconosciuto in mezzo (§4.3) | **stimata**: approssimazione su campioni incompleti | linea tratteggiata; il tooltip dice *Estimate* e le due letture, mai un numero in mezzo |
+| **buco** | §4.4 | sconosciuta, con il motivo | nessuna linea; banda tratteggiata `state-unknown` con il motivo |
+| **stato** di un'unità | eventi `S` | calcolata in `values` (soglie `rec.warning`, `rec.danger`), rilevata in `state` (stati del gioco) | corsia nel token di stato, icona di stato alle entrate in WARNING e DANGER |
+| **detentore** | eventi `A` | rilevata | corsia del detentore, icona `tank` ai cambi |
+| **marcatori** | eventi (§4.5) | quella dell'evento (`L` e `H` la loro categoria e confidenza) | icone sulla traccia degli eventi |
+| **riepilogo di un intervallo** | §4.8 | calcolata; stimata (*at least*) se l'intervallo ha tempo sconosciuto, come il report (§3.1) | card o tooltip |
+
+- **RPL-03** MUST: nessuna ipotesi, nessuna causa (D9 vale anche qui, D15): i testi (chiavi `TIMELINE_*` e
+  `REPLAY_*`) passano la prova delle parole di SPEC-04 §2.4 (WR-01–WR-07), estesa in M5.4.
+- **RPL-04** MUST: i tre esiti (§0) si mostrano per tratto di tempo (§4.6); un grafico vuoto non sembra mai 0 %: dove
+  non potevano esserci percentuali la timeline lo scrive.
+- **RPL-05** MUST: un buco non si riempie e non si attraversa con una linea; il suo motivo è nel tooltip e, se la banda è
+  larga almeno 40 px, scritto dentro.
+
+### 4.2 Il modello (`Data/Timeline.lua`, M5.2)
+
+`Timeline.Build(id, done)` fa come `Report.Build` (§3.4): `Storage.Decode`, poi `Timeline.Compute(s, d, step)` a
+**fette** di `Timeline.SLICE` = 5 000 righe o eventi per frame (`Compat.After(0)`), dentro o fuori dal combattimento;
+`done(model)` o `done(nil, motivo)` con `off` (interruttore `timeline` spento), `unknown` (anche se la sessione si
+elimina durante la costruzione), `recording` (la sessione aperta), `damaged` o `error`. Il risultato a fette e quello
+di un'unica passata sono uguali (test). Si tiene in memoria **un** modello, l'ultimo costruito, mai salvato; si butta a
+`SESSIONS_CHANGED` se la sessione non c'è più. Periodi, crossing e detentore si calcolano con le **stesse funzioni** del
+report (M5.2 le espone da `Data/Report.lua` invece di copiarle), così report e timeline non possono dire cose diverse.
+
+```lua
+model = {
+    id = "1764100000-1",
+    dur = 1840,              -- decimi: fine dell'asse, il maggiore fra `dur` e l'ultimo t scritto (righe ed eventi)
+    state = "complete", ended = "combat", after = nil, trunc = nil,   -- dall'intestazione (SPEC-02 §4.1)
+    hz = 2, join = 15,       -- s.rec.hz (2 se manca); il limite del tratto pieno in decimi (§4.3)
+    warning = 82, danger = 91,                         -- s.rec; nil se mancano (allora niente linee di soglia)
+    combat = { { 0, 1203 }, { 1240, 1840 } },          -- periodi di combattimento (§3.3)
+    mobs = { { 0, 1840, 1 } },                         -- periodi di mob: { from, to, m }
+    modes = { { 0, 1840, "values" } },                 -- da M (prima del primo M: rec.mode): { from, to, mode, reason }
+    gaps = { { 812, 836, "tick" } },                   -- buchi del mob intero (§4.4): { from, to, kind, reason }
+    units = { [1] = Series, … },                       -- per indice di `units`
+    events = { … },                                    -- i marcatori (§4.5), in ordine di tempo
+    outcome = "values",      -- values | state | none | mixed (§4.6)
+    series = { 3, 1, 5 },    -- le serie mostrate di predefinito (§4.7)
+}
+Series = {
+    rows = { … },            -- indici (in `d`) delle righe con un numero dell'unità, in ordine di t
+    states = { { from, to, "W", m }, … },   -- dagli S, tagliati ai periodi (§3.3)
+    holds = { { from, to, m }, … },         -- da A: quando l'unità teneva il mob
+    unknown = { { from, to, reason }, … },  -- buchi dell'unità (§4.4)
+    present = { { from, to, m }, … },       -- nella lista del mob: dall'S di entrata all'S di uscita
+    maxP = 912, maxT = 640, readings = 210, -- percentuale massima registrata (decimi di %) e quando; letture con un numero
+    crossings = { { t, "W" }, … },          -- entrate in WARNING e DANGER con la regola del report (§3.2)
+}
+```
+
+### 4.3 Serie e tratti
+
+Una **serie** sono le letture con un numero di un'unità, in ordine di tempo. Fra due letture consecutive `r1` e `r2`
+della stessa unità (`t1 ≤ t2`) il tratto è, nell'ordine:
+
+1. **nessuno** (buco o interruzione) se `r1` e `r2` sono su mob diversi o c'è un evento `T` fra loro; se fra loro c'è
+   una riga **senza numero** della stessa unità (`a`–`d`, `S`, `E`, `M`, `U`, `X`, `T`); se fra loro c'è un evento `G`,
+   un `M` verso `state` o `none`, un `c` (fine di un periodo di combattimento), l'`S` di uscita dell'unità dalla lista o
+   lo `Z` dei campioni; oppure se `t2 − t1 > Timeline.ESTIMATE_MAX` = **100** decimi (10 s);
+2. **pieno** (rilevato) se `t2 − t1 ≤ join`, con `join = max(30 / hz, 10)` decimi (1,5 s a 2 Hz): lo stesso limite
+   del buco del tick (§1.3), cioè due letture prese al passo del registratore;
+3. **tratteggiato** (stimato) altrimenti: letture rade senza nulla di sconosciuto registrato in mezzo. Succede con le
+   unità lette a turno oltre `maxUnits` (SPEC-03 §1.3: la loro freschezza ha un intervallo più lungo, quindi restano
+   fresche senza righe nuove) o con un client lento. Con i predefiniti (40 unità, monitor a 5 Hz, registrazione a 2 Hz)
+   è raro; la distinzione che si vedrà più spesso è fra linea e buco ([Q20](SPEC-09-risks-open-questions.md)).
+
+Valori e assi:
+
+- Il valore di un vertice è `p / 10` % (la colonna `p` di SPEC-02 §4.2). `p = 3843`, il massimo della colonna, è un
+  **limite inferiore**: il tooltip dice *at least 384.3 %* (stimata).
+- Asse y da 0 a `max(110, la percentuale più alta nella vista arrotondata alla decina superiore)`, al più **150 %**: un
+  vertice più alto sta sul bordo con l'icona `arrow_up` e il suo numero nel tooltip.
+- Linea di riferimento **100 %** (`border-strong`): in `values` chi tiene il mob sta a 100 %, quindi la sua serie è la
+  *threat del tank* della fonte (la percentuale è relativa al detentore, SPEC-03 §2.2). Le soglie `rec.warning` e
+  `rec.danger` della sessione sono linee orizzontali da 1 px nei token `state-warning` e `state-danger` (elementi non
+  testuali, ST-03) con la loro etichetta (*82 %*) in `text-3`; senza `rec` non si disegnano.
+- In *state only* un'unità non ha vertici: ha la sua corsia degli stati (§4.6).
+
+### 4.4 Buchi
+
+| Buco (`kind`) | Comincia a | Finisce a | Ambito | Testo (tooltip e banda) |
+|---|---|---|---|---|
+| `unknown` | una riga con un motivo (`S`, `E`, `M`, `U`, `X`) | la riga seguente dell'unità sullo stesso mob, la fine del periodo di mob o di combattimento | l'unità (la sua serie e la sua corsia) | *No reading: secret value* (`missing`, `error`, `no unit`, `other`) |
+| `stale` | una riga `T` | come sopra | l'unità | *Reading too old* |
+| `mode` | un `M` verso `none` | l'`M` seguente | tutto il grafico | *Nothing readable: secret value* (il motivo dell'`M`) |
+| `nomob` | un `T` senza mob (`a` = `n`, `d`, `l`) | il `T` seguente con un mob | tutto | *No monitored mob* · *Target died* · *Target lost* |
+| `tick` | `t − n` di un evento `G` (`n` è la durata) | `t` del `G` | tutto | *Recording paused for 2.4 s* |
+| `limit` | `trunc` (evento `Z` `r` o `t`) | la fine dell'asse | le serie e le corsie; gli eventi continuano | *Samples stopped: limit reached* |
+
+- Il **fuori combattimento** fra un `c` e il `C` seguente (pull a catena) non è un buco (§1.2: fuori dal combattimento
+  non si legge nulla): banda `surface-2` *Out of combat*, senza tratteggio.
+- Un'unità **fuori dalla lista** (fra un `S` di uscita e uno di entrata, o prima della prima entrata) non ha buco: la
+  sua linea si ferma e il tooltip dice *Not on the threat list*.
+- La **fine di una sessione interrotta** è la fine dell'asse (l'ultimo record, §3.1): l'ultimo marcatore è `X`
+  (*Recording interrupted (reload)*) e nulla si disegna dopo; la timeline non dice mai che cosa è successo dopo.
+
+### 4.5 Marcatori degli eventi
+
+| Evento | Marcatore | Dove | Testo |
+|---|---|---|---|
+| `C` | icona `flag` | traccia degli eventi | *Combat started* (`a = 1`) · *Next pull* (`2`) · *Combat continued after a reload* (`r`) |
+| `c` | inizio della banda fuori combattimento | grafico | *Combat ended* |
+| `T` con un mob | linea verticale `border-strong` su tutta l'altezza, il nome del mob in alto se c'è posto | grafico | *Target: Hogger* (*Unknown mob* senza nome) |
+| `T` senza mob | inizio del buco `nomob` | grafico | come §4.4 |
+| `S` che **entra** in WARNING o DANGER (la regola dei superamenti di §3.2) | icona di stato da 10 px sulla serie, all'altezza della lettura più vicina entro `join` (altrimenti sulla corsia) | serie e corsia | *Thrall: Warning* e, in `values`, *thresholds 82 / 91*; in `state` *game state* |
+| ogni altro `S` (discesa, UNKNOWN, entrata o uscita dalla lista) | solo il colore della corsia | corsia | elenco degli eventi, filtro *All* (§5.4) |
+| `A`, nuovo tank (`a = 1`) | icona `tank` `text-2` | corsia del detentore | *Thrall holds the mob* |
+| `A`, nuovo **non** tank (`a = 0`) | icona `warn` in `state-danger` | corsia del detentore e traccia | *Ana took the mob from Thrall* (senza *da chi* se era il primo) |
+| `D` | icona `skull` `text-1` | traccia | *Thrall died* · *The target died* · *You died* |
+| `L` | icona `bell` (`mute` se silenziato), nel token di stato della gravità (`warning` → `state-warning`; `danger`, `aggro`, `lost` → `state-danger`; gli altri `text-2`) | traccia | *Alert: Warning* (*muted*), con categoria e confidenza dell'avviso |
+| `H` | icona `coach` `text-2` | traccia | *Coach tip* con il titolo breve della regola (`T1`–`T7`, `D1`–`D5`, `A1`), categoria e confidenza: le parole del consiglio non sono registrate e non si ricostruiscono |
+| `N` | icona `star` `text-2` | traccia | *Encounter started* · *Encounter ended: success / not successful* |
+| `M` | inizio della banda di modalità | grafico | *Threat values readable* · *State only: values are secret* · *Nothing readable* (con il motivo) |
+| `G` | il buco `tick` | grafico | come §4.4 |
+| `X` | icona `cross` `text-2` alla fine dell'asse | traccia | *Recording interrupted (logout or reload)* |
+| `Z` | icona `warn` `text-2` | traccia | *Limit reached: samples · events · units · mobs · time* |
+
+- **Raggruppamento**: i marcatori della traccia a meno di `Timeline.MARKER_PX` = **8** px si uniscono in uno con il
+  numero (*×3*), con l'icona del più importante (`D`, poi `A` non tank, `C`/`c`, `T`, `N`, `L`, `H`, gli altri); il
+  tooltip li elenca in ordine di tempo, al più 8, poi *and 4 more*.
+
+### 4.6 I tre esiti nel tempo
+
+L'**esito** di una sessione si calcola dalle righe: `values` se ha righe con un numero e nessuna `a`–`d`; `state` se
+ha righe `a`–`d` e nessuna con un numero; `none` se non ha né le une né le altre; `mixed` altrimenti (o se le bande di
+modalità cambiano).
+
+| Esito | Grafico delle percentuali | Corsie | Testo al posto del grafico |
+|---|---|---|---|
+| **values** | le serie (§4.3), le soglie, la linea 100 % | detentore e gli stati delle serie mostrate | — |
+| **state** (*state only*) | nessuno | detentore e una corsia degli stati per unità (al più `Timeline.MAX_LANES` = **10**, §4.7) | *Percentages were not available in this fight (state only): states and who held the mob are shown.* |
+| **none** (nulla di leggibile) | nessuno | nessuna | *Nothing was readable in this fight (secret value): only the events are shown.*, con il motivo prevalente come la qualità dei dati del report (§3.2) |
+| **mixed** | le serie nei tratti `values`; altrove la banda della modalità sopra il grafico (*State only from 1:12*, tratteggiata se `none`) | come `values`, più le corsie di chi ha solo stati | — |
+
+### 4.7 Serie mostrate, riassunto per la larghezza e vista
+
+- **Serie mostrate di predefinito** (`Timeline.MAX_SERIES` = **6**, [Q20](SPEC-09-risks-open-questions.md)): il
+  giocatore (`me`) se ha letture; chi ha tenuto il mob, per tempo tenuto; poi le altre unità per percentuale massima
+  registrata, decrescente; a pari valore l'indice. Un'unità senza letture con un numero non è mai una serie. Le corsie
+  di *state only* seguono lo stesso ordine con il tempo in WARNING e DANGER al posto della percentuale. Il replay
+  permette di cambiare le serie mostrate (§5.4), sempre al più 6.
+- **Vista**: un intervallo `[a, b]` in decimi, tutta la sessione all'apertura, almeno `Timeline.MIN_VIEW` = **50**
+  decimi (5 s). Il grafico largo `W` px si divide in `buckets = min(floor(W / Timeline.BUCKET_PX), Timeline.MAX_BUCKETS)`
+  colonne di tempo uguale, con `BUCKET_PX` = **2** e `MAX_BUCKETS` = **400**.
+- **Riassunto per la larghezza** (*downsampling*): `Timeline.View(model, a, b, buckets, series, out)` dà per ogni serie
+  e colonna le letture **prima**, **ultima**, **minima** e **massima** (indici di riga, mai una media). Il widget
+  disegna in ogni colonna con più letture una barra verticale dalla minima alla massima (i picchi restano: un
+  superamento non sparisce rimpicciolendo) e, fra l'ultima lettura di una colonna e la prima della colonna seguente che
+  ne ha, il tratto di §4.3 calcolato **su quelle due letture vere**, che sono consecutive. Se dentro una colonna c'è un
+  buco della serie, la colonna si disegna come due corse separate e il buco resta largo almeno 1 px. Con la vista
+  stretta abbastanza (una lettura per colonna) il disegno è la linea esatta delle letture.
+- **Costo**: `View` cerca `a` con una ricerca binaria sulla colonna `t` (larghezza fissa, SPEC-02 §4.2) e passa solo le
+  righe della vista; scrive in `out`, riusato (nessuna allocazione dopo il riscaldamento per una vista della stessa
+  larghezza). È sincrona; M5.2 ne fissa il budget con una prova lunga (proposta: una vista dell'intera sessione a 30 000
+  righe entro 2 000 000 di istruzioni della VM) e, se un raid da 40 lo supera, la fa a fette come `Build`.
+- **Zoom**: *Zoom to selection* (§4.8) e la rotella sopra il grafico (×2 avanti o indietro intorno al puntatore, entro
+  `MIN_VIEW` e la sessione intera); *Whole fight* torna alla sessione intera.
+
+### 4.8 Il widget (`UI/Timeline.lua`, M5.3)
+
+`Timeline.Widget(parent, opts)` → un oggetto con `:SetModel(model)`, `:SetView(a, b)`, `:SetSeries(list)`,
+`:SetCursor(t)`, `:SetSelection(a, b)`, `:Layout(w, h)` e le richiamate `opts.onSeek(t)`, `opts.onSelect(a, b)`,
+`opts.onHover(t)`. `opts.lanes` (vero nel replay) e `opts.legend` scelgono le parti.
+
+**Disposizione**, dall'alto (punti):
+
+| Parte | Altezza | Contenuto |
+|---|---|---|
+| Legenda | 16 | per ogni serie: un trattino del colore della serie (12 × 2), il nome (o il token, *Unknown*) in `Small` `text-1`, la percentuale massima registrata in `MonoSmall`; l'icona `tank` per chi ha tenuto il mob |
+| Grafico | il resto, almeno 80 | margine sinistro di 28 pt con le etichette dell'asse y (`MonoSmall` `text-3`) a 0, 50 e 100 %; righe della griglia `border-subtle`; soglie, linea 100 %, serie, buchi, linee dei cambi di mob, banda fuori combattimento, cursore (`accent`, 1 px su tutta l'altezza), selezione (`accent` al 15 %) |
+| Corsie | 10 il detentore, 6 per serie (`opts.lanes`) | il detentore nel colore della sua serie (`text-3` se non è una serie mostrata) con le icone dei cambi; gli stati nei token di stato, UNKNOWN tratteggiato |
+| Traccia degli eventi | 16 | i marcatori di §4.5 |
+| Asse del tempo | 14 | tacche a passo rotondo (1, 2, 5, 10, 15, 30 s; 1, 2, 5, 10 min) distanti almeno 60 px, etichette `m:ss` in `MonoSmall` `text-3` |
+
+**Disegno, dentro i limiti del client**:
+
+- Linee con le regioni `Line` del client (`frame:CreateLine`, `SetStartPoint`, `SetEndPoint`, `SetThickness`, nel
+  dump); bande, corsie e griglia con texture (`CreateTexture` + `Theme.Fill` / `Theme.Tint`); icone dal foglio di
+  `UI/Assets.lua`. Spessore 2 px (`Theme.Px`) per la serie del giocatore, 1,5 px per le altre, 1 px le barre min–max.
+- Un tratto **tratteggiato** è fatto di trattini da 4 px con spazi da 3 px (`Timeline.DASH`), ognuno una `Line`, al più
+  24 per tratto (un tratto più lungo allunga i trattini). I buchi usano la texture `dash` ripetuta, tinta
+  `state-unknown` al 50 % sopra `surface-2`.
+- **Pool**: le regioni si prendono da pool che crescono fino a `Timeline.MAX_LINES` = **3 000** linee e
+  `Timeline.MAX_TEXTURES` = **1 200** texture e non si restringono; se un disegno supererebbe un limite, il widget
+  raddoppia `BUCKET_PX` e ridisegna (mai dati tolti in silenzio); `/atw debug` lo conta.
+- **Senza `CreateLine`** (`Theme.Probes()` aggiunge `lines`): il grafico mostra le letture come punti da 2 px e le barre
+  min–max, senza tratti; le stime diventano punti radi e il tooltip lo dice. Nessuna linea inventata con texture ruotate.
+- **Colori**: solo token di `UI/Theme.lua`. Le serie hanno sei token nuovi `series-1`…`series-6`, definiti **in ogni
+  tema** (più chiari nei temi scuri, più scuri in Aurora) con contrasto ≥ 3:1 su `bg` e `surface-1` e tinte lontane dai
+  quattro token di stato, che restano per stati e marcatori; M5.3 sceglie i valori, li scrive in
+  [ui-style §3.5](ui-style.md#35-timeline-e-replay-m5) e `test_theme.lua` li controlla. Il giocatore è sempre
+  `series-1`. Un'unità non si riconosce mai dal solo colore: la legenda, il nome alla fine della linea quando c'è posto
+  (almeno 40 px liberi) e il tooltip la nominano.
+
+**Interazione** (frame normali, quindi anche in combattimento):
+
+- **Passaggio del mouse**: `OnEnter` mette un `OnUpdate` sul grafico (tolto a `OnLeave`) che lavora solo quando la x del
+  puntatore (`Compat.CursorPosition()`) cambia di almeno 1 px: una linea verticale sottile e il tooltip al tempo sotto
+  il puntatore: ora (*1:12.4*), mob, modalità; per ogni serie mostrata la lettura più vicina entro
+  `Timeline.HOVER_PX` = 4 px (*62.4 % at 1:12.3*, rilevata), oppure su un tratto tratteggiato *Estimate: between 58.0 %
+  (1:10.0) and 66.5 % (1:14.5)*, oppure in un buco *No reading: secret value*; lo stato in quel momento (con *thresholds
+  82 / 91* o *game state*) e chi tiene il mob; i marcatori sotto il puntatore.
+- **Clic** (premuto e rilasciato entro 3 px): `onSeek(t)`.
+- **Trascinamento** (oltre 3 px): selezione dell'intervallo, con l'ombra che segue il puntatore (l'`OnUpdate` gira solo
+  durante il trascinamento); al rilascio `onSelect(a, b)` se `b − a ≥ 10` decimi, altrimenti vale come clic. Il clic
+  destro toglie la selezione.
+- **Riepilogo dell'intervallo** (`Timeline.Summary(model, a, b, out)`, calcolato): durata; per serie mostrata la lettura
+  più alta (rilevata, con l'ora), quante letture, superamenti verso WARNING e DANGER, tempo in WARNING e DANGER (*at
+  least* e il tempo sconosciuto quando l'intervallo ne ha, come il report), tempo sconosciuto; eventi per tipo.
+- **Card *Timeline* nel report** (scheda Reports, interruttore `timeline`): dopo la card di testa, il widget largo come
+  la card e alto 140 pt, sulla sessione intera con le serie predefinite, la corsia del detentore e la traccia degli
+  eventi, senza legenda (i nomi sono nel tooltip); si costruisce dopo il report, a fette, con *Building timeline…*. Un
+  clic apre il replay a quel tempo (`REPLAY_REQUESTED(id, t)`, solo con l'interruttore `replay`); in *state only* e con
+  nulla di leggibile la card mostra le corsie o la nota di §4.6.
+
+## 5. Threat Replay (`Data/Replay.lua`, `UI/ReplayWindow.lua`, M5.4–M5.5)
+
+Fonte §5.4: elenco degli ultimi scontri con la durata; timeline; eventi in ordine cronologico; selezione di un evento
+per vedere i dati attorno; indicazione dei dati mancanti; eliminazione delle registrazioni. L'**elenco** con la durata
+e l'**eliminazione** sono la scheda Reports (§3.6, M4.5), da cui il replay si apre; il replay aggiunge la timeline con
+il cursore, gli eventi e il dettaglio.
+
+### 5.1 Regole
+
+- **RPL-06** MUST: il replay muove un **cursore** sulla sessione registrata e mostra ciò che era registrato a quel
+  tempo; non legge nulla dal gioco, non scrive nulla nella sessione, non cambia ciò che il report calcola.
+- **RPL-07** MUST: al tempo del cursore ogni valore mostrato porta la sua categoria; un valore che manca dice perché e
+  da quando (*No reading since 1:10.2: secret value*), e un numero vecchio non si mostra mai come se fosse di quel
+  momento (§5.3).
+- **RPL-08** MUST: selezionare un evento mostra i dati da 5 s prima a 5 s dopo (fonte §5.4) e l'elenco dei dati mancanti
+  in quella finestra, anche quando non manca nulla (*No missing data in this window*).
+
+### 5.2 Il controllore (`Data/Replay.lua`, M5.4)
+
+Nessun frame; un solo replay alla volta, in `Replay.state`:
+
+```lua
+Replay.state = {
+    id = "1764100000-1", model = model,   -- il modello di Timeline.Build
+    cursor = 0,                           -- decimi
+    playing = false, speed = 1,
+    view = { 0, 1840 },                   -- la vista della timeline (§4.7)
+    selection = nil,                      -- { a, b } o nil
+    focus = nil,                          -- indice dell'evento selezionato (§5.4) o nil
+    filter = "key",                       -- filtro dell'elenco degli eventi (§5.4)
+    series = { 3, 1, 5 },                 -- serie mostrate (al più Timeline.MAX_SERIES)
+}
+```
+
+| Funzione | Effetto |
+|---|---|
+| `Replay.Open(id, t, done)` | costruisce il modello (`Timeline.Build`); `cursor` = `t` o l'inizio del primo periodo di combattimento; in pausa; `speed` da `char.ui.replay.speed`; `done(true)` o `done(false, motivo)` con i motivi di `Timeline.Build`. Un `Open` mentre un altro replay è aperto lo sostituisce |
+| `Replay.Close()` | ferma il tick e dimentica lo stato (il modello resta nella cache di Timeline) |
+| `Replay.Play()` | se il cursore è alla fine della vista riparte dall'inizio della vista; `Scheduler.Start("replay", Replay.HZ, tick)` con `Replay.HZ` = **10** (senza `combat`); in combattimento risponde `false, "combat"` ([Q18](SPEC-09-risks-open-questions.md)) |
+| `Replay.Pause()`, `Replay.Toggle()` | ferma il tick; alterna |
+| il tick | `cursor += speed × min(max(now − last, 0), 0,5 s) × 10` (`Compat.Now()`: un client fermo non fa saltare il cursore); alla fine della vista il cursore si ferma lì e il replay va in pausa |
+| `Replay.Seek(t)` | il cursore a `t`, entro `[0, dur]`; se esce dalla vista, la vista scorre e tiene la sua larghezza |
+| `Replay.Step(dir)` | pausa; il cursore al **momento registrato** seguente (`dir = 1`) o precedente: il tempo di una riga di una serie mostrata o di un evento del filtro *All*, strettamente dopo o prima del cursore; se non ce n'è, la fine o l'inizio |
+| `Replay.Jump(dir)` | il cursore `± Replay.JUMP` = **50** decimi (5 s), senza fermare la riproduzione |
+| `Replay.NextEvent(dir)` | il cursore all'evento seguente o precedente del filtro in vigore, che diventa il `focus` |
+| `Replay.Focus(i)` | l'evento `i`: cursore al suo tempo, pausa, `focus = i`, la **finestra** `[t − 50, t + 50]` tagliata a `[0, dur]` diventa la selezione e, se la sessione è più lunga di 20 s, la vista (*Whole fight* torna indietro) |
+| `Replay.SetSpeed(x)` | `x` fra `Replay.SPEEDS` = **{ 1, 2, 4, 8 }** ([Q19](SPEC-09-risks-open-questions.md)); salvata in `char.ui.replay.speed` |
+| `Replay.SetView(a, b)`, `Replay.WholeFight()` | la vista, almeno `Timeline.MIN_VIEW` |
+| `Replay.SetSeries(list)`, `Replay.SetFilter(f)` | serie mostrate (al più 6); filtro dell'elenco |
+| `Replay.Snapshot(t, out)` | §5.3 |
+| `Replay.Missing(a, b, out)` | i buchi (§4.4) che toccano `[a, b]`: tipo, da, a, motivo, unità o tutto il mob; e le unità della lista senza letture nell'intervallo |
+| `Replay.Events(filter)` | l'elenco degli eventi (§5.4) |
+| `Replay.OnChange(fn)` | un solo ascoltatore, la finestra: `fn(what)` con `what` = `cursor`, `play`, `view`, `focus`, `series`, `filter`, `model`, `closed`; `cursor` al più una volta per tick |
+
+- **Combattimento** ([Q18](SPEC-09-risks-open-questions.md), `Replay.PAUSE_IN_COMBAT` = vero): a `COMBAT_STARTED` la
+  riproduzione va in pausa e `Play` rifiuta fino a `COMBAT_ENDED` (il monitor ha la priorità, il costo del tick resta
+  fuori dal combattimento: P10); cercare, passare a un evento e leggere il dettaglio funzionano anche in combattimento.
+- **Sessione eliminata** (`SESSIONS_CHANGED` senza la sessione): `Close` e `OnChange("closed")` con `unknown`.
+- **Costo del tick**: nessuna funzione del gioco, nessuna allocazione; il cursore muove una regione e il dettaglio si
+  ricalcola solo quando il cursore passa un momento registrato (puntatori per serie che avanzano durante la
+  riproduzione). Budget proposto: 2 000 istruzioni per tick, fissato in M5.4.
+- Con l'interruttore `replay` (o `timeline`) spento `Open` risponde `off` e nulla si registra (ADR 0014).
+
+### 5.3 Il dettaglio al tempo del cursore
+
+`Replay.Snapshot(t, out)` riempie `out` (riusato, nessuna allocazione durante la riproduzione):
+
+| Campo | Da | Categoria | Che cosa si mostra |
+|---|---|---|---|
+| tempo | il cursore | — | *1:12.4* |
+| combattimento | periodi di combattimento | rilevata | *In combat (pull 2)* · *Out of combat* |
+| mob | periodo di mob, `mobs` | rilevata; sconosciuta senza nome | *Hogger* · *Unknown mob* · *No monitored mob* |
+| modalità | bande di modalità | rilevata | *Values* · *State only* · *Nothing readable: secret value* |
+| buco del mob | `gaps` | sconosciuta | *Recording paused (2.4 s)* e simili (§4.4) |
+| detentore | `holds` | rilevata | *Thrall holds the mob (tank)*; sconosciuto se nessun `A` dice chi |
+| per unità nella lista in quel momento (prima le serie mostrate, poi le altre, al più 40): stato | `states` | calcolata in `values`, rilevata in `state` | distintivo di stato (icona e parola, ST-02) |
+| per unità: lettura | l'ultima riga con un numero dell'unità sullo stesso mob con `tr ≤ t` | rilevata se `t − tr ≤ join`; **stimata** se `join < t − tr ≤ ESTIMATE_MAX` senza buchi fra `tr` e `t`; altrimenti sconosciuta | *62.4 %* · *~62.4 % · 1.8 s before* (tooltip *Estimate: the last reading, 1.8 s before*) · *No reading since 1:10.2: secret value* |
+| per unità in *state only* | l'ultima riga `a`–`d` | rilevata | la situazione con le parole della modalità `state` del monitor (SPEC-03 §2.3) |
+
+Il **dettaglio dell'evento** (con un `focus`): l'evento con i suoi campi (unità, mob, categoria, confidenza), le letture
+delle unità coinvolte nella finestra ±5 s (la prima, l'ultima, la più alta, quante) e i **dati mancanti** di
+`Replay.Missing` nella finestra: *Thrall: no readings 0:42.1–0:45.0 (secret value)*, *Nothing readable 0:40.0–0:47.3*,
+*Recording paused 0:44.0–0:46.4*, *Samples stopped at 3:10 (limit reached)*, oppure *No missing data in this window*.
+
+### 5.4 L'elenco degli eventi
+
+- Una riga per evento di `model.events`, in ordine di tempo: ora (*0:12.4*, `MonoSmall`), icona e testo di §4.5,
+  l'indicatore della categoria come nella scheda Reports (stimata nel colore `warn`, sconosciuta `text-3`).
+- **Filtri** (`Widgets.Segmented`): *Key events* (predefinito: `C`, `c`, `T`, `A`, entrate in WARNING e DANGER, `D`, `N`,
+  `M`, `G` di almeno 1 s, `X`, `Z`), *Alerts & tips* (`L`, `H`), *All* (anche ogni altro `S` e ogni `G`).
+- Righe da 20 pt in un pool che scorre (al più le righe visibili più due, anche con 6 000 eventi). Durante la
+  riproduzione la riga dell'ultimo evento passato si evidenzia e l'elenco la tiene in vista, salvo per 3 s dopo che il
+  giocatore l'ha fatto scorrere.
+- Clic: `Replay.Focus(i)`. Tooltip: categoria, campi, e per `L` e `H` la categoria e la confidenza registrate.
+- Un elenco con soli `C` e `c` dice *Only the start and the end of combat were recorded.*
+- **Serie**: nel dettaglio un clic sul nome di un'unità la mostra o la toglie dal grafico (al più 6: la settima prende il
+  posto dell'ultima scelta in automatico).
+
+### 5.5 La finestra del replay (`UI/ReplayWindow.lua`, M5.5)
+
+- Frame `AzerothThreatwardenReplay` (con il nome per Esc, ARC-04), **separato** dalla finestra principale, che resta
+  com'è: strato `MEDIUM`, `SetToplevel`, nello schermo (`SetClampedToScreen`), spostato dalla barra del titolo,
+  ridimensionato dalla maniglia `dashed`; lo stile della disposizione ampia (barra del titolo da 52 pt con il logo da
+  24 pt, card su `bg`, raggio 12, ombra); la scala di `char.ui.scale`, come la finestra principale.
+- Dimensione predefinita **820 × 520** pt, minima **640 × 420**, massima **1400 × 1000**; posizione, dimensione e
+  velocità per personaggio in `char.ui.replay` ([SPEC-02 §3.9](SPEC-02-data-model-storage.md#39-schema-2-del-personaggio-m5-la-finestra-del-replay)),
+  salvate al rilascio; senza posizione, al centro.
+- **Si apre da**: il pulsante *Replay* della card di testa del report (interruttore `replay`; spento con il tooltip per
+  la registrazione in corso o danneggiata); un clic sulla card *Timeline* del report (a quel tempo);
+  `/atw replay` (la registrazione chiusa più recente) e `/atw replay <n>` (la `n`-esima dell'elenco, 1 = la più
+  recente). Tutti passano da `REPLAY_REQUESTED(id, t)`. L'avviso di fine scontro (§3.5) resta *Open report*.
+
+```
+┌ logo · THREAT REPLAY · 26 Nov 21:14 · Deadmines · Hogger · 3:40 · Interrupted ──────────────── ✕ ┐
+│ ── You 91 %  ── Thrall 100 %  ── Ana 88 %                                                          │
+│ [grafico: soglie, 100 %, serie piene e tratteggiate, buchi, cambi di mob, cursore, selezione]       │
+│ [corsie: detentore, stati]   [traccia degli eventi]   [asse del tempo]                     (~55 %) │
+│ |◀  ◀◀  ◀  ▶/❚❚  ▶  ▶▶  ▶|    1× 2× 4× 8×     1:12.4 / 3:40      Zoom to selection · Whole fight   │
+│ ┌ Events  [Key events | Alerts & tips | All] ┐ ┌ At 1:12.4 ─────────────────────────────────────┐ │
+│ │ 0:00.0  ⚑ Combat started                   │ │ Hogger · Values · In combat                     │ │
+│ │ 0:12.4  ▲ Ana: Warning                     │ │ Thrall holds the mob (tank)                     │ │
+│ │ 0:31.0  ☠ Thrall died                      │ │ You     WARNING  84.2 %                         │ │
+│ │ …                                          │ │ Ana     SAFE     ~61.0 % · 1.8 s before         │ │
+│ └────────────────────────────────────────────┘ │ Missing in ±5 s: none                           │ │
+│                                                └─────────────────────────────────────────────────┘ │
+└──────────────────────────────────────────────────────────────────────────────────────────── grip ┘
+```
+
+- Sotto i 760 pt di larghezza i due pannelli in basso diventano uno con il selettore *Events · Details*.
+- **Comandi**: all'inizio, evento precedente, passo indietro, riproduci o pausa, passo avanti, evento seguente, alla fine;
+  la velocità (`Widgets.Segmented`); il tempo del cursore e la durata; *Zoom to selection* e *Whole fight*. Ogni
+  pulsante ha il tooltip con il suo tasto. M5.5 aggiunge al foglio delle icone `play`, `pause`, `step-back`,
+  `step-forward`, `skip-back`, `skip-forward` (forme originali, `tools/make_media.py`).
+- **Tasti** (`Replay.KEYS`, [Q19](SPEC-09-risks-open-questions.md)), solo **fuori dal combattimento** e mentre il
+  puntatore è sopra la finestra: Spazio riproduci o pausa; Sinistra e Destra un passo; Maiuscolo + Sinistra o Destra
+  ±5 s; Su e Giù evento precedente o seguente; Home e Fine inizio e fine; 1–4 la velocità. La finestra prende la tastiera
+  con `EnableKeyboard(true)` e lascia passare al gioco ogni altro tasto (`SetPropagateKeyboardInput(true)`); in
+  combattimento non prende tasti. Esc chiude la finestra, anche in combattimento (`UISpecialFrames`).
+
+| Situazione | Che cosa mostra |
+|---|---|
+| costruzione | *Building timeline…*; comandi spenti |
+| registrazione danneggiata | *This recording is damaged and was set aside.* |
+| registrazione in corso | *This fight is still being recorded: the replay opens when it ends.* |
+| registrazione eliminata (anche mentre è aperta) | *This recording was deleted.* |
+| *state only* | la nota di §4.6, le corsie, il dettaglio con gli stati |
+| nulla di leggibile | la nota di §4.6, gli eventi e il dettaglio (mob, combattimento, morti, modalità con il motivo) |
+| interrotta | il distintivo *Interrupted (reload)* nella barra del titolo; l'asse finisce all'ultimo record con il marcatore `X`; *Continued from…* / *Continues in…* aprono la sessione collegata da `after` |
+| troncata | la banda `limit`; nel dettaglio *Samples stopped at 3:10 (limit reached)* |
+| dati in sola lettura | uguale: il replay legge soltanto |
+| in combattimento | riproduzione in pausa, *Play* spento con il tooltip *Playback pauses during combat*; cercare, passare e leggere funzionano; nessun tasto |
+| interruttori spenti | la finestra non si costruisce; `/atw replay` risponde *This arrives in v0.5.0.* |
+
+- La finestra si costruisce alla prima apertura (pool di righe, regioni del grafico) e si nasconde alla chiusura;
+  chiudendola il replay si chiude (`Replay.Close`). Il tema si ridipinge con il registro di `UI/Theme.lua`.
+
+### 5.6 Anteprime e manuale
+
+- **Anteprime** (ADR 0013, dati inventati, `tools/make_mockups.py`): `replay-values`, `replay-state`, `replay-unknown`,
+  `replay-event` (un evento selezionato con la finestra ±5 s e i dati mancanti) e `report-timeline` (la card del
+  report), in inglese e in italiano; `replay-values` anche in Aurora e Warden.
+- **Manuale**: la pagina *Threat Replay* (`docs/wiki/Threat-Replay.md` e `Threat-Replay-it.md`) con le anteprime: come si
+  apre, che cosa vogliono dire linea piena, tratteggiata e banda tratteggiata, i tasti, il combattimento, e i limiti (nulla
+  si ricostruisce, nessuna causa, che cosa dipende dal probe); *Combat Reports* rimanda alla card *Timeline*.
 
 ## 6. Moduli, eventi, interruttori e diagnostica (M4)
 
@@ -507,3 +904,54 @@ Ogni test che passa per il monitor gira sui tre esiti (`Fight.OUTCOMES`, [SPEC-0
   `PLAYER_ENTERING_WORLD` dice `isReloadingUi` (§1.6).
 - **[da provare in gioco]** (checklist M4.7): la dimensione vera del file delle SavedVariables con 25 sessioni contro la
   stima; che la scheda e il report si leggano a dimensioni piccole; i limiti di Q8 e le scelte di Q16 su un raid vero.
+- **[da provare in gioco]** (checklist M5.6): le regioni `Line` del client su Forever (spessore, bordi a scale
+  frazionarie, trattini da 4 px) e quante regioni reggono senza far calare i frame; `GetCursorPosition` con la scala
+  dell'interfaccia e della finestra; l'`OnUpdate` solo durante il passaggio del mouse; se `SetPropagateKeyboardInput`
+  è permesso fuori dal combattimento e se i tasti del replay disturbano quelli del gioco; la leggibilità del grafico a
+  640 × 420 pt e dei sei colori delle serie nei tre temi; la durata di `Timeline.Build` su una sessione di un raid vero.
+- **[probe P3]**: quale dei tre esiti di §4.6 mostra davvero la timeline in gruppo, in istanza e in raid.
+- **[probe P10]**: il costo di `Timeline.View` e del tick del replay (fuori dal combattimento) sul client vero.
+
+## 9. Moduli, eventi, interruttori e diagnostica (M5)
+
+| File | Responsabilità | Bus | Step |
+|---|---|---|---|
+| `Data/Timeline.lua` | il modello di §4.2–§4.7 (`Build` a fette, `Compute`, `View`, `Summary`, serie predefinite, esito), con i periodi e i superamenti presi da `Data/Report.lua` | ascolta `SESSIONS_CHANGED` | M5.2 |
+| `Data/Report.lua` (cambio) | espone le funzioni dei periodi (combattimento, mob, modalità, detentore, stati) e dei superamenti, che il report e la timeline usano insieme; il report non cambia | — | M5.2 |
+| `UI/Timeline.lua` | il widget di §4.8: disposizione, pool di linee e texture, riassunto per la larghezza, tratteggio, buchi, marcatori raggruppati, tooltip, clic, trascinamento, rotella; la card *Timeline* nel report | emette `REPLAY_REQUESTED(id, t)` (clic sulla card) | M5.3 |
+| `UI/Reports.lua` (cambio) | la card *Timeline* (interruttore `timeline`) e il pulsante *Replay* della card di testa (interruttore `replay`) | emette `REPLAY_REQUESTED(id, nil)` | M5.3, M5.5 |
+| `UI/Theme.lua` (cambio) | i token `series-1`…`series-6` in ogni tema; `Theme.Probes()` con `lines` (`CreateLine`) | — | M5.3 |
+| `Data/Replay.lua` | il controllore di §5.2–§5.4: cursore, riproduzione con il tick `replay`, passi, salti, eventi, finestra ±5 s, dettaglio, dati mancanti, filtri, serie | ascolta `COMBAT_STARTED`, `COMBAT_ENDED`, `SESSIONS_CHANGED` | M5.4 |
+| `UI/ReplayWindow.lua` | la finestra di §5.5: barra del titolo, timeline, comandi, elenco degli eventi, dettaglio, stati, tasti, posizione e dimensione | ascolta `REPLAY_REQUESTED`, `COMBAT_STARTED`, `COMBAT_ENDED`, `CONFIG_LOADED`, `DISPLAY_CHANGED` | M5.5 |
+| `Core/Commands.lua` (cambio) | `/atw replay [n]` (interruttore `replay`, *This arrives in v0.5.0.* da spento) | emette `REPLAY_REQUESTED(id, nil)` | M5.5 |
+| `Core/Config.lua` (cambio) | schema **2** del personaggio: `ui.replay` (`pos`, `size`, `speed`), la migrazione 1 → 2 e il suo test | — | M5.5 |
+| `Core/Compat.lua` (cambio) | `Compat.CursorPosition()` (`GetCursorPosition`), `Compat.ModifierDown(name)` (`IsShiftKeyDown`, `IsControlKeyDown`): tutte nel dump, nella tabella di SPEC-01 §8.2 | — | M5.3, M5.5 |
+| `UI/Assets.lua`, `tools/make_media.py` (cambio) | le icone `play`, `pause`, `step-back`, `step-forward`, `skip-back`, `skip-forward` | — | M5.5 |
+
+- **Interruttori** (`Core/Features.lua`, ADR 0014): `timeline` (il modello, il widget, la card *Timeline* del report) e
+  `replay` (il controllore, la finestra, il pulsante *Replay*, `/atw replay`) restano **spenti** fino a M5.R; il replay
+  chiede tutti e due (senza la timeline non ha grafico). Spento vuol dire: nessun ascoltatore e nessuna regione,
+  `Timeline.Build` e `Replay.Open` rispondono `off`, nessuna card né pulsante, `/atw replay` risponde *This arrives in
+  v0.5.0.* Lo schema 2 del personaggio si scrive comunque, come i predefiniti di M4 prima di M4.R. I test che li
+  vogliono accesi li mettono a `true` in `M.features`.
+- **`/atw debug`**, sezione *Timeline and replay*: interruttori; il modello in memoria (righe, eventi, serie, esito,
+  millisecondi della costruzione); le regioni dei pool (linee, texture, quante volte si è raggiunto il limite e si è
+  raddoppiato `BUCKET_PX`, `lines` di `Theme.Probes`); il replay (aperto, in riproduzione, velocità) e
+  `Scheduler.Cost("replay")`. Mai nomi, zone o mob.
+- **Eventi del Bus**: `REPLAY_REQUESTED(id, t)` (`t` facoltativo, in decimi); nessun evento a ogni tick (la finestra
+  ascolta il controllore con `Replay.OnChange`); nessun nome negli argomenti. Prende il posto del `REPLAY_POSITION(t)`
+  previsto in SPEC-01 §3.2.
+
+## 10. Piano di M5: test per step
+
+Le sessioni dei test si scrivono con il recorder vero da uno scontro scriptato (`Fight`, nei tre esiti di
+`Fight.OUTCOMES`) o si costruiscono a mano con `Data/Session.lua` quando serve un caso esatto (un buco di un tipo,
+`p = 3843`, `trunc`).
+
+| Step | Test e casi |
+|---|---|
+| **M5.2** | `test_timeline.lua`: sessioni note con modelli noti: ogni tipo di tratto (pieno a `join`, tratteggiato oltre, nessuno per ogni causa di §4.3 e oltre `ESTIMATE_MAX`), ogni buco di §4.4 con il motivo, ogni marcatore di §4.5, superamenti uguali a quelli del report, esito (`values`, `state`, `none`, `mixed`), sessione interrotta, troncata, con `after`, `p = 3843`; serie predefinite e corsie nell'ordine di §4.7; `View` uguale a una ricerca per forza bruta su sessioni a caso (prima, ultima, minima, massima per colonna), viste strette e larghe, nessuna allocazione dopo il riscaldamento; costruzione a fette uguale a quella intera; stessa sessione, stesso modello (RPL-01); interruttore spento. In `Tests/long/test_monitor_budget.lua` (o un file lungo nuovo) il budget di `View` a 30 000 righe |
+| **M5.3** | `test_timeline_widget.lua`: la matematica del disegno (tempo ↔ x, scala y e tetto a 150 %, tacche dell'asse, colonne, trattini per tratto, raggruppamento dei marcatori, limite dei pool e raddoppio di `BUCKET_PX`, il ripiego senza `CreateLine`), la lettura più vicina del tooltip in ogni categoria, clic contro trascinamento, rotella, riepilogo dell'intervallo; nessun colore fuori dal tema. `test_theme.lua`: i token `series-*` in ogni tema con i contrasti. `test_reports.lua`: la card *Timeline* (costruzione, esiti, clic con e senza `replay`). Il client finto aggiunge le regioni `Line` (`CreateLine`, `SetStartPoint`, `SetEndPoint`, `SetThickness`, dal dump) e `GetCursorPosition` |
+| **M5.4** | `test_replay.lua`: aprire e chiudere; riproduzione con il tempo finto a ogni velocità, pausa alla fine, salti del client fermo; passi sui momenti registrati; ±5 s; evento seguente e precedente con i filtri; `Focus` con la finestra tagliata ai bordi; `Seek` dentro e fuori dalla vista; dettaglio con le tre categorie e i motivi nei tre esiti; dati mancanti (anche *nessuno*); pausa e rifiuto in combattimento; sessione eliminata mentre è aperta; interruttori spenti; il tick non alloca. `test_coach_wording.lua` esteso alle chiavi `TIMELINE_*` e `REPLAY_*` |
+| **M5.5** | `test_replay_window.lua`: apertura dal pulsante, dalla card, da `/atw replay [n]` e da `REPLAY_REQUESTED`; disposizione larga e a pannello unico; ogni riga della tabella degli stati di §5.5; tasti solo fuori dal combattimento e con il puntatore sopra, gli altri tasti lasciati al gioco; Esc; posizione, dimensione e velocità per personaggio dopo un `/reload`; sola lettura; il tema. `test_config.lua`: lo schema 2 del personaggio e la migrazione da dati dello schema 1. `test_commands.lua`: `/atw replay`. `Tests/long/test_replay_long.lua` (fonte §13, *apertura e chiusura ripetuta del replay*): sessioni ai limiti aperte, riprodotte, cercate e chiuse più di 200 volte, anche in combattimento e con la potatura; pool, righe, regioni e memoria che smettono di crescere. Manuale *Threat Replay* nelle due lingue con le anteprime |
+| **M5.6** | `docs/checklists/M5.md`: ogni riga *Real client* di M5.2–M5.5 e il criterio di uscita |
