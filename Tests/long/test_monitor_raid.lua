@@ -257,7 +257,7 @@ describe("states oscillating around the thresholds", function()
 			local raid = Raid.new()
 			bigWindow(rate)
 			-- the holder never changes, and every damage dealer has a steady 40 % except these four
-			Raid.PULL_FOR, Raid.TANK_SWAP = 0, 1e9
+			raid.pullFor, raid.tankSwap = 0, 1e9
 			for u = 9, 40 do raid.wave[u] = { base = 40, amplitude = 0, period = 10 } end
 			raid.wave[9] = { base = 80, amplitude = 1.4, period = 1.3 }    -- inside the hysteresis of WARNING
 			raid.wave[10] = { base = 95, amplitude = 1.4, period = 1.7 }   -- inside the hysteresis of DANGER

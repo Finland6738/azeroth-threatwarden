@@ -136,6 +136,47 @@ describe("rows and events", function()
 		eq(after.events[300].n, 300)
 	end)
 
+	it("write the same characters as Session.Encode at every digit boundary of the time", function()
+		local s = newSession()
+		S().AddUnit(s, {})
+		S().AddMob(s, {})
+		local times = { 0, 1, 61, 62, 63, 3843, 3844, 3845, 7688, 100000, S().MAX_T - 1, S().MAX_T }
+		local want, events = {}, {}
+		for i, t in ipairs(times) do
+			S().AddRow(s, t, 1, 1, i, "0")
+			S().AddEvent(s, t, "G", 0, 0, 0, "t", "-", "-", i)
+			want[i] = S().Encode(t, 3)
+			events[i] = want[i] .. "G000t--" .. S().Encode(i, 2)
+		end
+		S().Join(s)
+		eq(s.cols.t, table.concat(want))
+		eq(s.ev, table.concat(events))
+	end)
+
+	it("pack 256 rows into little more than the packed strings (ARC-06, SPEC-05 §1.8)", function()
+		local s = newSession()
+		S().AddUnit(s, {})
+		S().AddMob(s, {})
+		local t = 0
+		local function fill(n)
+			for _ = 1, n do
+				t = t + 7
+				S().AddRow(s, t, 1, 1, t % 1000, "1")
+			end
+		end
+		fill(3 * S().CHUNK + S().CHUNK - 1)     -- the buffers at their size, one row short of the fourth pack
+		collectgarbage("collect")
+		collectgarbage("collect")
+		collectgarbage("stop")
+		local before = collectgarbage("count")
+		fill(1)
+		local kb = collectgarbage("count") - before
+		collectgarbage("restart")
+		eq(#s.parts.t, 4)
+		-- the five pieces are 2 KB; the buffers of table.concat double that or so. A table or a string per row: 50 KB
+		truthy(kb < 12, ("one pack allocated %.1f KB"):format(kb))
+	end)
+
 	it("never go back in time, and a duplicate event in the same tenth is written once (REC-06, SPEC-05 §1.4)", function()
 		local s = newSession()
 		S().AddUnit(s, {})

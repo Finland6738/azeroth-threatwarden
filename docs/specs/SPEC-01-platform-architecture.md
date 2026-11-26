@@ -226,6 +226,30 @@ in attesa della misura nel client (P10, [Q14](SPEC-09-risks-open-questions.md)).
   byte** per tick (la striscia scrive testi nuovi quando i suoi numeri cambiano, al più una volta al secondo, quindi a
   meno letture al secondo ogni tick pesa di più), budget **160 byte**; lavoro e tempo come con il solo monitor, a cui
   si riferisce la tabella qui sopra.
+- Da M4.6 la terza configurazione ha **anche la registrazione** (interruttori `recording` e `reports`, una sessione
+  aperta, il suo tick a 2 Hz fra quelli del monitor): lavoro **162 000 – 181 000** istruzioni (il budget resta
+  220 000), tempo 9 – 11 (budget 30), **110 – 610 byte** per tick del monitor (le righe tenute, 8 byte l'una, e
+  l'unione di 256 di esse), budget **1 200 byte**. Sul PC di sviluppo circa 1,7 – 2 ms per tick, come il solo monitor.
+- Il **tick di registrazione** da solo, a 40 unità (stesso test; la finestra non conta, il tick legge solo il modello):
+
+  | Modalità | Istruzioni in media | Nel tick peggiore (impacchetta 256 righe) | Byte per tick | Budget (medio / peggiore / byte) |
+  |---|---|---|---|---|
+  | values (circa 38 righe) | 27 000 | 67 000 | 370 – 515 | 36 000 / 90 000 / 1 024 |
+  | state only | 13 600 | 57 000 | fino a 7 | 36 000 / 90 000 / 48 |
+  | nulla di leggibile | 13 200 | 13 200 | 0 | 36 000 / 90 000 / 48 |
+
+  La proposta di M4.1 (sotto il 10 % di **un tick** del monitor, circa 22 000 istruzioni) non regge con i valori: il
+  solo giro delle 40 unità, senza scrivere nulla, ne costa 13 000. Il budget fissato è circa 1,3 volte il misurato; al
+  secondo il tick di registrazione a 2 Hz pesa **circa il 7 %** del monitor a 5 Hz (54 000 istruzioni contro circa
+  800 000), il 17 % se la registrazione è portata a 5 Hz. Prima di M4.6 un impacchettamento allocava circa 60 KB
+  (8 600 byte per tick): ora riusa una sola tabella e un impacchettamento alloca solo le
+  stringhe unite e i loro buffer (circa 3 KB). Quanto costa **nel gioco** lo dice P10.
+- Fuori dai tick, misurato in M4.6 (`test_recorder_raid.lua`), sempre offline: ridisegnare un report di 38 unità
+  nella scheda circa 210 000 istruzioni (1,3 tick del monitor; solo quando le registrazioni o le impostazioni
+  cambiano); decodificare una registrazione di 18 000 righe circa 3,7 milioni di istruzioni (circa 23 tick, in un solo
+  frame al clic su quella registrazione, una volta), il calcolo del report altri 740 000 a fette. Una registrazione al
+  limite (30 000 righe) vale circa 1,7 volte tanto: se in gioco lo scatto si sente, la decodifica va spezzata anch'essa
+  (checklist M4.7).
 - Ripartizione del lavoro a 5 Hz: letture (con la segretezza controllata da Compat) circa metà, elenco circa 23 %,
   modello e calcoli circa 21 % (di più a 10 Hz, per i campioni della tendenza), stati circa 6 %. In *state only* un
   tick costa circa il 55 % di uno con i valori, con nulla di leggibile circa il 35 %.

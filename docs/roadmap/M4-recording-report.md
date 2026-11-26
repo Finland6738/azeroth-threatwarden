@@ -161,9 +161,14 @@ notice, `/atw reports`) in `Core/Features.lua` stay **off** until M4.R; every st
   `/reload` in combat; the tab and reports opened and closed many times); the third configuration of
   `Tests/long/test_monitor_budget.lua` with recording on, and its budget written into SPEC-01 §5.1 and SPEC-08 §3.
 - Done when:
-  - [ ] Memory, pieces and the store stop growing at their limits; the budget of the recording tick is measured,
+  - [x] Memory, pieces and the store stop growing at their limits; the budget of the recording tick is measured,
     justified and enforced by the test.
-- Real client: CPU of the recording tick and of the Scanner with the window closed, in a party and a raid (P10).
+- Real client: CPU of the recording tick and of the Scanner with the window closed, in a party and a raid (P10); the
+  hitch, if any, when a long recording is clicked in the Reports tab (decoding is one frame).
+- *Done (2026-11-26): `Tests/long/test_recorder_raid.lua` (8 scenarios) and, in `test_monitor_budget.lua`, the
+  configuration with recording and the budget of the recording tick (SPEC-01 §5.1). They found that packing 256 rows
+  allocated about 60 KB in combat (now about 3 KB, regression test in `test_session.lua`) and a mock fidelity gap
+  (`SetPoint` piled up points). 1127 tests, 1165 with `--long`. Not verified in the game.*
 
 ### M4.7 — In-game checklist M4 and MVP check
 - Branch: `step/m4-7-checklist`

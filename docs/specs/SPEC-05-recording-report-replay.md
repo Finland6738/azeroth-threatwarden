@@ -182,9 +182,12 @@ sempre farle posto.
   chiusa (consumatore `recorder`), quindi il costo del monitor di [SPEC-01 §5.1](SPEC-01-platform-architecture.md#51-il-costo-di-un-tick-del-monitor-misura-offline-di-m27)
   vale anche lì. **[probe P10]**: se il budget non regge, la registrazione segue la frequenza del monitor e non il
   contrario.
-- Budget proposto (misurato in M4.6 con `Tests/long/test_monitor_budget.lua`, una terza configurazione con la
-  registrazione): il tick di registrazione a 40 unità sotto il **10 %** del lavoro di un tick del monitor (circa 22 000
-  istruzioni), nessuna crescita di memoria per tick oltre ai pezzi; il numero esatto lo fissa M4.6 in SPEC-01 §5.1.
+- **Budget** (fissato in M4.6, [SPEC-01 §5.1](SPEC-01-platform-architecture.md#51-il-costo-di-un-tick-del-monitor-misura-offline-di-m27),
+  controllato da `Tests/long/test_monitor_budget.lua`): il tick di registrazione a 40 unità entro 36 000 istruzioni in
+  media e 90 000 nel tick che impacchetta, entro 1 024 byte con i valori e 48 altrimenti. La proposta di M4.1 (10 % di
+  un tick del monitor) è sostituita: al secondo, a 2 Hz, il tick pesa circa il 7 % del monitor a 5 Hz.
+- L'impacchettamento (M4.6) passa da una sola tabella riusata e dalle stringhe già pronte di una e due cifre: alloca
+  solo le stringhe unite (prima circa 60 KB a pacco, ora circa 3 KB).
 - Unire le colonne alla chiusura, controllare le sessioni al caricamento e costruire un report sono lavori fuori dal
   tick: la chiusura avviene sempre fuori dal combattimento (dopo `END_DELAY`), il report si costruisce a fette (§3.4)
   (ARC-07).

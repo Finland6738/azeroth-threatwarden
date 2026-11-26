@@ -17,6 +17,8 @@
 --   raid:outcome("state")                   the probe outcome from now on (Fight.OUTCOMES)
 --   raid.holder                             the unit holding the monitored mob
 --   raid.wave[u] = { base, amplitude, period }   the scaled % of a unit over time; change it to script a series
+--   raid.pullFor, raid.tankSwap             Raid.PULL_FOR and Raid.TANK_SWAP for this raid only (the Raid table is
+--                                           shared by every test file: never change it)
 local Mock = ...
 
 local Raid = {}
@@ -74,11 +76,11 @@ end
 local function pickHolder(raid)
 	local t, alive = raid.elapsed, raid.alive
 	local shifted = t + raid.mob * 7
-	if shifted % Raid.PULL_EVERY >= Raid.PULL_EVERY - Raid.PULL_FOR then
+	if shifted % Raid.PULL_EVERY >= Raid.PULL_EVERY - (raid.pullFor or Raid.PULL_FOR) then
 		local u = 9 + (floor(shifted / Raid.PULL_EVERY) * 5) % 31
 		if alive[u] then return u end
 	end
-	local first = (floor(shifted / Raid.TANK_SWAP) % 2) + 1
+	local first = (floor(shifted / (raid.tankSwap or Raid.TANK_SWAP)) % 2) + 1
 	if alive[first] then return first end
 	if alive[3 - first] then return 3 - first end
 	for u = 9, Raid.UNITS do

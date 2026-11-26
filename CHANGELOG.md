@@ -37,6 +37,16 @@ All notable changes to this project are documented here. The format follows
   and, in its tooltip, the category and the reason. *Delete recording* asks twice; read-only data are shown and not
   changed; an empty list says why. The card chooses when and how often fights are recorded, the number and size limits
   (the oldest recordings go at once), the notice after a fight and *Delete all recordings*. `/atw reports` opens the tab.
+- M4.6: long tests of recording (`test_recorder_raid.lua`: an hour of fights in a raid of 40, the limits of a session,
+  the store at its limits, repeated `/reload` in combat, the Reports tab opened and closed many times) and a budget for
+  recording in `test_monitor_budget.lua` (the monitor with a recording open, and the recording tick alone). The mock
+  client's `SetPoint` now replaces a point set again, as the game does.
+
+### Fixed
+
+- M4.6: packing the recording every 256 rows (behind the `recording` switch, off until `v0.4.0`) made about 60 KB of
+  short-lived garbage in combat; it now reuses one table and makes only the packed strings (about 3 KB). The saved form
+  is unchanged.
 
 ### Documentation
 

@@ -1,8 +1,9 @@
 name: Long tests
 
 # The offline tests with the long scenarios (Tests/run_tests.py --long, Tests/long/, ADR 0010): hours of combat ticks
-# of the threat monitor and its alerts in a 40-player raid and the budget of one tick, and ten minutes of the mock
-# client with a /reload; recordings near the storage limit and the rest of SPEC-08 §3 as their modules arrive. They run
+# of the threat monitor and its alerts in a 40-player raid, of recording with the store at its limits, the budgets of
+# one tick of the monitor and of the recorder, and ten minutes of the mock client with a /reload; the rest of
+# SPEC-08 §3 as its modules arrive. They run
 # when the threat pipeline, the list and its widgets, the recorder, the harness or these tests change, every Monday, and
 # on request; the CI workflow ("Tests") stays quick.
 on:

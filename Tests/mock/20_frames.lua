@@ -103,7 +103,12 @@ function Widget:GetID() return self._id or 0 end
 
 function Widget:SetPoint(point, relativeTo, relativePoint, x, y)
 	if type(relativeTo) == "number" then relativeTo, relativePoint, x, y = nil, nil, relativeTo, relativePoint end
-	self._points[#self._points + 1] = { point, relativeTo or self._parent, relativePoint or point, x or 0, y or 0 }
+	-- as the client: a point set again replaces the one set before, it is not a second one
+	local at = #self._points + 1
+	for i = 1, #self._points do
+		if self._points[i][1] == point then at = i break end
+	end
+	self._points[at] = { point, relativeTo or self._parent, relativePoint or point, x or 0, y or 0 }
 end
 function Widget:ClearAllPoints() for i = #self._points, 1, -1 do self._points[i] = nil end end
 function Widget:GetNumPoints() return #self._points end

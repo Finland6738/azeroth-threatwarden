@@ -140,37 +140,56 @@ end
 ---------------------------------------------------------------------------------------------------------------------
 local WIDTH = Session.WIDTH
 
+-- Packing runs in combat, on the recording tick: its characters go through one table, kept and written over, and
+-- are taken from the ready-made strings of ENC1 and ENC2, so that a pack makes the packed strings and nothing else
+-- (ARC-06, SPEC-05 §1.8). A piece of three characters (`t`) is two entries: no string of its own.
+local scratch = {}
+
+-- `t` (0 .. MAX_T) as two entries of `scratch` after the first `k`.
+local function putTime(k, t)
+	t = floor(t)
+	if t < 0 then t = 0 end
+	scratch[k + 1], scratch[k + 2] = ENC1[floor(t / 3844) % 62], ENC2[t % 3844]
+	return k + 2
+end
+
 local function encodeRows(buf, column, from, to)
-	local out, values = {}, buf[column]
+	local values, k = buf[column], 0
 	if column == "s" then
-		for i = from, to do out[#out + 1] = values[i] end
+		return concat(values, "", from, to)
 	elseif column == "p" then
 		for i = from, to do
 			local p = values[i]
-			out[#out + 1] = (type(p) == "number" and p >= 0) and ENC2[p > Session.MAX_N and Session.MAX_N or floor(p)]
+			k = k + 1
+			scratch[k] = (type(p) == "number" and p >= 0) and ENC2[p > Session.MAX_N and Session.MAX_N or floor(p)]
 				or "--"
 		end
+	elseif WIDTH[column] == 3 then
+		for i = from, to do k = putTime(k, values[i]) end
 	else
 		local w = WIDTH[column]
-		for i = from, to do out[#out + 1] = Session.Encode(values[i], w) end
+		for i = from, to do
+			k = k + 1
+			scratch[k] = Session.Encode(values[i], w)
+		end
 	end
-	return concat(out)
-end
-
-local function encodeEvent(ev, i)
-	local n = ev[i + 8]
-	local nn
-	if type(n) == "string" and #n == 2 then nn = n
-	elseif type(n) == "number" and n >= 0 then nn = ENC2[n > Session.MAX_N and Session.MAX_N or floor(n)]
-	else nn = "--" end
-	return Session.Encode(ev[i], 3) .. ev[i + 1] .. ENC1[ev[i + 2]] .. ENC1[ev[i + 3]] .. ENC1[ev[i + 4]]
-		.. ev[i + 5] .. ev[i + 6] .. ev[i + 7] .. nn
+	return concat(scratch, "", 1, k)
 end
 
 local function encodeEvents(ev)
-	local out, F = {}, Session.EVENT_FIELDS
-	for i = 1, #ev, F do out[#out + 1] = encodeEvent(ev, i) end
-	return concat(out)
+	local k, F = 0, Session.EVENT_FIELDS
+	for i = 1, #ev, F do
+		k = putTime(k, ev[i])
+		scratch[k + 1] = ev[i + 1]
+		scratch[k + 2], scratch[k + 3], scratch[k + 4] = ENC1[ev[i + 2]], ENC1[ev[i + 3]], ENC1[ev[i + 4]]
+		scratch[k + 5], scratch[k + 6], scratch[k + 7] = ev[i + 5], ev[i + 6], ev[i + 7]
+		local n = ev[i + 8]
+		if type(n) == "string" and #n == 2 then scratch[k + 8] = n
+		elseif type(n) == "number" and n >= 0 then scratch[k + 8] = ENC2[n > Session.MAX_N and Session.MAX_N or floor(n)]
+		else scratch[k + 8] = "--" end
+		k = k + 8
+	end
+	return concat(scratch, "", 1, k)
 end
 
 local function clear(list)
