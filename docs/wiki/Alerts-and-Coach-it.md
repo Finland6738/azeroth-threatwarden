@@ -2,9 +2,8 @@
 
 *English: [[Alerts and Coach|Alerts-and-Coach]]*
 
-> **In arrivo nella `v0.3.0`, non ancora nella versione pubblicata e non verificato in gioco.** La striscia, gli
-> avvisi, il Coach, il silenziamento rapido e la [card Avvisi delle Impostazioni](Settings-it#avvisi) sono pronti e
-> spenti fino al rilascio.
+> **Nuovo nella `v0.3.0`, non verificato in gioco.** Quali dati di threat WoW Forever dia davvero a un addon, e se i
+> messaggi aiutino in un combattimento vero, è ancora da verificare; cooldown e testi sono provvisori.
 
 Un **avviso** quando un rischio comincia, e un breve **consiglio** con il suo motivo. Tutti e due compaiono in una
 striscia della scheda [[Monitor della threat|Threat-Monitor-it]], fra l'intestazione del nemico e l'elenco. Nulla viene

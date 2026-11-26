@@ -15,8 +15,6 @@
 -- The budgets are about 1.3 times (work), twice (allocation) and twice or more (time) what M2.7 measured. When a change
 -- needs more on purpose, measure, say why in the pull request and move the numbers here and in SPEC-01 §5.
 
-before_boot(function(M) M.features = { monitor = true } end)
-
 local WARMUP = 600          -- ticks before any measure: rows, widgets, rings and strings made
 local INSTRUCTION_TICKS = 200
 local ALLOC_TICKS, ALLOC_BATCHES = 400, 3
@@ -28,6 +26,14 @@ local BUDGET = {
 	instructions = 220000,   -- per tick
 	bytes = 48,              -- allocated per tick
 	time = 30,               -- per tick, in runs of the reference loop
+}
+
+-- Two sets of switches: the monitor alone (the M2.7 measure) and the shipped one since v0.3.0, with the alerts and the
+-- Coach. M3.R measured 39 to 113 bytes per tick with them (the strip writes new texts as its numbers change, at most
+-- once a second, so fewer reads per second cost more per tick); work and time stayed as for the monitor alone.
+local CONFIGS = {
+	{ name = "the monitor alone", alerts = false, coach = false, bytes = BUDGET.bytes },
+	{ name = "with the alerts and the Coach", alerts = true, coach = true, bytes = 160 },
 }
 
 local function noop() end
@@ -144,7 +150,10 @@ local function measure(tick)
 	return instructions, bytes, median(ratios), median(ms)
 end
 
-describe("the budget of one tick in a raid of 40", function()
+for _, config in ipairs(CONFIGS) do
+describe("the budget of one tick in a raid of 40, " .. config.name, function()
+	before_boot(function(M) M.features = { monitor = true, alerts = config.alerts, coach = config.coach } end)
+
 	for _, case in ipairs({ { id = "one", name = "on one mob" }, { id = "switching", name = "with new targets" } }) do
 		for _, rate in ipairs({ 2, 5, 10 }) do
 			it(("stays inside its budget at %d Hz %s"):format(rate, case.name), function()
@@ -167,9 +176,10 @@ describe("the budget of one tick in a raid of 40", function()
 					rate, case.name, ms, ms * rate, time, instructions, bytes))
 				truthy(instructions <= BUDGET.instructions,
 					("work: %.0f instructions per tick, budget %d"):format(instructions, BUDGET.instructions))
-				truthy(bytes <= BUDGET.bytes, ("allocation: %.1f B per tick, budget %d"):format(bytes, BUDGET.bytes))
+				truthy(bytes <= config.bytes, ("allocation: %.1f B per tick, budget %d"):format(bytes, config.bytes))
 				truthy(time <= BUDGET.time, ("time: %.1f reference units per tick, budget %d"):format(time, BUDGET.time))
 			end)
 		end
 	end
 end)
+end

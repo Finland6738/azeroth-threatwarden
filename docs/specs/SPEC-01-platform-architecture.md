@@ -158,7 +158,7 @@ Accord.
 ### 3.4 Interruttori (`Core/Features.lua`)
 
 Un interruttore per ogni parte di una milestone successiva ([ADR 0014](../adr/0014-one-version-per-milestone-and-feature-switches.md));
-in `v0.1.0` erano tutti spenti, dalla `v0.2.0` (M2.R) è acceso `monitor` e gli altri sono spenti. Spento vuol dire: nulla di visibile, nessun evento del gioco registrato, nessun dato
+in `v0.1.0` erano tutti spenti, dalla `v0.2.0` (M2.R) è acceso `monitor`, dalla `v0.3.0` (M3.R) anche `alerts` e `coach`, e gli altri sono spenti. Spento vuol dire: nulla di visibile, nessun evento del gioco registrato, nessun dato
 scritto; un comando di quella parte risponde che arriva in una versione successiva.
 
 | Nome | Parte | Si accende in |
@@ -221,6 +221,10 @@ in attesa della misura nel client (P10, [Q14](SPEC-09-risks-open-questions.md)).
 | 5 Hz (predefinito provvisorio) | circa 10 ms al secondo |
 | 10 Hz | circa 20 ms al secondo |
 
+- Dalla `v0.3.0` (M3.R) il test misura anche la configurazione pubblicata, con avvisi e Coach accesi: **39 – 113
+  byte** per tick (la striscia scrive testi nuovi quando i suoi numeri cambiano, al più una volta al secondo, quindi a
+  meno letture al secondo ogni tick pesa di più), budget **160 byte**; lavoro e tempo come con il solo monitor, a cui
+  si riferisce la tabella qui sopra.
 - Ripartizione del lavoro a 5 Hz: letture (con la segretezza controllata da Compat) circa metà, elenco circa 23 %,
   modello e calcoli circa 21 % (di più a 10 Hz, per i campioni della tendenza), stati circa 6 %. In *state only* un
   tick costa circa il 55 % di uno con i valori, con nulla di leggibile circa il 35 %.
@@ -437,7 +441,7 @@ ogni file di test cita i requisiti che prova.
 | File di test | Modulo | Cosa prova | Step |
 |---|---|---|---|
 | `test_init.lua` | Init | avvio nel mock, client non Forever (ARC-01), `/reload` simulato, `ADDON_READY`, combattimento | M1.3 |
-| `test_features.lua` | Features | accesi solo quelli delle parti rilasciate (`monitor` dalla `v0.2.0`); una parte spenta non registra eventi, non legge la threat e non scrive nulla (i comandi di una parte spenta li prova `test_commands.lua`, M1.7) | M1.3 |
+| `test_features.lua` | Features | accesi solo quelli delle parti rilasciate (`monitor` dalla `v0.2.0`, `alerts` e `coach` dalla `v0.3.0`); una parte spenta non registra eventi, non legge la threat e non scrive nulla (i comandi di una parte spenta li prova `test_commands.lua`, M1.7) | M1.3 |
 | `test_locales.lua` | Locales | ADR 0009 regola 3 (chiavi, segnaposti, stringhe vuote o uguali) | M1.3 |
 | `test_bus.lua` | Bus | ordine, duplicati, `Off` durante un `Emit`, errori isolati | M1.4 |
 | `test_compat.lua` | Compat | ogni voce di §8.2 `available`/`missing`/`restricted`/`error` nel mock; valori segreti mai letti; §8.3 con risposte scriptate (valori, solo stato, segreto, `nil`, errore) | M1.4 |

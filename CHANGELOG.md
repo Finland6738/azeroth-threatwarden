@@ -5,6 +5,27 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-11-26
+
+The third test version: **Alerts and the Threat Coach** (milestone M3), switched on. When a risk begins (your state
+rises to **Warning** or **Danger**, or the unit holding the mob changes) one alert appears in the Monitor tab, with a
+tint of the window's border and, if you turn it on, a game sound; never in chat. The Coach shows one short tip at a
+time for your role, each with its reason and the category of its data. `/atw mute`, a key binding and an *Alerts* card
+in Settings control them. The cooldown, the thresholds and the messages are **provisional**.
+
+It has been checked by offline tests only. The M0 probe (which threat data the client gives an addon) and the
+[in-game checklist of M3](https://github.com/Finland6738/azeroth-threatwarden/blob/v0.3.0/docs/checklists/M3.md) were **not run** before this tag, and those of
+[M1](https://github.com/Finland6738/azeroth-threatwarden/blob/v0.3.0/docs/checklists/M1.md) and [M2](https://github.com/Finland6738/azeroth-threatwarden/blob/v0.3.0/docs/checklists/M2.md) are **still open**,
+so nothing below has been verified in the real client. Recording and reports are switched off until later versions. The
+probe is a development tool in the repository and is not part of this package.
+
+### Changed
+
+- M3.R: the `alerts` and `coach` switches are on: the alerts, the Coach, their strip, Settings card, `/atw mute`, key
+  binding and row menu of M3.2-M3.5 are part of this version. Entries below that say a part is "behind the `alerts`
+  switch (off until `v0.3.0`)" describe it before this release. With the Coach on, the offline cost of a monitor tick
+  allocates 39-113 bytes (the strip's new texts) instead of 14-27; the long tests now bound both.
+
 ### Added
 
 - M3.5: alert settings and the quick mute, behind the `alerts` and `coach` switches (off until `v0.3.0`, so nothing
@@ -42,7 +63,7 @@ All notable changes to this project are documented here. The format follows
 
 ### Documentation
 
-- M3.6: the in-game checklist of M3, [docs/checklists/M3.md](docs/checklists/M3.md): the demo and the Alerts card,
+- M3.6: the in-game checklist of M3, [docs/checklists/M3.md](https://github.com/Finland6738/azeroth-threatwarden/blob/v0.3.0/docs/checklists/M3.md): the demo and the Alerts card,
   a damage dealer nearing the tank, the tank losing the margin and the mob, a healer, a hunter's pet, *state only* and
   unknown data, mute and the key, the sound, the game's own warning, readability, and the tuning notes of the cooldown
   (Q12) and of the messages (Q11); how to switch `alerts` and `coach` on in an installed development copy. **Not run

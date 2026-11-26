@@ -2,8 +2,8 @@
 
 *Italiano: [[Installazione|Installation-it]]*
 
-> **`v0.2.0` is the second test version: it brings the [[Threat Monitor|Threat-Monitor]].** It has not been checked
-> in the real client yet.
+> **`v0.3.0` is the third test version: it adds [[Alerts and Coach|Alerts-and-Coach]] to the
+> [[Threat Monitor|Threat-Monitor]].** It has not been checked in the real client yet.
 
 ## From a release
 

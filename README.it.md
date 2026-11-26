@@ -7,18 +7,20 @@ della threat, di coaching e di analisi dei combattimenti per **World of Warcraft
 quale mob, ti avvisa prima che tu prenda l'aggro, registra i combattimenti e spiega cosa è successo, distinguendo sempre
 ciò che è **noto** da ciò che è **stimato**.
 
-> **Stato: sviluppo iniziale. La [`v0.2.0`](https://github.com/Finland6738/azeroth-threatwarden/releases/tag/v0.2.0) è
-> la seconda versione di prova: porta il monitor della threat, non verificato in gioco.** Si scarica da
-> [GitHub Releases](https://github.com/Finland6738/azeroth-threatwarden/releases)
+> **Stato: sviluppo iniziale. La [`v0.3.0`](https://github.com/Finland6738/azeroth-threatwarden/releases/tag/v0.3.0) è
+> la terza versione di prova: aggiunge al monitor della threat gli avvisi e il Threat Coach, non verificati in gioco.**
+> Si scarica da [GitHub Releases](https://github.com/Finland6738/azeroth-threatwarden/releases)
 > ([come installarla](docs/wiki/Installation-it.md)). La scheda Monitor mostra chi minaccia il nemico che selezioni, il
 > tank, la percentuale, il margine, la tendenza e uno stato, oppure *solo stato* / *sconosciuto* con il motivo quando il
-> client non dà numeri; `/atw demo` riproduce uno scontro inventato; soglie e frequenza di lettura sono provvisorie
+> client non dà numeri; `/atw demo` riproduce uno scontro inventato. Una striscia in quella scheda ti avvisa una volta
+> quando un rischio comincia e dà un breve consiglio con il suo motivo ([Avvisi e Coach](docs/wiki/Alerts-and-Coach-it.md)),
+> mai in chat; `/atw mute` silenzia gli avvisi. Soglie, cooldown e frequenza di lettura sono provvisori
 > ([Monitor della threat](docs/wiki/Threat-Monitor-it.md)). Ha anche le impostazioni salvate (con versione e
 > migrazioni), l'aspetto dell'ecosistema, una finestra spostabile con le Impostazioni e la pagina Info con i crediti, i
 > [comandi](docs/wiki/Commands-it.md) `/atw` e `/threatwarden`, il pulsante della minimappa e la voce nell'Addon
 > Compartment. È controllata solo da test offline: la sonda M0 e le verifiche in gioco della
-> [M1](docs/checklists/M1.md) e della [M2](docs/checklists/M2.md) (in inglese) sono ancora aperte. Gli avvisi e il Threat Coach (`v0.3.0`) sono
-> costruiti e spenti, con la loro [checklist in gioco](docs/checklists/M3.md) (in inglese) scritta e non ancora eseguita. La
+> [M1](docs/checklists/M1.md), della [M2](docs/checklists/M2.md) e della [M3](docs/checklists/M3.md) (in inglese) sono
+> ancora aperte. La
 > [sonda](docs/spike/README.md) (uno strumento di sviluppo, mai distribuito) verifica nel client vero quali dati di
 > threat WoW Forever dà a un addon, perché in alcune situazioni il client può nascondere i valori agli addon: il client e
 > le funzioni della threat, compreso se i loro valori sono segreti (P1–P4), quali unità e mob rispondono, gli eventi
@@ -40,6 +42,8 @@ in gioco ([tutte le anteprime: inglese e italiano, tre temi](docs/specs/mockups/
 ![La pagina Info con i crediti, tema Warden](docs/specs/mockups/previews/about-warden-it.webp)
 
 ![Il monitor della threat con uno scontro inventato, tema Aurora](docs/specs/mockups/previews/monitor-values-aurora-it.webp)
+
+![La striscia del Coach di un DPS, tema Nebula](docs/specs/mockups/previews/coach-dps-nebula-it.webp)
 
 ## Funzioni previste
 

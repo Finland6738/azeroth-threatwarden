@@ -20,9 +20,9 @@ describe("the Settings page", function()
 		isNil(W():Frame().pages.settings.view, "nothing built while the Monitor is on screen")
 		local f, view = open()
 		eq(view.pageId, "settings")
-		eq(#f.cards, 6, "read-only warning, Appearance, Language, Window, Monitor, Reset")
+		eq(#f.cards, 7, "read-only warning, Appearance, Language, Window, Monitor, Alerts, Reset")
 		falsy(f.cards[1]:IsShown(), "no warning on writable data")
-		for i = 2, 6 do truthy(f.cards[i]:IsShown()) end
+		for i = 2, 7 do truthy(f.cards[i]:IsShown()) end
 		eq(view.pager:Active(), "settings")
 		eq(#Mock.errors, 0)
 	end)
@@ -219,7 +219,7 @@ describe("Reset settings", function()
 		eq(f.theme.control:Active(), "nebula")
 		truthy(f.minimap.control:IsOn())
 		eq(f.reset:GetLabel(), "Reset settings")
-		eq(f.cards[6].status:GetText(), "Settings reset.")
+		eq(f.cards[7].status:GetText(), "Settings reset.")
 	end)
 
 	it("forgets the first click after a few seconds", function()
@@ -272,7 +272,7 @@ describe("saved data of a newer version (read-only)", function()
 		truthy(f.cards[2].status:IsShown())
 		f.reset:Click()
 		f.reset:Click()
-		eq(f.cards[6].status:GetText(), "Nothing was changed: your saved data is read-only (see /atw debug).")
+		eq(f.cards[7].status:GetText(), "Nothing was changed: your saved data is read-only (see /atw debug).")
 		deepEq(AzerothThreatwardenDB, { schema = 99, settings = { theme = "aurora" } })
 		eq(#Mock.errors, 0)
 	end)
@@ -361,10 +361,10 @@ describe("the Monitor card (SPEC-03 §5)", function()
 
 	it("is there only while the monitor is switched on", function()
 		local f = open()
-		eq(#f.cards, 6, "Monitor before Reset")
+		eq(#f.cards, 7, "Monitor, Alerts and Reset")
 		truthy(f.cards[5]:IsShown())
 		notNil(f.warning)
-		boot(function(M) M.features = { monitor = false } end)
+		boot(function(M) M.features = { monitor = false, alerts = false, coach = false } end)
 		local off = open()
 		eq(#off.cards, 5)
 		isNil(off.warning)
@@ -488,10 +488,10 @@ describe("the Monitor card (SPEC-03 §5)", function()
 	it("says in the Reset card that the monitor settings go back too", function()
 		local f = open()
 		local text = {}
-		for _, it in ipairs(f.cards[6].items) do
+		for _, it in ipairs(f.cards[7].items) do
 			if it.region.GetText then text[#text + 1] = it.region:GetText() end
 		end
-		contains(table.concat(text, "\n"), "the monitor back to the defaults")
+		contains(table.concat(text, "\n"), "the monitor and the alerts and Coach back to the defaults")
 	end)
 
 	it("is in Italian on an Italian client", function()
@@ -508,7 +508,7 @@ end)
 local function alertsAccount() return AzerothThreatwardenDB.settings.alerts end
 
 describe("the Alerts card with the switches off (ADR 0014)", function()
-	before_boot(function(M) M.features = { monitor = true } end)
+	before_boot(function(M) M.features = { monitor = true, alerts = false, coach = false } end)
 
 	it("is not there, and Reset says nothing of it", function()
 		local f = open()
@@ -521,7 +521,7 @@ describe("the Alerts card with the switches off (ADR 0014)", function()
 	end)
 
 	it("is not there with the Coach's switch alone", function()
-		boot(function(M) M.features = { monitor = true, coach = true } end)
+		boot(function(M) M.features = { monitor = true, alerts = false, coach = true } end)
 		local f = open()
 		isNil(f.alertsCard)
 		isNil(f.coach)

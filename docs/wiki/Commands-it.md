@@ -19,13 +19,13 @@ compaiono solo nella tua finestra di chat, nella lingua dell'addon; nulla viene 
 | `/atw help` | elenca i comandi |
 | `/atw demo` | avvia la [modalità demo](Threat-Monitor-it#modalità-demo), uno scontro inventato (scritto di nuovo, la chiude) |
 | `/atw demo stop` | chiude la modalità demo (anche `/atw demo off`) |
-| `/atw mute` | silenzia gli [avvisi](Alerts-and-Coach-it#silenziare) fino alla fine di questo combattimento, o del prossimo; scritto di nuovo li riaccende (dalla `v0.3.0`) |
+| `/atw mute` | silenzia gli [avvisi](Alerts-and-Coach-it#silenziare) fino alla fine di questo combattimento, o del prossimo; scritto di nuovo li riaccende |
 
-Prima della loro versione, `/atw mute` (`v0.3.0`) e `/atw reports` rispondono con la versione che li porterà.
+Prima della sua versione, `/atw reports` risponde con la versione che lo porterà.
 
 ## Assegnazione di un tasto
 
-Dalla `v0.3.0` le assegnazioni dei tasti del gioco hanno **Silenzia gli avvisi** sotto *Azeroth Threatwarden* (nella
+Le assegnazioni dei tasti del gioco hanno **Silenzia gli avvisi** sotto *Azeroth Threatwarden* (nella
 categoria degli addon), senza tasto predefinito: fa quello che fa `/atw mute`. Il nome è nella lingua del gioco.
 
 ## La finestra

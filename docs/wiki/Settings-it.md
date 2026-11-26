@@ -82,7 +82,7 @@ Le aperture e chiusure automatiche non cambiano mai la tua scelta a mano.
 
 ## Avvisi
 
-> **In arrivo nella `v0.3.0`**: la card non è ancora nella versione pubblicata, e nulla è stato verificato in gioco.
+> **Nuova nella `v0.3.0`**, non verificata in gioco.
 
 Salvata per tutto l'account, sotto *Monitor*. Che cosa sono gli avvisi è in [[Avvisi e Coach|Alerts-and-Coach-it]].
 Ogni modifica si applica subito.
@@ -108,7 +108,7 @@ avvisi per un po', o quelli su una sola unità, vedi [[Avvisi e Coach|Alerts-and
 ## Ripristino
 
 **Ripristina impostazioni** riporta ai valori predefiniti l'aspetto, la lingua, il pulsante della minimappa, le
-impostazioni del monitor e (dalla `v0.3.0`) quelle di avvisi e Coach, ed
+impostazioni del monitor e quelle di avvisi e Coach, ed
 elimina i dati danneggiati che l'addon aveva messo da parte per le segnalazioni. Chiede
 un secondo clic entro pochi secondi. Le registrazioni (di una versione futura) non vengono toccate; la posizione della
 finestra si ripristina con *Ripristina finestra*.

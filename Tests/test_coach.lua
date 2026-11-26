@@ -6,7 +6,7 @@
 -- value and no allocation per update. The numbers of the mock are assumptions until the M0 probe
 -- (Tests/mock/70_threat.lua): where a number matters the script fixes the scaled % or the game's state.
 
-before_boot(function(M) M.features = { monitor = true, coach = true } end)
+before_boot(function(M) M.features = { monitor = true, alerts = false, coach = true } end)
 
 local function CO() return Mock.ns.Coach end
 local function TS() return Mock.ns.ThreatScanner end
@@ -701,7 +701,7 @@ describe("the work of an update (ARC-06)", function()
 end)
 
 describe("the coach switch off (ADR 0014)", function()
-	before_boot(function(M) M.features = { monitor = true, coach = false } end)
+	before_boot(function(M) M.features = { monitor = true, alerts = false, coach = false } end)
 
 	it("emits nothing and gives no tip, whatever happens", function()
 		local seen = record()

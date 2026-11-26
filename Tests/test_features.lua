@@ -5,10 +5,10 @@
 
 local function A() return AzerothThreatwarden end
 
--- SPEC-01 §3.4: the switches, and those on in this version (M2.R: the threat monitor).
+-- SPEC-01 §3.4: the switches, and those on in this version (M2.R: the threat monitor; M3.R: alerts and Coach).
 local SWITCHES = { "alerts", "analytics", "coach", "export", "heatmap", "monitor", "multitarget", "profiles",
 	"recording", "replay", "reports", "timeline" }
-local SHIPPED_ON = { monitor = true }
+local SHIPPED_ON = { alerts = true, coach = true, monitor = true }
 
 local function switchNames()
 	local names = {}
@@ -56,7 +56,7 @@ describe("a part that is switched off", function()
 	local GAME_EVENTS = { "UNIT_THREAT_LIST_UPDATE", "UNIT_THREAT_SITUATION_UPDATE", "PLAYER_TARGET_CHANGED",
 		"UNIT_TARGET", "GROUP_ROSTER_UPDATE", "ENCOUNTER_START", "ENCOUNTER_END" }
 
-	before_boot(function(M) M.features = { monitor = false } end)
+	before_boot(function(M) M.features = { monitor = false, alerts = false, coach = false } end)
 
 	it("registers none of the game events of the later parts (SPEC-01 §8.2)", function()
 		for _, event in ipairs(GAME_EVENTS) do eq(Mock.Listeners(event), 0, event) end
@@ -82,7 +82,7 @@ describe("a part that is switched off", function()
 end)
 
 describe("the shipped code", function()
-	it("runs the monitor and registers none of the events of the parts still off", function()
+	it("runs the monitor, the alerts and the Coach and registers none of the events of the parts still off", function()
 		truthy(Mock.Listeners("PLAYER_TARGET_CHANGED") > 0, "the monitor is on")
 		truthy(Mock.Listeners("GROUP_ROSTER_UPDATE") > 0, "the monitor is on")
 		for _, event in ipairs({ "ENCOUNTER_START", "ENCOUNTER_END" }) do eq(Mock.Listeners(event), 0, event) end
@@ -90,20 +90,20 @@ describe("the shipped code", function()
 end)
 
 describe("a test that changes a switch", function()
-	before_boot(function(M) M.features = { monitor = false, alerts = true } end)
+	before_boot(function(M) M.features = { monitor = false, alerts = false } end)
 
 	it("has it from before ADDON_LOADED, through a /reload too", function()
 		eq(A().Features.On("monitor"), false)
-		eq(A().Features.On("alerts"), true)
+		eq(A().Features.On("alerts"), false)
 		Mock.Reload()
 		eq(A().Features.On("monitor"), false)
-		eq(A().Features.On("alerts"), true)
+		eq(A().Features.On("alerts"), false)
 	end)
 end)
 
 describe("the next test", function()
 	it("gets the shipped switches again", function()
 		eq(A().Features.On("monitor"), true)
-		eq(A().Features.On("alerts"), false)
+		eq(A().Features.On("alerts"), true)
 	end)
 end)

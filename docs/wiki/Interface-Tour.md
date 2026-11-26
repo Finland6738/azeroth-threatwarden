@@ -18,6 +18,10 @@ The **Monitor** tab is small, to sit over the game:
 
 ![The Monitor tab with an invented fight, theme Warden](../specs/mockups/previews/monitor-values-warden.webp)
 
+In a fight a strip above the list shows [[alerts and advice|Alerts-and-Coach]]:
+
+![The strip of a damage dealer, theme Nebula](../specs/mockups/previews/coach-dps-nebula.webp)
+
 ## Settings and Info
 
 The **Settings** tab is larger and has two pages, chosen with the pills at its top: [[Settings|Settings]] and

@@ -32,8 +32,8 @@ describe("the report (SPEC-01 §9)", function()
 		contains(text, "language: setting auto, active enUS")
 		contains(text, "missing language keys: 0")
 		contains(text, "instance: none")
-		contains(text, "on: monitor")
-		contains(text, "off: alerts, analytics, coach, export, heatmap, multitarget, profiles, recording, " ..
+		contains(text, "on: alerts, coach, monitor")
+		contains(text, "off: analytics, export, heatmap, multitarget, profiles, recording, " ..
 			"replay, reports, timeline")
 	end)
 

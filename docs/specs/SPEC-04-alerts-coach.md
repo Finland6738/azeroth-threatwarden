@@ -7,7 +7,7 @@
 > **[da provare in gioco]**. Piano per step in §6.
 
 Due parti, due interruttori ([ADR 0014](../adr/0014-one-version-per-milestone-and-feature-switches.md)), spenti fino a
-M3.R:
+M3.R e accesi dalla `v0.3.0`:
 
 - gli **avvisi** (`Data/Alerts.lua`, interruttore `alerts`): un segnale breve quando una condizione di rischio
   **entra**, sui canali che il giocatore sceglie (§1);
@@ -428,7 +428,7 @@ testo di *Reset* che nomina avvisi e Coach.
 
 ### 4.3 Interruttori (`Core/Features.lua`)
 
-`alerts` e `coach` restano **spenti** fino a M3.R. Spento vuol dire (SPEC-01 §3.4): nessuna striscia, nessuna card,
+`alerts` e `coach` sono rimasti **spenti** fino a M3.R e sono **accesi** dalla `v0.3.0`. Spento vuol dire (SPEC-01 §3.4): nessuna striscia, nessuna card,
 nessun avviso o consiglio emesso, nessun suono, nessun consumatore dello Scanner, nulla scritto; `/atw mute` e il tasto
 rispondono *This arrives in v0.3.0.*; l'evento `AGGRO_CHANGED` di `ThreatState` invece c'è con `monitor` (è un fatto
 del monitor). I due interruttori sono indipendenti: il Coach senza avvisi e gli avvisi senza Coach funzionano.

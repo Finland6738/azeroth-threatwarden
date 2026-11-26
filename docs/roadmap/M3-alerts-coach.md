@@ -20,8 +20,11 @@ goes to chat, and every Coach message shows its reason. Released as `v0.3.0`.
 | M3.6 In-game checklist M3 | Sonnet | low |
 | M3.R Release preparation `v0.3.0` | Sonnet | medium |
 
-The switches `alerts` and `coach` in `Core/Features.lua` stay **off** until M3.R; every step works and is tested behind
-them (SPEC-04 §4.3).
+The switches `alerts` and `coach` in `Core/Features.lua` stayed **off** until M3.R; every step works and is tested
+behind them (SPEC-04 §4.3).
+
+*State (2026-11-26): M3 is complete in code (steps M3.1–M3.6, offline tests in CI) and switched on for `v0.3.0` (M3.R).
+The exit criterion needs the game and is **open** until the owner runs [the M3 checklist](../checklists/M3.md).*
 
 ### M3.1 — Specification of alerts and Coach
 - Branch: `step/m3-1-spec`
@@ -141,3 +144,8 @@ them (SPEC-04 §4.3).
 - Depends on: M3.6
 - Scope: switches `alerts` and `coach` on, `test_features.lua` updated; changelog promoted; READMEs and wiki status;
   Release workflow dry run, then the tag ([ADR 0014](../adr/0014-one-version-per-milestone-and-feature-switches.md)).
+- Done when:
+  - [x] The `alerts` and `coach` switches are on, the later ones off; changelog promoted, status updated; the checks are
+        green.
+  - [ ] The dry run is green, and the tag `v0.3.0` and its GitHub Release (changelog section as notes, zip with only the
+        addon) exist.

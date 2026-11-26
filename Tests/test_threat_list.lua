@@ -637,6 +637,8 @@ local function menuRows()
 end
 
 describe("the row menu with the alerts switched off", function()
+	before_boot(function(M) M.features = { monitor = true, alerts = false } end)
+
 	it("does not open, and the tooltip says nothing about alerts", function()
 		partyPull():to(0.5)
 		rightClick(widget("party3"))

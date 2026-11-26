@@ -18,6 +18,10 @@ La scheda **Monitor** è piccola, per stare sopra il gioco:
 
 ![La scheda Monitor con uno scontro inventato, tema Warden](../specs/mockups/previews/monitor-values-warden.webp)
 
+In combattimento una striscia sopra l'elenco mostra [[avvisi e consigli|Alerts-and-Coach-it]]:
+
+![La striscia di un DPS, tema Nebula](../specs/mockups/previews/coach-dps-nebula.webp)
+
 ## Impostazioni e Info
 
 La scheda **Impostazioni** è più grande e ha due pagine, scelte con le pillole in cima: [[Impostazioni|Settings-it]] e

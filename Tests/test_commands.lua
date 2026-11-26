@@ -101,9 +101,9 @@ for _, code in ipairs({ "enUS", "itIT" }) do
 			contains(out, T.help)
 			for _, name in ipairs(NAMES) do contains(out, "/atw " .. name .. " - ") end
 			contains(out, "/atw demo - ")
-			falsy(out:find("/atw mute", 1, true))
+			contains(out, "/atw mute - ")
 			falsy(out:find("/atw reports", 1, true))
-			eq(#Mock.output, #NAMES + 3)
+			eq(#Mock.output, #NAMES + 4)
 		end)
 
 		it("say what an unknown word is", function()
@@ -112,9 +112,7 @@ for _, code in ipairs({ "enUS", "itIT" }) do
 		end)
 
 		it("say when a command of a part switched off arrives, and do nothing", function()
-			for _, case in ipairs({ { "mute", "v0.3.0" }, { "reports", "v0.4.0" } }) do
-				contains(run("/atw " .. case[1]), T.later:format(case[2]))
-			end
+			contains(run("/atw reports"), T.later:format("v0.4.0"))
 			eq(W():Tab(), "monitor")
 		end)
 

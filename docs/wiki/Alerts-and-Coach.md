@@ -2,8 +2,8 @@
 
 *Italiano: [[Avvisi e Coach|Alerts-and-Coach-it]]*
 
-> **Coming in `v0.3.0`, not in the published version yet, and not verified in game.** The strip, the alerts, the
-> Coach, the quick mute and the [Alerts card of Settings](Settings#alerts) are built and switched off until the release.
+> **New in `v0.3.0`, not verified in game.** Which threat data WoW Forever really gives an addon, and whether the
+> messages help in a real fight, are still to be checked; the cooldown and the wording are provisional.
 
 A **warning** when a risk begins, and one short **piece of advice** with its reason. Both appear in a strip of the
 [[Threat Monitor|Threat-Monitor]] tab, between the header of the enemy and the list. Nothing is ever written in chat,

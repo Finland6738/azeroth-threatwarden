@@ -2,8 +2,8 @@
 
 *English: [[Installation|Installation]]*
 
-> **La `v0.2.0` è la seconda versione di prova: porta il [[monitor della threat|Threat-Monitor-it]].** Non è ancora
-> stata verificata nel client vero.
+> **La `v0.3.0` è la terza versione di prova: aggiunge [[Avvisi e Coach|Alerts-and-Coach-it]] al
+> [[monitor della threat|Threat-Monitor-it]].** Non è ancora stata verificata nel client vero.
 
 ## Da una versione pubblicata
 

@@ -81,7 +81,7 @@ Opening or closing by itself never changes what you chose by hand.
 
 ## Alerts
 
-> **Coming in `v0.3.0`**: the card is not in the published version yet, and nothing of it has been verified in game.
+> **New in `v0.3.0`**, not verified in game.
 
 Saved for the whole account, below *Monitor*. What the alerts are is on [[Alerts and Coach|Alerts-and-Coach]]. Every
 change applies at once.
@@ -106,7 +106,7 @@ alerts about one unit, see [[Alerts and Coach|Alerts-and-Coach#muting]].
 
 ## Reset
 
-**Reset settings** puts the appearance, the language, the minimap button, the monitor settings and (from `v0.3.0`) the
+**Reset settings** puts the appearance, the language, the minimap button, the monitor settings and the
 alerts and Coach back to the defaults, and drops the damaged
 data the addon had set aside for bug reports. It asks for a second
 click, within a few seconds. Your recordings (from a later version) are not touched; the window's place is reset with

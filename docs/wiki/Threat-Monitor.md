@@ -23,7 +23,7 @@ group ([when the window shows](Settings#monitor)); thresholds, rate, order and t
 - **Margin**: for a damage dealer or healer, how far you are from 100 % (taking aggro); for the tank, how far the
   second one is from 100 %.
 
-From `v0.3.0` a strip with [[alerts and advice|Alerts-and-Coach]] sits under the header.
+Since `v0.3.0` a strip with [[alerts and advice|Alerts-and-Coach]] sits under the header.
 
 ## The list
 

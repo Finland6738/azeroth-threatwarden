@@ -72,6 +72,8 @@ describe("the names follow the client, not the chosen language", function()
 end)
 
 describe("the key with the alerts switched off", function()
+	before_boot(function(M) M.features = { alerts = false } end)
+
 	it("says when the mute arrives and mutes nothing", function()
 		contains(press(), "This arrives in v0.3.0.")
 		falsy(Mock.ns.Alerts.IsMuted())
