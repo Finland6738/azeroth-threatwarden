@@ -5,6 +5,10 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Documentation
+
+- M3.R: `v0.3.0` released on GitHub; the release step is ticked in the M3 milestone file.
+
 ## [0.3.0] - 2026-11-26
 
 The third test version: **Alerts and the Threat Coach** (milestone M3), switched on. When a risk begins (your state

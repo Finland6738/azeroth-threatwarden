@@ -23,7 +23,7 @@ goes to chat, and every Coach message shows its reason. Released as `v0.3.0`.
 The switches `alerts` and `coach` in `Core/Features.lua` stayed **off** until M3.R; every step works and is tested
 behind them (SPEC-04 §4.3).
 
-*State (2026-11-26): M3 is complete in code (steps M3.1–M3.6, offline tests in CI) and switched on for `v0.3.0` (M3.R).
+*State (2026-11-26): M3 is complete in code (steps M3.1–M3.6, offline tests in CI) and released as `v0.3.0` (M3.R).
 The exit criterion needs the game and is **open** until the owner runs [the M3 checklist](../checklists/M3.md).*
 
 ### M3.1 — Specification of alerts and Coach
@@ -147,5 +147,12 @@ The exit criterion needs the game and is **open** until the owner runs [the M3 c
 - Done when:
   - [x] The `alerts` and `coach` switches are on, the later ones off; changelog promoted, status updated; the checks are
         green.
-  - [ ] The dry run is green, and the tag `v0.3.0` and its GitHub Release (changelog section as notes, zip with only the
+  - [x] The dry run is green, and the tag `v0.3.0` and its GitHub Release (changelog section as notes, zip with only the
         addon) exist.
+- *Done (2026-11-26): `alerts` and `coach` switched on, changelog promoted and status updated (commit `ec39134`, every
+  later switch off, 936 quick tests and 957 with `--long`; the long budget test also bounds the shipped switches at 160 B
+  per tick, SPEC-01 §5.1); the dry run of the Release workflow was green; annotated tag `v0.3.0` on that commit,
+  [GitHub Release](https://github.com/Finland6738/azeroth-threatwarden/releases/tag/v0.3.0) with the changelog section
+  as notes and `AzerothThreatwarden-v0.3.0-forever.zip` (144 files, all in `AzerothThreatwarden/`;
+  `## Version: v0.3.0`). CurseForge skipped (no `CF_API_KEY`). The zip has not been installed or run in the game; the M0
+  probe and the M1, M2 and M3 checklists are still open.*
