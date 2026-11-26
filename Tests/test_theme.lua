@@ -188,6 +188,103 @@ describe("the four state tokens (ui-style 4.2)", function()
 	end)
 end)
 
+-- CIE76 distance of two tokens: how far apart two colours look.
+local function lab(token, theme)
+	local r, g, b = Th().Color(token, theme)
+	local function lin(c) if c <= 0.04045 then return c / 12.92 end return ((c + 0.055) / 1.055) ^ 2.4 end
+	r, g, b = lin(r), lin(g), lin(b)
+	local function f(t) if t > 0.008856 then return t ^ (1 / 3) end return 7.787 * t + 16 / 116 end
+	local x = f((0.4124 * r + 0.3576 * g + 0.1805 * b) / 0.95047)
+	local y = f(0.2126 * r + 0.7152 * g + 0.0722 * b)
+	local z = f((0.0193 * r + 0.1192 * g + 0.9505 * b) / 1.08883)
+	return 116 * y - 16, 500 * (x - y), 200 * (y - z)
+end
+local function distance(a, b, theme)
+	local l1, a1, b1 = lab(a, theme)
+	local l2, a2, b2 = lab(b, theme)
+	return math.sqrt((l1 - l2) ^ 2 + (a1 - a2) ^ 2 + (b1 - b2) ^ 2)
+end
+
+describe("the series tokens of the timeline (ui-style 3.5, SR-01..SR-03)", function()
+	local SERIES = { "series-1", "series-2", "series-3", "series-4", "series-5", "series-6" }
+
+	it("are six, defined by every theme", function()
+		deepEq(Th().SERIES, SERIES)
+		for _, id in ipairs(THEMES) do
+			for _, token in ipairs(SERIES) do notNil(Th().themes[id][token], id .. " " .. token) end
+		end
+	end)
+
+	it("have the values the specification writes", function()
+		local section = spec():match("### 3%.5.-\n## 4%.")
+		notNil(section)
+		local found = 0
+		for token, nebula, aurora, warden in
+			section:gmatch("\n| `(series%-%d)` | `(#%x+)`[^|]*| `(#%x+)`[^|]*| `(#%x+)`") do
+			eq(hexOf(token, "nebula"), nebula, token)
+			eq(hexOf(token, "aurora"), aurora, token)
+			eq(hexOf(token, "warden"), warden, token)
+			found = found + 1
+		end
+		eq(found, 6)
+	end)
+
+	it("reach 3:1 on bg and surface-1 in every theme (SR-01), with the numbers of the specification", function()
+		local section = spec():match("### 3%.5.-\n## 4%.")
+		for _, id in ipairs(THEMES) do
+			for _, token in ipairs(SERIES) do
+				truthy(worst({ token }, { "bg", "surface-1" }, id) >= 3, id .. " " .. token)
+			end
+		end
+		local found = 0
+		for token, nebula, aurora, warden in
+			section:gmatch("\n| `(series%-%d)` | `#%x+` %((%d+,%d+)%) | `#%x+` %((%d+,%d+)%) | `#%x+` %((%d+,%d+)%)") do
+			for id, text in pairs({ nebula = nebula, aurora = aurora, warden = warden }) do
+				eq(worst({ token }, { "bg", "surface-1" }, id), tonumber((text:gsub(",", "."))), id .. " " .. token)
+			end
+			found = found + 1
+		end
+		eq(found, 6)
+	end)
+
+	it("look apart from the four state hues and from each other (SR-02)", function()
+		for _, id in ipairs(THEMES) do
+			for i, token in ipairs(SERIES) do
+				for _, state in ipairs(STATES) do
+					truthy(distance(token, state, id) >= 30, id .. " " .. token .. " " .. state)
+				end
+				for j = i + 1, #SERIES do
+					truthy(distance(token, SERIES[j], id) >= 30, id .. " " .. token .. " " .. SERIES[j])
+				end
+			end
+		end
+	end)
+end)
+
+describe("a pooled region painted again (Theme.Paint)", function()
+	it("keeps one colour only, which follows the theme", function()
+		local f = CreateFrame("Frame")
+		local t = f:CreateTexture()
+		Th().Paint(t, "tint", "state-danger")
+		Th().Paint(t, "fill", "series-2", 0.5)
+		deepEq(t._vertex, { 1, 1, 1, 1 }, "the old tint is taken off")
+		truthy(Th().Apply("aurora"))
+		local r, g, b = Th().Color("series-2", "aurora")
+		near(t._texture[1], r, 1e-6); near(t._texture[2], g, 1e-6); near(t._texture[3], b, 1e-6)
+		near(t._texture[4], 0.5, 1e-6)
+		Th().Paint(t, "tint", "series-3")
+		t._texture = "an image"
+		truthy(Th().Apply("warden"))
+		eq(t._texture, "an image", "the old fill does not come back")
+		near3(t, "series-3", "warden")
+	end)
+
+	it("is told by /atw debug whether the client has Line regions", function()
+		truthy(Th().Probes().lines)
+		contains(table.concat(Th().DebugLines(), "\n"), "line regions yes")
+	end)
+end)
+
 describe("changing theme without /reload", function()
 	it("recolours every registered region at once", function()
 		local f = CreateFrame("Frame")

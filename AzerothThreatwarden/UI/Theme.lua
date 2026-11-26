@@ -1,5 +1,5 @@
--- Theme: the tokens of docs/specs/ui-style.md section 4 in three themes (Nebula, Aurora, Warden), the four state tokens
--- of the threat (the same in every theme), the registry of tinted regions, font objects, the Px() helper and the 9-slice
+-- Theme: the tokens of docs/specs/ui-style.md sections 3.5 and 4 in three themes (Nebula, Aurora, Warden), the four
+-- state tokens of the threat (the same in every theme), the registry of tinted regions, font objects, the Px() helper and the 9-slice
 -- shapes. Lua 5.1; UI only, no game data. This is the only file of the addon that writes a colour (tools/check_addon.py).
 -- Adapted from Azeroth Accord (UI/Theme.lua, itself from Finland Dragon Credit Points), same owner, GPL-3.0 (ADR 0012).
 -- Changes: the Warden theme takes the place of Accord's, Theme.STATE, the compact fonts, and every client call through
@@ -28,7 +28,11 @@ local function rgba(r, g, b, a) return { r / 255, g / 255, b / 255, a } end
 -- Token names, in the order of the spec's table. Every theme defines every one of them (tests check the parity).
 Theme.TOKENS = { "bg", "surface-1", "surface-2", "surface-3", "raised", "border-subtle", "border", "border-strong",
 	"text-1", "text-2", "text-3", "on-accent", "accent", "accent-hover", "accent-text", "accent-2", "neon", "neon-core",
-	"ok", "warn", "err", "highlight", "scrim", "grad-1", "grad-2", "grad-3", "grad-4" }
+	"ok", "warn", "err", "highlight", "scrim", "grad-1", "grad-2", "grad-3", "grad-4",
+	"series-1", "series-2", "series-3", "series-4", "series-5", "series-6" }
+-- The lines of the Threat Timeline (ui-style 3.5, SR-01..SR-03): at least 3:1 on bg and surface-1, far from the state
+-- hues and from each other. The player is always series-1.
+Theme.SERIES = { "series-1", "series-2", "series-3", "series-4", "series-5", "series-6" }
 
 local function lightBorders(r, g, b) return rgba(r, g, b, .07), rgba(r, g, b, .13), rgba(r, g, b, .24) end
 
@@ -44,6 +48,8 @@ Theme.themes = {
 		ok = hex("#46C28F"), warn = hex("#F2B33D"), err = hex("#FF6369"),
 		highlight = rgba(255, 255, 255, .06), scrim = rgba(5, 2, 10, .72),
 		["grad-1"] = hex("#FC8C46"), ["grad-2"] = hex("#EE4662"), ["grad-3"] = hex("#9A2A9A"), ["grad-4"] = hex("#702AA8"),
+		["series-1"] = hex("#4CD7F6"), ["series-2"] = hex("#B79CFF"), ["series-3"] = hex("#FF79C6"),
+		["series-4"] = hex("#D4E157"), ["series-5"] = hex("#4A6CFF"), ["series-6"] = hex("#F1F1F1"),
 	},
 	aurora = {
 		name = "Aurora", dark = false,
@@ -55,6 +61,8 @@ Theme.themes = {
 		ok = hex("#1B7A50"), warn = hex("#8F5B00"), err = hex("#C0262D"),
 		highlight = rgba(255, 255, 255, .6), scrim = rgba(11, 27, 43, .45),
 		["grad-1"] = hex("#0054B6"), ["grad-2"] = hex("#007EA8"), ["grad-3"] = hex("#00A89A"), ["grad-4"] = hex("#70C446"),
+		["series-1"] = hex("#007EC7"), ["series-2"] = hex("#7C2BD9"), ["series-3"] = hex("#B5127B"),
+		["series-4"] = hex("#5C6B00"), ["series-5"] = hex("#1A2F8F"), ["series-6"] = hex("#0F1720"),
 	},
 	warden = {   -- from the palette of the logo (assets/logo-source.webp), docs/specs/ui-style.md 4.1
 		name = "Warden", dark = true,
@@ -67,6 +75,8 @@ Theme.themes = {
 		ok = hex("#5CCB8D"), warn = hex("#F2B33D"), err = hex("#FF6B5E"),
 		highlight = rgba(255, 255, 255, .06), scrim = rgba(2, 9, 12, .72),
 		["grad-1"] = hex("#D9B57A"), ["grad-2"] = hex("#A8D9A0"), ["grad-3"] = hex("#5FAE86"), ["grad-4"] = hex("#1F6B5C"),
+		["series-1"] = hex("#4CD7F6"), ["series-2"] = hex("#B79CFF"), ["series-3"] = hex("#FF79C6"),
+		["series-4"] = hex("#D4E157"), ["series-5"] = hex("#4A6CFF"), ["series-6"] = hex("#F1F1F1"),
 	},
 }
 do
@@ -182,6 +192,26 @@ function Theme.TextRGB(region, r, g, b) return add(region, "rgb", nil, nil, r, g
 function Theme.ClassText(region, r, g, b) return add(region, "class", nil, nil, r, g, b) end
 -- A free function fn(region, themeId) that sets whatever a token cannot (a gradient, a blend mode); runs now and on Apply.
 function Theme.Call(region, fn) return add(region, "fn", nil, nil, nil, nil, nil, fn) end
+
+-- The one colour of a region that a pool reuses for different things (the chart of UI/Timeline.lua): kind "fill" paints
+-- it as a solid colour (SetColorTexture), kind "tint" colours its white image (SetVertexColor). Either replaces whatever
+-- the region showed before, so a theme change never brings an old colour back. Nothing is allocated once the region is
+-- known.
+function Theme.Paint(region, kind, token, alpha)
+	local wanted = kind == "fill" and "color" or "vertex"
+	local list = registry[region]
+	if list then
+		for i = 1, #list do
+			local k = list[i].kind
+			if k == "color" or k == "vertex" then
+				list[i].kind = wanted
+				break
+			end
+		end
+	end
+	if wanted == "color" then region:SetVertexColor(1, 1, 1, 1) end   -- a tint left on the region would multiply the fill
+	return add(region, wanted, token, alpha)
+end
 
 function Theme.Count()
 	local n = 0
@@ -428,6 +458,7 @@ function Theme.Probes()
 	local tex = probe.texture
 	res.slicing = tex.SetTextureSliceMargins ~= nil
 	res.addBlend = tex.SetBlendMode ~= nil
+	res.lines = probe.CreateLine ~= nil   -- the Line regions of the timeline (SPEC-05 §4.8)
 	res.pixel = Theme.PixelSize()
 	local parent = Compat.UIParent()
 	res.scale = parent and parent:GetEffectiveScale() or 1
@@ -455,8 +486,8 @@ function Theme.DebugLines()
 		("font objects: %d, using the game's font: %d"):format(total, fallbacks),
 		("registered regions: %d, repaint failures: %d%s"):format(Theme.Count(), Theme.applyFailures or 0,
 			Theme.lastFailure and (" (last: " .. Theme.lastFailure .. ")") or ""),
-		("client: 9-slice %s, blend modes %s; one pixel is %.4f UI units at scale %.2f"):format(yesNo(p.slicing),
-			yesNo(p.addBlend), p.pixel, p.scale),
+		("client: 9-slice %s, blend modes %s, line regions %s; one pixel is %.4f UI units at scale %.2f"):format(
+			yesNo(p.slicing), yesNo(p.addBlend), yesNo(p.lines), p.pixel, p.scale),
 		("textures the client refused: %d"):format(p.texturesRefused),
 	}
 end

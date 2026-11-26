@@ -233,6 +233,7 @@ Compat.APIS = {
 	{ id = "ui.SlashCmdList", paths = { "SlashCmdList" }, check = "read", since = "M1", probe = "game" },
 	{ id = "ui.ClassColor", paths = { "C_ClassColor.GetClassColor" }, check = "exists", since = "M2", probe = "-" },
 	{ id = "ui.PlaySound", paths = { "PlaySound", "C_Sound.PlaySound" }, check = "exists", since = "M3", probe = "-" },
+	{ id = "ui.CursorPosition", paths = { "GetCursorPosition" }, check = "exists", since = "M5", probe = "game" },
 }
 
 local apiById = {}
@@ -600,6 +601,17 @@ function Compat.PhysicalScreenHeight()
 	local ok, _, height = pcall(fn)
 	if ok and not Compat.IsSecret(height) and type(height) == "number" and height > 0 then return height end
 	return nil
+end
+
+-- Where the pointer is, in the pixels of the screen (GetCursorPosition): x, y, or nil when the client cannot say or
+-- hides it. A frame's own coordinates are these divided by its effective scale. Allocation-free: it runs while the pointer
+-- is over the timeline (SPEC-05 §4.8). How it follows the UI and window scale is [to be tried in game].
+function Compat.CursorPosition()
+	local fn = Resolve("GetCursorPosition")
+	if type(fn) ~= "function" then return nil end
+	local ok, x, y = pcall(fn)
+	if not ok or IsSecret(x) or IsSecret(y) or not plainNumber(x) or not plainNumber(y) then return nil end
+	return x, y
 end
 
 -- A colour object for the widget methods that want one (SetGradient); a plain table when the client has no CreateColor.

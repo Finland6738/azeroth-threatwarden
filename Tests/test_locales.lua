@@ -14,7 +14,8 @@ local SAME = {
 		MON_TIME = true, ROLE_TANK = true, TIP_TAGGED = true, TIP_THREAT = true, MODULE_DEMO = true, SET_MONITOR = true, SET_HERTZ = true,
 		SET_SECONDS = true, SET_COACH = true, REPORT_TANK_CHANGE = true, REPORT_WITH_POINTS = true,
 		REPORT_ALERT_KIND = true, REPORT_ALERT_AGGRO = true, REPORTS_KB = true, REPORTS_MB = true,
-		REPORTS_MB_WHOLE = true, REPORTS_TIP_LINE = true, TIMELINE_STATE = true, TIMELINE_WITH = true },
+		REPORTS_MB_WHOLE = true, REPORTS_TIP_LINE = true, TIMELINE_STATE = true, TIMELINE_WITH = true,
+		TIMELINE_PERCENT = true, TIMELINE_GROUP = true },
 }
 
 -- The checks, as functions that return a list of problems: the group at the end proves they find them. -----------

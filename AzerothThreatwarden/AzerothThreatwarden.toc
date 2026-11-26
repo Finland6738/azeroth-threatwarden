@@ -59,5 +59,6 @@ UI\DiagnosticsBox.lua
 UI\Window.lua
 UI\Launcher.lua
 UI\Settings.lua
+UI\Timeline.lua
 UI\Reports.lua
 UI\About.lua

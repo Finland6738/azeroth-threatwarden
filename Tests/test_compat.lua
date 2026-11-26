@@ -20,7 +20,7 @@ local SPEC_IDS = {
 	"time.After", "time.NewTicker", "time.NewTimer", "time.ProfileStop", "addon.Metadata", "addon.Memory",
 	"addon.Framerate", "addon.ErrorHandler", "ui.Reload", "ui.CreateFrame", "ui.CreateFont", "ui.CreateColor",
 	"ui.ScreenSize",
-	"ui.SettingsPanel", "ui.SpecialFrames", "ui.SlashCmdList", "ui.ClassColor", "ui.PlaySound",
+	"ui.SettingsPanel", "ui.SpecialFrames", "ui.SlashCmdList", "ui.ClassColor", "ui.PlaySound", "ui.CursorPosition",
 }
 
 -- What the mock client does not imitate yet (Tests/mock headers): reported missing, never raised.
@@ -662,5 +662,40 @@ describe("the zone, the instance and the creature number (M4.2, SPEC-02 §4.1)",
 			"PLAYER_ENTERING_WORLD" }) do
 			if Mock.validEvents then truthy(Mock.validEvents[event], event) end
 		end
+	end)
+end)
+
+describe("the pointer (Compat.CursorPosition, SPEC-05 §4.8)", function()
+	it("gives the screen pixels of the pointer", function()
+		Mock.cursor.x, Mock.cursor.y = 640.5, 12
+		deepEq({ C().CursorPosition() }, { 640.5, 12 })
+		eq(C().ApiState("ui.CursorPosition"), "available")
+	end)
+
+	it("answers nothing when the client has no function, errors, hides or garbles it", function()
+		Mock.cursor.x = Mock.Secret("number")
+		isNil(C().CursorPosition())
+		Mock.cursor.x = "here"
+		isNil(C().CursorPosition())
+		Mock.cursor.x = 0 / 0
+		isNil(C().CursorPosition())
+		GetCursorPosition = function() error("restricted") end
+		isNil(C().CursorPosition())
+		T.boot(function(M) M.Remove("GetCursorPosition") end)
+		isNil(C().CursorPosition())
+		eq(C().ApiState("ui.CursorPosition"), "missing")
+		eq(#Mock.errors, 0)
+	end)
+
+	it("allocates nothing", function()
+		Mock.cursor.x, Mock.cursor.y = 1, 2
+		C().CursorPosition()
+		collectgarbage("collect")
+		collectgarbage("stop")
+		local before = collectgarbage("count")
+		for _ = 1, 200 do C().CursorPosition() end
+		local grown = (collectgarbage("count") - before) * 1024
+		collectgarbage("restart")
+		truthy(grown < 512, "bytes: " .. grown)
 	end)
 end)

@@ -523,8 +523,8 @@ end
 Timeline.Column = column
 
 -- Per series of `series` (default the model's) and column: the first, last, lowest and highest reading (positions in
--- the series' rows, 0 for none; the lowest and highest are the earliest of equals) and `cut` when a segment inside the
--- column is absent. Writes into `out` (reused: no table made for a view of the same width after the first).
+-- the series' rows, 0 for none; the lowest and highest are the earliest of equals), `cut` when a segment inside the
+-- column is absent and `dash` when one is an estimate. Writes into `out` (reused: no table made for a view of the same width after the first).
 function Timeline.View(model, a, b, buckets, series, out)
 	out = out or {}
 	a, b = Timeline.Clamp(model, a, b)
@@ -539,12 +539,12 @@ function Timeline.View(model, a, b, buckets, series, out)
 		local u = series[j]
 		local col = out[j]
 		if not col then
-			col = { first = {}, last = {}, lo = {}, hi = {}, cut = {} }
+			col = { first = {}, last = {}, lo = {}, hi = {}, cut = {}, dash = {} }
 			out[j] = col
 		end
 		col.u = u
-		local first, lastc, lo, hi, cut = col.first, col.last, col.lo, col.hi, col.cut
-		for c = 1, buckets do first[c], lastc[c], lo[c], hi[c], cut[c] = 0, 0, 0, 0, false end
+		local first, lastc, lo, hi, cut, dash = col.first, col.last, col.lo, col.hi, col.cut, col.dash
+		for c = 1, buckets do first[c], lastc[c], lo[c], hi[c], cut[c], dash[c] = 0, 0, 0, 0, false, false end
 		local se = model.units[u]
 		if se then
 			local rows, segs = se.rows, se.segs
@@ -565,7 +565,8 @@ function Timeline.View(model, a, b, buckets, series, out)
 					local p = dp[i]
 					if p < dp[rows[lo[c]]] then lo[c] = k end
 					if p > dp[rows[hi[c]]] then hi[c] = k end
-					if segs[k] == "none" then cut[c] = true end
+					local kind = segs[k]
+					if kind == "none" then cut[c] = true elseif kind == "dashed" then dash[c] = true end
 				end
 				lastc[c] = k
 			end
@@ -851,6 +852,7 @@ function Timeline.DebugLines()
 			model.rows, model.ne, #model.series, #model.lanes, model.outcome,
 			st.ms and ("%.1f ms"):format(st.ms) or "unknown ms", st.frames)
 	end
+	if Timeline.PoolLines then Timeline.PoolLines(lines) end   -- the widget's (UI/Timeline.lua)
 	if Timeline.lastError then lines[#lines + 1] = "last build error: " .. Timeline.lastError end
 	return lines
 end

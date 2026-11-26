@@ -1,6 +1,7 @@
 -- Adapted from Azeroth Accord (Tests/mock/25_frames_more.lua and 26_ui_textures.lua), same owner, GPL-3.0 (ADR 0012).
--- Mock client, part 4b: the texture methods of the themed UI, colour objects, the screen size, and Show / Hide that run
--- the hooked scripts and reach the shown children, added to the generic widget of 20_frames.lua.
+-- Mock client, part 4b: the texture methods of the themed UI, colour objects, the screen size, Line regions, the
+-- pointer, and Show / Hide that run the hooked scripts and reach the shown children, added to the generic widget of
+-- 20_frames.lua.
 --
 -- Imitates (dump: ../WoW-Addons/docs/api.json, Texture / TextureBase and ScriptRegion API): SetTextureSliceMargins,
 -- GetTextureSliceMargins, SetTextureSliceMode, SetSnapToPixelGrid, SetTexelSnappingBias, and the globals CreateColor,
@@ -21,6 +22,26 @@ function Widget:SetHorizTile(v) self._horizTile = v and true or false end
 function Widget:SetFormattedText(format, ...) self:SetText(string.format(format, ...)) end
 
 Enum.UITextureSliceMode = { Stretched = 1, Tiled = 0 }
+
+-- Line regions (dump: SimpleFrameAPI:CreateLine, SimpleLineAPI SetStartPoint / SetEndPoint / SetThickness; a Line is
+-- coloured like a texture). The mock keeps the points as the addon gave them. A setup may set `Widget.CreateLine = nil`
+-- (getmetatable(UIParent).__index) to imitate a client without them.
+function Widget:CreateLine(name, layer)
+	local l = self:CreateTexture(name, layer)
+	l._type = "Line"
+	return l
+end
+function Widget:SetStartPoint(relativePoint, relativeTo, x, y) self._start = { relativePoint, relativeTo, x or 0, y or 0 } end
+function Widget:GetStartPoint() if self._start then return unpack(self._start) end end
+function Widget:SetEndPoint(relativePoint, relativeTo, x, y) self._end = { relativePoint, relativeTo, x or 0, y or 0 } end
+function Widget:GetEndPoint() if self._end then return unpack(self._end) end end
+function Widget:SetThickness(t) self._thickness = t end
+function Widget:GetThickness() return self._thickness end
+function Widget:SetDrawLayer(layer, sub) self._layer, self._sublevel = layer, sub end
+
+-- The pointer in screen pixels (dump: Input.GetCursorPosition); a test moves it by writing Mock.cursor.
+Mock.cursor = { x = 0, y = 0 }
+function GetCursorPosition() return Mock.cursor.x, Mock.cursor.y end
 
 -- A scroll frame keeps the offset the addon gave it.
 function Widget:SetVerticalScroll(v) self._vscroll = v end

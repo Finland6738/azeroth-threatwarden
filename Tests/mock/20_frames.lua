@@ -285,7 +285,7 @@ for _, name in ipairs({
 	"SetMovable", "SetResizable", "SetClampedToScreen", "SetToplevel", "RegisterForDrag", "RegisterForClicks",
 	"StartMoving", "StopMovingOrSizing", "SetUserPlaced", "Raise", "Lower", "SetFixedFrameStrata", "SetFixedFrameLevel",
 	"EnableKeyboard", "SetHitRectInsets", "SetJustifyV", "SetWordWrap", "SetShadowColor", "SetShadowOffset",
-	"SetNonSpaceWrap", "SetMaxLines", "SetBlendMode", "SetDesaturated", "SetDrawLayer", "SetGradient",
+	"SetNonSpaceWrap", "SetMaxLines", "SetBlendMode", "SetDesaturated", "SetGradient",
 	"SetMaskTexture", "SetRotation", "SetMaxLetters", "SetMultiLine", "SetNumeric", "SetOrientation", "SetValueStep",
 	"SetObeyStepOnDrag", "SetStatusBarTexture", "SetStatusBarColor", "SetDisabledFontObject",
 	"SetHighlightFontObject", "SetPushedTextOffset", "SetCheckedTexture", "SetDisabledCheckedTexture",

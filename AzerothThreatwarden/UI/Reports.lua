@@ -3,7 +3,9 @@
 --
 -- A header with the use of the store (an estimate), the list of the recordings (newest first, with badges and the
 -- player's worst state), and under it the report of the recording clicked, built in slices by Data/Report.lua: every
--- metric with its category marker and, in its tooltip, the category and the reason. Delete asks twice and is for
+-- metric with its category marker and, in its tooltip, the category and the reason. With the `timeline` switch a
+-- *Timeline* card follows the head card (UI/Timeline.lua, SPEC-05 §4.8): built after the report, in slices; with the
+-- `replay` switch too, a click on it asks for the replay at that time. Delete asks twice and is for
 -- closed recordings. Empty: *No recordings yet* and why recording is off or would not start. Read-only data are shown
 -- and never changed. Nothing here is protected, so the tab works in combat too.
 --
@@ -13,7 +15,7 @@
 --   Reports.EmptyReason()             why the list is empty, nil when recording is on and would start
 --
 -- Bus (registered when the view is built): SESSIONS_CHANGED, SESSION_STARTED, SESSION_ENDED, REPORT_REQUESTED,
--- CONFIG_CHANGED, COMBAT_ENDED. Rows and cards are pooled: nothing new is made for a recording already shown.
+-- CONFIG_CHANGED, COMBAT_ENDED; it emits REPLAY_REQUESTED(id, t). Rows and cards are pooled: nothing new is made for a recording already shown.
 local ADDON_NAME, ns = ...
 ns = ns or {}
 ns.modules = ns.modules or {}
@@ -50,6 +52,8 @@ local function storage() return ns.Storage end
 local function config() return ns.Config end
 local function readOnly() return config() ~= nil and config():IsReadOnly("account") end
 local function recordingOn() return ns.Features ~= nil and ns.Features.On("recording") end
+local function timelineOn() return ns.Features ~= nil and ns.Features.On("timeline") end
+local function replayOn() return ns.Features ~= nil and ns.Features.On("replay") end
 
 ---------------------------------------------------------------------------------------------------------------------
 -- Words
@@ -406,6 +410,31 @@ local function headCard(view)
 	return card
 end
 
+-- The *Timeline* card: the chart of the whole recording with the default series, the holder lane and the events.
+local function timelineCard(view)
+	local card = ns.Settings.StackCard(view.report.child)
+	ns.Settings.CardText(card, "H2", "text-1", L.TIMELINE_TITLE, 0)
+	card.message = ns.Settings.CardText(card, "BodyMedium", "text-2", "", 8)
+	card.chart = ns.Timeline.Widget(card, { zoom = false, onSeek = function(t)
+		if replayOn() and view.selected and ns.Bus then ns.Bus.Emit("REPLAY_REQUESTED", view.selected, t) end
+	end })
+	card:Add(card.chart, 8, { stretch = true })
+	card.hint = ns.Settings.CardText(card, "Small", "text-3", L.TIMELINE_CARD_HINT, 6)
+	return card
+end
+
+local function paintTimeline(view)
+	local card = view.timeline
+	local model = view.model
+	local message = view.modelProblem and L.TIMELINE_FAILED or (not model and L.TIMELINE_BUILDING) or nil
+	card.message:SetText(message or "")
+	card.message:SetShown(message ~= nil)
+	if card.chart.model ~= model then card.chart:SetModel(model) end
+	card.chart:SetShown(model ~= nil)
+	card.hint:SetShown(model ~= nil and replayOn())
+	card:Show()
+end
+
 local function headerOf(view, id)
 	for _, h in ipairs(view.headers) do
 		if h.id == id then return h end
@@ -435,9 +464,16 @@ local function paintReport(view)
 	local cards = view.report.cards
 	for i = #cards, 1, -1 do cards[i] = nil end
 	cards[1] = head
+	if report and timelineOn() then
+		if not view.timeline then view.timeline = timelineCard(view) end
+		paintTimeline(view)
+		cards[#cards + 1] = view.timeline
+	elseif view.timeline then
+		view.timeline:Hide()
+	end
 	view.fight:SetShown(report ~= nil)
 	if report then
-		cards[2] = view.fight
+		cards[#cards + 1] = view.fight
 		for i, row in ipairs(view.fight.rows) do
 			local c = report.rows[ns.Report.SESSION_ROWS[i]]
 			if c then paintMetric(row, report, c) else row:Hide() end
@@ -559,6 +595,7 @@ function Reports.Build(parent)
 		if self.selected and not headerOf(self, self.selected) and self.problem ~= "damaged"
 			and self.building ~= self.selected then
 			self.selected, self.data, self.problem = nil, nil, nil
+			self.model, self.modelProblem = nil, nil
 			disarm(self)
 		end
 		for i, h in ipairs(self.headers) do
@@ -591,6 +628,7 @@ function Reports.Build(parent)
 		self.buildToken = self.buildToken + 1
 		local mine = self.buildToken
 		self.data, self.problem, self.building = nil, nil, id
+		self.model, self.modelProblem = nil, nil
 		paintReport(self)
 		self:Layout()
 		ns.Report.Build(id, function(report, why)
@@ -598,8 +636,20 @@ function Reports.Build(parent)
 			self.building = nil
 			self.data, self.problem = report, why
 			if why == "unknown" then self.selected, self.problem = nil, nil end   -- deleted while building
+			if report and timelineOn() then self:BuildTimeline(id, mine) end       -- after the report
 			if self:IsVisible() then self:Refresh() end
 		end)
+	end
+
+	-- The model of the timeline, built in slices by Data/Timeline.lua; a later selection wins.
+	function view:BuildTimeline(id, mine)
+		local waiting = false
+		ns.Timeline.Build(id, function(model, why)
+			if mine ~= self.buildToken or self.selected ~= id then return end
+			self.model, self.modelProblem = model, why
+			if waiting and self:IsVisible() then self:Refresh() end
+		end)
+		waiting = true
 	end
 
 	-- Opens the report of `id` under the list (nil closes it).
@@ -611,6 +661,7 @@ function Reports.Build(parent)
 			return
 		end
 		self.selected, self.data, self.problem, self.building = id, nil, nil, nil
+		self.model, self.modelProblem = nil, nil
 		self.buildToken = self.buildToken + 1
 		self.report:SetVerticalScroll(0)
 		self:Refresh()

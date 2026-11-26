@@ -38,7 +38,7 @@ describe("the report (SPEC-01 §9)", function()
 
 	it("lists what Compat found: every API, the capabilities and the restrictions", function()
 		local text = D().Report()
-		contains(text, "61 available, 1 missing, 0 restricted, 0 error")
+		contains(text, "62 available, 1 missing, 0 restricted, 0 error")
 		contains(text, "threat.Detailed: available")
 		contains(text, "ui.ClassColor: missing")
 		contains(text, "secret.HasSecretRestrictions: available = false")

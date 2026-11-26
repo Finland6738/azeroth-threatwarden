@@ -7,6 +7,16 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
+- M5.3: the **chart of the Threat Timeline** (`UI/Timeline.lua`), still behind the `timeline` switch, which stays off
+  until `v0.5.0`: nothing of it is visible yet. With the switch on, the report of the Reports tab gets a *Timeline*
+  card: the series of up to six units (the player first), lines solid between readings taken at the recording's pace and
+  dashed as estimates, gaps as dashed bands with their reason, out of combat as a plain band, the thresholds and the
+  100 % line, changes of enemy, who held it, state lanes, grouped event markers and a time axis. The tooltip gives the
+  category of every value and never a number between two readings; a click asks for the replay (when it exists), a drag
+  selects an interval with its summary, the right button clears it. Regions are pooled and capped (3 000 lines, 1 200
+  textures): past a cap the columns widen instead of leaving data out. A client without line regions shows dots and
+  bars. Six series colours per theme (ui-style 3.5); `Compat.CursorPosition`; a pool line in `/atw debug`. Not tried in
+  the real client.
 - M5.2: the **model of the Threat Timeline** (`Data/Timeline.lua`), behind the `timeline` switch, which stays off until
   `v0.5.0`: nothing of it is visible yet. It reads a recorded fight and keeps, per unit, the readings with a number,
   the line between two of them as solid (taken at the recording's pace), dashed (an estimate, up to 10 s with nothing

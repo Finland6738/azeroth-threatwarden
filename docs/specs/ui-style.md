@@ -134,15 +134,29 @@ La timeline e la finestra del replay seguono la disposizione **ampia** (Accord �
 | Comandi del replay | pulsanti quadrati da 28 pt con le icone nuove `play`, `pause`, `step-back`, `step-forward`, `skip-back`, `skip-forward` (M5.5); la velocità con `Widgets.Segmented` |
 
 **Token delle serie.** `series-1`…`series-6` sono token **dei temi** (come `accent`, non come gli stati): ogni tema li
-definisce, più chiari in Nebula e Warden, più scuri in Aurora. Regole (le controllerà `Tests/test_theme.lua` da M5.3):
+definisce, più chiari in Nebula e Warden, più scuri in Aurora. Regole (le controlla `Tests/test_theme.lua`, M5.3):
 
 - **SR-01** MUST: contrasto ≥ 3:1 su `bg` e `surface-1` in ogni tema (elementi non testuali);
 - **SR-02** MUST: tinte lontane dai quattro token di stato (che restano per stati e marcatori) e fra loro;
 - **SR-03** MUST: una serie non si riconosce mai dal solo colore: legenda, nome alla fine della linea quando c'è posto
   e tooltip la nominano (come ST-02 per gli stati).
 
-M5.3 sceglie i valori e li scrive qui con i contrasti calcolati; la tavolozza per il daltonismo (M8) potrà cambiarli
-senza cambiare queste regole.
+Valori scelti in M5.3 (fra parentesi il contrasto peggiore su `bg` e `surface-1`, SR-01; Nebula e Warden hanno gli
+stessi colori):
+
+| Token | Nebula | Aurora | Warden | Tinta |
+|---|---|---|---|---|
+| `series-1` | `#4CD7F6` (11,42) | `#007EC7` (4,09) | `#4CD7F6` (10,19) | celeste: sempre il giocatore |
+| `series-2` | `#B79CFF` (8,51) | `#7C2BD9` (6,14) | `#B79CFF` (7,59) | viola |
+| `series-3` | `#FF79C6` (8,13) | `#B5127B` (5,90) | `#FF79C6` (7,26) | magenta |
+| `series-4` | `#D4E157` (13,59) | `#5C6B00` (5,53) | `#D4E157` (12,12) | giallo-lime, oliva sul chiaro |
+| `series-5` | `#4A6CFF` (4,51) | `#1A2F8F` (10,66) | `#4A6CFF` (4,02) | blu |
+| `series-6` | `#F1F1F1` (17,18) | `#0F1720` (16,92) | `#F1F1F1` (15,33) | bianco, quasi nero sul chiaro |
+
+Per SR-02 «lontane» vuol dire una distanza CIE76 (ΔE) di almeno **30** da ognuno dei quattro token di stato e fra due
+serie, in ogni tema: il minimo è fra la serie del giocatore e `state-unknown` in Aurora (circa 30). Se le due si
+confondono in gioco lo dice la checklist M5.6. La tavolozza per il daltonismo (M8) potrà cambiare i valori senza cambiare
+queste regole.
 
 ## 4. Il tema Warden e i token di stato
 

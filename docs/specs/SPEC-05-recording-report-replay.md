@@ -983,6 +983,39 @@ Ogni test che passa per il monitor gira sui tre esiti (`Fight.OUTCOMES`, [SPEC-0
   il modello in memoria (righe, eventi, serie, corsie, esito, millisecondi e frame della costruzione); M5.3 e M5.4
   aggiungono le loro righe.
 
+**Realizzato in M5.3** (`UI/Timeline.lua`, la card in `UI/Reports.lua`), con queste precisazioni:
+
+- `UI/Timeline.lua` completa la tabella `Timeline` di `Data/Timeline.lua`; `Timeline.Widget` risponde `nil` con
+  l'interruttore `timeline` spento. Il widget ha anche `:View()` e `opts.onView(a, b)` (lo zoom della rotella, per il
+  replay), `opts.zoom = false` e `opts.height`; `:Layout(w, h)` restituisce l'altezza usata, **maggiore** di `h` quando
+  le corsie lascerebbero al grafico meno di 80 pt.
+- L'area del puntatore copre grafico, corsie e traccia degli eventi. Il **riepilogo** di una selezione è il tooltip
+  mentre il puntatore è dentro la selezione (e appena la si traccia), con *Right-click to clear the selection*; ogni sua
+  parte dice la categoria. Un trascinamento più corto di 1 s vale come clic.
+- Il tooltip ha al più le 16 righe del tooltip dell'addon: ora, mob, modalità, chi lo tiene, una riga per serie (lettura
+  e stato, ognuno con la categoria) e per corsia, i marcatori, poi *and N more*. Fra due letture di un tratto pieno più
+  distanti di 4 px dice *Between … and …* (rilevata), mai un numero in mezzo.
+- **Tratti**: fra due pezzi non uniti da un tratto pieno restano almeno `Timeline.BREAK_PX` = 3 px (le estremità
+  disegnate si spostano di al più 1,5 px). Una colonna con un buco o una stima al suo interno si divide in **due** pezzi
+  (`Timeline.View` aggiunge `dash` a `cut`): la prima corsa di tratti pieni sul bordo sinistro, tutto il resto sul
+  destro, ognuno con la sua barra minima–massima. Mai più di due, così colonne più larghe danno sempre meno regioni. Un tratteggio ha sempre uno spazio
+  alle due estremità; sotto i 7 px è un solo trattino lungo metà del tratto, sotto `Timeline.DASH_MIN` = 3 px resta un
+  vuoto (un trattino così corto sembrerebbe pieno). Una lettura senza tratti pieni accanto è un punto; i tratti che
+  entrano o escono dalla vista si tagliano al bordo.
+- **Bande e corsie** hanno la risoluzione di mezza colonna: bande di buco più vicine si uniscono e ognuna è larga almeno
+  quanto la risoluzione; sotto gli 8 px la banda mostra una sola striscia con uno spazio ai lati, perché la texture
+  `dash` sembrerebbe piena. In una corsia resta un pezzo per mezza colonna, vince DANGER, poi UNKNOWN, WARNING, SAFE;
+  buchi dell'unità e di tutto il grafico (tranne *nessun mob*) si disegnano tratteggiati sopra. Allargando le colonne al
+  limite dei pool anche bande, corsie e icone si diradano, senza che sparisca nessun intervallo.
+- La banda *state only* di una sessione mista è `surface-3`. Nella card di una sessione mista compaiono anche le corsie
+  delle unità che hanno solo stati. Un superamento senza lettura entro `join` e senza corsia (nella card) sta in fondo al
+  grafico.
+- La card *Timeline* del report non ha lo zoom (la rotella scorre il report); il clic chiede `REPLAY_REQUESTED(id, t)`
+  solo con l'interruttore `replay`, che mostra anche la riga *Click to open the replay at that time*.
+- `Theme.Paint(region, "fill" | "tint", token, alpha)` dà il solo colore di una regione di un pool riusata. Le serie
+  seguono [ui-style §3.5](ui-style.md#35-timeline-e-replay-m5). `/atw debug` aggiunge la riga dei pool (regioni create,
+  limiti, quante volte si sono allargate le colonne, `lines`).
+
 ## 10. Piano di M5: test per step
 
 Le sessioni dei test si scrivono con il recorder vero da uno scontro scriptato (`Fight`, nei tre esiti di

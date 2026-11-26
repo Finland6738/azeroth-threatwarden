@@ -100,9 +100,17 @@ M4.R. Nothing is added to the sessions and the account schema stays 5.
   `replay` switch); `Line` regions and `GetCursorPosition` in the mock client (from the dump); the pool lines of
   `/atw debug`.
 - Done when:
-  - [ ] The chart draws every element of SPEC-05 §4.2–§4.5 with its look of ui-style §3.5 in the three themes; dashed
+  - [x] The chart draws every element of SPEC-05 §4.2–§4.5 with its look of ui-style §3.5 in the three themes; dashed
     and gap elements never look like a solid line; the pools stop at their caps without dropping data; the tooltip
     names the category of every value; nothing shows with the switch off.
+- *Done (2026-11-26, before M0.7): `UI/Timeline.lua` behind `timeline` (`Timeline.Widget` with legend, chart, lanes,
+  event track and axis; `Line` regions and textures in pools capped at 3 000 and 1 200 with wider columns past a cap; at
+  least 3 px between pieces that nothing joins, no dash shorter than visible as one; dots and bars without `CreateLine`;
+  hover, click, drag, right click, wheel and the interval summary in the tooltip); the six series colours per theme
+  (3:1, ΔE ≥ 30 from the states and each other, ui-style §3.5) and `Theme.Paint`, `lines` in the probes;
+  `Compat.CursorPosition`; the *Timeline* card of the report; `Line` regions and `GetCursorPosition` in the mock; the
+  pool line of `/atw debug`; `test_timeline_widget.lua` and cases in `test_theme.lua`, `test_reports.lua` and
+  `test_compat.lua`. Details in SPEC-05 §9. Nothing was tried in the real client.*
 - Tests: `test_timeline_widget.lua` (the layout maths, the tooltip in each category, click and drag, caps and fallback,
   no colour outside the theme), `test_theme.lua` (series tokens and contrasts), `test_reports.lua` (the card),
   `test_compat.lua` (`CursorPosition`).

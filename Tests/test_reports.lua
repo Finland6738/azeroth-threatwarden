@@ -395,3 +395,143 @@ describe("with the `reports` switch off", function()
 		isNil(R().view)
 	end)
 end)
+
+describe("the Timeline card (SPEC-05 §4.8, M5.3)", function()
+	before_boot(function(M)
+		local on = ALL()
+		on.timeline = true
+		M.features = on
+	end)
+
+	local function replayAsked()
+		local asked = {}
+		bus().On("REPLAY_REQUESTED", function(id, t) asked[#asked + 1] = { id, t } end)
+		return asked
+	end
+
+	local function click(chart, t)
+		Mock.cursor.x = Mock.ns.Timeline.X(t, chart.a, chart.b, chart.plot.width)
+		Mock.RunScript(chart.hit, "OnEnter")
+		Mock.RunScript(chart.hit, "OnMouseDown", "LeftButton")
+		Mock.RunScript(chart.hit, "OnMouseUp", "LeftButton")
+		Mock.RunScript(chart.hit, "OnLeave")
+	end
+
+	it("follows the head card with the whole fight, the holder lane and the events, without a legend", function()
+		local s = add{}
+		local view = openTab()
+		isNil(view.timeline, "no card before a recording is opened")
+		view:Select(s.id)
+		local card = view.timeline
+		truthy(card:IsShown())
+		eq(view.report.cards[1], view.head)
+		eq(view.report.cards[2], card)
+		eq(view.report.cards[3], view.fight)
+		falsy(card.message:IsShown())
+		truthy(card.chart:IsShown())
+		eq(card.chart.model.id, s.id)
+		deepEq({ card.chart:View() }, { 0, 400 })
+		eq(card.chart:GetHeight(), Mock.ns.Timeline.CARD_HEIGHT)
+		local kinds = {}
+		for i = 1, card.chart.textures.used do kinds[card.chart.textures.list[i].kind] = true end
+		truthy(kinds.holder and kinds.marker and kinds.grid)
+		falsy(kinds["legend-mark"] or kinds.lane)
+		falsy(card.chart.hit:IsMouseWheelEnabled(), "the wheel scrolls the report")
+		truthy(card:GetHeight() > Mock.ns.Timeline.CARD_HEIGHT)
+		eq(#Mock.errors, 0)
+	end)
+
+	it("is built after the report, in slices, and says so meanwhile", function()
+		local rows = {}
+		for i = 1, 40 do rows[i] = { i * 10, 1, 1, 500, "0" } end
+		local s = add{ rows = rows }
+		Mock.ns.Timeline.SLICE = 10
+		local view = openTab()
+		view:Select(s.id)
+		notNil(view.data, "the report first")
+		isNil(view.model)
+		eq(view.timeline.message:GetText(), L().TIMELINE_BUILDING)
+		falsy(view.timeline.chart:IsShown())
+		Mock.Advance(5)
+		eq(view.model.id, s.id)
+		truthy(view.timeline.chart:IsShown())
+		falsy(view.timeline.message:IsShown())
+	end)
+
+	it("lets a later selection win, and closes with the report", function()
+		local rows = {}
+		for i = 1, 40 do rows[i] = { i * 10, 1, 1, 500, "0" } end
+		local slow = add{ rows = rows }
+		local quick = add{ mob = "Pup", rows = { { 10, 1, 1, 500, "0" } } }
+		Mock.ns.Timeline.SLICE = 10
+		local view = openTab()
+		view:Select(slow.id)
+		view:Select(quick.id)
+		Mock.Advance(5)
+		eq(view.model.id, quick.id)
+		eq(view.timeline.chart.model.id, quick.id)
+		view:Select(nil)
+		falsy(view.report:IsShown())
+		view:Select(slow.id)
+		Mock.Advance(5)
+		eq(view.timeline.chart.model.id, slow.id)
+		eq(#Mock.errors, 0)
+	end)
+
+	it("says when the timeline cannot be built", function()
+		local s = add{}
+		Mock.ns.Timeline.Compute = function() error("boom") end
+		local view = openTab()
+		view:Select(s.id)
+		eq(view.timeline.message:GetText(), L().TIMELINE_FAILED)
+		falsy(view.timeline.chart:IsShown())
+		notNil(view.data, "the report stays")
+	end)
+
+	it("is not shown for a damaged or an open recording", function()
+		local s = add{}
+		s.mobs = { { name = "x" } }
+		s.cols.m = string.rep("z", #s.cols.m)
+		local view = openTab()
+		view:Select(s.id)
+		falsy(view.timeline and view.timeline:IsShown())
+		eq(#view.report.cards, 1)
+	end)
+
+	it("asks for nothing on a click while the replay is off", function()
+		local s = add{}
+		local view = openTab()
+		view:Select(s.id)
+		local asked = replayAsked()
+		click(view.timeline.chart, 200)
+		eq(#asked, 0)
+		falsy(view.timeline.hint:IsShown())
+	end)
+
+	it("asks for the replay at that time on a click, with the `replay` switch", function()
+		T.boot(function(M)
+			local on = ALL()
+			on.timeline, on.replay = true, true
+			M.features = on
+		end)
+		local s = add{}
+		local view = openTab()
+		view:Select(s.id)
+		local asked = replayAsked()
+		eq(view.timeline.hint:GetText(), L().TIMELINE_CARD_HINT)
+		truthy(view.timeline.hint:IsShown())
+		click(view.timeline.chart, 200)
+		deepEq(asked, { { s.id, 200 } })
+	end)
+
+	it("has no card with the switch off", function()
+		T.boot(function(M) M.features = ALL() end)
+		local s = add{}
+		local view = openTab()
+		view:Select(s.id)
+		isNil(view.timeline)
+		eq(view.report.cards[2], view.fight)
+		eq(Mock.ns.Timeline.regions.textures, 0)
+		isNil(Mock.ns.Timeline.Cached())
+	end)
+end)
