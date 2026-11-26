@@ -169,7 +169,8 @@ dimostrerà un modo affidabile, M0.7 aggiungerà un tipo di evento con un nuovo 
 | `CHUNK` | 256 righe o eventi | impacchettamento (SPEC-02 §4.4) |
 | durata | 6 h 37 min (`t` a 3 caratteri) | `Z t` |
 
-Una sessione non supera quindi circa **320 KB** stimati, sotto il minimo di `maxKB` (512 KB): la potatura (§2.4) può
+In M4.2 la tabella è `Session.LIMITS` di `Data/Session.lua` (il recorder ne ha bisogno prima di Storage); il
+`Storage.LIMITS` di M4.3 è la stessa tabella, con un solo posto. Una sessione non supera quindi circa **320 KB** stimati, sotto il minimo di `maxKB` (512 KB): la potatura (§2.4) può
 sempre farle posto.
 
 ### 1.8 Costo
@@ -385,6 +386,21 @@ dati attorno (±5 s); indicazione dei dati mancanti; eliminazione delle registra
 | `Data/ThreatModel.lua` (cambio) | `ThreatModel.IsStale(record, now)`: la regola di DAT-12 in una funzione | — | M4.2 |
 | `Core/Config.lua` (cambio) | schema 4 (`RECORDING_DEFAULTS`, `RECORDING`, `RECORD_WHEN`, la regola di `sessions`, la migrazione), `Config:SetAside(path, value)`, `TABS` con `reports` | — | M4.2, M4.3 |
 | `Core/Compat.lua` (cambio) | `zone.RealZoneText` (`GetRealZoneText`), lettura di `instance.Info` (tipo e difficoltà), `Unit.NpcID` dal GUID; gli eventi `UNIT_DIED`, `PLAYER_DEAD`, `PLAYER_LOGOUT`, `ENCOUNTER_START`, `ENCOUNTER_END` nella tabella di SPEC-01 §8.2 | — | M4.2 |
+
+**Realizzato in M4.2** (`Data/Session.lua`, `Data/Recorder.lua`), con queste precisazioni:
+
+- Il recorder registra i suoi ascoltatori del Bus e gli eventi del gioco al login (`PLAYER_LOGIN`) solo se gli
+  interruttori `monitor` e `recording` sono accesi; legge le impostazioni quando servono, quindi non ascolta
+  `CONFIG_LOADED`. Un interruttore spento dopo il login chiude la sessione al tick seguente.
+- `SESSIONS_CHANGED()` si emette all'apertura (una sessione nuova in `sessions`) e a ogni chiusura (tenuta o tolta).
+- La demo non parte in combattimento (SPEC-03 §5.2): chiude quindi la sessione solo durante `END_DELAY`.
+- `inst` è `nil` quando né `GetInstanceInfo` né `IsInInstance` lo dicono (sconosciuto, non `none`).
+- `COACH_TIP(nil)` non si scrive ma dimentica la regola: un consiglio che torna dopo è di nuovo un evento `H`.
+- In `buf.ev` un evento occupa **9** posti consecutivi (`t k m u v a b c n`: numeri e codici di un carattere; `n` è un
+  numero, due codici o `-1`); in `buf.p` `-1` vuol dire nessun valore. Sono i soli valori che si salvano a un
+  `/reload`.
+- Il collegamento `after` guarda la sessione interrotta (o aperta e mai finita) più recente: la sua fine è
+  `started + dur / 10`.
 
 - **Interruttori** (`Core/Features.lua`, ADR 0014): `recording` (recorder, Storage, card *Recording*) e `reports`
   (report, scheda, avviso, `/atw reports`) restano **spenti** fino a M4.R. Spento vuol dire: nessun ascoltatore e nessun

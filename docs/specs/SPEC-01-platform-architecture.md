@@ -324,8 +324,8 @@ senza firma), **assente** (si cerca a runtime). In grassetto le voci il cui comp
 | `group.Size` | `GetNumGroupMembers` | chiamata | globale | unità da leggere | M2 | P5 |
 | `group.RaidIndex` | `UnitInRaid` | esistenza | firma, risultato nilable | l'indice `raidN` del giocatore, da saltare ([SPEC-03 §1.3](SPEC-03-threat-monitor-ui.md#13-unità-osservate-e-limite-datathreatscannerlua)) | M2 | P5 |
 | `instance.InInstance` | `IsInInstance` | chiamata | firma | contesto in `/atw debug` e nelle sessioni | M1 | P3 |
-| `instance.Info` | `GetInstanceInfo` | esistenza | firma | tipo e difficoltà delle sessioni (mai il nome nel rapporto) | M4 | P3 |
-| `zone.RealZoneText` | `GetRealZoneText` | esistenza | firma `(mapID?)` | la zona di una sessione (solo nella sessione, [SPEC-02 §4.1](SPEC-02-data-model-storage.md#41-intestazione)) | M4 | — |
+| `instance.Info` | `GetInstanceInfo` | esistenza | firma | tipo e difficoltà delle sessioni (`Compat.InstanceInfo`, M4.2; mai il nome, che non si legge) | M4 | P3 |
+| `zone.RealZoneText` | `GetRealZoneText` | esistenza | firma `(mapID?)` | la zona di una sessione (`Compat.ZoneText`, M4.2; solo nella sessione, [SPEC-02 §4.1](SPEC-02-data-model-storage.md#41-intestazione)); il numero della creatura di un mob lo dà `Compat.Unit.NpcID(guid)` dal GUID già letto, senza chiamate | M4 | — |
 | `restriction.InCombatLockdown` | `C_RestrictedActions.InCombatLockdown` (o il globale `InCombatLockdown`) | chiamata | firma / globale | nessuna azione protetta in combattimento | M1 | P11 |
 | `restriction.IsActive` | `C_RestrictedActions.IsAddOnRestrictionActive` | per ogni tipo | firma | restrizioni attive (una voce `restriction.<Tipo>`) | M1 | **P11** |
 | `restriction.Types` | `Enum.AddOnRestrictionType` | lettura | assente (FrameXML) | i tipi di restrizione | M1 | **P11** |

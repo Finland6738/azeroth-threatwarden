@@ -33,7 +33,8 @@ describe("loading the addon", function()
 			"AzerothThreatwarden/Data/ThreatScanner.lua", "AzerothThreatwarden/Data/ThreatCalc.lua",
 			"AzerothThreatwarden/Data/ThreatModel.lua", "AzerothThreatwarden/Data/ThreatState.lua",
 			"AzerothThreatwarden/Data/Alerts.lua", "AzerothThreatwarden/Data/CoachRules.lua",
-			"AzerothThreatwarden/Data/Coach.lua",
+			"AzerothThreatwarden/Data/Coach.lua", "AzerothThreatwarden/Data/Session.lua",
+			"AzerothThreatwarden/Data/Recorder.lua",
 			"AzerothThreatwarden/UI/Assets.lua", "AzerothThreatwarden/UI/Theme.lua",
 			"AzerothThreatwarden/UI/Motion.lua", "AzerothThreatwarden/UI/Widgets/Core.lua",
 			"AzerothThreatwarden/UI/Widgets/Controls.lua", "AzerothThreatwarden/UI/Widgets/ThinBar.lua",
@@ -230,7 +231,33 @@ describe("a /reload", function()
 		local t = GetServerTime()
 		Mock.Relog(3600)
 		eq(GetServerTime(), t + 3600)
-		eq(AzerothThreatwardenDB.schema, 3)
+		eq(AzerothThreatwardenDB.schema, 4)
+		eq(#Mock.errors, 0)
+	end)
+end)
+
+describe("ENTERING_WORLD (M4.2, SPEC-05 §1.6)", function()
+	local seen
+	before_boot(function()
+		seen = {}
+		Mock.OnFilesLoaded(function()
+			Mock.ns.Bus.On("ENTERING_WORLD", function(...) seen[#seen + 1] = { n = select("#", ...), ... } end)
+		end)
+	end)
+
+	it("passes isInitialLogin and isReloadingUi of the game event", function()
+		eq(seen[1][1], true)
+		eq(seen[1][2], false)
+		Mock.Reload()
+		-- a new Lua state: the listener of this test is gone, so ask the world what the client sent
+		deepEq(Mock.world.entries[#Mock.world.entries], { false, true })
+	end)
+
+	it("passes nil for a flag the client does not give or hides", function()
+		Mock.Fire("PLAYER_ENTERING_WORLD", nil, Mock.Secret("boolean"))
+		local last = seen[#seen]
+		isNil(last[1])
+		isNil(last[2])
 		eq(#Mock.errors, 0)
 	end)
 end)

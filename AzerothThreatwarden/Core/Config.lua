@@ -1,4 +1,4 @@
--- Config: the two SavedVariables, their schemas (account 3, character 1), typed rules, defaults, migrations, read-only on a newer schema and damaged
+-- Config: the two SavedVariables, their schemas (account 4, character 1), typed rules, defaults, migrations, read-only on a newer schema and damaged
 -- tables set aside under `corrupt` (SPEC-02 §3, ADR 0005). Lua 5.1, no game API but Compat.ServerTime.
 -- Adapted from Azeroth Accord (Core/Config.lua), same owner, GPL-3.0 (ADR 0012). Kept from there: the copy, the rules
 -- by path checked parents first, the merge of the defaults, the migrations on a copy, read-only on a newer schema, Get
@@ -11,8 +11,9 @@
 --                                               minimap = { hide, minimapPos }, monitor = { warning, danger, rate,
 --                                               maxUnits, show, sort, pinSelf, followTargetOfTarget },
 --                                               alerts = { enabled, window, visual, sound, cooldown, others, pet },
---                                               coach = { enabled } },
---                                               corrupt = { ... } }
+--                                               coach = { enabled },
+--                                               recording = { enabled, when, rate, maxSessions, maxKB, notice } },
+--                                               sessions = { ... }, corrupt = { ... } }
 --   AzerothThreatwardenCharDB  (character) = { schema, ui = { shown, locked, scale, pos, size, lastTab, lastPage } }
 --
 -- Load() runs at ADDON_LOADED (Core/Init.lua, before Locale.Apply): the defaults are added without overwriting, old data
@@ -33,8 +34,8 @@ local type, pairs, ipairs, pcall, tostring, next, select = type, pairs, ipairs, 
 local floor, huge, abs = math.floor, math.huge, math.abs
 local concat, sort = table.concat, table.sort
 
--- The schema of each variable that this version of the addon knows (SPEC-02 §3.2, §3.3, §3.5, §3.6).
-Config.SCHEMAS = { account = 3, char = 1 }
+-- The schema of each variable that this version of the addon knows (SPEC-02 §3.2, §3.3, §3.5, §3.6, §3.7).
+Config.SCHEMAS = { account = 4, char = 1 }
 
 -- Development build. A checkout of the repository is one; the BigWigs packager comments out the block between the
 -- debug markers below in every packaged build, so a release has DEV = false (tools/check_package.py checks it).
@@ -50,7 +51,7 @@ Config.SCOPES = { "account", "char" }
 Config.LANGUAGES = { "auto", "enUS", "itIT" }
 Config.THEMES = { "nebula", "aurora", "warden" }
 Config.FONT_SOURCES = { "addon", "game" }
-Config.TABS = { "monitor", "settings" }          -- "reports" from M4
+Config.TABS = { "monitor", "settings", "reports" }   -- "reports" from M4 (shown only with its switch, UI/Window.lua)
 Config.PAGES = { "settings", "about" }
 -- The monitor (schema 2, SPEC-02 §3.5): when the window shows itself (SPEC-03 §5.1) and the list orders (§3).
 Config.SHOW_MODES = { "auto", "always", "manual" }
@@ -89,6 +90,22 @@ Config.ALERTS_DEFAULTS = {
 Config.COACH_DEFAULTS = {
 	enabled = true,
 }
+-- The recording (schema 4, SPEC-02 §3.7, SPEC-05 §1.1): when a fight is recorded, the ranges and the one place of the
+-- defaults, the proposed answers of Q8 (how many sessions and how much) and Q16 (when, how often, the notice).
+Config.RECORD_WHEN = { "group", "instance", "always" }
+Config.RECORDING = {
+	rate = { min = 1, max = 5 },              -- Hz of the recording tick
+	maxSessions = { min = 5, max = 100 },
+	maxKB = { min = 512, max = 8192 },        -- estimated KB of all the sessions
+}
+Config.RECORDING_DEFAULTS = {
+	enabled = true,
+	when = "group",
+	rate = 2,
+	maxSessions = 25,
+	maxKB = 2048,
+	notice = false,
+}
 Config.POINTS = { "TOPLEFT", "TOP", "TOPRIGHT", "LEFT", "CENTER", "RIGHT", "BOTTOMLEFT", "BOTTOM", "BOTTOMRIGHT" }
 
 -- The window: scale 50-200 % in steps of 5 %; the sizes of the two layouts (SPEC-03 §4).
@@ -119,7 +136,9 @@ Config.defaults = {
 			monitor = {},             -- filled from MONITOR_DEFAULTS below
 			alerts = {},              -- filled from ALERTS_DEFAULTS below
 			coach = {},               -- filled from COACH_DEFAULTS below
+			recording = {},           -- filled from RECORDING_DEFAULTS below
 		},
+		sessions = {},                -- the recorded sessions, the oldest first (SPEC-02 §4; their content is Storage's)
 		corrupt = {},
 	},
 	char = {
@@ -139,6 +158,7 @@ Config.defaults = {
 for key, value in pairs(Config.MONITOR_DEFAULTS) do Config.defaults.account.settings.monitor[key] = value end
 for key, value in pairs(Config.ALERTS_DEFAULTS) do Config.defaults.account.settings.alerts[key] = value end
 for key, value in pairs(Config.COACH_DEFAULTS) do Config.defaults.account.settings.coach[key] = value end
+for key, value in pairs(Config.RECORDING_DEFAULTS) do Config.defaults.account.settings.recording[key] = value end
 
 ---------------------------------------------------------------------------------------------------------------------
 -- Helpers
@@ -277,6 +297,19 @@ Config.rules = {
 	["account.settings.alerts.pet"] = { type = "boolean" },
 	["account.settings.coach"] = { type = "table", container = true },
 	["account.settings.coach.enabled"] = { type = "boolean" },
+	["account.settings.recording"] = { type = "table", container = true },
+	["account.settings.recording.enabled"] = { type = "boolean" },
+	["account.settings.recording.when"] = { type = "string", enum = Config.RECORD_WHEN },
+	["account.settings.recording.rate"] = { type = "number", integer = true, min = Config.RECORDING.rate.min,
+		max = Config.RECORDING.rate.max },
+	["account.settings.recording.maxSessions"] = { type = "number", integer = true,
+		min = Config.RECORDING.maxSessions.min, max = Config.RECORDING.maxSessions.max },
+	["account.settings.recording.maxKB"] = { type = "number", integer = true, min = Config.RECORDING.maxKB.min,
+		max = Config.RECORDING.maxKB.max },
+	["account.settings.recording.notice"] = { type = "boolean" },
+	-- Config checks only that `sessions` is a table (anything else: its type in `corrupt`, a new table); every session
+	-- is checked by Data/Storage.lua (M4.3, SPEC-02 §3.7).
+	["account.sessions"] = { type = "table", container = true },
 	["account.corrupt"] = { type = "table", container = true, keep = false, validate = isArrayOfTables,
 		fix = function(v)
 			if #v <= Config.MAX_CORRUPT then return v end
@@ -475,11 +508,14 @@ end
 -- Step 1: data without a version is version 0 and needs only the defaults and the rules, so it has nothing to do.
 -- Account step 2 (M2.6): `settings.monitor` is new, and the defaults add its keys: nothing to do either.
 -- Account step 3 (M3.2, M3.3): `settings.alerts` and `settings.coach` are new: the defaults again.
+-- Account step 4 (M4.2): `settings.recording` and `sessions` are new: the defaults again (a `sessions` already there
+-- stays as it is; Storage checks it, SPEC-05 §2.3).
 Config.migrations = {
 	account = {
 		[1] = function(db) end,
 		[2] = function(db) end,
 		[3] = function(db) end,
+		[4] = function(db) end,
 	},
 	char = {
 		[1] = function(db) end,

@@ -2,10 +2,10 @@
 --
 -- Imitates: InCombatLockdown, C_RestrictedActions.InCombatLockdown and IsAddOnRestrictionActive,
 -- Enum.AddOnRestrictionType, C_CombatLog.IsCombatLogRestricted, C_DamageMeter.IsDamageMeterAvailable, IsInInstance,
--- GetInstanceInfo, and the events PLAYER_REGEN_DISABLED, PLAYER_REGEN_ENABLED, ADDON_RESTRICTION_STATE_CHANGED,
+-- GetInstanceInfo, GetRealZoneText, and the events PLAYER_REGEN_DISABLED, PLAYER_REGEN_ENABLED, ADDON_RESTRICTION_STATE_CHANGED,
 -- ENCOUNTER_START, ENCOUNTER_END.
 -- Dump (../WoW-Addons/docs/api.json, build 70170): systems RestrictedActions, CombatLog, DamageMeter, Instance, Unit,
--- EncounterInfo; InCombatLockdown is in `globals`. The values of Enum.AddOnRestrictionType and
+-- EncounterInfo, ZoneScript (GetRealZoneText); InCombatLockdown is in `globals`. The values of Enum.AddOnRestrictionType and
 -- Enum.AddOnRestrictionState are not in the dump (P11): the ones below are the retail names and are **invented** for
 -- Forever; the addon must read them at run time. CombatLogGetCurrentEventInfo is absent from the dump and from the mock.
 --
@@ -15,6 +15,7 @@
 --   Mock.combat.SetRestriction("Encounter", true)
 --   Mock.combat.StartEncounter(101, "Test Boss", 1, 5) / Mock.combat.EndEncounter(true)
 --   Mock.instance.Set{ type = "party", difficultyID = 1, maxPlayers = 5, id = 36 }   -- nil leaves the instance
+--   Mock.instance.SetZone("Elwynn Forest")   -- the zone's name (GetRealZoneText); nil gives "" as the client does
 local Mock = ...
 local W = Mock.world
 
@@ -101,4 +102,12 @@ function GetInstanceInfo()
 	local i = W.instance or {}
 	return i.name or (W.instance and "Test Instance" or "Test Continent"), i.type or "none", i.difficultyID or 0, "",
 		i.maxPlayers or 0, 0, false, i.id or 0, GetNumGroupMembers(), nil, false
+end
+
+function instance.SetZone(name) W.zone = name end
+
+-- The name of the zone: "Test Zone" until a test sets another; an empty string when it is set to false.
+function GetRealZoneText(mapID)
+	if W.zone == false then return "" end
+	return W.zone or "Test Zone"
 end

@@ -15,7 +15,7 @@ local SPEC_IDS = {
 	"unit.GUID", "unit.TokenFromGUID", "unit.Name", "unit.Class", "unit.Classification", "unit.CanAttack",
 	"unit.IsDead", "unit.IsUnit", "unit.AffectingCombat", "unit.Role", "group.InGroup", "group.InRaid", "group.Size",
 	"group.RaidIndex",
-	"instance.InInstance", "instance.Info", "restriction.InCombatLockdown", "restriction.IsActive",
+	"instance.InInstance", "instance.Info", "zone.RealZoneText", "restriction.InCombatLockdown", "restriction.IsActive",
 	"restriction.Types", "combatlog.Restricted", "damagemeter.Available", "time.GetTime", "time.ServerTime",
 	"time.After", "time.NewTicker", "time.NewTimer", "time.ProfileStop", "addon.Metadata", "addon.Memory",
 	"addon.Framerate", "addon.ErrorHandler", "ui.Reload", "ui.CreateFrame", "ui.CreateFont", "ui.CreateColor",
@@ -615,5 +615,52 @@ describe("units and the group (M2.2)", function()
 		eq(G.Size(), 0)
 		Mock.Remove("UnitInRaid")
 		isNil(G.RaidIndex())
+	end)
+end)
+
+describe("the zone, the instance and the creature number (M4.2, SPEC-02 §4.1)", function()
+	it("read the zone's name, nil when empty, missing, failing or secret", function()
+		eq(C().ZoneText(), "Test Zone")
+		Mock.instance.SetZone(false)
+		isNil(C().ZoneText())
+		GetRealZoneText = function() return Mock.Secret("string") end
+		isNil(C().ZoneText())
+		GetRealZoneText = function() error("boom") end
+		isNil(C().ZoneText())
+		Mock.Remove("GetRealZoneText")
+		isNil(C().ZoneText())
+		eq(#Mock.errors, 0)
+	end)
+
+	it("read the type and the difficulty of the instance, never its name", function()
+		eq(C().InstanceInfo(), "none")
+		Mock.instance.Set{ type = "raid", difficultyID = 9, name = "A Raid" }
+		local kind, difficulty = C().InstanceInfo()
+		eq(kind, "raid")
+		eq(difficulty, 9)
+		GetInstanceInfo = function() return "x", Mock.Secret("string"), Mock.Secret("number") end
+		local k2, d2 = C().InstanceInfo()
+		isNil(k2)
+		isNil(d2)
+		Mock.Remove("GetInstanceInfo")
+		isNil(C().InstanceInfo())
+		eq(#Mock.errors, 0)
+	end)
+
+	it("take the creature number from a readable mob GUID only", function()
+		local U = C().Unit
+		eq(U.NpcID("Creature-0-1-0-1-448-00000ABCDE"), 448)
+		eq(U.NpcID("Vehicle-0-1-0-1-28670-0000000001"), 28670)
+		eq(select(2, U.NpcID("Player-1-0000A001")), "not-creature")
+		eq(select(2, U.NpcID(nil)), "no-guid")
+		eq(select(2, U.NpcID(Mock.Secret("string"))), "no-guid")
+		isNil(U.NpcID("Creature-0-1"))
+	end)
+
+	it("know the game events of the recorder in the Forever dump (SPEC-01 §8.2)", function()
+		for _, event in ipairs({ "PLAYER_LOGOUT", "UNIT_DIED", "PLAYER_DEAD", "ENCOUNTER_START", "ENCOUNTER_END",
+			"PLAYER_ENTERING_WORLD" }) do
+			if Mock.validEvents then truthy(Mock.validEvents[event], event) end
+		end
 	end)
 end)

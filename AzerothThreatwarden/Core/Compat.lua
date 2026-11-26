@@ -197,6 +197,7 @@ Compat.APIS = {
 	{ id = "group.RaidIndex", paths = { "UnitInRaid" }, check = "exists", since = "M2", probe = "P5" },
 	{ id = "instance.InInstance", paths = { "IsInInstance" }, check = "call", show = true, since = "M1", probe = "P3" },
 	{ id = "instance.Info", paths = { "GetInstanceInfo" }, check = "exists", since = "M4", probe = "P3" },
+	{ id = "zone.RealZoneText", paths = { "GetRealZoneText" }, check = "exists", since = "M4", probe = "-" },
 	{ id = "restriction.InCombatLockdown", paths = { "C_RestrictedActions.InCombatLockdown", "InCombatLockdown" },
 		check = "call", show = true, since = "M1", probe = "P11" },
 	{ id = "restriction.IsActive", paths = { "C_RestrictedActions.IsAddOnRestrictionActive" }, check = "exists",
@@ -520,6 +521,29 @@ function Compat.InstanceType()
 	return showable(kind)
 end
 
+-- The type and the difficulty of the current instance (GetInstanceInfo, M4: the header of a recorded session, SPEC-02
+-- §4.1): instanceType ("none", "party", "raid"... a fixed word of the client, never the instance's name, which is not
+-- read) and difficultyID; each nil when the client cannot say or hides it.
+function Compat.InstanceInfo()
+	local fn = Resolve("GetInstanceInfo")
+	if type(fn) ~= "function" then return nil, nil end
+	local ok, _, kind, difficulty = pcall(fn)
+	if not ok then return nil, nil end
+	if IsSecret(kind) then kind = nil end
+	if IsSecret(difficulty) then difficulty = nil end
+	return showable(kind), plainNumber(difficulty)
+end
+
+-- The name of the zone the player is in (GetRealZoneText, M4): kept only in a recorded session (SPEC-02 §4.1), never in
+-- the report of /atw debug. nil when absent, empty or secret.
+function Compat.ZoneText()
+	local fn = Resolve("GetRealZoneText")
+	if type(fn) ~= "function" then return nil end
+	local ok, zone = pcall(fn)
+	if not ok or IsSecret(zone) then return nil end
+	return plainString(zone)
+end
+
 -- The player's own name and realm, only to take them out of the report (Core/Diagnostics.lua); never stored.
 function Compat.PlayerName()
 	return plainString((first("UnitName", "player")))
@@ -707,6 +731,16 @@ end
 function Unit.GUID(unit) return text("UnitGUID", unit) end
 -- The name shown for a unit (never stored outside the sessions, SPEC-02 §1) [probe P9].
 function Unit.Name(unit) return text("UnitName", unit) end
+
+-- The creature number of a mob from a readable GUID ("Creature-0-1-2-3-<npcID>-<spawn>", or "Vehicle-..."): the sixth
+-- field, a whole number; nil and why otherwise ("no-guid": not a plain string or secret; "not-creature": a player, a
+-- pet or another kind). Reads only the string it is given, never the game (SPEC-02 §4.1: `npc`, never the whole GUID).
+function Unit.NpcID(guid)
+	if type(guid) ~= "string" or IsSecret(guid) then return nil, "no-guid" end
+	local kind, id = guid:match("^(%a+)%-[^-]*%-[^-]*%-[^-]*%-[^-]*%-(%d+)%-")
+	if kind ~= "Creature" and kind ~= "Vehicle" then return nil, "not-creature" end
+	return tonumber(id), nil
+end
 
 -- The classification of a unit ("normal", "elite", "rare", "rareelite", "worldboss", "minus"...) [probe P5].
 function Unit.Classification(unit) return text("UnitClassification", unit) end

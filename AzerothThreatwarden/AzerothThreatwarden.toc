@@ -40,6 +40,8 @@ Data\ThreatState.lua
 Data\Alerts.lua
 Data\CoachRules.lua
 Data\Coach.lua
+Data\Session.lua
+Data\Recorder.lua
 UI\Assets.lua
 UI\Theme.lua
 UI\Motion.lua

@@ -5,6 +5,16 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Added
+
+- M4.2: the recorder and the sessions, behind the `recording` switch (off until `v0.4.0`, so nothing changes in the
+  game yet). A fight in a group or an instance becomes a session saved at once (a `/reload` keeps it): one row for
+  every new reading of a value, a row without a number only when the reason changes, and the monitor's events (combat
+  start and end, target changes, states, who holds the mob, mode, deaths, alerts, Coach tips, encounters, gaps of the
+  tick). Chained pulls within 5 s stay one session, fights under 3 s are dropped, a `/reload` or a logout in combat
+  leaves an *interrupted* session and the next one says which one it continues. Account schema 4 adds
+  `settings.recording` and `sessions` (migration 3 → 4); `/atw debug` has a *Recording* section.
+
 ### Documentation
 
 - M4.1: specification of the recorder, the storage and the combat report (SPEC-05 §1–§3 and SPEC-02 §3.7–§4,

@@ -412,7 +412,8 @@ nessun modo affidabile prima di P7). Un evento costa 12 caratteri: 6 000 eventi 
 
 ### 4.4 Mentre la sessione è aperta
 
-Il recorder scrive righe ed eventi in `buf` (array di numeri e di codici, riusati); ogni **256** righe (`CHUNK`) le
+Il recorder scrive righe ed eventi in `buf` (array di numeri e di codici, riusati: `buf.t`, `buf.m`, `buf.u`, `buf.p`
+con `-1` per nessun valore, `buf.s`; in `buf.ev` nove posti per evento, `t k m u v a b c n`); ogni **256** righe (`CHUNK`) le
 impacchetta in un pezzo per colonna, aggiunto a `parts`, e svuota `buf` (lo stesso per gli eventi). La sessione aperta
 sta **già** in `sessions`, quindi un `/reload` o un logout la salvano com'è, con al più 255 righe in forma estesa
 (**[probe P12]**). Alla chiusura i pezzi e `buf` diventano una stringa per colonna e `parts` e `buf` spariscono; per una

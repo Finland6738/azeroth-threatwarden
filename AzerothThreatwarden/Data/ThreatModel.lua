@@ -80,6 +80,13 @@ local function resetSamples()
 	for i = 1, #rows do Calc.Reset(rows[i].samples) end
 end
 
+-- true when the read of `record` is old at `now` (DAT-12, SPEC-03 §1.5): marked stale (the combat ended), or older than
+-- max(2 * interval, 0.5 s). The one rule of the model, also for the recorder (SPEC-05 §1.3). Allocation-free.
+function ThreatModel.IsStale(record, now)
+	if not record then return true end
+	return record.stale == true or Calc.IsStale(record.observedAt, record.interval, now)
+end
+
 -- The fresh part of a row: present, stale, reason, the record's confidence, and the sample of the trend.
 local function readRow(row, rec, now)
 	if row.unitToken ~= rec.unitToken then   -- the roster moved this place to another unit
@@ -96,7 +103,7 @@ local function readRow(row, rec, now)
 		Calc.Reset(row.samples)                 -- the row left the list (SPEC-03 §2.5)
 		return
 	end
-	local stale = rec.stale == true or Calc.IsStale(rec.observedAt, rec.interval, now)
+	local stale = ThreatModel.IsStale(rec, now)
 	row.stale = stale
 	if stale then
 		row.reason = "stale"

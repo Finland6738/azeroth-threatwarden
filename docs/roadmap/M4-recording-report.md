@@ -67,9 +67,16 @@ notice, `/atw reports`) in `Core/Features.lua` stay **off** until M4.R; every st
   `PLAYER_LOGOUT`, `ENCOUNTER_*` (checked against the dump); the *Recording* section of `/atw debug` (recorder part).
   Until M4.3 a closed session is only added and not pruned (behind the switch).
 - Done when:
-  - [ ] A fight in a group gives one session with rows and events as SPEC-05 §1.3–§1.4; chained pulls within 5 s stay
+  - [x] A fight in a group gives one session with rows and events as SPEC-05 §1.3–§1.4; chained pulls within 5 s stay
     one session; a fight under 3 s is dropped; a `/reload` in combat leaves the session with the `X` stamp; no session
     in demo, read-only or with the switch off; the three outcomes give the rows of SPEC-02 §4.2.
+- *Done (2026-11-26, before M0.7): `Data/Session.lua` (base 62, codes, `units`/`mobs`, `buf` packed every 256 rows and
+  events, join, decode, the limits as `Session.LIMITS`) and `Data/Recorder.lua` behind `recording` (conditions,
+  END_DELAY and chained pulls, the `record` tick, the events of §1.4, logout and the linked session, the Scanner
+  consumer, `SESSION_STARTED`/`SESSION_ENDED`/`SESSIONS_CHANGED`, the *Recording* section of `/atw debug`); account
+  schema 4 with migration 3 → 4 and `TABS` with `reports`; `ENTERING_WORLD(isInitialLogin, isReloadingUi)`;
+  `ThreatModel.IsStale`; `Compat.ZoneText`, `Compat.InstanceInfo`, `Compat.Unit.NpcID`, `zone.RealZoneText`. Tests:
+  `test_session.lua`, `test_recorder.lua`, schema 4 in `test_config.lua`, `test_compat.lua`, `test_init.lua`.*
 - Tests: `test_session.lua`, `test_recorder.lua` (every scenario of SPEC-08 QA-03 that ends in a session, SPEC-05 §7),
   schema 4 in `test_config.lua`, the new Compat entries in `test_compat.lua`, `ENTERING_WORLD` in `test_init.lua`.
 - Real client: `UNIT_DIED` and `ENCOUNTER_*` payloads (P7), `PLAYER_LOGOUT` at `/reload` and what is saved (P12), GUIDs

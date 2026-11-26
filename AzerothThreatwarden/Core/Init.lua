@@ -87,10 +87,17 @@ function ATW:OnDisplayChanged()
 	emit("DISPLAY_CHANGED")
 end
 
--- After a /reload in combat the client may send no PLAYER_REGEN_DISABLED [probe P12]: the player's own combat flag
--- starts the combat here instead (SPEC-03 §1.4, M2.2).
-function ATW:OnEnteringWorld()
-	emit("ENTERING_WORLD")
+-- A flag of a game event, for the Bus: true or false, nil when the client gives no boolean or hides it (never a secret).
+local function flag(value)
+	if Compat.IsSecret(value) or type(value) ~= "boolean" then return nil end
+	return value
+end
+
+-- ENTERING_WORLD(isInitialLogin, isReloadingUi) with the arguments of the game event (SPEC-01 §8.2, M4.2: the recorder
+-- and Storage tell a /reload from a login, SPEC-05 §1.6 [probe P12]). After a /reload in combat the client may send no
+-- PLAYER_REGEN_DISABLED [probe P12]: the player's own combat flag starts the combat here instead (SPEC-03 §1.4, M2.2).
+function ATW:OnEnteringWorld(_, isInitialLogin, isReloadingUi)
+	emit("ENTERING_WORLD", flag(isInitialLogin), flag(isReloadingUi))
 	if not self.inCombat and Compat.Unit.AffectingCombat("player") == true then self:OnCombatStart() end
 end
 

@@ -25,7 +25,10 @@
 --   AGGRO_CHANGED(mobKey, unitKey, oldUnitKey)                                             Data/ThreatState.lua (M3.2)
 --   ALERT_RAISED(alert), MUTE_CHANGED(muted)                                               Data/Alerts.lua (M3.2)
 --   COACH_TIP(tip)                                                                         Data/Coach.lua (M3.3)
---   SESSION_STARTED, SESSION_ENDED, SESSIONS_CHANGED                                       Data/ (M4)
+--   ENTERING_WORLD(isInitialLogin, isReloadingUi)  Core/Init.lua, from PLAYER_ENTERING_WORLD (the flags from M4.2; nil
+--                                   when the client gives none).
+--   SESSION_STARTED(id), SESSION_ENDED(id, state)                                          Data/Recorder.lua (M4.2)
+--   SESSIONS_CHANGED()                                                                     Data/Recorder.lua, Storage (M4)
 local ADDON_NAME, ns = ...
 ns = ns or {}
 ns.modules = ns.modules or {}
