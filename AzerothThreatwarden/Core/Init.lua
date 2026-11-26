@@ -90,6 +90,7 @@ end
 -- After a /reload in combat the client may send no PLAYER_REGEN_DISABLED [probe P12]: the player's own combat flag
 -- starts the combat here instead (SPEC-03 §1.4, M2.2).
 function ATW:OnEnteringWorld()
+	emit("ENTERING_WORLD")
 	if not self.inCombat and Compat.Unit.AffectingCombat("player") == true then self:OnCombatStart() end
 end
 

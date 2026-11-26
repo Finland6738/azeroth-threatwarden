@@ -15,6 +15,8 @@
 -- Order (SPEC-03 §3): "relative" (default), "absolute", "risk", "change"; UNKNOWN rows last, ties in roster order, the
 -- player first with "pin me on top"; computed at most once a second and at once when a row enters DANGER (MON-13). The
 -- order and the pin are `account.settings.monitor.sort` and `.pinSelf`; on read-only data they last for the session.
+-- With the `alerts` switch on, a right click on a row of another unit opens *Mute alerts about this unit* (SPEC-04
+-- §1.5, until the /reload); the tooltip of a muted row says so.
 -- During the demo (Core/Demo.lua) the data modules it reads are the invented ones and the footer says so.
 local ADDON_NAME, ns = ...
 ns = ns or {}
@@ -149,6 +151,11 @@ local function signed(v)
 	return tostring(r)
 end
 
+local function alertsModule()
+	if ns.Features and ns.Features.On("alerts") then return ns.Alerts end
+	return nil
+end
+
 ---------------------------------------------------------------------------------------------------------------------
 -- Tooltips
 ---------------------------------------------------------------------------------------------------------------------
@@ -219,6 +226,8 @@ function ThreatList.RowTooltip(row, now)
 	now = now or Compat.Now()
 	local lines = { unitLabel(rec) }
 	if ns.Demo and ns.Demo.IsActive() then lines[#lines + 1] = L.MON_DEMO_TIP end
+	local Alerts = alertsModule()
+	if Alerts and rec.unitKey and Alerts.IsExcluded(rec.unitKey) then lines[#lines + 1] = L.TIP_ALERTS_MUTED end
 	local def = Theme.State(STATE_ID[row.state or "UNKNOWN"])
 	local category = (rec.mode == "state") and "detected" or "calculated"
 	if row.state == "UNKNOWN" or not row.state then
@@ -241,6 +250,20 @@ function ThreatList.RowTooltip(row, now)
 	if (rec.observedAt or 0) > 0 then lines[#lines + 1] = L.TIP_READ:format(max(now - rec.observedAt, 0)) end
 	lines[#lines + 1] = L.TIP_MODE:format(L[MODE_LABEL[rec.mode] or "MODULE_UNAVAILABLE"])
 	return lines
+end
+
+-- The menu of a row (right click): *Mute alerts about this unit*, checked while it is muted. nil for the player (who
+-- cannot be excluded) and with the `alerts` switch off. It holds the unit's key, not the row: rows are reused.
+function ThreatList.RowMenu(row)
+	local Alerts = alertsModule()
+	local rec = row and row.record
+	if not Alerts or not rec or not rec.unitKey or rec.unitToken == "player" then return nil end
+	local unitKey = rec.unitKey
+	return {
+		{ text = unitLabel(rec), header = true },
+		{ text = L.MENU_MUTE_UNIT, checked = Alerts.IsExcluded(unitKey),
+			onClick = function() Alerts.Exclude(unitKey, not Alerts.IsExcluded(unitKey)) end },
+	}
 end
 
 ---------------------------------------------------------------------------------------------------------------------
@@ -410,6 +433,13 @@ local function newRowWidget(view, i)
 	w:SetPoint("TOPRIGHT", view.list, "TOPRIGHT", 0, -(i - 1) * ThreatList.ROW_HEIGHT)
 	w:EnableMouse(true)
 	Widgets.Tooltip.Attach(w, function(self) return self.data and ThreatList.RowTooltip(self.data) end, "TOP")
+	w:SetScript("OnMouseUp", function(self, button)
+		if button ~= "RightButton" then return end
+		local items = self.data and ThreatList.RowMenu(self.data)
+		if not items then return end
+		Widgets.Tooltip.Hide()
+		Widgets.Menu.Show(self, items)
+	end)
 	view:LayoutRow(w)
 	return w
 end
@@ -991,6 +1021,7 @@ function ThreatList.Build(page)
 	end, "TOP")
 
 	view:SetScript("OnShow", function(self) self:Redraw() end)
+	view:SetScript("OnHide", function() Widgets.Menu.Hide() end)
 	ThreatList.view = view
 	return view
 end
@@ -1012,6 +1043,7 @@ if ns.Bus then
 	Bus.On("DEMO_CHANGED", function()
 		local view = ThreatList.view
 		if view then
+			Widgets.Menu.Hide()   -- its unit belongs to the other fight
 			view.forceSort, view.infoKey = true, nil
 			view:Redraw()
 		end

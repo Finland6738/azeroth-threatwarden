@@ -35,6 +35,7 @@ ICONS = {
     "trend-flat": '<path d="M3 12h17M15 7l5 5-5 5"/>',
     "predict": '<path d="M2 12h.01M8 12h.01"/><path d="M14 6l8 6-8 6z" fill="currentColor" stroke="none"/>',
     "check": '<path d="M4 12l5 5L20 6"/>', "minus": '<path d="M5 12h14"/>',
+    "mute": '<path d="M6 9a6 6 0 0 1 12 0c0 6 2 7 2 8H4c0-1 2-2 2-8zM10 21h4"/><path d="M3 3l18 18"/>',
     "coach": '<path d="M4 4h16a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-9l-6 5v-5H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z"/><circle cx="12" cy="10.5" r="2" fill="currentColor"/>',
 }
 CLASS = {"warrior": "#C69B6D", "mage": "#3FC7EB", "priest": "#FFFFFF", "rogue": "#FFF468"}
@@ -167,6 +168,18 @@ def alert_danger(theme):
     return window_html + tip(lines, 190)
 
 
+def alert_muted(theme):
+    rows = [mon_row(theme, "Bram", "warrior", "tank", "danger", 100, holder=True),
+            mon_row(theme, T("UNIT_YOU"), "mage", "dps", "warning", 84, me=True, trend="up"),
+            mon_row(theme, "Kor", "rogue", "dps", "safe", 49, trend="up"),
+            mon_row(theme, "Sela", "priest", "healer", "safe", 12, trend="flat")]
+    note_strip = (f'<div class="strip"><span class="text" style="color:var(--text-2)">{esc(T("STRIP_MUTED"))}</span>'
+                  f'<span class="pred">{icon("mute")}</span></div>')
+    body = (mon_head("Gorrak", T("MON_CLASS_BOSS"), "warning", T("MON_TANK", "Bram"), "+16")
+            + note_strip + mon_list(rows))
+    return mon_window(theme, "live", body, quality(100)) + tip([T("STRIP_TIP_MUTED")], 190)
+
+
 def monitor_values(theme):
     rows = [mon_row(theme, "Bram", "warrior", "tank", "danger", 100, holder=True),
             mon_row(theme, "Kor", "rogue", "dps", "danger", 97, trend="up"),
@@ -283,6 +296,31 @@ def settings_monitor(theme):
     return page(theme, 0, cards, LEFT, module="idle") + page(theme, 0, cards, RIGHT, 330, "idle")
 
 
+# The Alerts card of Settings (M3.5, with the `alerts` and `coach` switches on), with the note of the game's own threat
+# warning, and the Reset card below it.
+def alerts_card():
+    inner = (row(T("SET_ALERTS_ENABLED"), switch(True)) + row(T("SET_ALERTS_WINDOW"), switch(True))
+             + row(T("SET_ALERTS_VISUAL"), switch(True)) + row(T("SET_ALERTS_SOUND"), switch(False))
+             + note(T("SET_ALERTS_SOUND_NOTE"))
+             + row(T("SET_ALERTS_COOLDOWN"), lib.slider((8 - 3) / 27, T("SET_SECONDS", 8)))
+             + note(T("SET_ALERTS_COOLDOWN_NOTE"))
+             + f'<div class="row"><b>{esc(T("SET_ALERTS_OTHERS"))}</b></div>'
+             + seg([T("SET_OTHERS_TANK"), T("SET_OTHERS_ALWAYS"), T("SET_OTHERS_NEVER")], 0, "margin-top:4px")
+             + row(T("SET_ALERTS_PET"), switch(True))
+             + note(T("SET_ALERTS_THRESHOLDS", 80, 95), "margin-top:12px;color:var(--text-2)")
+             + button(T("SET_ALERTS_TO_MONITOR"), "wide", "margin-top:8px")
+             + note(T("SET_ALERTS_NATIVE"), "margin-top:12px;color:var(--warn)")
+             + row(T("SET_COACH"), switch(True)))
+    return card(T("SET_ALERTS"), inner)
+
+
+def settings_alerts(theme):
+    reset = card(T("SET_RESET"), f'<div class="body">{esc(T("SET_RESET_TEXT_ALERTS"))}</div>'
+                 + button(T("SET_RESET_BUTTON"), "wide"))
+    cards = [alerts_card(), reset]
+    return page(theme, 0, cards, LEFT, module="idle") + page(theme, 0, cards, RIGHT, 330, "idle")
+
+
 def about_cards(theme):
     def picture(src, cls, title, title_class, line, line_class):
         return (f'<div class="head"><img class="{cls}" src="{lib.ASSETS}/{src}" alt=""><div class="texts">'
@@ -329,6 +367,8 @@ COACH_KINDS = [
     ("alert-danger", alert_danger, ["nebula", "warden"],
      "An alert in the strip, with the border in the colour of its state",
      "Un avviso nella striscia, con il bordo nel colore del suo stato"),
+    ("alert-muted", alert_muted, ["nebula", "warden"], "Alerts muted until the end of the fight",
+     "Avvisi silenziati fino alla fine del combattimento"),
 ]
 
 MONITOR_KINDS = [
@@ -348,6 +388,9 @@ MONITOR_KINDS = [
     ("settings-monitor", settings_monitor, ["nebula", "warden"],
      "Settings: the Monitor card, its top and the page scrolled down",
      "Impostazioni: la card Monitor, la parte alta e la pagina scorsa in basso"),
+    ("settings-alerts", settings_alerts, ["nebula", "warden"],
+     "Settings: the Alerts card with the note of the game's own threat warning",
+     "Impostazioni: la card Avvisi con la nota dell'avviso della threat del gioco"),
 ]
 
 KINDS = [

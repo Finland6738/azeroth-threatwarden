@@ -79,9 +79,35 @@ number of units are provisional until they are tuned in the game.
 
 Opening or closing by itself never changes what you chose by hand.
 
+## Alerts
+
+> **Coming in `v0.3.0`**: the card is not in the published version yet, and nothing of it has been verified in game.
+
+Saved for the whole account, below *Monitor*. What the alerts are is on [[Alerts and Coach|Alerts-and-Coach]]. Every
+change applies at once.
+
+![The Alerts card, with the note about the game's own threat warning](../specs/mockups/previews/settings-alerts-nebula.webp)
+
+| Option | What it does | Choices | Default |
+|---|---|---|---|
+| Show alerts | all the alerts on or off; off, the three channels below stay visible but inactive | on / off | on |
+| Message in the window | the alert shows in the strip of the Monitor tab | on / off | on |
+| Visual effect | the border of the window takes the colour of the state once | on / off | on |
+| Sound | a sound of the game, only for Danger and for losing or taking the enemy | on / off | off |
+| Cooldown | how long the same alert about the same unit waits before it comes again; saved when you release the slider | 3 to 30 s | 8 s |
+| Alerts about others | alerts about other players | When I tank, Always, Never | When I tank |
+| Your pet takes the mob | the alert when your pet takes the enemy in a group with a tank | on / off | on |
+| Go to the Monitor card | the alerts use the Warning and Danger thresholds of *Monitor*; the card says them | button | |
+| Threat Coach | the advice in the strip | on / off | on |
+
+If the game's own threat warning is on (in the game's options), the card says that you may get two warnings for the
+same thing, and lets you choose: the addon never changes the game's setting. To mute the alerts for a while, or the
+alerts about one unit, see [[Alerts and Coach|Alerts-and-Coach#muting]].
+
 ## Reset
 
-**Reset settings** puts the appearance, the language, the minimap button and the monitor settings back to the defaults, and drops the damaged
+**Reset settings** puts the appearance, the language, the minimap button, the monitor settings and (from `v0.3.0`) the
+alerts and Coach back to the defaults, and drops the damaged
 data the addon had set aside for bug reports. It asks for a second
 click, within a few seconds. Your recordings (from a later version) are not touched; the window's place is reset with
 *Reset window*.

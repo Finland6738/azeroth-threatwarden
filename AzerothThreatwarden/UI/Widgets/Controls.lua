@@ -1,6 +1,7 @@
--- Widget kit, part 2: Switch, Slider and Select (a dropdown without UIDropDownMenu, which taints).
+-- Widget kit, part 2: Switch, Slider, Select (a dropdown without UIDropDownMenu, which taints) and Menu (a popup
+-- of checks under a row).
 -- Adapted from Azeroth Accord (UI/Widgets/Controls.lua, itself from Finland Dragon Credit Points), same owner, GPL-3.0
--- (ADR 0012); its snackbar, skeleton, class mark and menu are not needed here. Ordinary unprotected frames; every colour
+-- (ADR 0012); its snackbar, skeleton and class mark are not needed here. Ordinary unprotected frames; every colour
 -- is a theme token; text comes in already translated. Lua 5.1.
 local ADDON_NAME, ns = ...
 ns = ns or {}
@@ -202,4 +203,105 @@ function Widgets.Select(parent, opts)
 	sel:SetChoices(sel.choices)
 	if opts.value ~= nil then sel:Select(opts.value, true) end
 	return sel
+end
+
+-- --- Menu -------------------------------------------------------------------------------------------------------------
+
+-- A popup list under an anchor (the menu of a row of the threat list): no UIDropDownMenu, which taints. items =
+-- { { text, checked, onClick(item), header } }: a click runs onClick and closes the menu; a `header` is a heading, not a
+-- choice. One menu at a time; a click anywhere else or Esc closes it.
+-- Widgets.Menu.Show(anchor, items) -> the frame, .Hide(), .IsOpen(), .frame (rows in .frame.rows).
+local Menu = {}
+Widgets.Menu = Menu
+Menu.ROW, Menu.MIN_WIDTH = 22, 160
+local MENU_NAME = "AzerothThreatwardenMenu"
+
+local function buildMenu()
+	local menu = CreateFrame("Frame", MENU_NAME, Compat.UIParent())
+	menu:SetFrameStrata("FULLSCREEN_DIALOG")
+	menu:SetClampedToScreen(true)
+	menu:EnableMouse(true)
+	menu.parts = Theme.Panel(menu, { radius = 8, fill = "raised", border = "border-strong", shadow = true })
+	menu.rows = {}
+	menu.catcher = CreateFrame("Button", nil, Compat.UIParent())
+	menu.catcher:SetAllPoints(Compat.UIParent())
+	menu.catcher:SetFrameStrata("FULLSCREEN")
+	menu.catcher:SetScript("OnClick", function() Menu.Hide() end)
+	menu.catcher:Hide()
+	menu:SetScript("OnHide", function() menu.catcher:Hide() end)
+	menu:Hide()
+	Widgets.CloseOnEscape(MENU_NAME)
+	return menu
+end
+
+local function menuRow(menu, i)
+	local row = CreateFrame("Button", nil, menu)
+	row:SetHeight(Menu.ROW)
+	row.hover = row:CreateTexture(nil, "BACKGROUND")
+	Theme.Fill(row.hover, "surface-3", 0)
+	row.hover:SetAllPoints(row)
+	row.check = row:CreateTexture(nil, "ARTWORK")
+	row.check:SetTexture(Assets.textures.icons.path)
+	row.check:SetTexCoord(Assets.IconCoords("check"))
+	row.check:SetSize(12, 12)
+	row.check:SetPoint("LEFT", row, "LEFT", 8, 0)
+	Theme.Tint(row.check, "accent-text")
+	row.label = Theme.NewText(row, "Body", "text-1")
+	row.label:SetPoint("LEFT", row, "LEFT", 26, 0)
+	row.label:SetJustifyH("LEFT")
+	row:SetScript("OnEnter", function(self)
+		if self.item and not self.item.header then Theme.Fill(self.hover, "surface-3", 1) end
+	end)
+	row:SetScript("OnLeave", function(self) Theme.Fill(self.hover, "surface-3", 0) end)
+	row:SetScript("OnClick", function(self)
+		local item = self.item
+		if not item or item.header then return end
+		Menu.Hide()
+		if item.onClick then item.onClick(item) end
+	end)
+	menu.rows[i] = row
+	return row
+end
+
+function Menu.Show(anchor, items)
+	local menu = Menu.frame
+	if not menu then menu = buildMenu(); Menu.frame = menu end
+	local width = Menu.MIN_WIDTH
+	for i, item in ipairs(items) do
+		local row = menu.rows[i] or menuRow(menu, i)
+		row.item = item
+		row.check:SetShown(item.checked == true and not item.header)
+		row.label:SetWidth(0)   -- natural width first
+		row.label:SetText(item.text or "")
+		Theme.Text(row.label, item.header and "accent-text" or "text-1")
+		Theme.Fill(row.hover, "surface-3", 0)
+		width = max(width, (row.label:GetStringWidth() or 0) + 42)
+		row:Show()
+	end
+	for i = #items + 1, #menu.rows do
+		menu.rows[i].item = nil
+		menu.rows[i]:Hide()
+	end
+	for i = 1, #items do
+		local row = menu.rows[i]
+		row:SetWidth(width - 8)
+		row.label:SetWidth(width - 42)
+		row:ClearAllPoints()
+		row:SetPoint("TOPLEFT", menu, "TOPLEFT", 4, -4 - (i - 1) * Menu.ROW)
+	end
+	menu:SetSize(width, 8 + #items * Menu.ROW)
+	menu:ClearAllPoints()
+	menu:SetPoint("TOPLEFT", anchor, "BOTTOMLEFT", 0, -2)
+	menu.catcher:Show()
+	menu:Show()
+	Motion.FadeIn(menu, Motion.FAST)
+	return menu
+end
+
+function Menu.Hide()
+	if Menu.frame then Menu.frame:Hide() end
+end
+
+function Menu.IsOpen()
+	return Menu.frame ~= nil and Menu.frame:IsShown() == true
 end

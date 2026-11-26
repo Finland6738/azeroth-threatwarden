@@ -608,6 +608,15 @@ function Compat.PlaySound(kit)
 	return true, nil
 end
 
+-- Whether the game's own threat warning is on (ALR-03, the note of the *Alerts* card): true or false, nil when the
+-- client does not say (no function, an error, a secret or another type). What it shows on Forever is [to be tried in
+-- game].
+function Compat.ThreatWarningEnabled()
+	local value = first("IsThreatWarningEnabled")
+	if type(value) == "boolean" then return value end
+	return nil
+end
+
 -- Reloads the interface (the *Reload now* button of Settings): true when the client took the call. A click is the
 -- hardware event the client may ask for.
 function Compat.Reload()

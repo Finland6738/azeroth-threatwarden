@@ -2,9 +2,9 @@
 
 *English: [[Alerts and Coach|Alerts-and-Coach]]*
 
-> **In arrivo nella `v0.3.0`, non ancora nella versione pubblicata e non verificato in gioco.** La striscia, gli avvisi
-> e il Coach sono pronti e spenti fino al rilascio. Il silenziamento rapido (comando e tasto) e la card *Avvisi* delle
-> Impostazioni arrivano prima.
+> **In arrivo nella `v0.3.0`, non ancora nella versione pubblicata e non verificato in gioco.** La striscia, gli
+> avvisi, il Coach, il silenziamento rapido e la [card Avvisi delle Impostazioni](Settings-it#avvisi) sono pronti e
+> spenti fino al rilascio.
 
 Un **avviso** quando un rischio comincia, e un breve **consiglio** con il suo motivo. Tutti e due compaiono in una
 striscia della scheda [[Monitor della threat|Threat-Monitor-it]], fra l'intestazione del nemico e l'elenco. Nulla viene
@@ -42,6 +42,17 @@ Di base l'avviso compare nella striscia e il **bordo** della finestra prende una
 due secondi, senza lampeggi. Con il messaggio spento, la pillola in alto mostra per lo stesso tempo l'icona dello stato,
 così il colore non porta mai da solo il significato. Il **suono** è spento di base; se acceso, suona solo per Pericolo e
 quando si perde o si prende il nemico.
+
+### Silenziare
+
+- `/atw mute`, o il [tasto che gli assegni](Commands-it#assegnazione-di-un-tasto), silenzia tutti gli avvisi **fino
+  alla fine del combattimento in corso**; fuori dal combattimento, fino alla fine del prossimo. Di nuovo per
+  riaccenderli prima. Anche una ricarica lo toglie. Il Coach non si silenzia: è testo nella striscia (si spegne nelle
+  [Impostazioni](Settings-it#avvisi)).
+- **Una sola unità**: clic destro sulla sua riga nell'elenco, poi **Silenzia su questa unità gli avvisi** (di nuovo per
+  riaccenderli). Vale fino a una ricarica e nessun nome viene salvato. La tua riga non ha questo menu.
+
+![La striscia con gli avvisi silenziati](../specs/mockups/previews/alert-muted-warden.webp)
 
 ### L'avviso di threat del gioco
 

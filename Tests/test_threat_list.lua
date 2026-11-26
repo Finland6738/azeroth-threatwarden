@@ -624,3 +624,102 @@ describe("nothing on screen without a locale key, with the monitor", function()
 		end)
 	end
 end)
+
+-- The row menu (SPEC-04 §1.5, M3.5): *Mute alerts about this unit*, only with the `alerts` switch.
+local function Menu() return Mock.ns.Widgets.Menu end
+local function rightClick(w) Mock.RunScript(w, "OnMouseUp", "RightButton") end
+local function menuRows()
+	local out = {}
+	for _, row in ipairs(Menu().frame.rows) do
+		if row:IsShown() then out[#out + 1] = row end
+	end
+	return out
+end
+
+describe("the row menu with the alerts switched off", function()
+	it("does not open, and the tooltip says nothing about alerts", function()
+		partyPull():to(0.5)
+		rightClick(widget("party3"))
+		falsy(Menu().IsOpen())
+		isNil(TL().RowMenu(widget("party3").data))
+	end)
+end)
+
+describe("the row menu", function()
+	before_boot(function(M) M.features = { monitor = true, alerts = true } end)
+
+	it("opens on a right click with the unit's name and the one choice", function()
+		partyPull():to(0.5)
+		rightClick(widget("party3"))
+		truthy(Menu().IsOpen())
+		local rows = menuRows()
+		eq(#rows, 2)
+		eq(rows[1].label:GetText(), "Kor")
+		eq(rows[2].label:GetText(), "Mute alerts about this unit")
+		falsy(rows[2].check:IsShown())
+		falsy(Tip().IsShown())
+		eq(#Mock.errors, 0)
+	end)
+
+	it("mutes that unit for the session, says so in the tooltip, and unmutes it", function()
+		partyPull():to(0.5)
+		local key = widget("party3").data.record.unitKey
+		rightClick(widget("party3"))
+		menuRows()[2]:Click()
+		falsy(Menu().IsOpen())
+		truthy(Mock.ns.Alerts.IsExcluded(key))
+		contains(TL().RowTooltip(widget("party3").data), "Alerts about this unit are muted")
+		rightClick(widget("party3"))
+		truthy(menuRows()[2].check:IsShown())
+		menuRows()[2]:Click()
+		falsy(Mock.ns.Alerts.IsExcluded(key))
+		falsy(table.concat(TL().RowTooltip(widget("party3").data), "\n"):find("muted", 1, true))
+	end)
+
+	it("saves nothing, and a reload forgets it", function()
+		partyPull():to(0.5)
+		local key = widget("party3").data.record.unitKey
+		rightClick(widget("party3"))
+		menuRows()[2]:Click()
+		local saved = Mock.ns.Config.defaults.account
+		deepEq(AzerothThreatwardenDB, saved)
+		Mock.Reload()
+		falsy(Mock.ns.Alerts.IsExcluded(key))
+	end)
+
+	it("has nothing for the player, and a left click opens nothing", function()
+		partyPull():to(0.5)
+		rightClick(widget("player"))
+		falsy(Menu().IsOpen())
+		Mock.RunScript(widget("party3"), "OnMouseUp", "LeftButton")
+		falsy(Menu().IsOpen())
+	end)
+
+	it("closes on a click elsewhere and when the view is hidden", function()
+		partyPull():to(0.5)
+		rightClick(widget("party3"))
+		Menu().frame.catcher:Click()
+		falsy(Menu().IsOpen())
+		rightClick(widget("party3"))
+		Mock.ns.Window:SelectTab("settings")
+		falsy(Menu().IsOpen())
+	end)
+
+	it("keeps the unit it was opened on while the rows change", function()
+		local pull = partyPull()
+		pull:to(0.5)
+		local key = widget("party3").data.record.unitKey
+		rightClick(widget("party3"))
+		pull:threat("boss", "healer", { raw = 900, scaled = 90 })
+		pull:to(3)
+		menuRows()[2]:Click()
+		truthy(Mock.ns.Alerts.IsExcluded(key))
+	end)
+
+	it("says it in Italian", function()
+		boot(function(M) M.player.locale = "itIT" end)
+		partyPull():to(0.5)
+		rightClick(widget("party3"))
+		eq(menuRows()[2].label:GetText(), "Silenzia su questa unità gli avvisi")
+	end)
+end)

@@ -131,6 +131,70 @@ for _, code in ipairs({ "enUS", "itIT" }) do
 	end)
 end
 
+local MUTE = {
+	enUS = { fight = "Alerts muted until the end of this fight.", next = "Alerts muted until the end of the next fight.",
+		back = "Alerts back on.", disabled = "Alerts are off in Settings.", later = "This arrives in v0.3.0.",
+		help = "/atw mute - " },
+	itIT = { fight = "Avvisi silenziati fino alla fine di questo combattimento.",
+		next = "Avvisi silenziati fino alla fine del prossimo combattimento.", back = "Avvisi di nuovo attivi.",
+		disabled = "Gli avvisi sono spenti nelle Impostazioni.", later = "Arriva nella v0.3.0.", help = "/atw mute - " },
+}
+
+for _, code in ipairs({ "enUS", "itIT" }) do
+	local T = MUTE[code]
+	describe("/atw mute in " .. code, function()
+		before_boot(function(M)
+			M.player.locale = code
+			M.features = { monitor = true, alerts = true }
+		end)
+
+		it("is listed by help", function()
+			contains(run("/atw help"), T.help)
+		end)
+
+		it("mutes until the end of the next fight outside combat, and again unmutes", function()
+			contains(run("/atw mute"), T.next)
+			truthy(Mock.ns.Alerts.IsMuted())
+			contains(run("/atw MUTE now"), T.back)
+			falsy(Mock.ns.Alerts.IsMuted())
+		end)
+
+		it("keeps the mute through the next fight and ends it with it", function()
+			run("/atw mute")
+			Mock.combat.Enter()
+			truthy(Mock.ns.Alerts.IsMuted())
+			Mock.combat.Leave()
+			falsy(Mock.ns.Alerts.IsMuted())
+		end)
+
+		it("mutes until the end of this fight in combat, and the fight ends it", function()
+			Mock.combat.Enter()
+			contains(run("/atw mute"), T.fight)
+			Mock.combat.Leave()
+			falsy(Mock.ns.Alerts.IsMuted())
+		end)
+
+		it("does not survive a reload", function()
+			run("/atw mute")
+			Mock.Reload()
+			falsy(Mock.ns.Alerts.IsMuted())
+		end)
+
+		it("says that the alerts are off in Settings", function()
+			AzerothThreatwarden.Config:Set("account.settings.alerts.enabled", false)
+			contains(run("/atw mute"), T.disabled)
+			falsy(Mock.ns.Alerts.IsMuted())
+		end)
+
+		it("says when it arrives with the switch off", function()
+			boot(function(M) M.features = { monitor = true, alerts = false } end)
+			contains(run("/atw mute"), T.later)
+			falsy(Mock.ns.Alerts.IsMuted())
+			falsy(run("/atw help"):find(T.help, 1, true))
+		end)
+	end)
+end
+
 describe("the way a command is typed", function()
 	it("answers to /threatwarden as to /atw", function()
 		run("/threatwarden hide")

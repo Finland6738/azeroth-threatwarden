@@ -173,6 +173,12 @@ tank designati, chi tiene il mob. La **gravità** ordina gli avvisi: 1 WARNING, 
     lingua del client perché i nomi servono prima dell'`ADDON_LOADED`, [SPEC-01 §10](SPEC-01-platform-architecture.md#10-lingue-corelocalelua));
     chiama la funzione globale `AzerothThreatwarden_ToggleMute()` (ARC-04), che fa e risponde come `/atw mute`.
     Nessun tasto predefinito. Come in Accord (`Bindings.xml`, ADR 0012) **[da provare in gioco]**.
+  - Precisato in M3.5: `Bindings.xml` sta nella cartella dell'addon e il client lo carica per nome (non è nel TOC); le
+    due globali dei nomi e la funzione sono in `Core/Commands.lua`; la funzione passa da `/atw mute`, quindi risponde
+    nello stesso modo anche con l'interruttore spento. Il menu della riga (`ThreatList.RowMenu`, `Widgets.Menu` senza
+    `UIDropDownMenu`) ha il nome dell'unità come intestazione e la voce *Mute alerts about this unit*, con la spunta
+    quando è esclusa (un secondo clic la riaccende); si apre con il clic destro, non esiste per la riga del giocatore
+    né con l'interruttore spento, e si chiude con un clic altrove, Esc, il cambio di scheda o di demo.
 - `MUTE_CHANGED(muted)` sul Bus a ogni cambio (la striscia, `/atw debug`).
 - Interfaccia per M3.5 (M3.2): `Alerts.ToggleMute()` risponde `"muted-fight"`, `"muted-next"`, `"unmuted"`,
   `"disabled"` (avvisi spenti nella card: nulla cambia) o `"off"` (interruttore); `Alerts.Exclude(unitKey, sì/no)` e
@@ -188,6 +194,8 @@ tank designati, chi tiene il mob. La **gravità** ordina gli avvisi: 1 WARNING, 
 - Si legge quando la card si mostra e a `PLAYER_ENTERING_WORLD`; `/atw debug` lo riporta già (voce con `show`). Se la
   funzione manca o dà errore la card non dice nulla. Che cosa mostri davvero l'avviso nativo su Forever
   **[da provare in gioco]**.
+- Precisato in M3.5: `Compat.ThreatWarningEnabled()` risponde `true`, `false` o `nil` (mancante, errore, segreto o un
+  altro tipo); la nota compare solo con `true`. `Core/Init.lua` emette `ENTERING_WORLD` e Settings si ridisegna.
 
 ## 2. Threat Coach
 
@@ -413,7 +421,10 @@ Nella pagina Settings dopo *Monitor* e prima di *Reset*, solo con l'interruttore
 (cursore 3–30 s, salvato al rilascio), *Alerts about others* (segmentato *When I tank · Always · Never*), *Your pet
 takes the mob* (interruttore), la riga delle soglie con il collegamento alla card *Monitor*, la nota dell'avviso
 nativo (§1.6), *Threat Coach* (interruttore). Con gli avvisi spenti i controlli dei canali restano visibili ma inattivi.
-Con dati in sola lettura le scelte valgono per la sessione, come nella card *Monitor*.
+Con dati in sola lettura le scelte non si salvano e i controlli tornano al valore salvato, con *Not saved* sulla card,
+come nella card *Monitor* (precisato in M3.5). La card c'è con l'interruttore `alerts` (con il solo `coach` non c'è
+nessuna card). Le soglie hanno un pulsante *Go to the Monitor card* che scorre la pagina fino a lì; con la card c'è il
+testo di *Reset* che nomina avvisi e Coach.
 
 ### 4.3 Interruttori (`Core/Features.lua`)
 

@@ -1,0 +1,7 @@
+<Bindings>
+	<!-- Loaded by the client by its name (not listed in the TOC). Adapted from Azeroth Accord (Bindings.xml), same
+	     owner, GPL-3.0 (ADR 0012). No default key. -->
+	<Binding name="AZEROTHTHREATWARDEN_MUTE" header="AZEROTHTHREATWARDEN" category="ADDONS">
+		AzerothThreatwarden_ToggleMute()
+	</Binding>
+</Bindings>

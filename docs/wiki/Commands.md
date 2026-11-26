@@ -19,8 +19,14 @@ own chat window, in the addon's language; nothing is ever posted to other player
 | `/atw help` | lists the commands |
 | `/atw demo` | starts [demo mode](Threat-Monitor#demo-mode), an invented fight (typed again, stops it) |
 | `/atw demo stop` | ends demo mode (`/atw demo off` too) |
+| `/atw mute` | mutes the [alerts](Alerts-and-Coach#muting) until the end of this fight, or of the next one; typed again, unmutes them (from `v0.3.0`) |
 
-`/atw mute` and `/atw reports` answer with the version that will bring them.
+Until their version, `/atw mute` (`v0.3.0`) and `/atw reports` answer with the version that will bring them.
+
+## Key binding
+
+From `v0.3.0`, the game's key bindings have **Mute alerts** under *Azeroth Threatwarden* (in the addons' category),
+with no key set: it does the same as `/atw mute`. Its name is in the language of your game.
 
 ## The window
 

@@ -75,7 +75,9 @@ grafica, testabile offline), `UI/` (viste), `Locales/`.
 Compartment e i binding, più i frame con nome che il gioco richiede, tutti con il prefisso `AzerothThreatwarden`
 (la finestra, per chiuderla con Esc; il tooltip dell'addon; gli oggetti font `AzerothThreatwardenFont<Id>`). Unica
 eccezione senza prefisso: `SLASH_ACECONSOLE_ATW1` (e da M1.7 quello di `/threatwarden`), il nome che AceConsole dà al
-comando e che il client usa per trovarlo (M1.4).
+comando e che il client usa per trovarlo (M1.4). Da M3.5 ci sono anche le due globali con cui il client legge i nomi
+del binding, `BINDING_HEADER_AZEROTHTHREATWARDEN` e `BINDING_NAME_AZEROTHTHREATWARDEN_MUTE`, la funzione
+`AzerothThreatwarden_ToggleMute` e il menu `AzerothThreatwardenMenu` (frame con nome per Esc, creato al primo uso).
 
 ### 3.1 I moduli di M1
 
@@ -103,7 +105,7 @@ altro modulo caricato dopo di lui al caricamento del file, solo nei suoi gestori
 | `UI/Assets.lua` | tabella unica di texture e font dell'addon (`Media/`), come in Accord | — | `test_assets.lua` (ogni file in tabella, formato TGA, icone, licenze) | M1.6 |
 | `UI/Theme.lua` | token di Nebula, Aurora e Warden e i token di stato ([ui-style](ui-style.md)); registro delle regioni tinte; oggetti font `AzerothThreatwardenFont<Id>`; `Px()`; forme 9-slice | emette `THEME_CHANGED(themeId)`; ascolta `CONFIG_LOADED`, `CONFIG_CHANGED` | `test_theme.lua` (parità dei token, contrasti, nessun colore fuori dal tema) | M1.6 |
 | `UI/Motion.lua` | animazioni del tema (durate 120/200/320 ms), spente con `settings.animations` | — | `test_theme.lua` | M1.6 |
-| `UI/Widgets/` | il kit di Accord (`Core.lua`: Button, Card, Badge, Tabs, Segmented, TitleBar, Dialog, EditBox, ChoiceList; `Controls.lua`: Switch, Slider, Select; `ThinBar.lua`; `Tooltip.lua`), più `Threat.lua` con `ThreatBar`, `StateBadge` e `StateStripe` (vuoti di dati fino a M2) | — | `test_widgets.lua` | M1.6 |
+| `UI/Widgets/` | il kit di Accord (`Core.lua`: Button, Card, Badge, Tabs, Segmented, TitleBar, Dialog, EditBox, ChoiceList; `Controls.lua`: Switch, Slider, Select e, da M3.5, Menu (il menu di una riga); `ThinBar.lua`; `Tooltip.lua`), più `Threat.lua` con `ThreatBar`, `StateBadge` e `StateStripe` (vuoti di dati fino a M2) | — | `test_widgets.lua` | M1.6 |
 | `UI/DiagnosticsBox.lua` | la finestra da cui copiare il rapporto di `/atw debug`: dal M1.6 un `Widgets.Dialog` senza velo, spostabile | — | `test_diagnostics.lua` | M1.4 |
 | `UI/Window.lua` | finestra principale ([SPEC-03 §4](SPEC-03-threat-monitor-ui.md#4-finestra)): barra del titolo, schede, spostamento, blocco, ridimensionamento, scala, posizione per personaggio, Esc | emette `WINDOW_SHOWN(shown)`, `TAB_CHANGED(tabId)`; ascolta `CONFIG_LOADED`, `CONFIG_CHANGED`, `DISPLAY_CHANGED`, `COMBAT_STARTED`, `COMBAT_ENDED`, `CAPABILITY_CHANGED` (i colori li ridipinge il registro del tema) | `test_window.lua` | M1.7 |
 | `UI/Launcher.lua` | pulsante della minimappa (LibDataBroker + LibDBIcon, nascondibile) e voce dell'Addon Compartment (le tre funzioni globali del TOC), con lo stesso tooltip | ascolta `CONFIG_CHANGED` (`settings.minimap.*`) | `test_launcher.lua` | M1.7 |
@@ -143,6 +145,7 @@ Accord.
 | `CAPABILITY_CHANGED` | `id`, `state` | `Core/Compat.lua` (`Compat:SetCapability`, cambio di una restrizione) | Window (stato del modulo), ThreatState (M2) | M1.4 |
 | `COMBAT_STARTED` / `COMBAT_ENDED` | — | `Core/Init.lua` da `PLAYER_REGEN_DISABLED/ENABLED` | Scheduler, Window, Scanner (M2), Recorder (M4) | M1.2 |
 | `DISPLAY_CHANGED` | — | `Core/Init.lua` da `DISPLAY_SIZE_CHANGED` e `UI_SCALE_CHANGED` | Window (torna nello schermo) | M1.7 |
+| `ENTERING_WORLD` | — | `Core/Init.lua` da `PLAYER_ENTERING_WORLD` | Settings (rilegge l'avviso della threat del gioco) | M3.5 |
 | `WINDOW_SHOWN` | `shown` (bool) | `UI/Window.lua` | Scanner (M2: legge solo se serve) | M1.7 |
 | `TAB_CHANGED` | `tabId` | `UI/Window.lua` | le schede | M1.7 |
 | `TARGET_CHANGED`, `THREAT_SCANNED`, `THREAT_UPDATED`, `STATE_CHANGED`, `THREAT_MODE_CHANGED` | vedi §3.2 | `Data/` | UI, Alerts, Recorder | M2 |

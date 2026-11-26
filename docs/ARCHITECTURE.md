@@ -133,7 +133,8 @@ copied from Azeroth Accord and renamed; each copied file says so in its header.
 | `Core/Demo.lua`, `Data/Demo.lua` | demo mode: an invented fight through the same model, states and list, nothing read or saved | M2 (switch `monitor`, on since `v0.2.0`) |
 | `Data/Alerts.lua` | alerts when a state or the aggro holder changes, with a cooldown per kind and unit, channels, sound (through Compat) and mute ([SPEC-04](specs/SPEC-04-alerts-coach.md), Italian) | M3.2 (switch `alerts`, off until `v0.3.0`) |
 | `Data/Coach.lua`, `Data/CoachRules.lua` | rule-based tips (T1–T7, D1–D5, A1) with reason, category and confidence, one at a time, cooldowns, numbers at most once a second ([SPEC-04](specs/SPEC-04-alerts-coach.md), Italian) | M3.3 (switch `coach`, off until `v0.3.0`) |
-| `UI/CoachStrip.lua` | the Coach strip | *planned*, M3.4 |
+| `UI/CoachStrip.lua` | the Coach strip | M3.4 (switches `alerts`, `coach`) |
+| `Bindings.xml` | the key binding of the quick mute (loaded by the client by its name, not listed in the TOC); with `UI/Settings.lua` (*Alerts* card), `Core/Commands.lua` (`/atw mute`) and the row menu of `UI/ThreatList.lua` | M3.5 (switch `alerts`) |
 | `Data/Recorder.lua`, `Data/Session.lua`, `Data/Storage.lua`, `Data/Report.lua` | sessions, samples, events, limits, the combat report | *planned*, M4 |
 | `Data/Replay.lua`, `UI/Timeline.lua`, `UI/ReplayWindow.lua` | timeline and replay | *planned*, M5 |
 | `Data/Metrics.lua`, `Data/Export.lua` | descriptive metrics, comparison, text and CSV export | *planned*, M6 |
@@ -145,6 +146,7 @@ copied from Azeroth Accord and renamed; each copied file says so in its header.
 | `ADDON_READY` | Init, after Config, Locale and Compat | modules that prepare state | M1 |
 | `CONFIG_LOADED`, `CONFIG_CHANGED(path)` | Config | Theme, Window, Launcher, Settings | M1 |
 | `DISPLAY_CHANGED` | Init (screen size or interface scale) | Window | M1 |
+| `ENTERING_WORLD` | Init (`PLAYER_ENTERING_WORLD`) | Settings | M3.5 |
 | `SETTINGS_CHANGED(key)` | Settings | no one yet (views follow `CONFIG_CHANGED`) | M1 |
 | `THEME_CHANGED(themeId)` | Theme | Settings, other views | M1 |
 | `CAPABILITY_CHANGED(id, state)` | Compat | Window (module state), ThreatState | M1 |

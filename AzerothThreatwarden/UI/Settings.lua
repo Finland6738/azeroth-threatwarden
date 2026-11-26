@@ -2,7 +2,7 @@
 -- docs/specs/ui-style.md §2 and §3). Lua 5.1; no game API is named here (ARC-02): CreateFrame and Core/Compat.lua.
 -- Adapted from Azeroth Accord (UI/Settings.lua and the panel of UI/SettingsModel.lua), same owner, GPL-3.0 (ADR 0012).
 -- Changes: the cards are Threatwarden's own (Appearance, Language, Window, Monitor while the `monitor` switch is on,
--- Reset); no model file, because every value
+-- Alerts while the `alerts` switch is on (SPEC-04 §4.2, its Coach switch with `coach`), Reset); no model file, because every value
 -- is a path of Core/Config.lua; the cards follow the width they get; the scale is saved when the slider is released.
 --
 -- Every control writes through Config:Set and the change applies at once through CONFIG_CHANGED (Theme, Motion,
@@ -19,7 +19,8 @@
 --                                          has none.
 --
 -- Bus: emits SETTINGS_CHANGED(key) after the player changes an option; listens CONFIG_LOADED, CONFIG_CHANGED,
--- THEME_CHANGED and DEMO_CHANGED to repaint the pages on screen.
+-- THEME_CHANGED, DEMO_CHANGED and ENTERING_WORLD (the game's own threat warning is read again) to repaint the pages
+-- on screen.
 local ADDON_NAME, ns = ...
 ns = ns or {}
 ns.modules = ns.modules or {}
@@ -42,6 +43,8 @@ View.pages = {}              -- { id, labelKey, order, build } in order
 local function config() return ns.Config end
 local function get(path) return config() and config():Get(path) end
 local function monitorOn() return ns.Features ~= nil and ns.Features.On("monitor") end
+local function alertsOn() return ns.Features ~= nil and ns.Features.On("alerts") end
+local function coachOn() return ns.Features ~= nil and ns.Features.On("coach") end
 
 ---------------------------------------------------------------------------------------------------------------------
 -- Cards and rows (also used by UI/About.lua)
@@ -116,6 +119,15 @@ function View.Column(holder)
 		self.height = max(1, y - View.CARD_GAP + 8)
 		self.frame:SetSize(width, self.height)
 		if (self.scroll:GetVerticalScroll() or 0) > range() then self.scroll:SetVerticalScroll(range()) end
+	end
+	-- Scrolls so that `card` starts at the top (or as near as the end of the page allows).
+	function page:ScrollTo(card)
+		local y = 0
+		for _, other in ipairs(self.cards) do
+			if other == card then break end
+			if other:IsShown() then y = y + other:GetHeight() + View.CARD_GAP end
+		end
+		self.scroll:SetVerticalScroll(min(range(), y))
 	end
 	return page
 end
@@ -344,11 +356,71 @@ local function refreshMonitor(f)
 	f.demo:SetLabel(L[ns.Demo.IsActive() and "SET_DEMO_STOP" or "SET_DEMO_START"])
 end
 
+local ALERTS = "account.settings.alerts."
+
+-- The *Alerts* card (SPEC-04 §4.2): the channels stay on screen but inactive while the alerts are off; the Coach's
+-- switch is there with the `coach` switch. The thresholds are the monitor's, in one place: the card says them and links
+-- to that card. The note about the game's own threat warning shows only while the client says it is on (ALR-03).
+local function buildAlerts(view, f, page)
+	local Limits = ns.Config.ALERTS.cooldown
+	local card = View.StackCard(page.frame)
+	View.CardText(card, "H2", "text-1", L["SET_ALERTS"], 0)
+	f.alertsEnabled = switch(view, card, ALERTS .. "enabled", L["SET_ALERTS_ENABLED"])
+	f.alertsWindow = switch(view, card, ALERTS .. "window", L["SET_ALERTS_WINDOW"])
+	f.alertsVisual = switch(view, card, ALERTS .. "visual", L["SET_ALERTS_VISUAL"])
+	f.alertsSound = switch(view, card, ALERTS .. "sound", L["SET_ALERTS_SOUND"])
+	View.CardText(card, "Small", "text-3", L["SET_ALERTS_SOUND_NOTE"], 2)
+	f.cooldown = sliderBox(card, { min = Limits.min, max = Limits.max, step = 1,
+		format = function(v) return L["SET_SECONDS"]:format(v) end,
+		commit = function(v) write(view, card, ALERTS .. "cooldown", floor(v + 0.5)) end })
+	card:Add(controlRow(card, L["SET_ALERTS_COOLDOWN"], f.cooldown), 12, { stretch = true })
+	View.CardText(card, "Small", "text-3", L["SET_ALERTS_COOLDOWN_NOTE"], 2)
+
+	View.CardText(card, "BodyMedium", "text-1", L["SET_ALERTS_OTHERS"], 12)
+	local choices = {}
+	for i, id in ipairs(ns.Config.ALERT_OTHERS) do choices[i] = { id = id, text = L["SET_OTHERS_" .. id:upper()] } end
+	f.others = Widgets.Segmented(card, choices, function(id) write(view, card, ALERTS .. "others", id) end)
+	card:Add(f.others, 8)
+	f.alertsPet = switch(view, card, ALERTS .. "pet", L["SET_ALERTS_PET"])
+
+	f.thresholds = View.CardText(card, "Small", "text-2", "", 12)
+	if f.monitorCard then
+		f.toMonitor = Widgets.Button(card, { text = L["SET_ALERTS_TO_MONITOR"], style = "secondary", width = 240,
+			onClick = function() page:ScrollTo(f.monitorCard) end })
+		card:Add(f.toMonitor, 8)
+	end
+	f.native = View.CardText(card, "Small", "warn", L["SET_ALERTS_NATIVE"], 12)
+	f.native:Hide()
+	if coachOn() then f.coach = switch(view, card, "account.settings.coach.enabled", L["SET_COACH"]) end
+	statusLine(card)
+	return card
+end
+
+local function refreshAlerts(f)
+	local enabled = get(ALERTS .. "enabled") ~= false
+	f.alertsEnabled.control:SetOn(enabled, true)
+	for _, key in ipairs({ "window", "visual", "sound" }) do
+		local row = f["alerts" .. key:sub(1, 1):upper() .. key:sub(2)]
+		row.control:SetOn(get(ALERTS .. key) == true, true)
+		row.control:SetEnabled(enabled)
+	end
+	f.cooldown:Update(get(ALERTS .. "cooldown") or ns.Config.ALERTS_DEFAULTS.cooldown)
+	f.others:Select(get(ALERTS .. "others") or ns.Config.ALERTS_DEFAULTS.others)
+	f.alertsPet.control:SetOn(get(ALERTS .. "pet") == true, true)
+	local defaults = ns.Config.MONITOR_DEFAULTS
+	f.thresholds:SetText(L["SET_ALERTS_THRESHOLDS"]:format(get(MONITOR .. "warning") or defaults.warning,
+		get(MONITOR .. "danger") or defaults.danger))
+	f.native:SetShown(Compat.ThreatWarningEnabled() == true)
+	if f.coach then f.coach.control:SetOn(get("account.settings.coach.enabled") ~= false, true) end
+end
+
 -- "Reset settings" asks twice: the first click arms the button, a second one within CONFIRM_SECONDS resets.
 local function buildReset(view, f, page)
 	local card = View.StackCard(page.frame)
 	View.CardText(card, "H2", "text-1", L["SET_RESET"], 0)
-	View.CardText(card, "Body", "text-2", L[monitorOn() and "SET_RESET_TEXT_MONITOR" or "SET_RESET_TEXT"], 8)
+	local text = monitorOn() and "SET_RESET_TEXT_MONITOR" or "SET_RESET_TEXT"
+	if alertsOn() then text = "SET_RESET_TEXT_ALERTS" end
+	View.CardText(card, "Body", "text-2", L[text], 8)
 	local armed = 0
 	local function disarm()
 		armed = armed + 1
@@ -397,6 +469,7 @@ local function refreshSettings(view, f)
 	f.scaleBox:Update((get("char.ui.scale") or 1) * 100)
 	f.minimap.control:SetOn(get("account.settings.minimap.hide") ~= true, true)
 	if f.warning then refreshMonitor(f) end
+	if f.cooldown then refreshAlerts(f) end
 
 	local cfg = config()
 	local why = cfg and (cfg.readOnly.account or cfg.readOnly.char)
@@ -414,7 +487,14 @@ local function buildSettingsPage(holder, view)
 	f.readOnlyCard = buildReadOnly(f, page)
 	page.cards = { f.readOnlyCard, buildAppearance(view, f, page), buildLanguage(view, f, page),
 		buildWindowCard(view, f, page) }
-	if monitorOn() then page.cards[#page.cards + 1] = buildMonitor(view, f, page) end
+	if monitorOn() then
+		f.monitorCard = buildMonitor(view, f, page)
+		page.cards[#page.cards + 1] = f.monitorCard
+	end
+	if alertsOn() then
+		f.alertsCard = buildAlerts(view, f, page)
+		page.cards[#page.cards + 1] = f.alertsCard
+	end
 	page.cards[#page.cards + 1] = buildReset(view, f, page)
 	f.cards = page.cards
 	function page:Refresh() refreshSettings(view, f) end
@@ -564,6 +644,7 @@ if ns.Bus then
 	ns.Bus.On("CONFIG_CHANGED", View.RefreshAll)
 	ns.Bus.On("THEME_CHANGED", View.RefreshAll)
 	ns.Bus.On("DEMO_CHANGED", View.RefreshAll)
+	ns.Bus.On("ENTERING_WORLD", View.RefreshAll)
 end
 if ns.OnEnable then ns.OnEnable(function() View.RegisterPanel() end) end
 if ns.addon then

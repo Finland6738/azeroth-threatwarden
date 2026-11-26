@@ -7,6 +7,13 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
+- M3.5: alert settings and the quick mute, behind the `alerts` and `coach` switches (off until `v0.3.0`, so nothing
+  changes yet for players). An *Alerts* card in Settings (alerts, message, visual effect and sound, cooldown, alerts
+  about others, the pet, the monitor's thresholds with a button to their card, the note that the game's own threat
+  warning may warn twice, and the Threat Coach switch); `/atw mute` and a key binding with no default key
+  (`Bindings.xml`) that mute the alerts until the end of the fight, or of the next one; a right-click menu on a row,
+  *Mute alerts about this unit* (until a reload, nothing saved). Design previews `settings-alerts` and `alert-muted`;
+  manual pages *Settings*, *Commands* and *Alerts and Coach* updated.
 - M3.4: the Coach strip in the Monitor view, behind the `alerts` and `coach` switches (off until `v0.3.0`, so nothing
   changes yet for players). Between the header of the enemy and the list: an alert with its state badge for 4 seconds
   (a more severe one replaces it), then the Coach's tip, with a confidence pill for estimates and predictions, *Alerts

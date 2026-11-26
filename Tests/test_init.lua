@@ -58,6 +58,9 @@ describe("loading the addon", function()
 			"AzerothThreatwarden", "AzerothThreatwardenCharDB", "AzerothThreatwardenDB", "AzerothThreatwardenWindow",
 			"AzerothThreatwarden_OnAddonCompartmentClick",
 			"AzerothThreatwarden_OnAddonCompartmentEnter", "AzerothThreatwarden_OnAddonCompartmentLeave",
+			"AzerothThreatwarden_ToggleMute",
+			-- the names of the key binding of Bindings.xml, which the client reads by these names (SPEC-04 §1.5)
+			"BINDING_HEADER_AZEROTHTHREATWARDEN", "BINDING_NAME_AZEROTHTHREATWARDEN_MUTE",
 			"LibDBIcon10_AzerothThreatwarden", "SLASH_ACECONSOLE_ATW1", "SLASH_ACECONSOLE_THREATWARDEN1",
 		})
 	end)

@@ -112,10 +112,16 @@ them (SPEC-04 §4.3).
   `Bindings.xml` with `AzerothThreatwarden_ToggleMute`, the row menu *Mute alerts about this unit*, the previews
   `settings-alerts` and `alert-muted`; wiki pages *Settings* and *Commands* in both languages.
 - Done when:
-  - [ ] Every setting applies at once; `/atw mute` and the key answer in both languages and the mute ends with the
+  - [x] Every setting applies at once; `/atw mute` and the key answer in both languages and the mute ends with the
     fight; nothing of the card shows while the switches are off.
 - Tests: `test_settings.lua`, `test_commands.lua`, `test_bindings.lua`, the row menu in `test_threat_list.lua`.
 - Real client: the binding in the game's key bindings; what the game's own threat warning does.
+- *Done (2026-11-26, before M0.7): the *Alerts* card in `UI/Settings.lua` (read-only data as the *Monitor* card), the
+  note of `IsThreatWarningEnabled` through `Compat.ThreatWarningEnabled`, read when the card shows and on the new Bus
+  event `ENTERING_WORLD`; `/atw mute`; `Bindings.xml` (`AZEROTHTHREATWARDEN_MUTE` calling
+  `AzerothThreatwarden_ToggleMute()`, as SPEC-04 §1.5 names them); the row menu with `Widgets.Menu` (adapted from
+  Accord, no `UIDropDownMenu`); previews `settings-alerts` and `alert-muted`; wiki *Settings*, *Commands*, *Alerts and
+  Coach*. Tests: `test_settings.lua`, `test_commands.lua`, `test_bindings.lua`, `test_threat_list.lua`.*
 
 ### M3.6 — In-game checklist M3
 - Branch: `step/m3-6-checklist`

@@ -25,6 +25,18 @@ local function report(ok, done)
 	say(L[ok and done or "CMD_READ_ONLY"])
 end
 
+-- The answers of /atw mute by what Data/Alerts.lua says happened (SPEC-04 §1.5). "off" cannot come: the command is
+-- then answered by the switch.
+local MUTE_ANSWERS = {
+	["muted-fight"] = "CMD_MUTED_FIGHT", ["muted-next"] = "CMD_MUTED_NEXT", unmuted = "CMD_UNMUTED",
+	disabled = "CMD_ALERTS_DISABLED",
+}
+
+local function mute()
+	local key = MUTE_ANSWERS[ns.Alerts.ToggleMute()]
+	if key then say(L[key]) end
+end
+
 -- In the order of `help`. `help`: the key of its line. `feature` and `version`: a part of a later milestone.
 Commands.LIST = {
 	{ name = "show", help = "HELP_SHOW", run = function() ns.Window:Open() end },
@@ -38,7 +50,7 @@ Commands.LIST = {
 	{ name = "help", help = "HELP_HELP", run = function() Commands.Help() end },
 	{ name = "demo", help = "HELP_DEMO", feature = "monitor", version = "v0.2.0",
 		run = function(rest) ns.Demo.Command(rest) end },
-	{ name = "mute", feature = "alerts", version = "v0.3.0" },      -- M3
+	{ name = "mute", help = "HELP_MUTE", feature = "alerts", version = "v0.3.0", run = mute },
 	{ name = "reports", feature = "reports", version = "v0.4.0" },  -- M4
 }
 
@@ -78,5 +90,14 @@ function Commands.Register()
 	if not ns.addon then return end
 	for _, slash in ipairs(Commands.SLASH) do ns.addon:RegisterChatCommand(slash, Commands.Run) end
 end
+
+-- The key of Bindings.xml (SPEC-04 §1.5, ARC-04): it does and answers as /atw mute, "This arrives in v0.3.0." with the
+-- switch off. The names the game shows in its key bindings are needed before ADDON_LOADED, so they follow the language
+-- of the client (SPEC-01 §10).
+function AzerothThreatwarden_ToggleMute()
+	Commands.Run("mute")
+end
+_G.BINDING_HEADER_AZEROTHTHREATWARDEN = L["ADDON_TITLE"]
+_G.BINDING_NAME_AZEROTHTHREATWARDEN_MUTE = L["BINDING_MUTE"]
 
 if ns.addon then ns.addon.Commands = Commands end

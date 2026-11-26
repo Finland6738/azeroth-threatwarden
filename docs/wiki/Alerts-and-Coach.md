@@ -2,9 +2,8 @@
 
 *Italiano: [[Avvisi e Coach|Alerts-and-Coach-it]]*
 
-> **Coming in `v0.3.0`, not in the published version yet, and not verified in game.** The strip, the alerts and the
-> Coach are built and switched off until the release. The quick mute (command and key) and the *Alerts* card of
-> Settings arrive before it.
+> **Coming in `v0.3.0`, not in the published version yet, and not verified in game.** The strip, the alerts, the
+> Coach, the quick mute and the [Alerts card of Settings](Settings#alerts) are built and switched off until the release.
 
 A **warning** when a risk begins, and one short **piece of advice** with its reason. Both appear in a strip of the
 [[Threat Monitor|Threat-Monitor]] tab, between the header of the enemy and the list. Nothing is ever written in chat,
@@ -42,6 +41,16 @@ By default the alert shows in the strip and the **border** of the window takes t
 two seconds, without flashing. With the message turned off, the pill at the top shows the state's icon for the same
 time, so colour never carries the meaning alone. A **sound** is off by default; when on, it plays only for Danger and
 for losing or taking the enemy.
+
+### Muting
+
+- `/atw mute`, or the [key you bind to it](Commands#key-binding), silences every alert **until the end of the current
+  fight**; out of combat, until the end of the next one. Again to unmute sooner. A reload also ends it. The Coach is
+  not muted: it is text in the strip (turn it off in [Settings](Settings#alerts)).
+- **One unit**: right-click its row in the list and choose **Mute alerts about this unit** (again to unmute). It lasts
+  until a reload, and no name is saved. Your own row has no such menu.
+
+![The strip while the alerts are muted](../specs/mockups/previews/alert-muted-warden.webp)
 
 ### The game's own threat warning
 
