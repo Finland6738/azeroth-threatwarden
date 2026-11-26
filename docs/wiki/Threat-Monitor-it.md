@@ -23,6 +23,8 @@ resto sono nella [card Monitor delle Impostazioni](Settings-it#monitor).
 - **Margine**: per un DPS o un guaritore, quanto sei lontano dal 100 % (prendere l'aggro); per il tank, quanto il
   secondo è lontano dal 100 %.
 
+Dalla `v0.3.0` sotto l'intestazione c'è una striscia con [[avvisi e consigli|Alerts-and-Coach-it]].
+
 ## L'elenco
 
 Una riga per ogni unità nella lista della threat del nemico (tu, il tuo famiglio, il gruppo o l'incursione):

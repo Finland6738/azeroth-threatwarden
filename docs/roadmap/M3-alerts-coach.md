@@ -95,10 +95,14 @@ them (SPEC-04 §4.3).
   `coach-tank`, `coach-unknown`, `alert-danger`; wiki page *Alerts and Coach* in both languages (with the game's own
   threat warning, ALR-03).
 - Done when:
-  - [ ] An alert shows for 4 s and gives way to the current tip; the border changes once per alert, never flashing;
+  - [x] An alert shows for 4 s and gives way to the current tip; the border changes once per alert, never flashing;
     every tip shows its reason; no state by colour alone.
 - Tests: `test_coach_strip.lua`.
 - Real client: readability of the strip and of the border in combat, at small sizes.
+- *Done (2026-11-26, before M0.7): `UI/CoachStrip.lua` built into the Monitor view, the border effect and the pill's
+  state icon in `UI/Window.lua`, the icons `coach` and `mute`, previews `coach-dps`, `coach-tank`, `coach-unknown`,
+  `alert-danger` and the wiki page *Alerts and Coach*. Added to the specification: a reason for every alert
+  (`ALERT_WHY_*`, `Alerts.Text`); an alert is kept only while the strip can show it. `test_coach_strip.lua`.*
 
 ### M3.5 — Alert settings and quick mute
 - Branch: `step/m3-5-alert-settings`

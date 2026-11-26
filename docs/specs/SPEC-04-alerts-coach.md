@@ -348,6 +348,16 @@ Righe miste: se il secondo è in `state` mentre il giocatore è in `values`, le 
   invented values* durante la demo; *Alerts muted until the end of this fight* se silenziato.
 - Testi nelle due lingue; nessuna API del gioco (`test_api_boundary.lua`); i nomi di `%s` vengono dalle righe del
   modello, come nell'elenco.
+- Precisato in M3.4:
+  - **Motivazione di un avviso**: le chiavi `ALERT_WHY_*` di `Alerts.REASONS`, una per messaggio (soglia superata con
+    il suo numero, stato del gioco, chi è in cima alla lista, la confidenza della previsione), con le regole di §2.4;
+    `Alerts.Text(alert, nameOf)` formatta messaggio e motivazione. La categoria e la confidenza sono quelle
+    dell'avviso.
+  - Un avviso si tiene solo se la striscia può mostrarlo (finestra aperta sul Monitor, canale `window`); non si conserva.
+    La striscia si ridisegna ai suoi eventi, non a ogni tick, e solo quando è visibile.
+  - Spegnendo gli avvisi o il messaggio nella finestra l'avviso mostrato sparisce; il cambio di demo lo toglie se è
+    dell'altro combattimento. *Alerts muted* / *Alerts back on* si mostrano anche quando il silenzio finisce con il
+    combattimento.
 
 ### 3.2 L'effetto visivo
 
@@ -359,6 +369,10 @@ Righe miste: se il secondo è in `state` mentre il giocatore è in `values`, le 
 - È un colore su un elemento non testuale (ST-03) e non un bagliore (nessun neon nella compatta, ui-style §3.1).
   Poiché da solo sarebbe un segnale di solo colore, con `alerts.window` spento l'effetto mostra anche l'icona dello
   stato nella pastiglia della barra del titolo per la stessa durata (ST-02).
+- Precisato in M3.4: l'effetto è un anello 9-slice sopra la finestra (uno per disposizione), quindi il bordo normale
+  non cambia; con le animazioni accese dura 120 ms di entrata, 1,5 s di tenuta e 320 ms di uscita, e una chiusura della
+  finestra lo termina. Nella pillola della barra del titolo l'icona dello stato prende il posto di quella del modulo (la
+  parola resta).
 - `FlashClientIcon` (nel dump) **non** si usa: far lampeggiare la finestra del client è invasivo.
 
 ### 3.3 Anteprime
@@ -416,7 +430,7 @@ del monitor). I due interruttori sono indipendenti: il Coach senza avvisi e gli 
 | `Data/Alerts.lua` | tipi (§1.2), cooldown e raffiche (§1.3), canali, suono attraverso Compat, silenzio, esclusioni, consumatore dello Scanner | ascolta `STATE_CHANGED`, `AGGRO_CHANGED`, `COMBAT_ENDED`, `CONFIG_LOADED`, `CONFIG_CHANGED`, `DEMO_CHANGED`; emette `ALERT_RAISED(alert)`, `MUTE_CHANGED(muted)` | M3.2 |
 | `Data/CoachRules.lua` | la tabella di §2.2: dati e condizioni, senza stato | — | M3.3 |
 | `Data/Coach.lua` | ruolo, scelta, cooldown, numeri (§2.3), `Coach.Text` | ascolta `THREAT_UPDATED`, `COMBAT_ENDED`, `DEMO_CHANGED`, `CONFIG_LOADED`, `CONFIG_CHANGED`; emette `COACH_TIP(tip)` (`nil` = nessun consiglio) | M3.3 |
-| `UI/CoachStrip.lua` | la striscia (§3.1), costruita dalla vista di `UI/ThreatList.lua` | ascolta `ALERT_RAISED`, `COACH_TIP`, `MUTE_CHANGED`, `CONFIG_CHANGED`, `THEME_CHANGED` | M3.4 |
+| `UI/CoachStrip.lua` | la striscia (§3.1), costruita dalla vista di `UI/ThreatList.lua` | ascolta `ALERT_RAISED`, `COACH_TIP`, `MUTE_CHANGED`, `COMBAT_STARTED`, `COMBAT_ENDED`, `DEMO_CHANGED`, `CONFIG_LOADED`, `CONFIG_CHANGED`, `THEME_CHANGED` | M3.4 |
 | `UI/Window.lua` (cambio) | l'effetto del bordo (§3.2) | ascolta `ALERT_RAISED` | M3.4 |
 | `UI/Settings.lua`, `Core/Commands.lua`, `Bindings.xml` | card *Alerts*, `/atw mute`, il tasto, il menu della riga | — | M3.5 |
 

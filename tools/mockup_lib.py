@@ -181,6 +181,13 @@ body { font: 400 13px/1.35 'Outfit', 'Segoe UI', sans-serif; color: var(--text-1
 .mhead .margin { position: absolute; right: 0; top: 20px; font: 500 11px/14px 'JetBrains Mono', monospace; color: var(--text-2); }
 .badge { display: inline-flex; align-items: center; gap: 3px; height: 14px; padding: 0 7px 0 5px; border-radius: 8px; color: var(--on-state); font: 600 9px/1 'Outfit', sans-serif; white-space: nowrap; }
 .badge.large { position: absolute; right: 0; top: 0; height: 18px; }
+.strip { position: relative; display: flex; align-items: center; gap: 4px; height: 18px; padding: 0 4px 0 8px; background: var(--surface-2); border-radius: 4px; overflow: hidden; }
+.strip .stripe { position: absolute; left: 0; top: 0; bottom: 0; width: 3px; }
+.strip .coachicon { display: grid; color: var(--accent-text); }
+.strip .text { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.strip .pred { display: grid; color: var(--text-2); }
+.strip .pill { height: 14px; padding: 0 5px; border-radius: 8px; background: var(--surface-3); color: var(--text-2); font: 600 9px/14px 'Outfit', sans-serif; }
+.win.flash { border: 1px solid var(--state-danger); }
 .mlisthead { height: 14px; display: flex; justify-content: space-between; align-items: center; font: 600 10px/1 'Outfit', sans-serif; color: var(--text-3); }
 .mlisthead span { display: flex; gap: 3px; align-items: center; padding: 0 2px; }
 .mrow { position: relative; display: flex; align-items: center; height: 20px; padding-left: 8px; }

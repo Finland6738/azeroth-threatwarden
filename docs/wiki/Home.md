@@ -18,7 +18,7 @@ coach and combat analysis addon for World of Warcraft: Forever.
 
 - **Threat Monitor**: every group member's threat on your target, the tank, how close each one is to pulling aggro,
   and a state: *Safe*, *Warning*, *Danger* or *Unknown*.
-- **Alerts and Coach**: a warning before you overtake the tank, and short advice with its reason.
+- **[[Alerts and Coach|Alerts-and-Coach]]** (coming in `v0.3.0`): a warning before you overtake the tank, and short advice with its reason.
 - **Combat Report, Timeline and Replay**: every fight recorded while it happens, to look at afterwards.
 - **Honest data**: the addon always says whether a number is read from the game, calculated, estimated or predicted,
   and shows *Unknown* instead of guessing.

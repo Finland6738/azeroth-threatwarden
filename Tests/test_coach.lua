@@ -670,6 +670,7 @@ describe("the work of an update (ARC-06)", function()
 	it("allocates nothing after the warm-up", function()
 		local pull = tankPull(85)
 		pull:to(3)
+		Mock.ns.Window:Close()   -- the work of the module: the strip's texts are written only while it shows
 		Mock.ns.Scheduler.Stop("threat")
 		local Compat = Mock.ns.Compat
 		local t = Compat.Now()

@@ -438,6 +438,52 @@ local function onAggroChanged(mobKey, unitKey, oldUnitKey)
 end
 
 ---------------------------------------------------------------------------------------------------------------------
+-- The text of an alert (UI/CoachStrip.lua)
+---------------------------------------------------------------------------------------------------------------------
+-- The reason of each message (SPEC-04 §3.1: on which data it rests, never a cause, WR-03).
+Alerts.REASONS = {
+	ALERT_WARNING = "ALERT_WHY_P_WARNING", ALERT_WARNING_PREDICTED = "ALERT_WHY_PREDICTED",
+	ALERT_WARNING_STATE = "ALERT_WHY_STATE", ALERT_DANGER = "ALERT_WHY_P_DANGER", ALERT_AGGRO = "ALERT_WHY_TOP",
+	ALERT_MARGIN_WARNING = "ALERT_WHY_MARGIN_WARNING", ALERT_MARGIN_WARNING_STATE = "ALERT_WHY_STATE",
+	ALERT_MARGIN_DANGER = "ALERT_WHY_MARGIN_DANGER", ALERT_MARGIN_DANGER_STATE = "ALERT_WHY_STATE",
+	ALERT_BEHIND = "ALERT_WHY_BEHIND", ALERT_LOST = "ALERT_WHY_HOLDER", ALERT_PET = "ALERT_WHY_PET",
+	ALERT_OTHER_DANGER = "ALERT_WHY_OTHER_DANGER", ALERT_OTHER_AGGRO = "ALERT_WHY_HOLDER",
+}
+local REASON_AT_WARNING = { ALERT_WHY_P_WARNING = true, ALERT_WHY_MARGIN_WARNING = true }
+local REASON_AT_DANGER = { ALERT_WHY_P_DANGER = true, ALERT_WHY_MARGIN_DANGER = true, ALERT_WHY_OTHER_DANGER = true }
+
+local function defaultName(unitKey)
+	local row = rowOfKey(unitKey)
+	return row and row.record.unitName or nil
+end
+
+-- The message and the reason of an alert in the active language. nameOf(unitKey) gives the name of the `%s` (default:
+-- the name the scanner read for that row; "Unknown" when there is none).
+function Alerts.Text(alert, nameOf)
+	if not alert or not alert.message or alert.message == "" then return nil end
+	local L = ns.L
+	local name = alert.otherKey and (nameOf or defaultName)(alert.otherKey) or nil
+	if type(name) ~= "string" or name == "" then name = L.WHY_UNKNOWN end
+	local message
+	if alert.otherKey then
+		message = L[alert.message]:format(name, alert.args[1])
+	else
+		message = L[alert.message]:format(alert.args[1])
+	end
+	local key = Alerts.REASONS[alert.message]
+	local reason = L[key]
+	if REASON_AT_WARNING[key] or REASON_AT_DANGER[key] then
+		local warning, danger = ns.ThreatState.Thresholds()
+		reason = reason:format(REASON_AT_WARNING[key] and warning or danger)
+	elseif key == "ALERT_WHY_PREDICTED" then
+		reason = reason:format(L["CONF_" .. tostring(alert.confidence):upper()] or L.WHY_UNKNOWN)
+	elseif key == "ALERT_WHY_HOLDER" then
+		reason = reason:format(name)
+	end
+	return message, reason
+end
+
+---------------------------------------------------------------------------------------------------------------------
 -- The end of a fight, the demo, the settings
 ---------------------------------------------------------------------------------------------------------------------
 -- Drops what can no longer matter once many units have been seen (a long session of groups).

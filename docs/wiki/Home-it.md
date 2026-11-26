@@ -18,7 +18,7 @@ della threat, di coaching e di analisi dei combattimenti per World of Warcraft: 
 
 - **Threat Monitor**: la threat di ogni membro del gruppo sul tuo target, il tank, quanto manca a ciascuno per prendere
   l'aggro, e uno stato: *Safe*, *Warning*, *Danger* o *Unknown*.
-- **Avvisi e Coach**: un avviso prima di superare il tank, e brevi consigli con il loro motivo.
+- **[[Avvisi e Coach|Alerts-and-Coach-it]]** (in arrivo nella `v0.3.0`): un avviso prima di superare il tank, e brevi consigli con il loro motivo.
 - **Combat Report, Timeline e Replay**: ogni combattimento registrato mentre accade, da rivedere dopo.
 - **Dati onesti**: l'addon dice sempre se un numero è letto dal gioco, calcolato, stimato o previsto, e mostra
   *Unknown* invece di indovinare.

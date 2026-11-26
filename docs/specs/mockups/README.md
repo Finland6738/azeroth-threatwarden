@@ -15,7 +15,7 @@ basso.
 
 | Cartella | Contenuto | Prodotta da |
 |---|---|---|
-| [`previews/`](previews/README.md) | il monitor della threat (valori, vista del tank, solo stato, sconosciuto, nessun bersaglio, demo; Nebula e Warden, la prima anche in Aurora), la card Monitor delle Impostazioni, la finestra di M1 (scheda Monitor vuota), le Impostazioni e la pagina Info nei tre temi, in inglese e italiano | `tools/make_mockups.py` |
+| [`previews/`](previews/README.md) | il monitor della threat (valori, vista del tank, solo stato, sconosciuto, nessun bersaglio, demo; Nebula e Warden, la prima anche in Aurora), la striscia del Coach e l'effetto di un avviso (M3.4; Nebula e Warden), la card Monitor delle Impostazioni, la finestra di M1 (scheda Monitor vuota), le Impostazioni e la pagina Info nei tre temi, in inglese e italiano | `tools/make_mockups.py` |
 
 ## Rifarle
 

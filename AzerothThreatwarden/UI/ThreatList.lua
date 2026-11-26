@@ -479,7 +479,9 @@ function View:Layout(width, height)
 	self.message:SetWidth(width - 8)
 	self.reason:SetWidth(width - 8)
 	self.quality:SetWidth(width - 16)
+	if self.strip then self.strip.contentWidth = width end
 	self:Redraw()
+	if self.strip then self.strip:Update() end
 end
 
 ---------------------------------------------------------------------------------------------------------------------
@@ -766,7 +768,8 @@ end
 
 local function drawRows(view, situation)
 	local Model = ns.ThreatModel
-	local height = (view.contentHeight or 0) - view.headerHeight - ThreatList.LISTHEAD_HEIGHT - ThreatList.FOOTER_HEIGHT
+	local height = (view.contentHeight or 0) - view.headerHeight - view.stripHeight - view.listHeadHeight
+		- ThreatList.FOOTER_HEIGHT
 	local places = max(1, floor(height / ThreatList.ROW_HEIGHT))
 	local total, used = 0, 0
 	local order
@@ -819,7 +822,7 @@ local function drawRows(view, situation)
 	end
 	view.shownRows = used
 
-	show(view.listHead, total > 0)
+	show(view.listHead, total > 0 and view.listHeadHeight > 0)
 	if total > 0 then
 		local by = ThreatList.Sort()
 		local label = L[SORT_LABEL[by]]
@@ -838,6 +841,29 @@ local function drawRows(view, situation)
 	if reason then setText(view, view.reason, reason) end
 end
 
+-- Places the Coach strip (UI/CoachStrip.lua) between the header and the list header while it is present. In a window
+-- so low that the list would have fewer than two rows, the list header gives its room to the rows (SPEC-04 §3.1).
+function View:Arrange()
+	local strip = self.strip
+	local present = strip ~= nil and ns.CoachStrip.Present()
+	local height = present and ns.CoachStrip.HEIGHT or 0
+	local room = (self.contentHeight or 0) - self.headerHeight - height - ThreatList.LISTHEAD_HEIGHT
+		- ThreatList.FOOTER_HEIGHT
+	local short = present and floor(room / ThreatList.ROW_HEIGHT) < 2
+	self.stripHeight = height
+	self.listHeadHeight = short and 0 or ThreatList.LISTHEAD_HEIGHT
+	if present == self.stripPresent and short == self.shortList then return end
+	self.stripPresent, self.shortList = present, short
+	local above = present and strip or self.header
+	self.listHead:ClearAllPoints()
+	self.listHead:SetPoint("TOPLEFT", above, "BOTTOMLEFT", 0, 0)
+	self.listHead:SetPoint("TOPRIGHT", above, "BOTTOMRIGHT", 0, 0)
+	self.list:ClearAllPoints()
+	self.list:SetPoint("TOPLEFT", short and above or self.listHead, "BOTTOMLEFT", 0, 0)
+	self.list:SetPoint("BOTTOMRIGHT", self, "BOTTOMRIGHT", 0, ThreatList.FOOTER_HEIGHT)
+	if strip then show(strip, present) end
+end
+
 -- Draws the view from the Data modules. A hidden view only notes that it is out of date.
 function View:Redraw()
 	if not (ns.Features and ns.Features.On("monitor")) or not self.columns then return end
@@ -850,6 +876,7 @@ function View:Redraw()
 	local situation = ThreatList.Situation()
 	self.situation = situation
 	drawHeader(self, situation)
+	self:Arrange()
 	drawRows(self, situation)
 	drawFooter(self, situation)
 end
@@ -915,6 +942,13 @@ function ThreatList.Build(page)
 	view.notice = line(header, "Small", "text-2")
 	view.notice:SetPoint("TOPLEFT", header, "TOPLEFT", 0, -33)
 	Widgets.Tooltip.Attach(header, function() return view:HeaderTooltip() end, "BOTTOM")
+
+	view.stripHeight, view.listHeadHeight = 0, ThreatList.LISTHEAD_HEIGHT
+	if ns.CoachStrip then
+		view.strip = ns.CoachStrip.Build(view)
+		view.strip:SetPoint("TOPLEFT", header, "BOTTOMLEFT", 0, 0)
+		view.strip:SetPoint("TOPRIGHT", header, "BOTTOMRIGHT", 0, 0)
+	end
 
 	view.listHead = CreateFrame("Frame", nil, view)
 	view.listHead:SetHeight(ThreatList.LISTHEAD_HEIGHT)

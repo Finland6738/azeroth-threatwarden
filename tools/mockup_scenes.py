@@ -35,6 +35,7 @@ ICONS = {
     "trend-flat": '<path d="M3 12h17M15 7l5 5-5 5"/>',
     "predict": '<path d="M2 12h.01M8 12h.01"/><path d="M14 6l8 6-8 6z" fill="currentColor" stroke="none"/>',
     "check": '<path d="M4 12l5 5L20 6"/>', "minus": '<path d="M5 12h14"/>',
+    "coach": '<path d="M4 4h16a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-9l-6 5v-5H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z"/><circle cx="12" cy="10.5" r="2" fill="currentColor"/>',
 }
 CLASS = {"warrior": "#C69B6D", "mage": "#3FC7EB", "priest": "#FFFFFF", "rogue": "#FFF468"}
 STATE_KEY = {"safe": "STATE_SAFE", "warning": "STATE_WARNING", "danger": "STATE_DANGER", "unknown": "STATE_UNKNOWN"}
@@ -108,6 +109,62 @@ def quality(valid):
 
 def category(value, key):
     return T("TIP_TAGGED", value, T(key))
+
+
+# ---- the Coach strip (UI/CoachStrip.lua, SPEC-04 §3.1) --------------------------------------------------------------
+
+def strip(text, alert=None, pill=None, predicted=False):
+    token = f"var(--state-{alert})" if alert else "var(--accent)"
+    lead = badge(alert) if alert else f'<span class="coachicon">{icon("coach", 12)}</span>'
+    extra = f'<span class="pred">{icon("predict")}</span>' if predicted else ""
+    extra += f'<span class="pill">{esc(T(pill))}</span>' if pill else ""
+    return (f'<div class="strip"><span class="stripe" style="background:{token}"></span>{lead}'
+            f'<span class="text">{esc(text)}</span>{extra}</div>')
+
+
+def coach_dps(theme):
+    rows = [mon_row(theme, "Bram", "warrior", "tank", "danger", 100, holder=True),
+            mon_row(theme, T("UNIT_YOU"), "mage", "dps", "warning", 84, me=True, eta=4),
+            mon_row(theme, "Kor", "rogue", "dps", "safe", 49, trend="up"),
+            mon_row(theme, "Sela", "priest", "healer", "safe", 12, trend="flat")]
+    body = (mon_head("Gorrak", T("MON_CLASS_BOSS"), "warning", T("MON_TANK", "Bram"), "+16")
+            + strip(T("COACH_RISING"), pill="CONF_PILL_MEDIUM", predicted=True) + mon_list(rows))
+    lines = [T("COACH_RISING"), T("STRIP_WHY", T("COACH_WHY_TREND", 95, 4, T("CONF_MEDIUM"))),
+             T("STRIP_BASIS", T("CAT_PREDICTED"), T("CONF_MEDIUM")), T("STRIP_ADVICE"), T("STRIP_SINCE", 1)]
+    return mon_window(theme, "live", body, quality(100)) + tip(lines, 190)
+
+
+def coach_tank(theme):
+    rows = [mon_row(theme, T("UNIT_YOU"), "warrior", "tank", "safe", 100, holder=True, me=True),
+            mon_row(theme, "Kor", "rogue", "dps", "safe", 71, eta=6),
+            mon_row(theme, "Sela", "priest", "healer", "safe", 15, trend="flat")]
+    body = (mon_head("Gorrak", T("MON_CLASS_BOSS"), "safe", T("MON_TANK", T("UNIT_YOU")), "+29")
+            + strip(T("COACH_TANK_OVERTAKE", "Kor", 6), pill="CONF_PILL_HIGH", predicted=True) + mon_list(rows))
+    lines = [T("COACH_TANK_OVERTAKE", "Kor", 6), T("STRIP_WHY", T("COACH_WHY_TREND_OTHER", 4.8, T("CONF_HIGH"))),
+             T("STRIP_BASIS", T("CAT_PREDICTED"), T("CONF_HIGH")), T("STRIP_ADVICE"), T("STRIP_SINCE", 2)]
+    return mon_window(theme, "live", body, quality(100)) + tip(lines, 190)
+
+
+def coach_unknown(theme):
+    body = (mon_head("Gorrak", T("MON_CLASS_BOSS"), "unknown", T("MON_TANK_UNKNOWN"), holder=False)
+            + strip(T("COACH_INSUFFICIENT"))
+            + f'<div class="mmsg">{esc(T("MON_UNAVAILABLE"))}<small>{esc(T("WHY_SECRET"))}</small></div>')
+    lines = [T("COACH_INSUFFICIENT"), T("STRIP_WHY", T("WHY_SECRET")), T("STRIP_ADVICE"), T("STRIP_SINCE", 3)]
+    return mon_window(theme, "unavailable", body, quality(0), True) + tip(lines, 190)
+
+
+def alert_danger(theme):
+    rows = [mon_row(theme, "Bram", "warrior", "tank", "danger", 100, holder=True),
+            mon_row(theme, T("UNIT_YOU"), "mage", "dps", "danger", 97, me=True, trend="up"),
+            mon_row(theme, "Kor", "rogue", "dps", "safe", 49, trend="up"),
+            mon_row(theme, "Sela", "priest", "healer", "safe", 12, trend="flat")]
+    body = (mon_head("Gorrak", T("MON_CLASS_BOSS"), "danger", T("MON_TANK", "Bram"), "+3")
+            + strip(T("ALERT_DANGER", 97), alert="danger") + mon_list(rows))
+    lines = [T("ALERT_DANGER", 97), T("STRIP_WHY", T("ALERT_WHY_P_DANGER", 95)),
+             T("STRIP_BASIS", T("CAT_DETECTED"), T("CONF_HIGH")), T("STRIP_ALERT"), T("STRIP_SINCE", 0)]
+    window_html = mon_window(theme, "live", body, quality(100)).replace('<div class="win compact',
+                                                                       '<div class="win flash compact', 1)
+    return window_html + tip(lines, 190)
 
 
 def monitor_values(theme):
@@ -260,6 +317,20 @@ def about(theme):
     return page(theme, 1, cards, LEFT) + page(theme, 1, cards, RIGHT, 316)
 
 
+COACH_KINDS = [
+    ("coach-dps", coach_dps, ["nebula", "warden"],
+     "The Coach strip of a damage dealer: a predicted rise with its confidence",
+     "La striscia del Coach per un DPS: un aumento previsto con la sua affidabilità"),
+    ("coach-tank", coach_tank, ["nebula", "warden"],
+     "The Coach strip of a tank: the second may overtake, with the margin",
+     "La striscia del Coach per un tank: il secondo potrebbe superarti, con il margine"),
+    ("coach-unknown", coach_unknown, ["nebula", "warden"], "Not enough data for advice, and why",
+     "Dati insufficienti per un consiglio, e perché"),
+    ("alert-danger", alert_danger, ["nebula", "warden"],
+     "An alert in the strip, with the border in the colour of its state",
+     "Un avviso nella striscia, con il bordo nel colore del suo stato"),
+]
+
 MONITOR_KINDS = [
     ("monitor-values", monitor_values, THEMES,
      "The monitor with threat values: a damage dealer in WARNING with a prediction, one in DANGER",
@@ -296,7 +367,7 @@ for _lang in ("enUS", "itIT"):
             _name = f"{_kind}-{_theme}" + ("-it" if _lang == "itIT" else "")
             _caption = f"{_en if _lang == 'enUS' else _it} ({THEME_NAMES[_theme]})"
             SCENES.append((_name, _caption, (lambda f=_fn, t=_theme: f(t)), _lang, _theme))
-    for _kind, _fn, _themes, _en, _it in MONITOR_KINDS:
+    for _kind, _fn, _themes, _en, _it in MONITOR_KINDS + COACH_KINDS:
         for _theme in _themes:
             _name = f"{_kind}-{_theme}" + ("-it" if _lang == "itIT" else "")
             _caption = f"{_en if _lang == 'enUS' else _it} ({THEME_NAMES[_theme]})"

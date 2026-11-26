@@ -96,7 +96,9 @@ ICON_NAMES = ["chevron", "check", "cross", "dashed", "skull", "shield", "heal", 
               "state-safe", "state-warning", "state-danger", "state-unknown", "unlock", "tank", "trend-up",
               "trend-down", "trend-flat", "predict", "stale",
               # Threatwarden (M2.5, SPEC-03 §2.6): the assigned role of a row (the `tank` icon is who holds the mob)
-              "role-tank", "role-healer", "role-dps"]
+              "role-tank", "role-healer", "role-dps",
+              # Threatwarden (M3.4, SPEC-04 §3.1): the Coach's tip and the muted alerts
+              "coach", "mute"]
 
 
 def draw_icon(name):
@@ -297,6 +299,16 @@ def draw_icon(name):
     elif name == "role-healer":    # a cross
         d.rectangle([pt(6, 1.8), pt(10, 14.2)], fill=255)
         d.rectangle([pt(1.8, 6), pt(14.2, 10)], fill=255)
+    elif name == "coach":          # a speech bubble with a dot
+        d.rounded_rectangle([pt(1.6, 2.2), pt(14.4, 11.6)], radius=int(2.6 * u), outline=255, width=w)
+        d.polygon([pt(4.2, 11), pt(8.2, 11), pt(3.4, 15)], fill=255)
+        d.ellipse([pt(6.4, 5.3), pt(9.6, 8.5)], fill=255)
+    elif name == "mute":           # a bell struck through
+        d.pieslice([pt(3.4, 2), pt(12.6, 12)], start=180, end=360, fill=255)
+        d.polygon([pt(3.4, 7), pt(12.6, 7), pt(14, 12), pt(2, 12)], fill=255)
+        d.ellipse([pt(6.4, 12), pt(9.6, 14.8)], fill=255)
+        d.line([pt(2.4, 1.6), pt(14, 14)], fill=0, width=int(3.4 * u))
+        d.line([pt(1.6, 2.4), pt(13.2, 14.8)], fill=255, width=w)
     elif name == "role-dps":       # a sword, point up to the right
         d.line([pt(4.2, 11.8), pt(13.4, 2.6)], fill=255, width=int(2.2 * u))
         d.line([pt(3, 7.8), pt(8.2, 13)], fill=255, width=w)

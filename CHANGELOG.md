@@ -7,6 +7,14 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
+- M3.4: the Coach strip in the Monitor view, behind the `alerts` and `coach` switches (off until `v0.3.0`, so nothing
+  changes yet for players). Between the header of the enemy and the list: an alert with its state badge for 4 seconds
+  (a more severe one replaces it), then the Coach's tip, with a confidence pill for estimates and predictions, *Alerts
+  muted*, and *Advice appears during combat* out of combat; hover for the whole text, why, the data category, the
+  confidence and since when. In a low window the list header gives way, never the strip. The window's border takes the
+  colour of an alert's state once (120 ms in, 1.5 s, 320 ms out; no flashing, no glow); with the window message off the
+  title bar's pill shows the state's icon too. Alerts gain a reason in the tooltip (new `ALERT_WHY_*` texts in English
+  and Italian), two icons (`coach`, `mute`), design previews and a new manual page *Alerts and Coach*.
 - M3.3: the Threat Coach rules, behind the `coach` switch (off until `v0.3.0`, so nothing changes yet for players). One
   tip at a time for your role (tank, DPS, healer), each with its reason, the category of the data it rests on and, for
   estimates and predictions, a confidence; predictions only with medium or high confidence, with *may* and *about*.

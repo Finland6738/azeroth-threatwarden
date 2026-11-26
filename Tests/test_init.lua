@@ -38,7 +38,7 @@ describe("loading the addon", function()
 			"AzerothThreatwarden/UI/Motion.lua", "AzerothThreatwarden/UI/Widgets/Core.lua",
 			"AzerothThreatwarden/UI/Widgets/Controls.lua", "AzerothThreatwarden/UI/Widgets/ThinBar.lua",
 			"AzerothThreatwarden/UI/Widgets/Tooltip.lua", "AzerothThreatwarden/UI/Widgets/Threat.lua",
-			"AzerothThreatwarden/UI/ThreatList.lua", "AzerothThreatwarden/UI/DiagnosticsBox.lua", "AzerothThreatwarden/UI/Window.lua",
+			"AzerothThreatwarden/UI/CoachStrip.lua", "AzerothThreatwarden/UI/ThreatList.lua", "AzerothThreatwarden/UI/DiagnosticsBox.lua", "AzerothThreatwarden/UI/Window.lua",
 			"AzerothThreatwarden/UI/Launcher.lua", "AzerothThreatwarden/UI/Settings.lua",
 			"AzerothThreatwarden/UI/About.lua",
 		})

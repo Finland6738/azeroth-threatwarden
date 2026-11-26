@@ -192,6 +192,17 @@ ns.Locale.Register("enUS", {
 	ALERT_PET = "Your pet has the mob",
 	ALERT_OTHER_DANGER = "%s is very close to taking aggro",
 	ALERT_OTHER_AGGRO = "%s has the mob",
+	ALERT_WHY_P_WARNING = "Your threat passed the Warning threshold (%d %%).",
+	ALERT_WHY_P_DANGER = "Your threat passed the Danger threshold (%d %%).",
+	ALERT_WHY_PREDICTED = "At this trend you may reach Danger (%s confidence).",
+	ALERT_WHY_STATE = "From the game's threat state: no numbers here.",
+	ALERT_WHY_TOP = "You are at the top of its threat list.",
+	ALERT_WHY_MARGIN_WARNING = "The second passed the Warning threshold (%d %%).",
+	ALERT_WHY_MARGIN_DANGER = "The second passed the Danger threshold (%d %%).",
+	ALERT_WHY_BEHIND = "The game's threat state shows another unit above you.",
+	ALERT_WHY_HOLDER = "%s is at the top of its threat list. The cause is not known.",
+	ALERT_WHY_PET = "Your pet is at the top of its threat list.",
+	ALERT_WHY_OTHER_DANGER = "Their threat passed the Danger threshold (%d %%).",
 
 	-- Threat Coach (SPEC-04 §2.2, §2.4): a message and its reason; no cause, no ability, may/about for predictions
 	COACH_TANK_LOST = "%s has the mob",
@@ -229,6 +240,21 @@ ns.Locale.Register("enUS", {
 	COACH_WHY_P_SAFE = "Your threat is %d %% and not rising fast (%s confidence).",
 	COACH_WHY_UNKNOWN_TANK = "No one on the list is known to hold the mob.",
 	COACH_WHY_MARGIN_UNKNOWN = "Your margin over the second is not known.",
+
+	-- The Coach strip (SPEC-04 §3.1)
+	STRIP_IDLE = "Advice appears during combat",
+	STRIP_MUTED = "Alerts muted",
+	STRIP_UNMUTED = "Alerts back on",
+	STRIP_WHY = "Why: %s",
+	STRIP_BASIS = "Basis: %s, %s confidence",
+	STRIP_ALERT = "Alert",
+	STRIP_ADVICE = "Advice",
+	STRIP_SINCE = "Shown %d s ago",
+	STRIP_TIP_MUTED = "Alerts muted until the end of this fight",
+	STRIP_TIP_MUTED_NEXT = "Alerts muted until the end of the next fight",
+	CONF_PILL_HIGH = "HIGH",
+	CONF_PILL_MEDIUM = "MEDIUM",
+	CONF_PILL_LOW = "LOW",
 
 	-- Settings (SPEC-03 §5): the two pages of the tab and of the game's panel
 	PAGE_SETTINGS = "Settings",

@@ -190,6 +190,17 @@ ns.Locale.Register("itIT", {
 	ALERT_PET = "Il tuo famiglio tiene il nemico",
 	ALERT_OTHER_DANGER = "%s è a un passo dall'aggro",
 	ALERT_OTHER_AGGRO = "%s tiene il nemico",
+	ALERT_WHY_P_WARNING = "La tua threat ha superato la soglia di Attenzione (%d %%).",
+	ALERT_WHY_P_DANGER = "La tua threat ha superato la soglia di Pericolo (%d %%).",
+	ALERT_WHY_PREDICTED = "Con questa tendenza potresti arrivare a Pericolo (affidabilità %s).",
+	ALERT_WHY_STATE = "Dallo stato della threat del gioco: qui non ci sono numeri.",
+	ALERT_WHY_TOP = "Sei in cima alla sua lista della threat.",
+	ALERT_WHY_MARGIN_WARNING = "Il secondo ha superato la soglia di Attenzione (%d %%).",
+	ALERT_WHY_MARGIN_DANGER = "Il secondo ha superato la soglia di Pericolo (%d %%).",
+	ALERT_WHY_BEHIND = "Lo stato della threat del gioco mostra un'altra unità sopra di te.",
+	ALERT_WHY_HOLDER = "%s è in cima alla sua lista della threat. La causa non è nota.",
+	ALERT_WHY_PET = "Il tuo famiglio è in cima alla sua lista della threat.",
+	ALERT_WHY_OTHER_DANGER = "La sua threat ha superato la soglia di Pericolo (%d %%).",
 
 	-- Threat Coach (SPEC-04 §2.2, §2.4): un messaggio e la sua motivazione; nessuna causa, nessuna abilità,
 	-- potresti/potrebbe e circa per le previsioni
@@ -228,6 +239,21 @@ ns.Locale.Register("itIT", {
 	COACH_WHY_P_SAFE = "La tua threat è al %d %% e non sale in fretta (affidabilità %s).",
 	COACH_WHY_UNKNOWN_TANK = "Nessuno nella lista risulta tenere il nemico.",
 	COACH_WHY_MARGIN_UNKNOWN = "Il tuo margine sul secondo non è noto.",
+
+	-- The Coach strip (SPEC-04 §3.1)
+	STRIP_IDLE = "I consigli compaiono in combattimento",
+	STRIP_MUTED = "Avvisi silenziati",
+	STRIP_UNMUTED = "Avvisi riattivati",
+	STRIP_WHY = "Perché: %s",
+	STRIP_BASIS = "Base: %s, affidabilità %s",
+	STRIP_ALERT = "Avviso",
+	STRIP_ADVICE = "Consiglio",
+	STRIP_SINCE = "Mostrato da %d s",
+	STRIP_TIP_MUTED = "Avvisi silenziati fino alla fine di questo combattimento",
+	STRIP_TIP_MUTED_NEXT = "Avvisi silenziati fino alla fine del prossimo combattimento",
+	CONF_PILL_HIGH = "ALTA",
+	CONF_PILL_MEDIUM = "MEDIA",
+	CONF_PILL_LOW = "BASSA",
 
 	-- Impostazioni (SPEC-03 §5): le due pagine della scheda e del pannello del gioco
 	PAGE_SETTINGS = "Impostazioni",

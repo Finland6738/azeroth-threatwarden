@@ -17,7 +17,7 @@
 --
 -- Bus: emits WINDOW_SHOWN(shown) and TAB_CHANGED(tabId); listens CONFIG_LOADED, CONFIG_CHANGED, DISPLAY_CHANGED,
 -- COMBAT_STARTED, COMBAT_ENDED, GROUP_CHANGED, CAPABILITY_CHANGED, THREAT_MODE_CHANGED, TARGET_CHANGED and DEMO_CHANGED
--- (the pill).
+-- (the pill), ALERT_RAISED (the effect on the border).
 local ADDON_NAME, ns = ...
 ns = ns or {}
 ns.modules = ns.modules or {}
@@ -34,6 +34,7 @@ Window.RADIUS = { compact = 8, wide = 12 }
 Window.GRIP = 14
 Window.PAGE_MARGIN = 20   -- around the Settings tab
 Window.AUTO_CLOSE = 10    -- seconds after a fight outside a group before the window closes itself ("auto")
+Window.EFFECT_HOLD = 1.5  -- seconds the border keeps the colour of an alert (SPEC-04 §3.2)
 local SHOW_PATH = "account.settings.monitor.show"
 
 -- The tabs, in order. `feature`: shown only while that switch of Core/Features.lua is on (ADR 0014).
@@ -222,12 +223,18 @@ local function stateChip(parent, filled)
 	function chip:SetModuleState(id)
 		local def = Window.STATES[id]
 		self.state = id
-		self.icon:SetTexCoord(Assets.IconCoords(def.icon))
-		Theme.Tint(self.icon, def.token)
+		-- during the effect of an alert without a message in the window, the icon is the alert's state (SPEC-04 §3.2)
+		local alert = self.alert and Theme.State(self.alert)
+		self.icon:SetTexCoord(Assets.IconCoords(alert and alert.icon or def.icon))
+		Theme.Tint(self.icon, alert and alert.token or def.token)
 		Theme.Text(self.label, def.token)
 		if self.fill then Theme.Tint(self.fill, def.token, 0.16) end
 		self.label:SetText(L[def.labelKey])
 		self:SetWidth(self.pad * 2 + 14 + self.label:GetStringWidth())
+	end
+	function chip:SetAlert(id)
+		self.alert = id
+		if self.state then self:SetModuleState(self.state) end
 	end
 	chip:EnableMouse(true)
 	Widgets.Tooltip.Attach(chip, function() return Window.ModuleTip() end, "BOTTOM")
@@ -353,6 +360,23 @@ local function buildGrip(f)
 	f.grip = grip
 end
 
+-- The ring over the window that takes the colour of an alert's state, one per layout (the radius differs).
+local function buildEffect(f)
+	local flash = CreateFrame("Frame", nil, f)
+	flash:SetAllPoints(f)
+	flash:SetFrameLevel((f:GetFrameLevel() or 1) + 40)
+	flash:EnableMouse(false)
+	flash.rings = {}
+	for layout, radius in pairs(Window.RADIUS) do
+		local ring = Theme.Slice(flash, "rr_ring_" .. radius, "state-warning", "OVERLAY")
+		ring:SetAllPoints(flash)
+		ring:Hide()
+		flash.rings[layout] = ring
+	end
+	flash:Hide()
+	f.flash = flash
+end
+
 local function build()
 	local f = CreateFrame("Frame", Window.NAME, Compat.UIParent())
 	f:Hide()
@@ -390,6 +414,7 @@ local function build()
 
 	buildPages(f)
 	buildGrip(f)
+	buildEffect(f)
 	Widgets.CloseOnEscape(Window.NAME)
 
 	f:SetScript("OnSizeChanged", function()
@@ -403,6 +428,7 @@ local function build()
 	f:SetScript("OnHide", function(self)
 		stopMoving(self)
 		stopSizing(self)
+		Window:EndEffect()
 		-- hidden with the whole interface (Alt+Z, a cinematic) the window is still "shown": nothing to remember
 		if not self:IsShown() then
 			Window:CancelAutoClose()
@@ -428,6 +454,7 @@ local function showTab(f, id)
 	for name, bar in pairs(f.titles) do bar:SetShown(name == layout) end
 	for name, tabs in pairs(f.tabs) do tabs:SetShown(name == layout) end
 	for pageId, page in pairs(f.pages) do page:SetShown(pageId == id) end
+	for name, ring in pairs(f.flash.rings) do ring:SetShown(name == layout) end
 	for _, tabs in pairs(f.tabs) do tabs:Select(id) end
 end
 
@@ -681,6 +708,54 @@ function Window:DebugLines()
 end
 
 ---------------------------------------------------------------------------------------------------------------------
+-- The effect of an alert on the border (SPEC-04 §3.2): once per alert, never flashing, never a glow
+---------------------------------------------------------------------------------------------------------------------
+local function setChipAlert(f, id)
+	for _, bar in pairs(f.titles) do bar.chip:SetAlert(id) end
+	Window:LayoutTitle()
+end
+
+function Window:EndEffect()
+	local f = self.frame
+	self.effectToken = (self.effectToken or 0) + 1
+	if not self.effect then return end
+	self.effect = nil
+	if f then
+		f.flash:Hide()
+		setChipAlert(f, nil)
+	end
+end
+
+-- The border takes the colour of the alert's state: it fades in (120 ms), stays EFFECT_HOLD seconds and fades out
+-- (320 ms); with the animations off it only stays. An alert of a higher severity restarts it, another one does not.
+-- Without a message in the window the title bar's pill shows the state's icon too (never a colour alone, ST-02).
+function Window:AlertEffect(alert)
+	if not alert.visual or not self:IsShown() then return end
+	if self.effect and alert.severity <= self.effect then return end
+	local f = self.frame
+	self:EndEffect()
+	self.effect = alert.severity
+	local id = alert.state == "DANGER" and "danger" or "warning"
+	for _, ring in pairs(f.flash.rings) do Theme.Tint(ring, Theme.State(id).token) end
+	if not alert.window then setChipAlert(f, id) end
+	f.flash:Show()
+	f.flash:SetAlpha(0)
+	local Motion = ns.Motion
+	Motion.Fade(f.flash, 1, Motion.FAST)
+	local mine = self.effectToken
+	local lead = Motion.On() and Motion.FAST or 0
+	local tail = Motion.On() and Motion.SLOW or 0
+	Compat.After(lead + Window.EFFECT_HOLD, function()
+		if mine ~= self.effectToken then return end
+		if tail == 0 then self:EndEffect() return end
+		Motion.Fade(f.flash, 0, Motion.SLOW)
+		Compat.After(tail, function()
+			if mine == self.effectToken then self:EndEffect() end
+		end)
+	end)
+end
+
+---------------------------------------------------------------------------------------------------------------------
 -- Events
 ---------------------------------------------------------------------------------------------------------------------
 local function onConfigChanged(path)
@@ -710,6 +785,7 @@ end
 if ns.Bus then
 	ns.Bus.On("CONFIG_LOADED", function() if Window.frame then place(Window.frame) Window:Refresh() end end)
 	ns.Bus.On("CONFIG_CHANGED", onConfigChanged)
+	ns.Bus.On("ALERT_RAISED", function(alert) Window:AlertEffect(alert) end)
 	ns.Bus.On("DISPLAY_CHANGED", function() if Window.frame then keepOnScreen(Window.frame) end end)
 	local function state() Window:RefreshState() end
 	ns.Bus.On("COMBAT_STARTED", function()
