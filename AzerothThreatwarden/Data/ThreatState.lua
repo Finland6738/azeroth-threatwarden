@@ -45,7 +45,7 @@ ns.ThreatState, ns.modules.ThreatState = ThreatState, ThreatState
 
 local type, floor = type, math.floor
 
--- Provisional (SPEC-09 Q7): tuned with the M2 checklist; the player's settings override warning and danger.
+-- Decided by the owner (SPEC-09 Q7, 2026-11-26): 82 / 91; the player's settings override warning and danger.
 local Limits, Defaults = ns.Config.MONITOR, ns.Config.MONITOR_DEFAULTS
 ThreatState.DEFAULTS = { warning = Defaults.warning, danger = Defaults.danger, hysteresis = 3, dwell = 1 }
 ThreatState.MIN_WARNING, ThreatState.MAX_WARNING = Limits.warning.min, Limits.warning.max

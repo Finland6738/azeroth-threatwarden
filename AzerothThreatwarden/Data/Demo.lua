@@ -95,7 +95,8 @@ function DemoData.Fill(records, t)
 		if secondThreat > holderThreat then holder.situation = 2 end
 		holder.leadReason = nil
 		holder.leadPercent = secondThreat > 0 and holderThreat * 100 / secondThreat or 0
-		holder.leadSituation = (second >= 95 and 3) or (second >= 80 and 1) or 0
+		local defaults = ns.Config.MONITOR_DEFAULTS
+		holder.leadSituation = (second >= defaults.danger and 3) or (second >= defaults.warning and 1) or 0
 	end
 	return holder
 end

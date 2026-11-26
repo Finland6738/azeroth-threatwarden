@@ -10,6 +10,8 @@ import mockup_lib as lib
 from mockup_lib import T, button, card, esc, note, row, seg, select, switch, window
 
 THEMES = ["nebula", "aurora", "warden"]
+# The default thresholds (Core/Config.lua MONITOR_DEFAULTS, SPEC-09 Q7, decided by the owner on 2026-11-26).
+WARNING, DANGER = 82, 91
 THEME_NAMES = {"nebula": "Nebula", "aurora": "Aurora", "warden": "Warden"}
 # where the two wide windows of a scene stand, and how far the second one is scrolled
 LEFT, RIGHT, TOP = 24, 616, 100
@@ -72,7 +74,7 @@ def mon_row(theme, name, cls, role, state, percent=None, holder=False, me=False,
     if state_only:
         bar = f'<span class="barbox" style="width:{track + 48}px;justify-content:flex-end"><span class="num" style="color:var(--text-2)">{esc(T("MON_DASH"))}</span></span>'
     else:
-        ticks = '<u style="left:80%"></u><u style="left:95%"></u>'
+        ticks = f'<u style="left:{WARNING}%"></u><u style="left:{DANGER}%"></u>'
         fill = f'<i style="width:{min(percent, 100)}%;background:var(--state-{state})"></i>'
         pred = icon("predict") if eta else ""
         bar = (f'<span class="barbox"><span class="tr" style="width:{track}px">{fill}{ticks}</span>'
@@ -130,7 +132,7 @@ def coach_dps(theme):
             mon_row(theme, "Sela", "priest", "healer", "safe", 12, trend="flat")]
     body = (mon_head("Gorrak", T("MON_CLASS_BOSS"), "warning", T("MON_TANK", "Bram"), "+16")
             + strip(T("COACH_RISING"), pill="CONF_PILL_MEDIUM", predicted=True) + mon_list(rows))
-    lines = [T("COACH_RISING"), T("STRIP_WHY", T("COACH_WHY_TREND", 95, 4, T("CONF_MEDIUM"))),
+    lines = [T("COACH_RISING"), T("STRIP_WHY", T("COACH_WHY_TREND", DANGER, 4, T("CONF_MEDIUM"))),
              T("STRIP_BASIS", T("CAT_PREDICTED"), T("CONF_MEDIUM")), T("STRIP_ADVICE"), T("STRIP_SINCE", 1)]
     return mon_window(theme, "live", body, quality(100)) + tip(lines, 190)
 
@@ -161,7 +163,7 @@ def alert_danger(theme):
             mon_row(theme, "Sela", "priest", "healer", "safe", 12, trend="flat")]
     body = (mon_head("Gorrak", T("MON_CLASS_BOSS"), "danger", T("MON_TANK", "Bram"), "+3")
             + strip(T("ALERT_DANGER", 97), alert="danger") + mon_list(rows))
-    lines = [T("ALERT_DANGER", 97), T("STRIP_WHY", T("ALERT_WHY_P_DANGER", 95)),
+    lines = [T("ALERT_DANGER", 97), T("STRIP_WHY", T("ALERT_WHY_P_DANGER", DANGER)),
              T("STRIP_BASIS", T("CAT_DETECTED"), T("CONF_HIGH")), T("STRIP_ALERT"), T("STRIP_SINCE", 0)]
     window_html = mon_window(theme, "live", body, quality(100)).replace('<div class="win compact',
                                                                        '<div class="win flash compact', 1)
@@ -275,8 +277,8 @@ def monitor_card():
     def slide(label, low, high, value, text, first=False):
         return row(T(label), lib.slider((value - low) / (high - low), text))
 
-    inner = (slide("SET_WARNING", 50, 95, 80, T("SET_PERCENT", 80))
-             + slide("SET_DANGER", 60, 100, 95, T("SET_PERCENT", 95)) + note(T("SET_THRESHOLDS_NOTE", 5))
+    inner = (slide("SET_WARNING", 50, 95, WARNING, T("SET_PERCENT", WARNING))
+             + slide("SET_DANGER", 60, 100, DANGER, T("SET_PERCENT", DANGER)) + note(T("SET_THRESHOLDS_NOTE", 5))
              + slide("SET_RATE", 2, 10, 5, T("SET_HERTZ", 5)) + note(T("SET_RATE_NOTE"))
              + slide("SET_MAX_UNITS", 5, 40, 40, "40") + note(T("SET_MAX_UNITS_NOTE"))
              + f'<div class="row"><b>{esc(T("SET_SHOW"))}</b></div>'
@@ -307,7 +309,7 @@ def alerts_card():
              + f'<div class="row"><b>{esc(T("SET_ALERTS_OTHERS"))}</b></div>'
              + seg([T("SET_OTHERS_TANK"), T("SET_OTHERS_ALWAYS"), T("SET_OTHERS_NEVER")], 0, "margin-top:4px")
              + row(T("SET_ALERTS_PET"), switch(True))
-             + note(T("SET_ALERTS_THRESHOLDS", 80, 95), "margin-top:12px;color:var(--text-2)")
+             + note(T("SET_ALERTS_THRESHOLDS", WARNING, DANGER), "margin-top:12px;color:var(--text-2)")
              + button(T("SET_ALERTS_TO_MONITOR"), "wide", "margin-top:8px")
              + note(T("SET_ALERTS_NATIVE"), "margin-top:12px;color:var(--warn)")
              + row(T("SET_COACH"), switch(True)))

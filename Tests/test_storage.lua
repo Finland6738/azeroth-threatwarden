@@ -71,10 +71,10 @@ local function recording(id, started, state, stamp, piece, waiting)
 	return s
 end
 
--- Boots with these sessions on disk (and the recording settings `rec`); `schema` 4 unless given.
+-- Boots with these sessions on disk (and the recording settings `rec`); `schema` 5 unless given.
 local function bootWith(sessions, rec, schema)
 	T.boot(function(M)
-		M.saved = { AzerothThreatwardenDB = { schema = schema or 4,
+		M.saved = { AzerothThreatwardenDB = { schema = schema or 5,
 			settings = { theme = "aurora", recording = rec }, sessions = sessions } }
 	end)
 end
@@ -146,13 +146,13 @@ describe("the load of good sessions (SPEC-05 §2.2)", function()
 
 	it("migrates data of schema 3 with and without `sessions` (SPEC-05 §2.3)", function()
 		bootWith(nil, nil, 3)
-		eq(AzerothThreatwardenDB.schema, 4)
+		eq(AzerothThreatwardenDB.schema, 5)
 		deepEq(list(), {})
 		truthy(St().loaded)
 		Mock.Reload()
 		deepEq(list(), {})
 		bootWith({ closed("100-1", 100), "not a session" }, nil, 3)
-		eq(AzerothThreatwardenDB.schema, 4)
+		eq(AzerothThreatwardenDB.schema, 5)
 		eq(ids(), "100-1")
 		eq(#corruptSessions(), 1, "the damaged one set aside by Storage, not by the migration")
 		Mock.Reload()
@@ -543,7 +543,7 @@ describe("read-only data (SPEC-05 §2.6)", function()
 		local all = { closed("100-1", 100), bad, recording("300-1", 300, "interrupted", true),
 			closed("100-1", 400) }
 		for i = 1, 30 do all[#all + 1] = closed("x" .. i, 1000 + i) end
-		bootWith(all, { maxSessions = 5 }, 5)
+		bootWith(all, { maxSessions = 5 }, 6)
 	end
 
 	it("completes, sets aside, prunes and deletes nothing; hides and counts the damaged ones", function()
@@ -572,7 +572,7 @@ describe("read-only data (SPEC-05 §2.6)", function()
 		Mock.Reload()
 		eq(saved(), first)
 		contains(first, '["buf"]', "the interrupted one stays as it was")
-		contains(first, '["schema"]=5')
+		contains(first, '["schema"]=6')
 		eq(#Mock.errors, 0)
 	end)
 end)

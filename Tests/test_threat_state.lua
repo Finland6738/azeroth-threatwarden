@@ -1,6 +1,6 @@
 -- Data/ThreatState.lua (SPEC-03 §2, SPEC-09 Q7, MON-04, MON-10–MON-12) on fight scripts: the rules of §2.2 and §2.3 row
 -- by row (non tank, tank holding the mob, designated tank losing it, a swap between two tanks, alone with the pet); the
--- hysteresis on a series oscillating by ±2 points around 80 and 95; the 1 s dwell for falls and the immediate rises,
+-- hysteresis on a series oscillating by ±2 points around 82 and 91; the 1 s dwell for falls and the immediate rises,
 -- also after the combat; UNKNOWN with its reason; the predicted WARNING; tank detection and the Unknown tank;
 -- THREAT_MODE_CHANGED at every change of outcome; the thresholds from the settings; the QA-03 scenarios about states
 -- (tank stable, DPS nearing the threshold, taunt, tank death, DPS death, target change, secret values, state only,
@@ -66,7 +66,7 @@ end
 
 describe("values: a non tank (SPEC-03 §2.2)", function()
 	local cases = {
-		{ 40, "SAFE" }, { 79.9, "SAFE" }, { 80, "WARNING" }, { 94.9, "WARNING" }, { 95, "DANGER" }, { 100, "DANGER" },
+		{ 40, "SAFE" }, { 81.9, "SAFE" }, { 82, "WARNING" }, { 90.9, "WARNING" }, { 91, "DANGER" }, { 100, "DANGER" },
 	}
 	for _, case in ipairs(cases) do
 		it("is " .. case[2] .. " at " .. case[1] .. " %", function()
@@ -96,7 +96,7 @@ describe("values: a non tank (SPEC-03 §2.2)", function()
 end)
 
 describe("values: the tank holding the mob, on its margin over the second (MON-11)", function()
-	local cases = { { 60, "SAFE" }, { 80, "WARNING" }, { 90, "WARNING" }, { 95, "DANGER" } }
+	local cases = { { 60, "SAFE" }, { 82, "WARNING" }, { 88, "WARNING" }, { 91, "DANGER" } }
 	for _, case in ipairs(cases) do
 		it("is " .. case[2] .. " when the second is at " .. case[1] .. " %", function()
 			local pull = partyPull(case[1], 10)
@@ -422,30 +422,30 @@ describe("hysteresis and dwell (MON-10, MON-12)", function()
 		return pull, function() return seen end
 	end
 
-	it("does not flicker around WARNING 80", function()
-		local pull, seen = oscillate(80, 60)
+	it("does not flicker around WARNING 82", function()
+		local pull, seen = oscillate(82, 60)
 		pull:to(0.55)
 		eq(state("player"), "WARNING")
 		pull:finish()
-		eq(#changesOf(seen(), "player"), 0, "78 stays WARNING: it leaves only below 77")
+		eq(#changesOf(seen(), "player"), 0, "80 stays WARNING: it leaves only below 79")
 		eq(state("player"), "WARNING")
 	end)
 
-	it("does not flicker around DANGER 95", function()
-		local pull, seen = oscillate(95, 60)
+	it("does not flicker around DANGER 91", function()
+		local pull, seen = oscillate(91, 60)
 		pull:to(0.55)
 		eq(state("player"), "DANGER")
 		pull:finish()
-		eq(#changesOf(seen(), "player"), 0, "93 stays DANGER: it leaves only below 92")
+		eq(#changesOf(seen(), "player"), 0, "89 stays DANGER: it leaves only below 88")
 	end)
 
 	it("does not flicker on the tank's margin either", function()
 		local pull = partyPull(60, 10)
-		pull:at(0.5):threat("boss", "player", { raw = 500, scaled = 82 })
+		pull:at(0.5):threat("boss", "player", { raw = 500, scaled = 84 })
 		local seen
 		pull:at(0.6):call(function() seen = recordChanges() end)
 		for i = 1, 20 do
-			pull:at(0.6 + i * 0.2):threat("boss", "player", { raw = 500 + i, scaled = (i % 2 == 1) and 78 or 82 })
+			pull:at(0.6 + i * 0.2):threat("boss", "player", { raw = 500 + i, scaled = (i % 2 == 1) and 80 or 84 })
 		end
 		pull:finish()
 		eq(state("party1"), "WARNING")
@@ -504,14 +504,14 @@ describe("hysteresis and dwell (MON-10, MON-12)", function()
 end)
 
 describe("the predicted WARNING (SPEC-03 §2.2, §2.5)", function()
-	it("warns a DPS rising towards DANGER before 80 %, with the seconds, and ends when the prediction stops", function()
+	it("warns a DPS rising towards DANGER before 82 %, with the seconds, and ends when the prediction stops", function()
 		local pull = partyPull(50, 10)
 		for i = 0, 15 do
 			pull:at(0.2 + i * 0.2):threat("boss", "player", { raw = 500 + i, scaled = 50 + i * 2 })   -- +10 %/s
 		end
 		pull:to(2.3)
 		local me = row("player")
-		truthy(me.record.scaledPercent < 80)
+		truthy(me.record.scaledPercent < 82)
 		eq(me.state, "WARNING")
 		eq(me.stateReason, "predicted")
 		truthy(me.predictedIn <= 3)
@@ -653,15 +653,15 @@ describe("THREAT_MODE_CHANGED (MON-04)", function()
 end)
 
 describe("thresholds (SPEC-09 Q7, SPEC-02 §3.5)", function()
-	it("uses DEFAULTS 80 / 95, hysteresis 3 and dwell 1 s", function()
+	it("uses DEFAULTS 82 / 91 (the owner's decision), hysteresis 3 and dwell 1 s", function()
 		local D = ST().DEFAULTS
-		eq(D.warning, 80)
-		eq(D.danger, 95)
+		eq(D.warning, 82)
+		eq(D.danger, 91)
 		eq(D.hysteresis, 3)
 		eq(D.dwell, 1)
 		local w, d = ST().Thresholds()
-		eq(w, 80)
-		eq(d, 95)
+		eq(w, 82)
+		eq(d, 91)
 	end)
 
 	it("reads the player's thresholds when they change, and refuses an invalid pair", function()
@@ -677,8 +677,8 @@ describe("thresholds (SPEC-09 Q7, SPEC-02 §3.5)", function()
 		Config.db.account.settings.monitor = { warning = 90, danger = 92 }
 		Mock.ns.Bus.Emit("CONFIG_CHANGED", "account.settings.monitor.danger")
 		w, d = ST().Thresholds()
-		eq(w, 80, "danger below warning + 5: both defaults")
-		eq(d, 95)
+		eq(w, 82, "danger below warning + 5: both defaults")
+		eq(d, 91)
 	end)
 end)
 

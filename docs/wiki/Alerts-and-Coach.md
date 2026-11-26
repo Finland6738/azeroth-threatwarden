@@ -42,6 +42,20 @@ two seconds, without flashing. With the message turned off, the pill at the top 
 time, so colour never carries the meaning alone. A **sound** is off by default; when on, it plays only for Danger and
 for losing or taking the enemy.
 
+### What to do at Warning and Danger
+
+For a damage dealer or a healer the alerts of your own threat say what to do:
+
+| Your threat | Damage dealer | Healer |
+|---|---|---|
+| **Warning** (from 82 %) | *Threat 85 %: ease off, fewer casts or lower ranks* | the same |
+| **Danger** (from 91 %) | *Threat 93 %: stop damage for a moment* | *Threat 93 %: stop healing for a moment* |
+
+"Lower ranks" means a lower rank of the same spell, which makes less threat; the addon never names a spell or a class.
+A tank is never told to stop: holding the enemy, it gets the margin alerts on the second (from 82 % and 91 %); a tank
+that does not hold it gets only *close to taking aggro* or *very close to taking aggro*. With *state only* data the
+alert says what the game shows, without numbers.
+
 ### Muting
 
 - `/atw mute`, or the [key you bind to it](Commands#key-binding), silences every alert **until the end of the current
@@ -60,7 +74,8 @@ thing: turn off one of them. The addon never changes the game's setting.
 ## The Coach
 
 One tip at a time for your role (tank, damage dealer or healer), for example *Threat rising: consider delaying your
-burst* or, for a tank, *the second may overtake you*. Every tip has its reason. It never names an ability or a class,
+burst*, *Ease off: less damage, fewer casts or lower ranks* (from 82 %), *Very close to taking aggro: stop damage for a
+moment* (from 91 %; a healer reads *healing* instead of *damage*) or, for a tank, *the second may overtake you*. Every tip has its reason. It never names an ability or a class (the one advice about spells is the generic *lower ranks*),
 and it says *Not enough data for advice* (with why) when the game does not give enough.
 
 ![Not enough data for advice, and why](../specs/mockups/previews/coach-unknown-nebula.webp)

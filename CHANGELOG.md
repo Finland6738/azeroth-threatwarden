@@ -48,6 +48,18 @@ All notable changes to this project are documented here. The format follows
   short-lived garbage in combat; it now reuses one table and makes only the packed strings (about 3 KB). The saved form
   is unchanged.
 
+### Changed
+
+- The thresholds decided by the owner from play (SPEC-09 Q7): **Warning from 82 %** (was 80 %), **Danger from 91 %**
+  (was 95 %); hysteresis and the 1 s dwell are unchanged. Account schema 5: a saved pair still at the old defaults
+  80 / 95 becomes 82 / 91 once; thresholds you set yourself stay as they are.
+- The alerts and the Coach tell a damage dealer or a healer what to do: at Warning *Threat N %: ease off, fewer casts or
+  lower ranks* and *Ease off: less damage (less healing), fewer casts or lower ranks*; at Danger *Threat N %: stop damage
+  for a moment* (healer: *stop healing for a moment*) and *Very close to taking aggro: stop damage (healing) for a
+  moment*, in English and Italian. A tank is never told to stop: its margin alerts and advice keep their words with the
+  new thresholds on the second, and a tank that does not hold the mob is told only how close it is. The generic advice
+  of lower spell ranks is the one advice about spells allowed (SPEC-09 Q11); still no class, ability or rank number.
+
 ### Documentation
 
 - M4.1: specification of the recorder, the storage and the combat report (SPEC-05 §1–§3 and SPEC-02 §3.7–§4,

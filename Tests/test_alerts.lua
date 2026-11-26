@@ -90,6 +90,87 @@ local function petPull(def)
 	return pull
 end
 
+describe("the words by role (SPEC-09 Q7, the owner's decision of 2026-11-26)", function()
+	-- The player at 85 % (Warning), then 97 % (Danger), under a tank holding the boss.
+	local function climb(pull)
+		pull:to(1)
+		pull:at(2):threat("boss", "player", value(85))
+		pull:to(5)
+		pull:at(5.5):threat("boss", "player", value(97))
+		pull:to(8)
+	end
+
+	it("tells a damage dealer to ease off at Warning and to stop damage at Danger", function()
+		local seen = record()
+		climb(dpsPull(40))
+		eq(summary(seen), "warning/ALERT_WARNING danger/ALERT_DANGER")
+		eq(AL().Text(seen[1]), "Threat 85 %: ease off, fewer casts or lower ranks")
+		eq(AL().Text(seen[2]), "Threat 97 %: stop damage for a moment")
+		eq(select(2, AL().Text(seen[1])), "Your threat passed the Warning threshold (82 %).")
+		eq(select(2, AL().Text(seen[2])), "Your threat passed the Danger threshold (91 %).")
+	end)
+
+	it("tells a healer to ease off at Warning and to stop healing at Danger", function()
+		local seen = record()
+		local pull = newPull{
+			player = { class = "PRIEST", role = "HEALER", ranged = true },
+			party = {
+				{ key = "tank", role = "TANK" },
+				{ key = "mage", class = "MAGE", role = "DAMAGER" },
+				{ key = "rogue", class = "ROGUE", role = "DAMAGER" },
+			},
+		}
+		pull:at(0):start():threat("boss", "tank", 1000):threat("boss", "player", value(40))
+			:threat("boss", "rogue", value(20, 300))
+		climb(pull)
+		eq(summary(seen), "warning/ALERT_WARNING danger/ALERT_DANGER_HEALER")
+		eq(AL().Text(seen[2]), "Threat 97 %: stop healing for a moment")
+		eq(select(2, AL().Text(seen[2])), "Your threat passed the Danger threshold (91 %).")
+	end)
+
+	it("never tells a tank to stop: a tank that does not hold the mob hears only how close it is", function()
+		local seen = record()
+		local pull = newPull{
+			player = { class = "WARRIOR", role = "TANK" },
+			party = {
+				{ key = "tank", class = "PALADIN", role = "TANK" },
+				{ key = "healer", class = "PRIEST", role = "HEALER" },
+				{ key = "rogue", class = "ROGUE", role = "DAMAGER" },
+			},
+		}
+		pull:at(0):start():threat("boss", "tank", 1000):threat("boss", "player", value(40))
+			:threat("boss", "rogue", value(20, 300))
+		climb(pull)
+		eq(summary(seen), "warning/ALERT_WARNING_TANK danger/ALERT_DANGER_TANK")
+		eq(AL().Text(seen[1]), "Threat 85 %: close to taking aggro")
+		eq(AL().Text(seen[2]), "Threat 97 %: very close to taking aggro")
+	end)
+
+	it("keeps the tank's margin alerts on the second with the new thresholds", function()
+		local seen = record()
+		local pull = tankPull(40)
+		pull:to(1)
+		pull:at(2):threat("boss", "rogue", value(81, 300))
+		pull:to(4)
+		eq(#seen, 0, "81 % is below the Warning threshold of 82")
+		pull:at(4.5):threat("boss", "rogue", value(84, 300))
+		pull:to(6)
+		eq(summary(seen), "margin/ALERT_MARGIN_WARNING")
+		pull:at(14):threat("boss", "rogue", value(92, 300))   -- after the cooldown of `margin` (Q12)
+		pull:to(16)
+		eq(summary(seen), "margin/ALERT_MARGIN_WARNING margin/ALERT_MARGIN_DANGER")
+	end)
+
+	it("speaks Italian on an Italian client", function()
+		truthy(Mock.ns.Config:Set("account.settings.language", "itIT"))
+		Mock.Reload()
+		local seen = record()
+		climb(dpsPull(40))
+		eq(AL().Text(seen[1]), "Threat 85 %: rallenta, meno lanci o rank più bassi")
+		eq(AL().Text(seen[2]), "Threat 97 %: smetti di fare danni per un attimo")
+	end)
+end)
+
 describe("one alert per entry (ALR-01)", function()
 	it("says Warning once, Danger once, nothing on a fall, and again after the cooldown", function()
 		local seen = record()

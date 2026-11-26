@@ -56,8 +56,8 @@ Saved for the whole account. Every change applies at once, also to a
 
 | Option | What it does | Choices | Default |
 |---|---|---|---|
-| Warning threshold | from this share of the threat that takes the mob, a row says **Warning** | 50 % to 95 % | 80 % |
-| Danger threshold | from this share, **Danger** | 60 % to 100 % | 95 % |
+| Warning threshold | from this share of the threat that takes the mob, a row says **Warning** | 50 % to 95 % | 82 % |
+| Danger threshold | from this share, **Danger** | 60 % to 100 % | 91 % |
 | Reads per second | how often the threat is read in combat: a higher rate reacts sooner and costs more | 2 to 10 Hz | 5 Hz |
 | Units per read | how many units are read each time; in a larger group the others are read in turn (you, your pet, the tanks and who holds the mob every time) | 5 to 40 | 40 |
 | When the window shows | see below | In group or combat, Always, Manually | In group or combat |

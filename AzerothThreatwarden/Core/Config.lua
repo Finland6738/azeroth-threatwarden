@@ -1,4 +1,4 @@
--- Config: the two SavedVariables, their schemas (account 4, character 1), typed rules, defaults, migrations, read-only on a newer schema and damaged
+-- Config: the two SavedVariables, their schemas (account 5, character 1), typed rules, defaults, migrations, read-only on a newer schema and damaged
 -- tables set aside under `corrupt` (SPEC-02 §3, ADR 0005). Lua 5.1, no game API but Compat.ServerTime.
 -- Adapted from Azeroth Accord (Core/Config.lua), same owner, GPL-3.0 (ADR 0012). Kept from there: the copy, the rules
 -- by path checked parents first, the merge of the defaults, the migrations on a copy, read-only on a newer schema, Get
@@ -34,8 +34,8 @@ local type, pairs, ipairs, pcall, tostring, next, select = type, pairs, ipairs, 
 local floor, huge, abs = math.floor, math.huge, math.abs
 local concat, sort = table.concat, table.sort
 
--- The schema of each variable that this version of the addon knows (SPEC-02 §3.2, §3.3, §3.5, §3.6, §3.7).
-Config.SCHEMAS = { account = 4, char = 1 }
+-- The schema of each variable that this version of the addon knows (SPEC-02 §3.2, §3.3, §3.5-§3.8).
+Config.SCHEMAS = { account = 5, char = 1 }
 
 -- Development build. A checkout of the repository is one; the BigWigs packager comments out the block between the
 -- debug markers below in every packaged build, so a release has DEV = false (tools/check_package.py checks it).
@@ -66,11 +66,11 @@ Config.MONITOR = {
 	maxUnits = { min = 5, max = 40 },
 	gap = 5,
 }
--- The one place of the defaults the owner still has to decide (SPEC-09): the thresholds (Q7), when the window shows
--- itself (Q13), the sampling rate and the units read per scan (Q14, provisional until the probe P10 measures them in
--- the game; their offline cost is in SPEC-01 §5.1).
+-- The one place of the monitor's defaults (SPEC-09): the thresholds (Q7, decided by the owner on 2026-11-26: from 82 %
+-- ease off, from 91 % stop for a moment), when the window shows itself (Q13), the sampling rate and the units read per
+-- scan (Q14, provisional until the probe P10 measures them in the game; their offline cost is in SPEC-01 §5.1).
 Config.MONITOR_DEFAULTS = {
-	warning = 80, danger = 95,
+	warning = 82, danger = 91,
 	rate = 5, maxUnits = 40,
 	show = "auto",
 	sort = "relative", pinSelf = false,
@@ -539,12 +539,24 @@ end
 -- Account step 3 (M3.2, M3.3): `settings.alerts` and `settings.coach` are new: the defaults again.
 -- Account step 4 (M4.2): `settings.recording` and `sessions` are new: the defaults again (a `sessions` already there
 -- stays as it is; Storage checks it, SPEC-05 §2.3).
+-- Account step 5 (fix Q7): the default thresholds went from 80 / 95 to 82 / 91. The defaults are written into the saved
+-- data, so a pair still at exactly 80 and 95 is the old default and moves to the new one; any other pair is the
+-- player's and stays (one threshold changed counts as the player's choice of the pair).
+Config.OLD_THRESHOLDS = { warning = 80, danger = 95 }
 Config.migrations = {
 	account = {
 		[1] = function(db) end,
 		[2] = function(db) end,
 		[3] = function(db) end,
 		[4] = function(db) end,
+		[5] = function(db)
+			local monitor = type(db.settings) == "table" and db.settings.monitor or nil
+			if type(monitor) ~= "table" then return end
+			local old = Config.OLD_THRESHOLDS
+			if monitor.warning == old.warning and monitor.danger == old.danger then
+				monitor.warning, monitor.danger = Config.MONITOR_DEFAULTS.warning, Config.MONITOR_DEFAULTS.danger
+			end
+		end,
 	},
 	char = {
 		[1] = function(db) end,

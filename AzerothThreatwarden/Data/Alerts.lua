@@ -44,7 +44,8 @@ Alerts.PRUNE_AT = 200    -- units remembered before the old ones are forgotten a
 
 Alerts.KINDS = { "warning", "danger", "aggro", "margin", "lost", "pet", "other" }
 -- Every message key an alert can carry (the locales and the wording tests read it).
-Alerts.MESSAGES = { "ALERT_WARNING", "ALERT_WARNING_PREDICTED", "ALERT_WARNING_STATE", "ALERT_DANGER", "ALERT_AGGRO",
+Alerts.MESSAGES = { "ALERT_WARNING", "ALERT_WARNING_TANK", "ALERT_WARNING_PREDICTED", "ALERT_WARNING_STATE",
+	"ALERT_DANGER", "ALERT_DANGER_HEALER", "ALERT_DANGER_TANK", "ALERT_AGGRO",
 	"ALERT_MARGIN_WARNING", "ALERT_MARGIN_WARNING_STATE", "ALERT_MARGIN_DANGER", "ALERT_MARGIN_DANGER_STATE",
 	"ALERT_BEHIND", "ALERT_LOST", "ALERT_PET", "ALERT_OTHER_DANGER", "ALERT_OTHER_AGGRO" }
 
@@ -344,17 +345,30 @@ local function marginAlert(row, mobKey, state, reason)
 	return nil
 end
 
+-- The words of the player's own threshold alerts by role (SPEC-09 Q7, the owner's decision of 2026-11-26): the damage
+-- dealer and the healer are told to ease off at WARNING and to stop damage or healing for a moment at DANGER; a tank
+-- (a designated tank that does not hold the mob) is never told to stop, only how close it is.
+local OWN_WARNING = { dps = "ALERT_WARNING", healer = "ALERT_WARNING", tank = "ALERT_WARNING_TANK" }
+local OWN_DANGER = { dps = "ALERT_DANGER", healer = "ALERT_DANGER_HEALER", tank = "ALERT_DANGER_TANK" }
+
+-- The role of the player's row, as the Coach reads it (Data/Coach.lua, SPEC-04 §2.1).
+local function roleOf(row)
+	if row.isTank or row.record.role == "TANK" then return "tank" end
+	if row.record.role == "HEALER" then return "healer" end
+	return "dps"
+end
+
 -- The player not holding the mob (`warning`, `danger`).
 local function ownAlert(row, state, reason)
 	if state == "DANGER" then
 		local p = percent(row)
 		if reason ~= nil or not p then return nil end   -- aggro, lost-aggro: AGGRO_CHANGED speaks for them
-		return "danger", 2, "ALERT_DANGER", nil, p, "detected", "high"
+		return "danger", 2, OWN_DANGER[roleOf(row)], nil, p, "detected", "high"
 	end
 	if reason == nil then
 		local p = percent(row)
 		if not p then return nil end
-		return "warning", 1, "ALERT_WARNING", nil, p, "detected", "high"
+		return "warning", 1, OWN_WARNING[roleOf(row)], nil, p, "detected", "high"
 	end
 	if reason == "predicted" then
 		local t = row.predictedIn
@@ -442,8 +456,11 @@ end
 ---------------------------------------------------------------------------------------------------------------------
 -- The reason of each message (SPEC-04 §3.1: on which data it rests, never a cause, WR-03).
 Alerts.REASONS = {
-	ALERT_WARNING = "ALERT_WHY_P_WARNING", ALERT_WARNING_PREDICTED = "ALERT_WHY_PREDICTED",
-	ALERT_WARNING_STATE = "ALERT_WHY_STATE", ALERT_DANGER = "ALERT_WHY_P_DANGER", ALERT_AGGRO = "ALERT_WHY_TOP",
+	ALERT_WARNING = "ALERT_WHY_P_WARNING", ALERT_WARNING_TANK = "ALERT_WHY_P_WARNING",
+	ALERT_WARNING_PREDICTED = "ALERT_WHY_PREDICTED", ALERT_WARNING_STATE = "ALERT_WHY_STATE",
+	ALERT_DANGER = "ALERT_WHY_P_DANGER", ALERT_DANGER_HEALER = "ALERT_WHY_P_DANGER",
+	ALERT_DANGER_TANK = "ALERT_WHY_P_DANGER",
+	ALERT_AGGRO = "ALERT_WHY_TOP",
 	ALERT_MARGIN_WARNING = "ALERT_WHY_MARGIN_WARNING", ALERT_MARGIN_WARNING_STATE = "ALERT_WHY_STATE",
 	ALERT_MARGIN_DANGER = "ALERT_WHY_MARGIN_DANGER", ALERT_MARGIN_DANGER_STATE = "ALERT_WHY_STATE",
 	ALERT_BEHIND = "ALERT_WHY_BEHIND", ALERT_LOST = "ALERT_WHY_HOLDER", ALERT_PET = "ALERT_WHY_PET",

@@ -35,8 +35,8 @@ CoachRules.KEYS = {
 	COACH_TANK_LOST = "s", COACH_TANK_BEHIND = "", COACH_TANK_DANGER = "s", COACH_TANK_DANGER_STATE = "",
 	COACH_TANK_OVERTAKE = "sd", COACH_TANK_WARNING = "", COACH_TANK_OTHER = "", COACH_TANK_SAFE = "",
 	COACH_AGGRO = "", COACH_AGGRO_HEALER = "", COACH_DANGER = "", COACH_DANGER_HEALER = "", COACH_RISING = "",
-	COACH_RISING_HEALER = "", COACH_WARNING = "", COACH_WARNING_STATE = "", COACH_SAFE = "", COACH_SAFE_STATE = "",
-	COACH_INSUFFICIENT = "",
+	COACH_RISING_HEALER = "", COACH_WARNING = "", COACH_WARNING_HEALER = "", COACH_WARNING_STATE = "", COACH_SAFE = "",
+	COACH_SAFE_STATE = "", COACH_INSUFFICIENT = "",
 	-- reasons
 	COACH_WHY_HOLDER = "s", COACH_WHY_BEHIND = "", COACH_WHY_SECOND = "sdd", COACH_WHY_STATE = "",
 	COACH_WHY_TREND_OTHER = "fc", COACH_WHY_SECOND_W = "sdd", COACH_WHY_HOLDER_TANK = "s", COACH_WHY_MARGIN = "dd",
@@ -51,7 +51,7 @@ CoachRules.KEYS = {
 CoachRules.MESSAGES = { "COACH_TANK_LOST", "COACH_TANK_BEHIND", "COACH_TANK_DANGER", "COACH_TANK_DANGER_STATE",
 	"COACH_TANK_OVERTAKE", "COACH_TANK_WARNING", "COACH_TANK_OTHER", "COACH_TANK_SAFE", "COACH_AGGRO",
 	"COACH_AGGRO_HEALER", "COACH_DANGER", "COACH_DANGER_HEALER", "COACH_RISING", "COACH_RISING_HEALER", "COACH_WARNING",
-	"COACH_WARNING_STATE", "COACH_SAFE", "COACH_SAFE_STATE", "COACH_INSUFFICIENT" }
+	"COACH_WARNING_HEALER", "COACH_WARNING_STATE", "COACH_SAFE", "COACH_SAFE_STATE", "COACH_INSUFFICIENT" }
 CoachRules.PREDICTED = { COACH_TANK_OVERTAKE = true, COACH_RISING = true, COACH_RISING_HEALER = true,
 	COACH_WHY_TREND = true }
 
@@ -192,7 +192,9 @@ CoachRules.TANK = {
 }
 
 ---------------------------------------------------------------------------------------------------------------------
--- The damage dealer and the healer (D1-D5): the healer has its own words for D1-D3
+-- The damage dealer and the healer (D1-D5): the healer has its own words for D1-D4. At WARNING (D4) both are told to
+-- ease off (fewer casts, lower ranks), at DANGER (D2) to stop damage or healing for a moment (SPEC-09 Q7, the owner's
+-- decision of 2026-11-26); the state-only forms say only what is known, without numbers.
 ---------------------------------------------------------------------------------------------------------------------
 CoachRules.OTHER = {
 	{ id = "D1", name = "aggro", priority = 100, cooldown = 0, base = "detected",
@@ -243,7 +245,8 @@ CoachRules.OTHER = {
 			end
 			local p = percent(me)
 			if me.stateReason ~= nil or not p then return false end
-			set(out, "COACH_WARNING", "COACH_WHY_P_WARNING", false, "detected", "high")
+			set(out, healer(c, "COACH_WARNING", "COACH_WARNING_HEALER"), "COACH_WHY_P_WARNING", false, "detected",
+				"high")
 			rarg(out, p)
 			rarg(out, c.warning)
 			return true

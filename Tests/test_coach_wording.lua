@@ -1,5 +1,7 @@
 -- The wording rules of SPEC-04 §2.4 (WR-01-WR-07, COA-04, COA-05) on every COACH_*, ALERT_* and REPORT_* key (the
--- report also shows no hypothesis, REC-11), in enUS and itIT (ADR 0009): no cause, no ability or class, no blame and no call to write to others, may / about for predictions and
+-- report also shows no hypothesis, REC-11), in enUS and itIT (ADR 0009): no cause, no ability or class (the one advice
+-- about spells is the generic "lower ranks", SPEC-09 Q7/Q11), no blame and no call to write to others, may / about for
+-- predictions and
 -- never "will", short messages, the arguments of each key as Data/CoachRules.lua formats them, and a category for every
 -- rule. The list of forbidden words lives here and grows when needed.
 
@@ -88,6 +90,61 @@ describe("the words of the Coach and of the alerts (SPEC-04 §2.4)", function()
 				local text, found = strings(code)[key], false
 				for _, word in ipairs(may) do found = found or has(text, word) end
 				truthy(found, code .. " " .. key)
+			end
+		end)
+	end
+
+	-- SPEC-09 Q7 and Q11, the owner's decision of 2026-11-26: the damage dealer and the healer are told what to do (ease
+	-- off with fewer casts or lower ranks at Warning, stop for a moment at Danger); "lower ranks" is the one advice about
+	-- spells WR-04 allows, generic: never a rank number, never a spell; a tank is never told to stop or ease off.
+	local ACTION = {
+		enUS = { ease = "ease off", ranks = "lower ranks", damage = "stop damage", healing = "stop healing" },
+		itIT = { ease = "rallenta", ranks = "rank più bassi", damage = "smetti di fare danni", healing = "smetti di curare" },
+	}
+	-- A phrase in a text, ignoring the case of ASCII letters only (string.lower would change the bytes of "ù").
+	local function says(text, phrase)
+		local function low(x) return (x:gsub("[A-Z]", string.lower)) end
+		return low(text):find(low(phrase), 1, true) ~= nil
+	end
+	local STOP = { "stop", "ease off", "pause", "smetti", "fermati", "rallenta", "interrompi" }
+	local TANK_KEYS = { "ALERT_WARNING_TANK", "ALERT_DANGER_TANK", "ALERT_MARGIN_WARNING", "ALERT_MARGIN_WARNING_STATE",
+		"ALERT_MARGIN_DANGER", "ALERT_MARGIN_DANGER_STATE", "ALERT_BEHIND", "ALERT_LOST" }
+
+	for _, code in ipairs(LANGUAGES) do
+		it("tell the damage dealer and the healer what to do at Warning and Danger (Q7, " .. code .. ")", function()
+			local L, A = strings(code), ACTION[code]
+			for _, key in ipairs({ "ALERT_WARNING", "COACH_WARNING", "COACH_WARNING_HEALER" }) do
+				truthy(says(L[key], A.ease), code .. " " .. key)
+				truthy(says(L[key], A.ranks), code .. " " .. key)
+			end
+			for _, key in ipairs({ "ALERT_DANGER", "COACH_DANGER" }) do truthy(says(L[key], A.damage), code .. " " .. key) end
+			for _, key in ipairs({ "ALERT_DANGER_HEALER", "COACH_DANGER_HEALER" }) do
+				truthy(says(L[key], A.healing), code .. " " .. key)
+			end
+			-- the state-only forms say what is known, without numbers
+			for _, key in ipairs({ "ALERT_WARNING_STATE", "COACH_WARNING_STATE" }) do
+				eq(argsOf(L[key]), "", code .. " " .. key)
+			end
+		end)
+
+		it("speak of ranks only as generic lower ranks, never a number, and never tell a tank to stop (" .. code .. ")",
+			function()
+			local L, A = strings(code), ACTION[code]
+			for _, key in ipairs(wordingKeys(code)) do
+				local text = L[key]
+				if has(text, "rank") or has(text, "ranks") then
+					truthy(says(text, A.ranks), code .. " " .. key .. ": only generic lower ranks")
+				end
+				falsy(says(text, "rank %") or text:lower():find("ranks?%s*%d"), code .. " " .. key .. ": a rank number")
+				falsy(has(text, "grado") or has(text, "gradi"), code .. " " .. key)
+			end
+			for _, key in ipairs(TANK_KEYS) do
+				for _, word in ipairs(STOP) do falsy(has(L[key], word), code .. " " .. key .. ": " .. word) end
+			end
+			for key, text in pairs(L) do
+				if key:find("^COACH_TANK_") then
+					for _, word in ipairs(STOP) do falsy(has(text, word), code .. " " .. key .. ": " .. word) end
+				end
 			end
 		end)
 	end

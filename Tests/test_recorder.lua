@@ -95,7 +95,7 @@ describe("a fight in a group (SPEC-05 §1.2-§1.4)", function()
 		isNil(s.buf)
 		eq(s.rec.hz, 2)
 		eq(s.rec.monitorHz, 5)
-		eq(s.rec.warning, 80)
+		eq(s.rec.warning, 82)
 		eq(s.rec.mode, "none", "the mode at the opening, before the first scan")
 		eq(#s.mobs, 1)
 		deepEq(s.mobs[1], { name = "Boss", class = "worldboss", npc = 448 })
@@ -227,7 +227,7 @@ describe("when a fight is recorded (SPEC-05 §1.1, Q16)", function()
 		Mock.ns.Demo.Stop()
 		boot(function(M)
 			M.features = { monitor = true, recording = true }
-			M.saved = { AzerothThreatwardenDB = { schema = 5 } }
+			M.saved = { AzerothThreatwardenDB = { schema = 6 } }
 		end)
 		partyFight(5):finish()
 		Mock.Advance(6)

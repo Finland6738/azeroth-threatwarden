@@ -81,7 +81,7 @@ exit criterion needs the game and is **open** until the owner runs [the M2 check
 - Branch: `step/m2-4-states`
 - Depends on: M2.3
 - Spec: SPEC-03 §2, SPEC-09 Q7
-- Scope: `Data/ThreatState.lua` (SAFE, WARNING, DANGER, UNKNOWN; `DEFAULTS` 80/95; hysteresis; tank margin rule;
+- Scope: `Data/ThreatState.lua` (SAFE, WARNING, DANGER, UNKNOWN; `DEFAULTS` 80/95, 82/91 since the Q7 fix; hysteresis; tank margin rule;
   `STATE_CHANGED` on the Bus), tank from `isTanking` and the assigned role.
 - Done when:
   - [x] States do not flicker on a series that oscillates around a threshold.

@@ -58,10 +58,10 @@ tank designati, chi tiene il mob. La **gravità** ordina gli avvisi: 1 WARNING, 
 
 | Tipo (`kind`) | Soggetto | Quando entra | Gravità e stato | Messaggio (chiave, proposta `enUS`) | Categoria | Suono |
 |---|---|---|---|---|---|---|
-| `warning` | la propria riga, che non tiene il mob | `STATE_CHANGED` → WARNING con motivo soglia (nessuno) | 1, WARNING | `ALERT_WARNING` *Threat %d %%: close to taking aggro* | rilevata | no |
+| `warning` | la propria riga, che non tiene il mob | `STATE_CHANGED` → WARNING con motivo soglia (nessuno) | 1, WARNING | `ALERT_WARNING` *Threat %d %%: ease off, fewer casts or lower ranks* (DPS e healer; un tank designato che non tiene il mob `ALERT_WARNING_TANK` *Threat %d %%: close to taking aggro*) | rilevata | no |
 | `warning` | come sopra | → WARNING con motivo `predicted` (solo con confidenza almeno media, SPEC-03 §2.5) | 1, WARNING | `ALERT_WARNING_PREDICTED` *Threat rising: you may reach Danger in about %d s* | prevista | no |
 | `warning` | come sopra, modalità `state` | → WARNING con motivo `state-only` (`g = 1`) | 1, WARNING | `ALERT_WARNING_STATE` *Your threat is above the tank's* | rilevata | no |
-| `danger` | la propria riga, che non tiene il mob | → DANGER con motivo soglia (nessuno) | 2, DANGER | `ALERT_DANGER` *Threat %d %%: very close to taking aggro* | rilevata | sì |
+| `danger` | la propria riga, che non tiene il mob | → DANGER con motivo soglia (nessuno) | 2, DANGER | `ALERT_DANGER` *Threat %d %%: stop damage for a moment* (healer `ALERT_DANGER_HEALER` *Threat %d %%: stop healing for a moment*; un tank designato che non tiene il mob `ALERT_DANGER_TANK` *Threat %d %%: very close to taking aggro*) | rilevata | sì |
 | `aggro` | il giocatore, non tank | `AGGRO_CHANGED`: il giocatore diventa chi tiene il mob. Da soli (nessun tank designato) solo se prima lo teneva il proprio famiglio | 3, DANGER | `ALERT_AGGRO` *You have aggro* | rilevata | sì |
 | `margin` | la propria riga, tank che tiene il mob | → WARNING (soglia sul secondo, o `l = 1` in `state`) | 1, WARNING | `ALERT_MARGIN_WARNING` *Margin shrinking: %s at %d %%* (in `state`: *Your margin is getting small*) | calcolata / rilevata | no |
 | `margin` | come sopra | → DANGER per soglia sul secondo o `l` 2–3 (motivo nessuno o `margin`) | 2, DANGER | `ALERT_MARGIN_DANGER` *%s is very close to taking the mob* (in `state`: *Your margin is very small*) | calcolata / rilevata | sì |
@@ -71,6 +71,13 @@ tank designati, chi tiene il mob. La **gravità** ordina gli avvisi: 1 WARNING, 
 | `other` | un'altra unità osservata non tank e non il proprio famiglio; solo secondo `alerts.others` (§1.5) | → DANGER per soglia | 2, DANGER | `ALERT_OTHER_DANGER` *%s is very close to taking aggro* | rilevata | sì |
 | `other` | come sopra | `AGGRO_CHANGED`: diventa chi tiene il mob togliendolo a un tank designato | 3, DANGER | `ALERT_OTHER_AGGRO` *%s has the mob* | rilevata | sì |
 
+- **Decisione del proprietario (2026-11-26, [Q7](SPEC-09-risks-open-questions.md))**: con le soglie 82 % e 91 % gli
+  avvisi di soglia del giocatore dicono **cosa fare** a chi fa danni o cura: a WARNING ridurre lo spam di abilità (meno
+  lanci, meno danni o cure, o rank più bassi), a DANGER smettere per un attimo di fare danni o di curare. Il ruolo è
+  quello del Coach (§2.1, `UnitGroupRolesAssigned`, **[probe P9]**: senza ruolo vale DPS). Al tank non si dice mai di
+  fermarsi: il tank che tiene il mob ha gli avvisi `margin` sul secondo con le stesse soglie, e un tank designato che non
+  lo tiene (cambio di tank) riceve le forme `_TANK`, che dicono solo quanto è vicino. Le forme `state`
+  (`ALERT_WARNING_STATE`) dicono ciò che si sa, senza numeri e senza un'azione.
 - Un passaggio che vale per due righe della tabella (per esempio SAFE → DANGER con motivo `aggro` e, nello stesso
   aggiornamento, `AGGRO_CHANGED`) dà **un** avviso, quello di gravità più alta: `STATE_CHANGED` con motivo `aggro` o
   `lost-aggro` non avvisa da solo, perché lo fa `AGGRO_CHANGED`.
@@ -79,8 +86,8 @@ tank designati, chi tiene il mob. La **gravità** ordina gli avvisi: 1 WARNING, 
   giocatore di gravità uguale o più bassa dello stesso aggiornamento si scartano (da soli, `aggro` e non anche
   `margin`). Quando il tank riceve l'avviso `margin` di DANGER, lo stesso aggiornamento non dà anche `other` per il
   DANGER del secondo; se quel `margin` non esce (cooldown), `other` esce.
-- Le chiavi `ALERT_*` sono quelle della tabella più `ALERT_MARGIN_WARNING_STATE` e `ALERT_MARGIN_DANGER_STATE` per le
-  forme `state` (usate anche quando nessun'altra riga è in `values`); i testi inglesi e italiani sono in `Locales/`.
+- Le chiavi `ALERT_*` sono quelle della tabella (con `ALERT_WARNING_TANK`, `ALERT_DANGER_HEALER` e `ALERT_DANGER_TANK`)
+  più `ALERT_MARGIN_WARNING_STATE` e `ALERT_MARGIN_DANGER_STATE` per le forme `state` (usate anche quando nessun'altra riga è in `values`); i testi inglesi e italiani sono in `Locales/`.
 - `%s` è l'unità di cui parla l'avviso (il secondo, chi ha preso il mob): l'avviso ne porta la chiave (`otherKey`), mai
   il nome, e la vista scrive il nome o l'etichetta del token (*Party 2*) come l'elenco ([SPEC-03 §1.6](SPEC-03-threat-monitor-ui.md#16-i-campi-uno-per-uno)).
   `%d` sono numeri già mostrati dal monitor (percentuale scalata, secondi della previsione), arrotondati come lì.
@@ -211,7 +218,8 @@ leggono nulla che il monitor non abbia già.
 | `healer` | ruolo `HEALER` | D1–D5 con le parole del guaritore |
 | `dps` | ruolo `DAMAGER`, oppure nessun ruolo (`NONE` o segreto, **[probe P9]**) e non tank | D1–D5 |
 
-Nessun consiglio di classe o di abilità (Q11, COA-04): i ruoli cambiano solo le parole. Da soli, senza nessun altro
+Nessun consiglio di classe o di abilità (Q11, COA-04): i ruoli cambiano solo le parole; l'unico consiglio sugli
+incantesimi ammesso è il generico *rank più bassi* (decisione del proprietario del 2026-11-26, Q7 e Q11, §2.4). Da soli, senza nessun altro
 nella lista (il giocatore che tiene il proprio mob, senza famiglio), il Coach tace: non c'è nulla da consigliare.
 
 ### 2.2 Tabella delle regole (`Data/CoachRules.lua`)
@@ -232,13 +240,18 @@ prima vera in ordine di priorità.
 | **T6** `tank-other` | tank | tank designato che non tiene il mob, lo tiene un altro tank designato | `COACH_TANK_OTHER` *Another tank has the mob.* | `COACH_WHY_HOLDER_TANK` *%s, a tank, is at the top of the threat list.* | rilevata | alta | 30 | 8 s |
 | **T7** `tank-safe` | tank | tiene il mob, SAFE, con almeno un'altra riga nella lista | `COACH_TANK_SAFE` *You have enough margin according to current data.* | `COACH_WHY_MARGIN` *The second is at %d %% (margin %d points).* (in `state` `COACH_WHY_LEAD` *The game's threat state shows a comfortable lead.*) | calcolata (`state`: rilevata) | alta | 10 | 15 s |
 | **D1** `aggro` | dps, healer | tiene il mob da non tank (stato DANGER `aggro`) | `COACH_AGGRO` *You have aggro: the tank needs to take it back.* (healer `COACH_AGGRO_HEALER` *The mob is on you.*) | `COACH_WHY_TOP` *You are at the top of its threat list.* | rilevata | alta | 100 | 0 |
-| **D2** `danger` | dps, healer | DANGER per soglia (`p ≥ D`), non tiene il mob | `COACH_DANGER` *Very close to taking aggro: ease off your threat.* (healer `COACH_DANGER_HEALER` *Very close to taking aggro: the mob may turn to you.*) | `COACH_WHY_P_DANGER` *Your threat is %d %% (Danger from %d %%).* | rilevata | alta | 90 | 0 |
+| **D2** `danger` | dps, healer | DANGER per soglia (`p ≥ D`), non tiene il mob | `COACH_DANGER` *Very close to taking aggro: stop damage for a moment.* (healer `COACH_DANGER_HEALER` *Very close to taking aggro: stop healing for a moment.*) | `COACH_WHY_P_DANGER` *Your threat is %d %% (Danger from %d %%).* | rilevata | alta | 90 | 0 |
 | **D3** `rising` | dps, healer | in `values`, non tiene il mob, trend oltre +2 punti/s con confidenza almeno media e una previsione: WARNING prevista (`predictedIn`) o tempo al superamento `t ≤ 10 s` | `COACH_RISING` *Threat rising: consider delaying your burst.* (healer `COACH_RISING_HEALER` *Threat rising: the mob may turn to you.*) | `COACH_WHY_TREND` *At this trend you may reach %d %% in about %d s (%s confidence).* | prevista | quella del trend (media o alta) | 80 | 8 s |
-| **D4** `warning` | dps, healer | WARNING per soglia (`W ≤ p < D`) o, in `state`, `g = 1` | `COACH_WARNING` *You are close to the risk threshold.* (in `state` `COACH_WARNING_STATE` *Your threat is above the tank's.*) | `COACH_WHY_P_WARNING` *Your threat is %d %% (Warning from %d %%).* (in `state` `COACH_WHY_STATE` *From the game's threat state: no numbers here.*) | rilevata | alta | 60 | 8 s |
+| **D4** `warning` | dps, healer | WARNING per soglia (`W ≤ p < D`) o, in `state`, `g = 1` | `COACH_WARNING` *Ease off: less damage, fewer casts or lower ranks.* (healer `COACH_WARNING_HEALER` *Ease off: less healing, fewer casts or lower ranks.*; in `state` `COACH_WARNING_STATE` *Your threat is above the tank's.*) | `COACH_WHY_P_WARNING` *Your threat is %d %% (Warning from %d %%).* (in `state` `COACH_WHY_STATE` *From the game's threat state: no numbers here.*) | rilevata | alta | 60 | 8 s |
 | **D5** `safe` | dps, healer | SAFE con un tank noto; in `values` con un trend di confidenza almeno media non oltre +2 punti/s; in `state` `g = 0` | `COACH_SAFE` *The tank has enough margin according to current data.* (in `state` `COACH_SAFE_STATE` *You are below the tank's threat.*) | `COACH_WHY_P_SAFE` *Your threat is %d %%, steady or falling (%s confidence).* (in `state` `COACH_WHY_STATE`) | stimata (`state`: rilevata) | quella del trend (`state`: alta) | 10 | 15 s |
 | **A1** `insufficient` | tutti | in combattimento con un mob e nessun'altra regola vera: la riga del giocatore è UNKNOWN, la modalità è `none`, il tank è sconosciuto, o in `values` il trend è *Insufficient data* (§2.5) | `COACH_INSUFFICIENT` *Not enough data for advice.* | il motivo: quelli dell'elenco (*Secret value*, *Stale*, *Insufficient data*…, `WHY_*` di M2.5) o `COACH_WHY_UNKNOWN_TANK` *No one on the list is known to hold the mob.* | — | — | 0 | 0 |
 
 - I quattro messaggi della fonte (§5.2) sono D3, D4, D5 (e T7) e A1. Gli altri sono proposte di questo documento.
+  D4 e D2 dicono, dal 2026-11-26, cosa fare con le soglie decise dal proprietario (Q7): D4 non dice più *You are close
+  to the risk threshold* / *Sei vicino alla soglia di rischio* della fonte, ma di ridurre danni o cure, i lanci o i rank
+  (*Rallenta: meno danni, meno lanci o rank più bassi* / healer *Rallenta: meno cure, meno lanci o rank più bassi*); D2
+  di smettere per un attimo (*A un passo dall'aggro: smetti di fare danni per un attimo* / healer *… smetti di curare
+  per un attimo*). T3 e T5 restano come sono, con le nuove soglie applicate al secondo.
 - **COA-01** (soglia) è D2, D4, T3, T5; **COA-02** (superamento imminente, *prevista*) è D3 e T4, solo con confidenza
   **media o alta**: con confidenza bassa la regola non vale e si passa alla successiva; **COA-03** (niente ripetizioni) è
   §2.3; **COA-04** e **COA-05** sono §2.4 e i test di M3.3.
@@ -299,7 +312,10 @@ le prova il test delle parole di M3.3 (`test_coach_wording.lua`).
   *dopo il tuo*. La **motivazione** spiega su quali dati poggia il consiglio (percentuali, soglie, trend, stato del
   gioco), non la causa di ciò che succede; T1 lo dice apertamente (*The cause is not known*).
 - **WR-04** MUST (**COA-04**, nessuna abilità): nessun nome di abilità, incantesimo, talento, oggetto, postura o
-  classe, in nessuna lingua; i verbi restano generici (*ease off your threat*, *delay your burst*). Il test confronta i
+  classe, in nessuna lingua; i verbi restano generici (*ease off*, *stop damage for a moment*, *delay your burst*).
+  Unica eccezione, decisa dal proprietario il 2026-11-26 (Q7, Q11): il consiglio **generico** di usare incantesimi di
+  rank più basso (*lower ranks* / *rank più bassi*), mai un rank numerato né un incantesimo; il test controlla che ogni
+  testo che parla di rank usi solo questa forma e che nessun testo del tank dica di fermarsi o rallentare. Il test confronta i
   testi con un elenco di parole vietate: le classi (*Warrior*, *Rogue*, *Hunter*, *Mage*, *Priest*, *Warlock*,
   *Paladin*, *Druid*, *Shaman* e in italiano *Guerriero*, *Ladro*, *Cacciatore*, *Mago*, *Sacerdote*, *Stregone*,
   *Paladino*, *Druido*, *Sciamano*) e le abilità di threat più note (*Taunt*, *Growl*, *Feint*, *Fade*, *Cower*,

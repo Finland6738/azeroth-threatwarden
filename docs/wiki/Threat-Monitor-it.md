@@ -34,7 +34,7 @@ Una riga per ogni unità nella lista della threat del nemico (tu, il tuo famigli
 | Striscia a sinistra, distintivo a destra | lo stato: **Sicuro**, **Attenzione**, **Pericolo** o **Sconosciuto**, sempre con icona e parola |
 | Icona del ruolo, icona dello scudo | il ruolo assegnato; lo scudo indica chi tiene il nemico |
 | Nome | il colore di classe (la tua riga ha un contorno) |
-| Barra e numero | la threat scalata: 100 % significa prendere l'aggro. Le tacche sono le soglie Attenzione (80 %) e Pericolo (95 %), o le tue |
+| Barra e numero | la threat scalata: 100 % significa prendere l'aggro. Le tacche sono le soglie Attenzione (82 %) e Pericolo (91 %), o le tue |
 | Freccia | la tendenza degli ultimi secondi (una *stima*); `~2 s` significa *potrebbe prendere l'aggro fra circa 2 s* (una *previsione*) |
 | `?` e barra tratteggiata | sconosciuto: passa sulla riga per leggere il motivo |
 | `—` senza barra | *solo stato*: il gioco dà lo stato ma nasconde i numeri |
@@ -54,12 +54,16 @@ altri* e la tua resta visibile.
 
 | Stato | Per un DPS o un guaritore | Per il tank che tiene il nemico |
 |---|---|---|
-| **Sicuro** | sotto l'80 % | il secondo è sotto l'80 % |
-| **Attenzione** | dall'80 %, o si prevede che arrivi al 95 % entro 3 s | il secondo è dall'80 % |
-| **Pericolo** | dal 95 %, o tiene il nemico | il secondo è dal 95 %, o ha più threat |
+| **Sicuro** | sotto l'82 % | il secondo è sotto l'82 % |
+| **Attenzione** | dall'82 %, o si prevede che arrivi al 91 % entro 3 s | il secondo è dall'82 % |
+| **Pericolo** | dal 91 %, o tiene il nemico | il secondo è dal 91 %, o ha più threat |
 | **Sconosciuto** | il gioco non dà nulla di leggibile, o il dato è vecchio | lo stesso |
 
-Le soglie sono provvisorie e le puoi cambiare nelle [Impostazioni](Settings-it#monitor). Uno stato sale subito e scende solo dopo un secondo, così non lampeggia.
+Le soglie vengono dal gioco: dall'**82 %** chi fa danni o cura rallenta (meno lanci, meno danni o cure, o incantesimi
+di rank più basso), dal **91 %** smette per un attimo di fare danni o di curare; gli
+[[avvisi e il Coach|Alerts-and-Coach-it]] lo dicono. Le puoi cambiare nelle [Impostazioni](Settings-it#monitor); se non
+le avevi mai cambiate, i vecchi 80 % e 95 % sono diventati 82 % e 91 % con questa versione, mentre le soglie scelte da
+te restano tue. Uno stato sale subito e scende solo dopo un secondo, così non lampeggia.
 
 ## Quando il gioco nasconde i numeri
 

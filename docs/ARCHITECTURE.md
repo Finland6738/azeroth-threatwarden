@@ -210,7 +210,7 @@ sequenceDiagram
    `missing`); it is never compared, formatted or saved.
 4. The Model keeps the category of each value (detected, calculated, estimated, predicted); the Calc computes the
    margin and, with at least 3 valid samples, the trend and the time to overtake.
-5. ThreatState applies the thresholds (provisional WARNING 80 %, DANGER 95 %, hysteresis 3 points, Q7) and emits
+5. ThreatState applies the thresholds (WARNING 82 %, DANGER 91 %, decided by the owner, hysteresis 3 points, Q7) and emits
    `STATE_CHANGED` only on a transition.
 6. The list repaints only what changed; a value that is not known is drawn as UNKNOWN with its reason in the tooltip.
 7. Combat ends: the tick stops. From M4 the Recorder has been sampling the Model's rows on its own bounded tick and
@@ -239,7 +239,7 @@ flowchart LR
 
 | Variable | Schema 1 (M1) | Later |
 |---|---|---|
-| `AzerothThreatwardenDB` | `schema`, `settings` (`language`, `theme`, `effects`, `animations`, `font`, `minimap`), `corrupt` | schema 2 (M2): `settings.monitor`; schema 3 (M3): `settings.alerts`, `settings.coach`; schema 4 (M4): `settings.recording`, `sessions`; `profiles` (M8) |
+| `AzerothThreatwardenDB` | `schema`, `settings` (`language`, `theme`, `effects`, `animations`, `font`, `minimap`), `corrupt` | schema 2 (M2): `settings.monitor`; schema 3 (M3): `settings.alerts`, `settings.coach`; schema 4 (M4): `settings.recording`, `sessions`; schema 5 (fix Q7): the old default thresholds 80/95 become 82/91; `profiles` (M8) |
 | `AzerothThreatwardenCharDB` | `schema`, `ui` (`shown`, `locked`, `scale`, `pos`, `size.compact`, `size.wide`, `lastTab`, `lastPage`) | — |
 
 - Defaults, rules (type, range, enum) and migrations live in `Config` ([SPEC-02 §3](specs/SPEC-02-data-model-storage.md#3-savedvariables)).

@@ -34,7 +34,7 @@ One row for each unit on the mob's threat list (you, your pet, your party or rai
 | Strip on the left, badge on the right | the state: **Safe**, **Warning**, **Danger** or **Unknown**, always with an icon and a word |
 | Role icon, shield icon | the assigned role; the shield marks who holds the mob |
 | Name | the class colour (your own row has a ring around it) |
-| Bar and number | the scaled threat: 100 % means pulling aggro. The ticks are the Warning (80 %) and Danger (95 %) thresholds, or yours |
+| Bar and number | the scaled threat: 100 % means pulling aggro. The ticks are the Warning (82 %) and Danger (91 %) thresholds, or yours |
 | Arrow | the trend of the last seconds (an *estimate*); `~2 s` means *may take aggro in about 2 s* (a *prediction*) |
 | `?` and a dashed bar | unknown: hover the row to read why |
 | `—` and no bar | *state only*: the game gives the state but hides the numbers |
@@ -53,12 +53,15 @@ at once when someone enters Danger. Both choices are saved. When the list does n
 
 | State | For a damage dealer or healer | For the tank holding the mob |
 |---|---|---|
-| **Safe** | below 80 % | the second one is below 80 % |
-| **Warning** | from 80 %, or predicted to reach 95 % within 3 s | the second one is from 80 % |
-| **Danger** | from 95 %, or holding the mob | the second one is from 95 %, or has more threat |
+| **Safe** | below 82 % | the second one is below 82 % |
+| **Warning** | from 82 %, or predicted to reach 91 % within 3 s | the second one is from 82 % |
+| **Danger** | from 91 %, or holding the mob | the second one is from 91 %, or has more threat |
 | **Unknown** | the game gives nothing readable, or the data is old | the same |
 
-The thresholds are provisional, and you can change them in [Settings](Settings#monitor). A state rises at once and falls only after a second, so it does not flicker.
+The thresholds come from play: from **82 %** a damage dealer or a healer eases off (fewer casts, less damage or
+healing, or lower spell ranks), from **91 %** they stop damage or healing for a moment; the
+[[alerts and the Coach|Alerts-and-Coach]] say so. You can change them in [Settings](Settings#monitor); if you had never
+changed them, the old 80 % and 95 % became 82 % and 91 % with this version, while thresholds you chose stay yours. A state rises at once and falls only after a second, so it does not flicker.
 
 ## When the game hides the numbers
 

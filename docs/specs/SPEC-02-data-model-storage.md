@@ -107,7 +107,7 @@ lo **schema 1** qui sotto è quello che M1.5 realizza; nessuna chiave dipende da
 
 | Chiave | Contenuto | Da |
 |---|---|---|
-| `db.schema` | numero di versione dello schema | M1 (schema 1), M2 (schema 2, §3.5), M3 (schema 3, §3.6), M4 (schema 4, §3.7) |
+| `db.schema` | numero di versione dello schema | M1 (schema 1), M2 (schema 2, §3.5), M3 (schema 3, §3.6), M4 (schema 4, §3.7), correzione Q7 (schema 5, §3.8) |
 | `db.settings` | lingua, aspetto, minimappa (M1); soglie, frequenza, quando mostrare la finestra, ordinamento (M2); avvisi e Coach (M3, §3.6); registrazione e suoi limiti (M4, §3.7) | M1 → |
 | `db.sessions` | registrazioni (§4), la più vecchia prima; il contenuto lo controlla `Data/Storage.lua` | M4 (schema 4, §3.7) |
 | `db.profiles` | preset per ruolo | M8 |
@@ -217,8 +217,8 @@ rifiuta un valore che la violerebbe e `Config:SetThresholds(warning, danger)` le
 | Percorso | Tipo | Predefinito | Regola | Uso |
 |---|---|---|---|---|
 | `settings.monitor` | tabella | `{}` | — | |
-| `settings.monitor.warning` | intero | `80` | 50–99 | soglia WARNING ([Q7](SPEC-09-risks-open-questions.md)) |
-| `settings.monitor.danger` | intero | `95` | 60–100 e almeno `warning + 5`; se no, le due tornano ai predefiniti | soglia DANGER (Q7) |
+| `settings.monitor.warning` | intero | `82` (era `80` fino allo schema 4, §3.8) | 50–99 | soglia WARNING ([Q7](SPEC-09-risks-open-questions.md), decisa dal proprietario il 2026-11-26) |
+| `settings.monitor.danger` | intero | `91` (era `95` fino allo schema 4, §3.8) | 60–100 e almeno `warning + 5`; se no, le due tornano ai predefiniti | soglia DANGER (Q7) |
 | `settings.monitor.rate` | intero | `5` | 2–10 (Hz) | frequenza del tick ([Q14](SPEC-09-risks-open-questions.md)) |
 | `settings.monitor.maxUnits` | intero | `40` | 5–40 | unità lette per scansione (Q14) |
 | `settings.monitor.show` | stringa | `"auto"` | enum `auto`, `always`, `manual` | quando si mostra la finestra ([Q13](SPEC-09-risks-open-questions.md), [SPEC-03 §5.1](SPEC-03-threat-monitor-ui.md#51-quando-si-mostra-la-finestra-q13-m26)) |
@@ -286,6 +286,20 @@ nuova); ogni sessione la controlla `Data/Storage.lua` al caricamento e una sessi
 copia limitata di §3.4, M4.3). *Reset settings* non tocca `sessions` (§3.4); le sessioni si eliminano solo da Reports o
 dalla card *Recording* ([SPEC-05 §2.5](SPEC-05-recording-report-replay.md#25-eliminare-una-o-tutte-le-registrazioni)).
 
+### 3.8 Schema 5 (correzione Q7): le soglie decise dal proprietario
+
+Il proprietario ha deciso le soglie il 2026-11-26 ([Q7](SPEC-09-risks-open-questions.md)): WARNING **82 %**, DANGER
+**91 %** (erano 80 e 95, provvisorie). `Config` scrive i predefiniti nei dati salvati (§3.4, punto 5), quindi chi non
+aveva mai toccato le soglie ha `80` e `95` salvati: lo schema dell'account passa a **5** e la migrazione
+`Config.migrations.account[5]` porta a 82 e 91 **solo** la coppia ancora esattamente a 80 e 95 (`Config.OLD_THRESHOLDS`),
+cioè i vecchi predefiniti. Ogni altra coppia è una scelta del giocatore e resta com'è, anche se una sola delle due è
+cambiata (per esempio 75 e 95): spostarne una sola potrebbe rompere lo scarto di 5 punti e riportare l'altra ai
+predefiniti. Il passo è idempotente, non fa nulla su dati senza `settings.monitor` e ha i suoi test, che partono dai
+dati dello schema 4 (DAT-20). Nessuna chiave nuova; il personaggio resta allo schema 1. Una versione precedente
+dell'addon (`v0.3.0` o prima) che trova lo schema 5 lavora in sola lettura (§3.4, punto 4). Chi aveva scelto proprio
+80 e 95 a mano li vede diventare 82 e 91 una volta: i dati non lo distinguono dai predefiniti, e la card *Monitor* li
+riporta dove li vuole (proposta, [Q7](SPEC-09-risks-open-questions.md)).
+
 ## 4. Sessioni registrate (schema 4, M4)
 
 Fissato in **M4.1** ([ADR 0016](../adr/0016-recordings-are-the-monitors-readings-in-compact-columns.md)). Una sessione
@@ -314,7 +328,7 @@ Session = {
     diff = nil,              -- difficultyID di GetInstanceInfo, nil se non leggibile
     rec = {                  -- le condizioni della registrazione all'apertura, perché il report le dica
         hz = 2, monitorHz = 5, maxUnits = 40,   -- frequenza di registrazione e del monitor, unità per scansione
-        warning = 80, danger = 95,              -- soglie in vigore (gli stati di values dipendono da loro)
+        warning = 82, danger = 91,              -- soglie in vigore (gli stati di values dipendono da loro)
         mode = "values",                        -- modalità del monitor all'apertura (MON-04)
         version = "v0.4.0",                     -- versione dell'addon che ha registrato
     },

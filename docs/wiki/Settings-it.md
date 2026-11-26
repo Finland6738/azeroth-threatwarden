@@ -56,8 +56,8 @@ Salvato per tutto l'account. Ogni modifica si applica subito, anche a una
 
 | Opzione | Cosa fa | Scelte | Predefinito |
 |---|---|---|---|
-| Soglia di attenzione | da questa quota della threat che prende il nemico una riga dice **Attenzione** | dal 50 % al 95 % | 80 % |
-| Soglia di pericolo | da questa quota, **Pericolo** | dal 60 % al 100 % | 95 % |
+| Soglia di attenzione | da questa quota della threat che prende il nemico una riga dice **Attenzione** | dal 50 % al 95 % | 82 % |
+| Soglia di pericolo | da questa quota, **Pericolo** | dal 60 % al 100 % | 91 % |
 | Letture al secondo | ogni quanto si legge la threat in combattimento: una frequenza più alta reagisce prima e costa di più | da 2 a 10 Hz | 5 Hz |
 | Unità per lettura | quante unità si leggono ogni volta; in un gruppo più grande le altre si leggono a turno (tu, il famiglio, i tank e chi tiene il nemico ogni volta) | da 5 a 40 | 40 |
 | Quando si mostra la finestra | vedi sotto | In gruppo o in lotta, Sempre, A mano | In gruppo o in lotta |
