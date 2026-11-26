@@ -687,7 +687,8 @@ Replay.state = {
 - **Sessione eliminata** (`SESSIONS_CHANGED` senza la sessione): `Close` e `OnChange("closed")` con `unknown`.
 - **Costo del tick**: nessuna funzione del gioco, nessuna allocazione; il cursore muove una regione e il dettaglio si
   ricalcola solo quando il cursore passa un momento registrato (puntatori per serie che avanzano durante la
-  riproduzione). Budget proposto: 2 000 istruzioni per tick, fissato in M5.4.
+  riproduzione). Budget (fissato in M5.4): **2 000 istruzioni per tick** e nessuna allocazione; misurate su una
+  sessione al limite delle righe al più 870 istruzioni a 8×.
 - Con l'interruttore `replay` (o `timeline`) spento `Open` risponde `off` e nulla si registra (ADR 0014).
 
 ### 5.3 Il dettaglio al tempo del cursore
@@ -1015,6 +1016,43 @@ Ogni test che passa per il monitor gira sui tre esiti (`Fight.OUTCOMES`, [SPEC-0
 - `Theme.Paint(region, "fill" | "tint", token, alpha)` dà il solo colore di una regione di un pool riusata. Le serie
   seguono [ui-style §3.5](ui-style.md#35-timeline-e-replay-m5). `/atw debug` aggiunge la riga dei pool (regioni create,
   limiti, quante volte si sono allargate le colonne, `lines`).
+
+**Realizzato in M5.4** (`Data/Replay.lua`), con queste precisazioni:
+
+- **Apertura**: `Replay.Open` butta subito il replay aperto; una costruzione superata risponde `false, "replaced"`
+  (un altro `Open`) o `false, "closed"` (`Close`); `Replay.Building()` dice l'`id` in costruzione. La velocità si scrive
+  in `char.ui.replay.speed` (`Replay.SPEED_PATH`): finché lo schema 2 del personaggio non c'è (M5.5), o con i dati in
+  sola lettura, `Config` la rifiuta e la scelta vale fino al `/reload`.
+- **Riproduzione**: `Play` riparte dall'inizio della vista anche quando il cursore è **prima** della vista;
+  `Replay.CanPlay()` dice se partirebbe (`closed`, `combat`; `Play` senza timer risponde `no-timer`). Una vista nuova che
+  lascia fuori il cursore mentre si riproduce mette in pausa. Uno spostamento fuori dalla vista la fa scorrere **con il
+  cursore al centro** (entro la sessione). A `COMBAT_STARTED` e `COMBAT_ENDED` parte `OnChange("play")`.
+- **Focus**: resta finché il cursore è nella finestra dell'evento (`[t − 50, t + 50]`); uscendone (passo, salto, ricerca
+  o riproduzione) cadono focus e selezione. `NextEvent` fa il `Focus` dell'evento trovato e, fra eventi dello stesso
+  decimo, li percorre uno per uno. `Replay.ToggleSeries(u)` è il clic sul nome di §5.4; `Replay.LastRow()` la riga
+  dell'ultimo evento passato; `Replay.ListNote(list)` il testo di un elenco: *Only the start and the end of combat were
+  recorded.* quando la sessione ha solo `C` e `c` e l'elenco del filtro ha righe, *No event in this filter.* quando è
+  vuoto.
+- **Dettaglio**: decide **l'ultima riga dell'unità sul mob monitorato**. Una riga senza numero più recente di una
+  lettura la sostituisce (con il suo motivo); una lettura non passa mai oltre un'interruzione registrata dopo di lei
+  (cambio di target, fine del combattimento, pausa della registrazione anche mentre è in corso, modalità `none` o
+  `state`, limite dei campioni, uscita dalla lista): il motivo è la prima. La situazione di *state only* vale finché
+  nulla la interrompe (le righe senza numero si scrivono solo al cambio, §1.3). *Since* è l'ultima lettura con un numero
+  su quel mob, altrimenti l'inizio del tratto senza numeri; senza righe, *No reading recorded: not read yet*. Fuori dal
+  combattimento il dettaglio non ha mob, modalità, detentore né unità; la fine dell'asse appartiene a ciò che finisce lì.
+- **`state.moment`** sale solo quando il cursore passa qualcosa di registrato (una riga, un evento, il bordo di un
+  buco, una lettura che supera `join` o `ESTIMATE_MAX`): la finestra rilegge il dettaglio solo allora (l'età di una stima
+  la ricalcola dal cursore). `Replay.Snapshot` riusa la sua tabella e non alloca.
+- **Dati mancanti**: i tratti *state only* sono una voce del mob intero (*State only, no percentages A–B*), non una per
+  unità; *nessuna lettura in questa finestra* vale per le unità che erano nella lista mentre i valori erano leggibili,
+  senza letture e senza un buco proprio nella finestra. `Replay.EventDetail(i)` dà l'evento, le letture delle unità che
+  nomina (per `A` anche chi teneva il mob prima) e i dati mancanti della finestra; le parole del dettaglio, dei dati
+  mancanti e degli elenchi sono le chiavi `REPLAY_*`.
+- **Costo** (prova lunga, 30 000 righe e 40 unità): tick al più 870 istruzioni e 0 byte; dettaglio di 40 unità circa
+  26 000 istruzioni e 0 byte (budget 60 000); aprire con il modello già in memoria circa 690 000 istruzioni in un frame
+  (gli indici del replay; budget 2 000 000, come la vista della timeline).
+- `Timeline.TimeText` e `Timeline.PercentText` passano da `UI/Timeline.lua` a `Data/Timeline.lua`; `/atw debug` aggiunge
+  alla sezione *Timeline and replay* lo stato del replay e il costo misurato del tick.
 
 ## 10. Piano di M5: test per step
 

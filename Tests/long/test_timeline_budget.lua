@@ -83,3 +83,83 @@ describe("the cost of a timeline view (SPEC-05 §4.7)", function()
 		end
 	end)
 end)
+
+-- The Threat Replay over the same session (SPEC-05 §5.2, M5.4). The tick moves the cursor and, when it passes a
+-- recorded moment, finds it by binary search: its work does not grow with the session. M5.2 proposed nothing for the
+-- detail; M5.4 measures it and bounds it, because the window reads it again at every recorded moment.
+local TICK_BUDGET = { instructions = 2000, bytes = 64 }
+local DETAIL_BUDGET = { instructions = 60000, bytes = 64 }
+
+describe("the cost of a replay at the row limit (SPEC-05 §5.2, ARC-06)", function()
+	before_boot(function(M)
+		M.features = { monitor = true, alerts = true, coach = true, recording = true, reports = true, timeline = true,
+			replay = true }
+	end)
+
+	local function allocated(fn)
+		local grown = math.huge
+		for _ = 1, 3 do
+			collectgarbage("collect")
+			collectgarbage("collect")
+			collectgarbage("stop")
+			local before = collectgarbage("count")
+			fn()
+			grown = math.min(grown, (collectgarbage("count") - before) * 1024)
+			collectgarbage("restart")
+		end
+		return grown
+	end
+
+	it("keeps the tick at 8x within 2 000 instructions and the detail bounded, making nothing", function()
+		local Replay, Storage, Scheduler = Mock.ns.Replay, Mock.ns.Storage, Mock.ns.Scheduler
+		local s = fullSession()
+		truthy(Storage.Add(s))
+		truthy(Storage.Closed(s, true))
+		local opened
+		Replay.Open(s.id, nil, function(ok) opened = ok end)
+		for _ = 1, 700 do Mock.Advance(0.05) end
+		truthy(opened)
+		Replay.OnChange(function() end)
+		Replay.SetSpeed(8)
+		local tick
+		local start = Scheduler.Start
+		Scheduler.Start = function(name, hz, fn, opts) tick = fn return start(name, hz, fn, opts) end
+		truthy(Replay.Play())
+		Scheduler.Start = start
+		local function step() Mock.StepClock(0.1) tick() end
+		for _ = 1, 20 do step() end
+		local worst = 0
+		for _ = 1, 100 do
+			local work = T.instructions(step, 1)
+			if work > worst then worst = work end
+		end
+		local bytes = allocated(function() for _ = 1, 50 do step() end end)
+		truthy(Replay.state.playing)
+		T.log(("replay tick: at most %d instructions, %d bytes in 50 ticks"):format(worst, bytes))
+		truthy(worst <= TICK_BUDGET.instructions, "instructions in a tick: " .. worst)
+		truthy(bytes <= TICK_BUDGET.bytes, "allocated in 50 ticks: " .. bytes)
+
+		local snap = Replay.Snapshot(0)
+		local times = { 5, 900, 1800, 2700, Replay.state.model.dur }
+		for _, t in ipairs(times) do Replay.Snapshot(t, snap) end
+		eq(snap.nunits, UNITS)
+		local most = 0
+		for _, t in ipairs(times) do
+			local work = T.instructions(function() Replay.Snapshot(t, snap) end, 10)
+			if work > most then most = work end
+		end
+		bytes = allocated(function() for _, t in ipairs(times) do Replay.Snapshot(t, snap) end end)
+		T.log(("detail of %d units: at most %d instructions, %d bytes"):format(UNITS, most, bytes))
+		truthy(most <= DETAIL_BUDGET.instructions, "instructions in a detail: " .. most)
+		truthy(bytes <= DETAIL_BUDGET.bytes, "allocated: " .. bytes)
+		local focus = T.instructions(function() Replay.EventDetail(1) end, 100)
+		T.log(("an event with its missing data: %d instructions"):format(focus))
+		-- with the model in memory, opening makes the replay's indexes at once, in one frame
+		Replay.Close()
+		local reopened
+		local work = T.instructions(function() Replay.Open(s.id, nil, function(ok) reopened = ok end) end, 100)
+		truthy(reopened)
+		T.log(("opening over a model in memory: %d instructions"):format(work))
+		truthy(work <= BUDGET.instructions, "instructions to open: " .. work)
+	end)
+end)

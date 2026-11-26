@@ -8,7 +8,7 @@
 --     :SetModel(model), :SetView(a, b), :View(), :SetSeries(list), :SetCursor(t), :SetSelection(a, b)
 --     :Layout(width, height) -> the height used (it grows when the lanes do not fit), :Reflow(width)
 --   Pure parts (tests, the replay): X, T, YMax, Y, TickStep, Ticks, Dashes, Plan, MergeBands, LanePieces, SeriesTokens,
---   TimeText, PercentText, Icon, Info (the hover tooltip), SummaryLines, PoolLines (/atw debug).
+--   Icon, Info (the hover tooltip), SummaryLines, PoolLines (/atw debug); TimeText and PercentText are the model's.
 --
 -- What a line means: a segment is a Line region, solid (two readings taken at the recording's pace) or cut in dashes (an
 -- estimate); where the model has no segment nothing is drawn, and the next piece starts at least BREAK_PX further. Gaps
@@ -21,7 +21,7 @@ ns = ns or {}
 
 local Timeline = ns.Timeline
 local L, Widgets, Theme, Assets, Compat = ns.L, ns.Widgets, ns.Theme, ns.Assets, ns.Compat
-local Session, Report = ns.Session, ns.Report
+local Report = ns.Report
 local type, pairs, ipairs, floor, ceil, max, min, abs, sqrt, sort, concat = type, pairs, ipairs, math.floor, math.ceil,
 	math.max, math.min, math.abs, math.sqrt, table.sort, table.concat
 
@@ -232,20 +232,6 @@ end
 ---------------------------------------------------------------------------------------------------------------------
 -- Words of the tooltip (ADR 0003: every value with its category)
 ---------------------------------------------------------------------------------------------------------------------
--- "1:12.4"
-function Timeline.TimeText(t)
-	t = floor((t or 0) + 0.5)
-	local seconds = floor(t / 10)
-	return ("%d:%02d.%d"):format(floor(seconds / 60), seconds % 60, t % 10)
-end
-
--- A value of the column (tenths of a percent); its top is a lower bound.
-function Timeline.PercentText(p)
-	local text = L.TIMELINE_PERCENT:format(p / 10)
-	if p >= Session.MAX_N then return L.REPORT_AT_LEAST:format(text) end
-	return text
-end
-
 local function categoryName(category) return L[CATEGORY_KEYS[category] or "CAT_UNKNOWN"] end
 local function tagged(text, category) return L.TIP_TAGGED:format(text, categoryName(category)) end
 

@@ -7,6 +7,19 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
+- M5.4: the **controller of the Threat Replay** (`Data/Replay.lua`), behind the `replay` and `timeline` switches, which
+  stay off until `v0.5.0`: nothing of it is visible yet, and the window comes with the next step. It moves a cursor over
+  a recorded fight and never reads the game or writes into the recording: play and pause at 1, 2, 4 and 8× (paused and
+  refused during combat), steps to the next recorded moment, 5 s jumps, seeking with a view that follows, the next and
+  previous event of the list (key events, alerts and tips, all), and a selected event with the 5 s before and after.
+  The detail at the cursor gives every value its category: a reading of that moment is detected, an older one up to
+  10 s with nothing recorded in between is an estimate with its age, and a missing one says why and since when (*No
+  reading since 1:10.2: secret value*); an old number is never shown as current. *State only* shows the game's
+  situation, and the missing data of an event's window is listed even when there is none (*No missing data in this
+  window*). A playback tick makes nothing and costs under 900 instructions on the longest recording; `/atw debug` says
+  whether the replay is open and playing, its speed and the tick's cost. Not tried in the real client.
+- Tests: `test_replay.lua`, the wording rules extended to the texts of the timeline and the replay, and the long test of
+  the replay's cost at 30 000 rows.
 - M5.3: the **chart of the Threat Timeline** (`UI/Timeline.lua`), still behind the `timeline` switch, which stays off
   until `v0.5.0`: nothing of it is visible yet. With the switch on, the report of the Reports tab gets a *Timeline*
   card: the series of up to six units (the player first), lines solid between readings taken at the recording's pace and

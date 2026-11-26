@@ -130,9 +130,16 @@ M4.R. Nothing is added to the sessions and the account schema stays 5.
   `REPLAY_*` locale keys of the detail, the missing data and the event list in both languages; the wording test
   extended to `TIMELINE_*` and `REPLAY_*`; the replay lines of `/atw debug`.
 - Done when:
-  - [ ] Play, pause, seek, step, jump and event focus move the cursor as SPEC-05 §5.2 says at every speed; the detail
+  - [x] Play, pause, seek, step, jump and event focus move the cursor as SPEC-05 §5.2 says at every speed; the detail
     gives every value its category and says why a value is missing; ±5 s lists the missing data or *No missing data in
     this window*; playback pauses in combat; the tick allocates nothing; nothing runs with the switches off.
+- *Done (2026-11-26, before M0.7): `Data/Replay.lua` behind `replay` and `timeline` (open and close, the 10 Hz tick,
+  speeds, view, seek, steps, jumps, events and focus, series, filters, `Snapshot`, `Missing`, `EventDetail`, one
+  listener); the `REPLAY_*` keys in both languages; the wording rules on `TIMELINE_*` and `REPLAY_*`; the replay lines of
+  `/atw debug`; `Timeline.TimeText` and `PercentText` moved to the model; `test_replay.lua` (53 tests) and a long test:
+  at 30 000 rows a tick is at most 870 instructions (budget 2 000) and allocates nothing, a detail of 40 units about
+  26 000, opening over a model in memory about 690 000. The speed is kept across reloads only from the character
+  schema 2 (M5.5). Details in SPEC-05 §9. Nothing was tried in the real client.*
 - Tests: `test_replay.lua` (SPEC-05 §10), `test_coach_wording.lua` extended.
 - Real client: whether pausing in combat is the right default (Q18); the tick's cost out of combat (P10).
 

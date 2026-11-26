@@ -1,5 +1,5 @@
--- The wording rules of SPEC-04 §2.4 (WR-01-WR-07, COA-04, COA-05) on every COACH_*, ALERT_* and REPORT_* key (the
--- report also shows no hypothesis, REC-11), in enUS and itIT (ADR 0009): no cause, no ability or class (the one advice
+-- The wording rules of SPEC-04 §2.4 (WR-01-WR-07, COA-04, COA-05) on every COACH_*, ALERT_*, REPORT_*, TIMELINE_* and
+-- REPLAY_* key (report, timeline and replay also show no hypothesis, REC-11, RPL-03), in enUS and itIT (ADR 0009): no cause, no ability or class (the one advice
 -- about spells is the generic "lower ranks", SPEC-09 Q7/Q11), no blame and no call to write to others, may / about for
 -- predictions and
 -- never "will", short messages, the arguments of each key as Data/CoachRules.lua formats them, and a category for every
@@ -12,11 +12,15 @@ local LANGUAGES = { "enUS", "itIT" }
 local function strings(code) return AzerothThreatwarden.Locale.Strings(code) end
 local function rules() return Mock.ns.CoachRules end
 
--- Every COACH_*, ALERT_* and REPORT_* key of a language, sorted.
+local PREFIXES = { "COACH_", "ALERT_", "REPORT_", "TIMELINE_", "REPLAY_" }
+
+-- Every key of a language that the wording rules cover, sorted.
 local function wordingKeys(code)
 	local out = {}
 	for key in pairs(strings(code)) do
-		if key:find("^COACH_") or key:find("^ALERT_") or key:find("^REPORT_") then out[#out + 1] = key end
+		for _, prefix in ipairs(PREFIXES) do
+			if key:sub(1, #prefix) == prefix then out[#out + 1] = key end
+		end
 	end
 	table.sort(out)
 	return out
@@ -203,18 +207,21 @@ describe("the words of the Coach and of the alerts (SPEC-04 §2.4)", function()
 		end
 	end)
 
-	it("shows no hypothesis in the report (REC-11)", function()
+	it("shows no hypothesis in the report, the timeline and the replay (REC-11, RPL-03)", function()
 		local HYPOTHESIS = { "probably", "likely", "maybe", "perhaps", "possibly", "seems", "forse", "probabilmente",
 			"possibilmente", "sembra", "may", "might", "potrebbe", "potresti" }
+		local atLeast = { REPORT_ = 80, TIMELINE_ = 80, REPLAY_ = 40 }
 		for _, code in ipairs(LANGUAGES) do
-			local count = 0
-			for key, text in pairs(strings(code)) do
-				if key:find("^REPORT_") then
-					count = count + 1
-					for _, word in ipairs(HYPOTHESIS) do falsy(has(text, word), code .. " " .. key .. ": " .. word) end
+			for prefix, minimum in pairs(atLeast) do
+				local count = 0
+				for key, text in pairs(strings(code)) do
+					if key:sub(1, #prefix) == prefix then
+						count = count + 1
+						for _, word in ipairs(HYPOTHESIS) do falsy(has(text, word), code .. " " .. key .. ": " .. word) end
+					end
 				end
+				truthy(count > minimum, code .. " " .. prefix .. " keys: " .. count)
 			end
-			truthy(count > 80, code .. " REPORT_ keys: " .. count)
 		end
 	end)
 

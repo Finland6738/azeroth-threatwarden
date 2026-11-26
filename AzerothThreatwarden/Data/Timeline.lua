@@ -15,7 +15,8 @@
 --   Timeline.View(model, a, b, buckets, series, out)   the first, last, lowest and highest reading per column
 --   Timeline.Summary(model, a, b, out, series)  the summary of an interval (calculated; estimated with unknown time)
 --   Timeline.Group(markers, a, b, width, out)   the markers of the event track grouped under MARKER_PX
---   Timeline.MarkerText / GapText / OutcomeText / ModeText / ReasonText   the words (TIMELINE_* keys)
+--   Timeline.MarkerText / GapText / OutcomeText / ModeText / ReasonText / TimeText / PercentText   the words
+--                                               (TIMELINE_* keys)
 --
 -- Times are tenths of a second from the start of the session. A segment is kept on the reading it ends at: for the
 -- k-th reading of a series, segs[k] is "solid", "dashed" or "none" (from reading k - 1) and why[k] the reason of "none".
@@ -724,6 +725,20 @@ local ALERT_KEY = { w = "REPORT_ALERT_WARNING", d = "REPORT_ALERT_DANGER", a = "
 	m = "REPORT_ALERT_MARGIN", l = "REPORT_ALERT_LOST", p = "REPORT_ALERT_PET", o = "REPORT_ALERT_OTHER" }
 local COMBAT_KEY = { ["1"] = "TIMELINE_COMBAT_STARTED", ["2"] = "TIMELINE_NEXT_PULL", r = "TIMELINE_COMBAT_RELOAD" }
 
+-- "1:12.4"
+function Timeline.TimeText(t)
+	t = floor((t or 0) + 0.5)
+	local seconds = floor(t / 10)
+	return ("%d:%02d.%d"):format(floor(seconds / 60), seconds % 60, t % 10)
+end
+
+-- A value of the column (tenths of a percent); its top is a lower bound.
+function Timeline.PercentText(p)
+	local text = ns.L.TIMELINE_PERCENT:format(p / 10)
+	if p >= Session.MAX_N then return ns.L.REPORT_AT_LEAST:format(text) end
+	return text
+end
+
 function Timeline.ReasonText(reason)
 	local L = ns.L
 	return L[Timeline.REASON_KEYS[reason or ""] or "TIMELINE_WHY_OTHER"]
@@ -853,6 +868,7 @@ function Timeline.DebugLines()
 			st.ms and ("%.1f ms"):format(st.ms) or "unknown ms", st.frames)
 	end
 	if Timeline.PoolLines then Timeline.PoolLines(lines) end   -- the widget's (UI/Timeline.lua)
+	if ns.Replay then ns.Replay.DebugLines(lines) end           -- the controller's (Data/Replay.lua)
 	if Timeline.lastError then lines[#lines + 1] = "last build error: " .. Timeline.lastError end
 	return lines
 end
