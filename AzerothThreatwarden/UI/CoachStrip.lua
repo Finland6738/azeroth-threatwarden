@@ -1,16 +1,20 @@
 -- CoachStrip: the strip of the compact view that shows the alerts and the Coach's tip (SPEC-04 §3.1; ui-style 3.1,
--- 3.3, 3.4, 4.2; ADR 0003, 0014). Threatwarden's own. Lua 5.1; an ordinary unprotected frame, no click.
+-- 3.3, 3.4, 4.2; ADR 0003, 0014). Threatwarden's own. Lua 5.1; an ordinary unprotected frame; only the notice takes a click.
 --
 -- It reads the Data modules only (Data/Alerts.lua, Data/Coach.lua): no game API is named here (ARC-02). The view of
 -- UI/ThreatList.lua builds it, places it between the header of the mob and the list header and gives it its width.
 --
 -- Present (a fixed place, so the rows do not jump) when the `coach` switch is on and the Coach is enabled, or the
--- `alerts` switch is on with the alerts and their window message enabled. What it says, first that applies:
+-- `alerts` switch is on with the alerts and their window message enabled, or while a notice is held. What it says,
+-- first that applies:
 --   1. "Alerts muted" / "Alerts back on" for NOTE_HOLD seconds after a change of the mute;
 --   2. an alert for Alerts.HOLD seconds (a new one of the same or a higher severity replaces it, a lower one does not
 --      cover it): the 3 pt stripe in the state colour and the state badge (icon and word, ST-02);
---   3. the Coach's tip: the stripe in `accent` and the `coach` icon;
---   4. out of combat with the Coach on, "Advice appears during combat"; else nothing (the place stays).
+--   3. the end-of-fight notice for NOTICE_HOLD seconds (SPEC-05 §3.5, the `reports` switch and
+--      settings.recording.notice, off by default): "Fight recorded · 1:42 · 3 threshold crossings" with "Open report" at
+--      the right; a click opens the Reports tab and emits REPORT_REQUESTED(id). Never chat, a sound or the window opened;
+--   4. the Coach's tip: the stripe in `accent` and the `coach` icon;
+--   5. out of combat with the Coach on, "Advice appears during combat"; else nothing (the place stays).
 -- A predicted basis adds the `predict` icon, an estimated or predicted one a confidence pill; `mute` at the right while
 -- the alerts are muted. The tooltip says the whole text, why, the category and the confidence, and since when.
 --
@@ -28,8 +32,10 @@ local type, max, floor = type, math.max, math.floor
 
 CoachStrip.HEIGHT = 18
 CoachStrip.NOTE_HOLD = 2
+CoachStrip.NOTICE_HOLD = 8
 
 local ALERTS_PREFIX, COACH_PREFIX = "account.settings.alerts.", "account.settings.coach."
+local NOTICE_PATH = "account.settings.recording.notice"
 local CATEGORY_LABEL = {
 	detected = "CAT_DETECTED", calculated = "CAT_CALCULATED", estimated = "CAT_ESTIMATED", predicted = "CAT_PREDICTED",
 }
@@ -40,7 +46,8 @@ local STATE_ID = { WARNING = "warning", DANGER = "danger" }
 -- What is held: the alert (a copy, the module's table is reused) and the note of the mute.
 local alert = { on = false }
 local note = nil          -- a locale key
-local alertToken, noteToken = 0, 0
+local notice = { on = false }   -- the end-of-fight notice: id, text
+local alertToken, noteToken, noticeToken = 0, 0, 0
 local settings = { enabled = true, window = true }
 
 local function on(name) return ns.Features ~= nil and ns.Features.On(name) end
@@ -61,8 +68,10 @@ local function coachOn() return on("coach") and ns.Coach ~= nil and ns.Coach.Ena
 local function alertsOn() return on("alerts") and settings.enabled and settings.window end
 local function muted() return on("alerts") and ns.Alerts ~= nil and ns.Alerts.IsMuted() end
 
+local function noticeOn() return on("reports") and setting(NOTICE_PATH, false) end
+
 -- Is there a strip at all?
-function CoachStrip.Present() return coachOn() or alertsOn() end
+function CoachStrip.Present() return coachOn() or alertsOn() or notice.on end
 
 -- The name of a unit as the list writes it: its name, or the label of its token.
 local function nameOf(unitKey)
@@ -98,9 +107,10 @@ local function atRight(self, region, offset)
 	region:SetPoint("RIGHT", self, "RIGHT", -offset, 0)
 end
 
--- Writes the parts: kind "note", "alert", "tip", "idle" or "empty"; the others from what is given.
+-- Writes the parts: kind "note", "alert", "notice", "tip", "idle" or "empty"; the others from what is given.
 function Strip:Draw(kind, text, state, category, confidence)
 	local isAlert, isTip = kind == "alert", kind == "tip"
+	local isNotice = kind == "notice"
 	setShown(self.stripe, isAlert or isTip)
 	if isAlert or isTip then
 		local token = isTip and "accent" or Theme.State(state).token
@@ -125,6 +135,12 @@ function Strip:Draw(kind, text, state, category, confidence)
 	end
 
 	local right = 4
+	setShown(self.openLabel, isNotice)
+	if isNotice then
+		self.openLabel:SetText(L.REPORT_OPEN)
+		atRight(self, self.openLabel, right)
+		right = right + self.openLabel:GetStringWidth() + 8
+	end
 	local isMuted = muted()
 	setShown(self.muteIcon, isMuted)
 	if isMuted then
@@ -164,6 +180,9 @@ function Strip:Update()
 		self:Draw("note", L[note])
 	elseif alert.on then
 		self:Draw("alert", alert.message, alert.state, alert.category, alert.confidence)
+	elseif notice.on then
+		self.tip = nil
+		self:Draw("notice", notice.text)
 	else
 		local tip = ns.Coach and coachOn() and ns.Coach.Current() or nil
 		if tip then
@@ -194,6 +213,10 @@ function Strip:TooltipLines()
 	local lines = {}
 	local held = nil
 	if self.kind == "alert" then held = alert elseif self.kind == "tip" then held = self.tip end
+	if self.kind == "notice" then
+		lines[#lines + 1] = notice.text
+		lines[#lines + 1] = L.REPORT_OPEN
+	end
 	if held then
 		lines[#lines + 1] = held.message
 		lines[#lines + 1] = L.STRIP_WHY:format(held.reason)
@@ -242,7 +265,12 @@ function CoachStrip.Build(parent)
 	f.pill.label = Theme.NewText(f.pill, "Badge", "text-2")
 	f.pill.label:SetPoint("CENTER", f.pill, "CENTER", 0, 0)
 	f.pill:Hide()
+	f.openLabel = Theme.NewText(f, "Row", "accent-text")
+	f.openLabel:Hide()
 	f:EnableMouse(true)
+	f:SetScript("OnMouseUp", function(self, button)
+		if self.kind == "notice" and button ~= "RightButton" then CoachStrip.OpenReport() end
+	end)
 	Widgets.Tooltip.Attach(f, function(self) return self:TooltipLines() end, "BOTTOM")
 	f:SetScript("OnShow", function(self) self:Update() end)
 	f:Hide()
@@ -265,6 +293,53 @@ end
 local function dropNote()
 	note = nil
 	noteToken = noteToken + 1
+end
+
+local redrawView
+
+local function dropNotice()
+	if not notice.on then return end
+	notice.on = false
+	noticeToken = noticeToken + 1
+end
+
+-- The click on the notice: the Reports tab, on the session of the notice.
+function CoachStrip.OpenReport()
+	if not notice.on then return false end
+	local id = notice.id
+	dropNotice()
+	local window = ns.Window
+	if window then
+		window:Open()
+		window:SelectTab("reports")
+	end
+	if ns.Bus then ns.Bus.Emit("REPORT_REQUESTED", id) end
+	redrawView()
+	return true
+end
+
+-- A session closed complete and kept: the notice, if the setting asks for it and the window shows the Monitor tab.
+local function onSessionEnded(id, state)
+	if state ~= "complete" or not noticeOn() or (ns.addon and ns.addon.inCombat) then return end
+	if ns.Demo and ns.Demo.IsActive() then return end
+	local f = CoachStrip.frame
+	if not f or not f:GetParent():IsVisible() then return end
+	local s = ns.Storage and ns.Storage.Get(id)
+	if not s then return end
+	local length = ns.Report.Time(s.dur)
+	local cross = type(s.sum) == "table" and s.sum.cross or nil
+	notice.on, notice.id = true, id
+	if cross == 1 then notice.text = L.REPORT_NOTICE_ONE:format(length)
+	elseif cross then notice.text = L.REPORT_NOTICE:format(length, cross)
+	else notice.text = L.REPORT_NOTICE_PLAIN:format(length) end
+	noticeToken = noticeToken + 1
+	local mine = noticeToken
+	Compat.After(CoachStrip.NOTICE_HOLD, function()
+		if mine ~= noticeToken then return end
+		notice.on = false
+		redrawView()
+	end)
+	redrawView()
 end
 
 -- An alert with the window channel: taken while the strip can show it.
@@ -305,7 +380,7 @@ local function onMute(value)
 	update()
 end
 
-local function redrawView()
+function redrawView()
 	local view = ns.ThreatList and ns.ThreatList.view
 	if view then view:Redraw() end
 	update()
@@ -316,13 +391,22 @@ if ns.Bus then
 	Bus.On("ALERT_RAISED", onAlert)
 	Bus.On("COACH_TIP", update)
 	Bus.On("MUTE_CHANGED", onMute)
-	Bus.On("COMBAT_STARTED", update)
+	Bus.On("COMBAT_STARTED", function()
+		if notice.on then
+			dropNotice()
+			redrawView()
+		else
+			update()
+		end
+	end)
+	Bus.On("SESSION_ENDED", onSessionEnded)
 	Bus.On("COMBAT_ENDED", update)
 	Bus.On("THEME_CHANGED", update)
 	-- the demo starts or ends: nothing of the other fight stays
 	Bus.On("DEMO_CHANGED", function(active)
 		if alert.on and alert.demo ~= (active == true) then dropAlert() end
-		update()
+		if active then dropNotice() end
+		redrawView()
 	end)
 	Bus.On("CONFIG_LOADED", function()
 		readSettings()
@@ -330,6 +414,10 @@ if ns.Bus then
 	end)
 	Bus.On("CONFIG_CHANGED", function(path)
 		if type(path) ~= "string" then return end
+		if path == NOTICE_PATH and not noticeOn() and notice.on then
+			dropNotice()
+			redrawView()
+		end
 		local alerts = path:sub(1, #ALERTS_PREFIX) == ALERTS_PREFIX
 		if not alerts and path:sub(1, #COACH_PREFIX) ~= COACH_PREFIX then return end
 		readSettings()

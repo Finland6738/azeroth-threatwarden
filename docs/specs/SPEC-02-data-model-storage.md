@@ -344,6 +344,7 @@ Session = {
 - `sum`: `{ mob, worst, cross, aggro, valid }` (indice del mob principale, stato peggiore del giocatore `S W D U` o
   `nil`, salite a WARNING e DANGER di tutte le unità, prese dell'aggro da parte di un non tank, percentuale di tick con
   dati leggibili): solo per l'elenco; il report lo ricalcola sempre dalle colonne.
+  `cross` e `aggro` sono `nil` se nulla era leggibile, `valid` è `nil` senza tick (M4.4).
 - Chiavi sconosciute di una sessione restano come sono (DAT-25).
 
 ### 4.2 Colonne compatte dei campioni

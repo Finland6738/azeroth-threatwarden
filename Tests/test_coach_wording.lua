@@ -1,5 +1,5 @@
--- The wording rules of SPEC-04 §2.4 (WR-01-WR-07, COA-04, COA-05) on every COACH_* and ALERT_* key, in enUS and itIT
--- (ADR 0009): no cause, no ability or class, no blame and no call to write to others, may / about for predictions and
+-- The wording rules of SPEC-04 §2.4 (WR-01-WR-07, COA-04, COA-05) on every COACH_*, ALERT_* and REPORT_* key (the
+-- report also shows no hypothesis, REC-11), in enUS and itIT (ADR 0009): no cause, no ability or class, no blame and no call to write to others, may / about for predictions and
 -- never "will", short messages, the arguments of each key as Data/CoachRules.lua formats them, and a category for every
 -- rule. The list of forbidden words lives here and grows when needed.
 
@@ -10,11 +10,11 @@ local LANGUAGES = { "enUS", "itIT" }
 local function strings(code) return AzerothThreatwarden.Locale.Strings(code) end
 local function rules() return Mock.ns.CoachRules end
 
--- Every COACH_* and ALERT_* key of a language, sorted.
+-- Every COACH_*, ALERT_* and REPORT_* key of a language, sorted.
 local function wordingKeys(code)
 	local out = {}
 	for key in pairs(strings(code)) do
-		if key:find("^COACH_") or key:find("^ALERT_") then out[#out + 1] = key end
+		if key:find("^COACH_") or key:find("^ALERT_") or key:find("^REPORT_") then out[#out + 1] = key end
 	end
 	table.sort(out)
 	return out
@@ -72,7 +72,7 @@ describe("the words of the Coach and of the alerts (SPEC-04 §2.4)", function()
 			for _, key in ipairs(wordingKeys(code)) do
 				local text = strings(code)[key]
 				for _, word in ipairs(CERTAIN) do falsy(has(text, word), code .. " " .. key .. ": " .. word) end
-				if text:find("%d s", 1, true) then contains(text, about, code .. " " .. key) end
+				if text:find("%%d s%f[%A]") then contains(text, about, code .. " " .. key) end
 			end
 			for key in pairs(rules().PREDICTED) do
 				local text, found = strings(code)[key], false
@@ -143,6 +143,21 @@ describe("the words of the Coach and of the alerts (SPEC-04 §2.4)", function()
 				"CONF_MEDIUM" }) do
 				notNil(strings(code)[word], code .. " " .. word)
 			end
+		end
+	end)
+
+	it("shows no hypothesis in the report (REC-11)", function()
+		local HYPOTHESIS = { "probably", "likely", "maybe", "perhaps", "possibly", "seems", "forse", "probabilmente",
+			"possibilmente", "sembra", "may", "might", "potrebbe", "potresti" }
+		for _, code in ipairs(LANGUAGES) do
+			local count = 0
+			for key, text in pairs(strings(code)) do
+				if key:find("^REPORT_") then
+					count = count + 1
+					for _, word in ipairs(HYPOTHESIS) do falsy(has(text, word), code .. " " .. key .. ": " .. word) end
+				end
+			end
+			truthy(count > 80, code .. " REPORT_ keys: " .. count)
 		end
 	end)
 

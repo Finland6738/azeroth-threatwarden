@@ -12,7 +12,8 @@ local SAME = {
 		PAGE_ABOUT = true, THEME_NEBULA = true, THEME_AURORA = true, THEME_WARDEN = true, LANGUAGE_ENUS = true,
 		LANGUAGE_ITIT = true, SET_PERCENT = true, MON_CLASS_BOSS = true, MON_DASH = true, MON_TANK = true,
 		MON_TIME = true, ROLE_TANK = true, TIP_TAGGED = true, TIP_THREAT = true, MODULE_DEMO = true, SET_MONITOR = true, SET_HERTZ = true,
-		SET_SECONDS = true, SET_COACH = true },
+		SET_SECONDS = true, SET_COACH = true, REPORT_TANK_CHANGE = true, REPORT_WITH_POINTS = true,
+		REPORT_ALERT_KIND = true, REPORT_ALERT_AGGRO = true },
 }
 
 -- The checks, as functions that return a list of problems: the group at the end proves they find them. -----------

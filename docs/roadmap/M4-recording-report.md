@@ -120,9 +120,16 @@ notice, `/atw reports`) in `Core/Features.lua` stay **off** until M4.R; every st
   the recorder at close); the `REPORT_*` locale keys in both languages (wording rules of SPEC-04 §2.4, no hypothesis);
   the end-of-fight notice of §3.5 in `UI/CoachStrip.lua` with `settings.recording.notice`.
 - Done when:
-  - [ ] Every metric of a known session gives the known answer in the three outcomes and in a mixed session; under 3
+  - [x] Every metric of a known session gives the known answer in the three outcomes and in a mixed session; under 3
     useful rows it says *Insufficient data*; with unknown time it shows a lower bound; the build in slices equals the
     one-pass build; no `REPORT_*` text names a cause or an ability.
+- *Done (2026-11-26, before M0.7): `Data/Report.lua` behind `reports` (the eleven metrics of §3.2 over the periods of
+  §3.3, cells with category, status, reason, lower bound and basis; *Not available*, *Insufficient data* under 3 useful
+  readings or 1 s of known state; interrupted and truncated sessions; `Report.Build` in slices of 5 000 with an in-memory
+  cache; `Report.Summary` for `sum`; the words, `Report.CellText` and `Headlines`); the `REPORT_*` keys in both
+  languages; the end-of-fight notice with *Open report* in `UI/CoachStrip.lua`. A lower bound is written *at least*
+  because the bundled fonts have no `≥`; SPEC-05 §6 lists the other precisions. Tests: `test_report.lua` (28 cases),
+  the wording test extended to `REPORT_*` with a no-hypothesis check, the notice in `test_coach_strip.lua`.*
 - Tests: `test_report.lua`, `test_coach_wording.lua` extended to `REPORT_*`, the notice in `test_coach_strip.lua`.
 - Real client: whether the report helps after a real wipe (the exit criterion); how long a report of a long raid fight
   takes to build (P10).

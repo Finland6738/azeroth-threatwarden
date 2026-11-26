@@ -23,6 +23,13 @@ All notable changes to this project are documented here. The format follows
   change, the oldest go first, never the session being recorded. Sessions can be deleted one by one or all at once
   (refused for the session being recorded and on read-only data); nothing is written while the saved data is
   read-only. `/atw debug` counts kept, dropped, pruned, damaged and deleted sessions, never a name.
+- M4.4: the combat report, behind the `reports` switch (off until `v0.4.0`, so nothing changes in the game yet). From
+  the recorded data only it gives duration, main enemy, tanks observed and tank changes, aggro losses, rises to and
+  time in Warning and Danger, the highest percentage recorded, data quality, deaths and alerts, each with its data
+  category; it says *Not available* or *Insufficient data* with the reason, writes lower bounds (*at least …*) where part
+  of the fight was unknown, marks interrupted and truncated recordings, and never states a cause. Long reports are built
+  over several frames. With *Notice after a fight* on (off by default), the Coach strip shows *Fight recorded · …* for
+  8 s with *Open report*.
 
 ### Documentation
 

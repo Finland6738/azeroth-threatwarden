@@ -380,7 +380,7 @@ dati attorno (±5 s); indicazione dei dati mancanti; eliminazione delle registra
 | `Data/Recorder.lua` | condizioni (§1.1), ciclo di vita (§1.2), tick (§1.3), eventi (§1.4), reload e logout (§1.6), consumatore `recorder` dello Scanner | ascolta `COMBAT_STARTED`, `COMBAT_ENDED`, `TARGET_CHANGED`, `STATE_CHANGED`, `AGGRO_CHANGED`, `THREAT_MODE_CHANGED`, `ALERT_RAISED`, `COACH_TIP`, `DEMO_CHANGED`, `CONFIG_LOADED`, `CONFIG_CHANGED`, `ENTERING_WORLD`; dal gioco `PLAYER_LOGOUT`, `UNIT_DIED`, `PLAYER_DEAD`, `ENCOUNTER_START`, `ENCOUNTER_END`; emette `SESSION_STARTED(id)`, `SESSION_ENDED(id, state)` | M4.2 |
 | `Data/Storage.lua` | caricamento e controlli (§2.2), sessioni messe da parte, potatura e stima (§2.4), eliminazione (§2.5), sola lettura (§2.6), interfaccia (§2.7) | ascolta `CONFIG_LOADED`, `CONFIG_CHANGED`, `ENTERING_WORLD`, `COMBAT_ENDED`; emette `SESSIONS_CHANGED()` | M4.3 |
 | `Data/Report.lua` | metriche (§3.2–§3.3), costruzione a fette e riepilogo (§3.4) | ascolta `SESSIONS_CHANGED` | M4.4 |
-| `UI/CoachStrip.lua` (cambio) | l'avviso di fine scontro (§3.5) | ascolta `SESSION_ENDED` | M4.4 |
+| `UI/CoachStrip.lua` (cambio) | l'avviso di fine scontro (§3.5) | ascolta `SESSION_ENDED`; emette `REPORT_REQUESTED(id)` | M4.4 |
 | `UI/Reports.lua`, `UI/Settings.lua` (card), `Core/Commands.lua` | la scheda, la card *Recording*, `/atw reports` | ascolta `SESSIONS_CHANGED`, `SESSION_STARTED`, `SESSION_ENDED` | M4.5 |
 | `Core/Init.lua` (cambio) | `ENTERING_WORLD(isInitialLogin, isReloadingUi)` con gli argomenti dell'evento del gioco | — | M4.2 |
 | `Data/ThreatModel.lua` (cambio) | `ThreatModel.IsStale(record, now)`: la regola di DAT-12 in una funzione | — | M4.2 |
@@ -429,6 +429,30 @@ dati attorno (±5 s); indicazione dei dati mancanti; eliminazione delle registra
   alla chiusura e a `COMBAT_ENDED`.
 - `/atw debug`, sezione *Recording*: le righe *sessions kept* (numero, stima, limiti, sola lettura) e *storage this
   load* (completate, rinominate, scartate, potate, danneggiate, messe da parte, nascoste, eliminate).
+
+**Realizzato in M4.4** (`Data/Report.lua`, l'avviso in `UI/CoachStrip.lua`), con queste precisazioni:
+
+- Ogni valore è una *cella* `{ key, category, status (ok, na, insufficient, unknown), value, reason, lower,
+  unknownTime, basis, truncated }`; il report ha le celle della sessione (`rows`) e una voce per unità (`cells`).
+  `Report.CellText`, `ReasonText`, `BasisText` e `Headlines` danno le parole (chiavi `REPORT_*`) alla scheda di M4.5.
+- **Righe utili** di un'unità (la soglia `MIN_ROWS`): le righe con un numero più, per lo stato soltanto, il maggiore fra
+  `q.s` e le righe `a`–`d` (in *state only* una riga si scrive solo quando il codice cambia, quindi le sole righe non
+  basterebbero). `Report.MIN_KNOWN` = 1 s di stato noto vale per superamenti e tempi; la percentuale massima chiede 3
+  righe con un numero. Senza nulla di leggibile le celle della threat di un'unità dicono *Not available* e resta la
+  qualità dei dati.
+- Il limite inferiore di un'unità si segna se ha tempo sconosciuto o almeno una riga senza valore. Si scrive
+  **«at least» / «almeno»** invece di `≥`: i caratteri inclusi nell'addon non hanno quel segno.
+- **Chi tiene il mob** si conta dal suo `A` fino all'`A` seguente, alla fine del periodo di combattimento **o del periodo
+  di mob** (di un mob non più monitorato non si sa chi lo tenga: precisazione di §3.3).
+- Perdite dell'aggro: ogni `A` con `a = 0`, anche il primo detentore (senza *da chi*); i punti si scrivono solo se
+  positivi. Due eventi `D` della stessa unità o dello stesso mob a meno di 3 s sono una morte.
+- `Report.Build` risponde `done(nil, motivo)` con `off`, `unknown` (anche se la sessione si elimina durante la
+  costruzione), `recording` (la sessione aperta), `damaged` o `error`; la prima fetta gira subito.
+- `Report.Summary` restituisce `nil` con l'interruttore `reports` spento (`sum` si calcola al primo caricamento con
+  l'interruttore acceso); senza nulla di leggibile `cross` e `aggro` sono `nil`, e `valid` è `nil` senza tick.
+- L'avviso di fine scontro tiene presente la striscia anche con Coach e avvisi spenti, non compare in combattimento né
+  in demo, sparisce a un nuovo combattimento; il clic (o *Open report*) apre la scheda Reports ed emette
+  `REPORT_REQUESTED(id)` per M4.5.
 
 - **Interruttori** (`Core/Features.lua`, ADR 0014): `recording` (recorder, Storage, card *Recording*) e `reports`
   (report, scheda, avviso, `/atw reports`) restano **spenti** fino a M4.R. Spento vuol dire: nessun ascoltatore e nessun

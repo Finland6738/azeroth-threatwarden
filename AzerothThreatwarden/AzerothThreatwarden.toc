@@ -43,6 +43,7 @@ Data\Coach.lua
 Data\Session.lua
 Data\Storage.lua
 Data\Recorder.lua
+Data\Report.lua
 UI\Assets.lua
 UI\Theme.lua
 UI\Motion.lua

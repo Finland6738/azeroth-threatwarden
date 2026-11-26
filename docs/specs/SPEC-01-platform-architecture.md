@@ -151,6 +151,7 @@ Accord.
 | `TARGET_CHANGED`, `THREAT_SCANNED`, `THREAT_UPDATED`, `STATE_CHANGED`, `THREAT_MODE_CHANGED` | vedi §3.2 | `Data/` | UI, Alerts, Recorder | M2 |
 | `AGGRO_CHANGED` | `mobKey`, `unitKey`, `oldUnitKey` (chi tiene il mob, prima e dopo; mai il motivo) | `Data/ThreatState.lua` | Alerts, Coach | M3.2 |
 | `ALERT_RAISED`, `COACH_TIP`, `MUTE_CHANGED` | vedi §3.2 e [SPEC-04 §5](SPEC-04-alerts-coach.md#5-moduli-eventi-e-diagnostica) | `Data/` | Window, striscia del Coach, Recorder (M4) | M3 |
+| `REPORT_REQUESTED` | `id` | striscia del Coach (clic sull'avviso di fine scontro) | Reports (M4.5) | M4.4 |
 | `SESSION_STARTED`, `SESSION_ENDED`, `SESSIONS_CHANGED` | `id`; `id`, `state` (`complete`, `interrupted`, `dropped`); nessuno ([SPEC-05 §6](SPEC-05-recording-report-replay.md#6-moduli-eventi-interruttori-e-diagnostica-m4)) | `Data/Recorder.lua`, `Data/Storage.lua` | Reports, striscia del Coach (avviso di fine scontro), Report | M4 |
 
 `/atw debug` mostra per ogni evento il numero di ascoltatori e gli ultimi errori degli ascoltatori.
