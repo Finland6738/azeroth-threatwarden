@@ -369,6 +369,14 @@ local function buildEffect(f)
 	f.flash = flash
 end
 
+-- The size of the Reports tab inside the window. Declared before build(), whose OnSizeChanged calls it.
+local function layoutReports(f)
+	local view = f.pages.reports.view
+	if not view then return end
+	view:Layout(f:GetWidth() - 2 * Window.PAGE_MARGIN,
+		f:GetHeight() - Widgets.TITLE_HEIGHT - Widgets.TAB_HEIGHT - 10 - Window.PAGE_MARGIN)
+end
+
 local function build()
 	local f = CreateFrame("Frame", Window.NAME, Compat.UIParent())
 	f:Hide()
@@ -495,14 +503,6 @@ local function paintPage(f)
 	end
 	page.view.width = f:GetWidth() - 2 * Window.PAGE_MARGIN
 	page.view:ShowPage(Window.page or get("char.ui.lastPage") or "settings")
-end
-
--- The size of the Reports tab inside the window.
-local function layoutReports(f)
-	local view = f.pages.reports.view
-	if not view then return end
-	view:Layout(f:GetWidth() - 2 * Window.PAGE_MARGIN,
-		f:GetHeight() - Widgets.TITLE_HEIGHT - Widgets.TAB_HEIGHT - 10 - Window.PAGE_MARGIN)
 end
 
 -- The Reports tab (UI/Reports.lua), built the first time it is shown, only while the `reports` switch is on (the tab

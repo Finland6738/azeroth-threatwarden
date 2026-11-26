@@ -247,6 +247,30 @@ describe("moving and resizing", function()
 		deepEq(ui().pos, { point = "TOPLEFT", relativePoint = "BOTTOMLEFT", x = 100, y = 400 })
 	end)
 
+	-- The client runs OnSizeChanged whenever the size changes; the mock's SetSize does not, so the test runs it.
+	it("lays the open tab out again when the wide window changes size", function()
+		boot(function(M) M.features = { monitor = true, reports = true } end)
+		local f = F()
+		local function resize(w, h)
+			f:SetSize(w, h)
+			Mock.RunScript(f, "OnSizeChanged", w, h)
+		end
+		truthy(W():SelectTab("settings"))
+		resize(600, 540)                 -- before the Reports tab is ever built
+		eq(#Mock.errors, 0)
+		truthy(W():SelectTab("reports"))
+		local view = f.pages.reports.view
+		resize(800, 700)
+		eq(#Mock.errors, 0)
+		eq(view.width, 800 - 2 * W().PAGE_MARGIN)
+		eq(view.height_, 700 - Mock.ns.Widgets.TITLE_HEIGHT - Mock.ns.Widgets.TAB_HEIGHT - 10 - W().PAGE_MARGIN)
+		resize(500, 440)
+		eq(view.width, 500 - 2 * W().PAGE_MARGIN)
+		truthy(W():SelectTab("monitor"))
+		resize(320, 240)
+		eq(#Mock.errors, 0)
+	end)
+
 	it("follows the lock and the position set elsewhere (Settings)", function()
 		F()
 		Config():Set("char.ui.locked", true)

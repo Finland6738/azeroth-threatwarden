@@ -435,6 +435,7 @@ pagina ricordata. Le card si restringono con la finestra (al massimo 520 pt) e l
 |---|---|
 | Apertura al login | secondo `char.ui.shown` (vero la prima volta); da M2.6 con `settings.monitor.show` ([Q13](SPEC-09-risks-open-questions.md), §5.1) |
 | Spostamento | trascinando la barra del titolo; la finestra resta nello schermo (`SetClampedToScreen`) e torna dentro a `DISPLAY_SIZE_CHANGED` e `UI_SCALE_CHANGED` |
+| Ridimensionamento | dalla maniglia nell'angolo, entro i limiti della disposizione; la scheda aperta (Monitor, Reports, Settings) si ridispone mentre la misura cambia; la dimensione si salva al rilascio |
 | Posizione | per personaggio (`char.ui.pos`), salvata al rilascio e quando il cambio di disposizione ancora l'angolo in alto a sinistra; `nil` = al centro. Il client non la salva per conto suo (`SetDontSavePosition`) |
 | Schermo più piccolo | la finestra torna dentro senza riscrivere la posizione salvata, che torna valida con lo schermo di prima |
 | Scala | `char.ui.scale` 50–200 % dalla card Finestra; si somma alla scala dell'interfaccia del gioco; al cambio gli scostamenti salvati sono convertiti, così la finestra resta dov'è |

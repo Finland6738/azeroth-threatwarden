@@ -5,6 +5,12 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Fixed
+
+- The main window no longer raises a Lua error when its wide layout (**Reports** or **Settings**) changes size, and the
+  Reports tab follows the new size while the window is resized: the size handler called a function declared after it.
+  Present since `v0.4.0`; found by reading the code and reproduced with the mock client, not in the real client.
+
 ### Added
 
 - M5.5: the **window of the Threat Replay** (`UI/ReplayWindow.lua`), behind the `replay` and `timeline` switches, which
