@@ -79,13 +79,15 @@ def to_webp(png, webp):
     Image.open(png).convert("RGB").save(webp, "WEBP", quality=80, method=6)
 
 
-GROUPS = [("The threat monitor", "monitor-"), ("Alerts and Coach", ("coach-", "alert-")), ("Reports", ("reports-", "report-")), ("The window", "window-"), ("Settings", "settings-"), ("Info and credits", "about-")]
+GROUPS = [("The threat monitor", "monitor-"), ("Alerts and Coach", ("coach-", "alert-")),
+          ("Reports", ("reports-", "report-values-", "report-state-", "report-unknown-")),
+          ("Timeline and replay", ("replay-", "report-timeline-")), ("The window", "window-"), ("Settings", "settings-"), ("Info and credits", "about-")]
 
 
 def index_text(scenes):
     lines = ["# Interface previews", "",
-             "The threat monitor, the alerts and the Coach, the reports, the window, the Settings page and the Info page of Azeroth Threatwarden, in both "
-             "languages of the interface (the monitor's players and mob are invented).", "",
+             "The threat monitor, the alerts and the Coach, the reports, the timeline and the replay, the window, the Settings page "
+             "and the Info page of Azeroth Threatwarden, in both languages of the interface (players and mobs are invented).", "",
              "> **Design previews, not screenshots.** Drawn from the addon's layout, colours (`UI/Theme.lua`) and texts "
              "(`Locales/`), with original art only (CSS shapes, the addon's logo, the NEBULA logos and the fonts the "
              "addon ships). Nothing has been run in WoW Forever yet, so the real window may differ in small details "

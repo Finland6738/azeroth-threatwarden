@@ -21,8 +21,10 @@ compaiono solo nella tua finestra di chat, nella lingua dell'addon; nulla viene 
 | `/atw demo stop` | chiude la modalità demo (anche `/atw demo off`) |
 | `/atw mute` | silenzia gli [avvisi](Alerts-and-Coach-it#silenziare) fino alla fine di questo combattimento, o del prossimo; scritto di nuovo li riaccende |
 | `/atw reports` | apre la [scheda Report](Combat-Reports-it) |
+| `/atw replay` | apre il [Replay della threat](Threat-Replay-it) dell'ultimo scontro finito (dalla `v0.5.0`) |
+| `/atw replay 2` | il replay del secondo scontro dell'elenco (1 è il più recente) |
 
-Prima della sua versione, `/atw reports` risponde con la versione che lo porterà.
+Prima della loro versione, `/atw reports` e `/atw replay` rispondono con la versione che li porterà.
 
 ## Assegnazione di un tasto
 

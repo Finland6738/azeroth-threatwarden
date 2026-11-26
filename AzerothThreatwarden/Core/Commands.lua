@@ -12,7 +12,7 @@ local Commands = {}
 ns.Commands, ns.modules.Commands = Commands, Commands
 
 local L = ns.L
-local ipairs, type = ipairs, type
+local ipairs, type, tonumber = ipairs, type, tonumber
 
 Commands.SLASH = { "threatwarden", "atw" }
 
@@ -37,6 +37,27 @@ local function mute()
 	if key then say(L[key]) end
 end
 
+-- /atw replay [n] (SPEC-05 §5.5): the latest closed recording, or the n-th of the list of the Reports tab (1 = the
+-- newest, the one being recorded included).
+local function replay(rest)
+	local list = ns.Storage.List()
+	local chosen
+	if rest == "" or rest == nil then
+		for _, h in ipairs(list) do
+			if not h.open then chosen = h break end
+		end
+		if not chosen then return say(L[#list > 0 and "CMD_REPLAY_RECORDING" or "CMD_REPLAY_NONE"]) end
+	else
+		local n = rest:match("^%d+$") and tonumber(rest)
+		chosen = n and list[n]
+		if not chosen then
+			if #list == 0 then return say(L["CMD_REPLAY_NONE"]) end
+			return say(L["CMD_REPLAY_UNKNOWN"]:format((rest:gsub("|", "||")), #list))
+		end
+	end
+	ns.Bus.Emit("REPLAY_REQUESTED", chosen.id, nil)
+end
+
 -- In the order of `help`. `help`: the key of its line. `feature` and `version`: a part of a later milestone.
 Commands.LIST = {
 	{ name = "show", help = "HELP_SHOW", run = function() ns.Window:Open() end },
@@ -53,10 +74,14 @@ Commands.LIST = {
 	{ name = "mute", help = "HELP_MUTE", feature = "alerts", version = "v0.3.0", run = mute },
 	{ name = "reports", help = "HELP_REPORTS", feature = "reports", version = "v0.4.0",
 		run = function() ns.Window:Open() ns.Window:SelectTab("reports") end },
+	{ name = "replay", help = "HELP_REPLAY", feature = "replay", also = "timeline", version = "v0.5.0", run = replay },
 }
 
+local function featureOn(name) return name == nil or (ns.Features ~= nil and ns.Features.On(name)) end
+
+-- `also`: a second switch the command needs.
 local function available(c)
-	return c.run ~= nil and (c.feature == nil or (ns.Features ~= nil and ns.Features.On(c.feature)))
+	return c.run ~= nil and featureOn(c.feature) and featureOn(c.also)
 end
 
 function Commands.Help()

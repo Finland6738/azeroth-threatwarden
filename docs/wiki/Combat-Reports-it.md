@@ -57,6 +57,16 @@ si legge che cosa vuol dire la categoria e perché un valore manca:
 
 Il report dice cosa è successo e quando; non dice mai perché.
 
+## Timeline e replay
+
+> **In arrivo con la `v0.5.0`**: non è ancora nella versione pubblicata, e non è verificato in gioco.
+
+Sotto la prima card di un report, la card **Timeline** mostra lo scontro intero: la threat di al più sei membri, chi
+teneva il nemico e gli eventi. Un clic apre il [[Replay della threat|Threat-Replay-it]] in quel momento; il pulsante
+**Replay** della prima card lo apre dall'inizio. Entrambi sono spenti per lo scontro in registrazione.
+
+![Il report con la card Timeline e il pulsante Replay](../specs/mockups/previews/report-timeline-nebula.webp)
+
 ## Eliminare
 
 **Elimina registrazione** chiede un secondo clic entro 8 secondi. L'eliminazione è definitiva e toglie i nomi dai dati

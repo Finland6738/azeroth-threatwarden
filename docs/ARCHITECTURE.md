@@ -158,7 +158,7 @@ copied from Azeroth Accord and renamed; each copied file says so in its header.
 | `ALERT_RAISED(alert)`, `MUTE_CHANGED(muted)` | Alerts | Window, Coach strip, Recorder later | M3.2 (switch `alerts`, on since `v0.3.0`) |
 | `COACH_TIP(tip)` | Coach, after each `THREAT_UPDATED` when the tip changes (`nil`: no tip) | Coach strip, Recorder later | M3.3 (switch `coach`, on since `v0.3.0`) |
 | `SESSION_STARTED(id)`, `SESSION_ENDED(id, state)`, `SESSIONS_CHANGED()` | Recorder, Storage | Reports, Report, Coach strip (end-of-fight notice); Timeline and Replay from M5 | M4 (switch `recording`, on since `v0.4.0`) |
-| `REPLAY_REQUESTED(id, t)` | the report's timeline card, the *Replay* button, `/atw replay` | the replay window | *planned*, M5 (switch `replay`) |
+| `REPLAY_REQUESTED(id, t)` | the report's timeline card, the *Replay* button, `/atw replay` | the replay window | M5.5 (switch `replay`, off until `v0.5.0`) |
 
 Event arguments never hold a secret value or a player name: threat events pass keys (`unitKey`, `mobKey`) into the
 model.

@@ -7,6 +7,19 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
+- M5.5: the **window of the Threat Replay** (`UI/ReplayWindow.lua`), behind the `replay` and `timeline` switches, which
+  stay off until `v0.5.0`: nothing of it is visible yet. A window of its own (`AzerothThreatwardenReplay`) with the
+  fight in its title (date, zone, enemy, length, *Interrupted*, and links to the linked recording), the chart with its
+  lanes, the controls and the speed, the event list with its filters and the detail at the cursor, with the missing data
+  of a selected event; under 760 points one panel with an *Events · Details* selector. It opens from the new **Replay**
+  button of a report, from the report's *Timeline* card and with `/atw replay` (or `/atw replay <n>`). Every state is
+  said (building, damaged, still recording, deleted, state only, nothing readable, interrupted, limit reached,
+  read-only). Keys (Space, arrows, Shift + arrows, Home, End, 1–4) only out of combat with the pointer over the window,
+  every other key left to the game; `Esc` closes it. Position, size and speed are kept per character (character data
+  **schema 2**, migrated from 1 with nothing lost). Six new icons, `Compat.ModifierDown`, five design previews and the
+  wiki page *Threat Replay*. Not tried in the real client.
+- Tests: `test_replay_window.lua`, character schema 2, `/atw replay`, and the long test of the replay opened and closed
+  210 times on the longest recordings.
 - M5.4: the **controller of the Threat Replay** (`Data/Replay.lua`), behind the `replay` and `timeline` switches, which
   stay off until `v0.5.0`: nothing of it is visible yet, and the window comes with the next step. It moves a cursor over
   a recorded fight and never reads the game or writes into the recording: play and pause at 1, 2, 4 and 8× (paused and

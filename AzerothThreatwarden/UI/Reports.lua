@@ -96,10 +96,13 @@ local function dateText(started)
 	return Compat.DateText(pattern, started) or L.REPORTS_DATE_UNKNOWN
 end
 
+Reports.DateText = dateText     -- also the title of the replay window
+
 local function zoneText(zone)
 	if type(zone) == "string" and zone ~= "" then return zone end
 	return L.REPORTS_ZONE_UNKNOWN
 end
+Reports.ZoneText = zoneText
 
 local function categoryName(category) return L[(CATEGORY[category] or CATEGORY.unknown).key] end
 
@@ -202,6 +205,8 @@ local function pill(parent)
 	return f
 end
 
+Reports.Pill, Reports.CATEGORY = pill, CATEGORY     -- the category markers of the replay window
+
 local function scrollPane(parent)
 	local scroll = CreateFrame("ScrollFrame", nil, parent)
 	local child = CreateFrame("Frame", nil, scroll)
@@ -222,6 +227,8 @@ local function scrollPane(parent)
 	end
 	return scroll
 end
+
+Reports.ScrollPane = scrollPane
 
 ---------------------------------------------------------------------------------------------------------------------
 -- The list
@@ -404,6 +411,16 @@ local function headCard(view)
 	card.close = Widgets.Button(buttons, { text = L.REPORTS_CLOSE, style = "ghost",
 		onClick = function() view:Select(nil) end })
 	card.close:SetPoint("LEFT", card.delete, "RIGHT", 8, 0)
+	-- the replay (SPEC-05 §5.5): off with its reason for a recording that is open or damaged
+	if replayOn() and timelineOn() then
+		card.replay = Widgets.Button(buttons, { text = L.REPORTS_REPLAY, style = "primary", onClick = function()
+			if view.selected and ns.Bus then ns.Bus.Emit("REPLAY_REQUESTED", view.selected, nil) end
+		end })
+		card.replay:SetPoint("LEFT", card.delete, "RIGHT", 8, 0)
+		card.close:SetPoint("LEFT", card.replay, "RIGHT", 8, 0)
+		if card.replay.SetMotionScriptsWhileDisabled then card.replay:SetMotionScriptsWhileDisabled(true) end
+		Widgets.Tooltip.Attach(card.replay, function(self) return self.tip end, "TOP")
+	end
 	card:Add(buttons, 10, { stretch = true })
 	card.status = ns.Settings.CardText(card, "Small", "warn", "", 8)
 	card.status:Hide()
@@ -460,6 +477,12 @@ local function paintReport(view)
 	head.message:SetText(message or "")
 	head.message:SetShown(message ~= nil)
 	head.delete:SetEnabled(h ~= nil and not h.open and not readOnly())
+	if head.replay then
+		local why = (h and h.open and "REPORTS_REPLAY_RECORDING")
+			or (view.problem == "damaged" and "REPORTS_REPLAY_DAMAGED") or (not h and "REPORTS_GONE") or nil
+		head.replay:SetEnabled(why == nil)
+		head.replay.tip = L[why or "REPORTS_REPLAY_TIP"]
+	end
 
 	local cards = view.report.cards
 	for i = #cards, 1, -1 do cards[i] = nil end

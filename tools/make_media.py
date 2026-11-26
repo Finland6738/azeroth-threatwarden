@@ -98,7 +98,9 @@ ICON_NAMES = ["chevron", "check", "cross", "dashed", "skull", "shield", "heal", 
               # Threatwarden (M2.5, SPEC-03 §2.6): the assigned role of a row (the `tank` icon is who holds the mob)
               "role-tank", "role-healer", "role-dps",
               # Threatwarden (M3.4, SPEC-04 §3.1): the Coach's tip and the muted alerts
-              "coach", "mute"]
+              "coach", "mute",
+              # Threatwarden (M5.5, SPEC-05 §5.5): the controls of the replay
+              "play", "pause", "step-back", "step-forward", "skip-back", "skip-forward"]
 
 
 def draw_icon(name):
@@ -309,6 +311,22 @@ def draw_icon(name):
         d.ellipse([pt(6.4, 12), pt(9.6, 14.8)], fill=255)
         d.line([pt(2.4, 1.6), pt(14, 14)], fill=0, width=int(3.4 * u))
         d.line([pt(1.6, 2.4), pt(13.2, 14.8)], fill=255, width=w)
+    elif name == "play":           # a filled triangle
+        d.polygon([pt(4, 2.4), pt(13.8, 8), pt(4, 13.6)], fill=255)
+    elif name == "pause":          # two bars
+        d.rectangle([pt(3.8, 2.8), pt(6.6, 13.2)], fill=255)
+        d.rectangle([pt(9.4, 2.8), pt(12.2, 13.2)], fill=255)
+    elif name in ("step-back", "step-forward"):     # an open arrowhead: one recorded moment
+        points = [(10.6, 3), (5, 8), (10.6, 13)]
+        if name == "step-forward":
+            points = [(16 - x, y) for x, y in points]
+        d.line([pt(*p) for p in points], fill=255, width=int(2.4 * u), joint="curve")
+    elif name in ("skip-back", "skip-forward"):     # a bar and a filled triangle: the start or the end
+        bar, tri = (2.8, 5.2), [(13.4, 2.8), (6.2, 8), (13.4, 13.2)]
+        if name == "skip-forward":
+            bar, tri = (10.8, 13.2), [(16 - x, y) for x, y in tri]
+        d.rectangle([pt(bar[0], 2.8), pt(bar[1], 13.2)], fill=255)
+        d.polygon([pt(*p) for p in tri], fill=255)
     elif name == "role-dps":       # a sword, point up to the right
         d.line([pt(4.2, 11.8), pt(13.4, 2.6)], fill=255, width=int(2.2 * u))
         d.line([pt(3, 7.8), pt(8.2, 13)], fill=255, width=w)

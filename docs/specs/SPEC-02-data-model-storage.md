@@ -2,7 +2,8 @@
 
 > Fonte: [specifiche originali](source-specification.md) §5.4, §7.3–§7.5. Impostazioni e schema 1 completati in
 > **M1.1** (§3); modello della threat (§1–§2) e schema 2 (§3.5) in **M2.1**; schema 3 (§3.6) in **M3.1**; schema 4 e sessioni
-> registrate (§3.7, §4) in **M4.1**; schema 2 del personaggio (§3.9) in **M5.1**.
+> registrate (§3.7, §4) in **M4.1**; schema 2 del personaggio (§3.9) in **M5.1**, realizzato in
+> **M5.5**.
 
 ## 1. `ThreatRecord` (in memoria)
 
@@ -320,6 +321,10 @@ dati dello schema 1 con e senza una chiave `ui.replay` già presente. Una versio
 trova lo schema 2 del personaggio lavora in sola lettura su quei dati (§3.4, punto 4): la finestra principale si apre ma
 non salva posizione e dimensione. M5.5 la realizza insieme alla finestra, dietro l'interruttore `replay`; lo schema si
 scrive anche con l'interruttore spento, come i predefiniti di M4 prima di M4.R.
+
+**Realizzato in M5.5** (`Core/Config.lua`): i limiti della dimensione sono `Config.SIZES.replay` (un valore fuori limite
+si riporta dentro, come per la finestra principale); `ui.replay.speed` è un numero controllato sull'elenco
+`Replay.SPEEDS`; una `ui.replay` che non è una tabella va in `corrupt` e torna al predefinito.
 
 ## 4. Sessioni registrate (schema 4, M4)
 

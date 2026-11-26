@@ -43,6 +43,33 @@ function Widget:SetDrawLayer(layer, sub) self._layer, self._sublevel = layer, su
 Mock.cursor = { x = 0, y = 0 }
 function GetCursorPosition() return Mock.cursor.x, Mock.cursor.y end
 
+-- The modifier keys (dump: Input.IsShiftKeyDown, IsControlKeyDown, IsAltKeyDown); a test writes Mock.modifiers.
+Mock.modifiers = {}
+function IsShiftKeyDown() return Mock.modifiers.shift == true end
+function IsControlKeyDown() return Mock.modifiers.ctrl == true end
+function IsAltKeyDown() return Mock.modifiers.alt == true end
+
+-- The keyboard of a frame (dump: SimpleFrameAPI EnableKeyboard, SetPropagateKeyboardInput; ScriptRegion IsMouseOver).
+-- A frame starts without keys and without propagation, as in the client; a test puts the pointer over it by setting
+-- Mock.mouseOver. SetPropagateKeyboardInput in combat lockdown is refused by the client: counted in Mock.blocked.
+-- Mock.PressKey(frame, key) is a key pressed: true when it reaches the game (the frame did not take it).
+Mock.mouseOver, Mock.blocked = nil, 0
+function Widget:EnableKeyboard(v) self._keyboard = v and true or false end
+function Widget:IsKeyboardEnabled() return self._keyboard == true end
+function Widget:SetPropagateKeyboardInput(v)
+	if InCombatLockdown() then
+		Mock.blocked = Mock.blocked + 1
+		error("SetPropagateKeyboardInput: blocked in combat", 2)
+	end
+	self._propagate = v and true or false
+end
+function Widget:IsMouseOver() return Mock.mouseOver == self end
+function Mock.PressKey(frame, key)
+	if not (frame._keyboard and frame:IsVisible()) then return true end
+	Mock.RunScript(frame, "OnKeyDown", key)
+	return frame._propagate == true
+end
+
 -- A scroll frame keeps the offset the addon gave it.
 function Widget:SetVerticalScroll(v) self._vscroll = v end
 function Widget:GetVerticalScroll() return self._vscroll or 0 end

@@ -131,7 +131,7 @@ La timeline e la finestra del replay seguono la disposizione **ampia** (Accord �
 | Cursore, selezione | 1 px `accent`; `accent` al 15 % |
 | Testi | legenda `Small` `text-1`, numeri e tempi `MonoSmall`, etichette degli assi `text-3` |
 | Marcatori | icone da 10 px del foglio (`flag`, `tank`, `warn`, `skull`, `bell`, `mute`, `coach`, `star`, `cross`, le quattro di stato); il raggruppamento con il numero in `Badge` |
-| Comandi del replay | pulsanti quadrati da 28 pt con le icone nuove `play`, `pause`, `step-back`, `step-forward`, `skip-back`, `skip-forward` (M5.5); la velocità con `Widgets.Segmented` |
+| Comandi del replay | pulsanti quadrati da 28 pt con le icone `play`, `pause`, `step-back` e `step-forward` (punte aperte; due affiancate per l'evento precedente o seguente), `skip-back`, `skip-forward` (barra e triangolo) (M5.5); la velocità con `Widgets.Segmented`; senza posto per i testi, *Zoom to selection* e *Whole fight* sono le icone `search` e `refresh` |
 
 **Token delle serie.** `series-1`…`series-6` sono token **dei temi** (come `accent`, non come gli stati): ogni tema li
 definisce, più chiari in Nebula e Warden, più scuri in Aurora. Regole (le controlla `Tests/test_theme.lua`, M5.3):

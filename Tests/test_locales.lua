@@ -15,7 +15,8 @@ local SAME = {
 		SET_SECONDS = true, SET_COACH = true, REPORT_TANK_CHANGE = true, REPORT_WITH_POINTS = true,
 		REPORT_ALERT_KIND = true, REPORT_ALERT_AGGRO = true, REPORTS_KB = true, REPORTS_MB = true,
 		REPORTS_MB_WHOLE = true, REPORTS_TIP_LINE = true, TIMELINE_STATE = true, TIMELINE_WITH = true,
-		TIMELINE_PERCENT = true, TIMELINE_GROUP = true },
+		TIMELINE_PERCENT = true, TIMELINE_GROUP = true, REPLAY_SPEED_ITEM = true, REPLAY_TIME = true,
+		REPORTS_REPLAY = true },
 }
 
 -- The checks, as functions that return a list of problems: the group at the end proves they find them. -----------

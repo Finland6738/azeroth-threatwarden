@@ -430,6 +430,277 @@ def report_unknown(theme):
     return report_scene(theme, "unknown")
 
 
+# ---- the timeline card and the replay window (UI/Timeline.lua, UI/ReplayWindow.lua). Invented data. -----------------
+
+REPLAY_ICONS = {
+    "skip-back": '<path d="M5 5h3v14H5z" fill="currentColor" stroke="none"/><path d="M20 4 9 12l11 8z" fill="currentColor" stroke="none"/>',
+    "skip-forward": '<path d="M16 5h3v14h-3z" fill="currentColor" stroke="none"/><path d="M4 4l11 8-11 8z" fill="currentColor" stroke="none"/>',
+    "step-back": '<path d="M15 5 8 12l7 7" stroke-width="3.4"/>', "step-forward": '<path d="M9 5l7 7-7 7" stroke-width="3.4"/>',
+    "play": '<path d="M6 4l15 8-15 8z" fill="currentColor" stroke="none"/>',
+    "flag": '<path d="M5 22V3M5 4h13l-3 4 3 4H5"/>', "skull": '<path d="M12 3a8 8 0 0 0-5 14v3h10v-3a8 8 0 0 0-5-14z"/><path d="M9 11h.01M15 11h.01" stroke-width="3.5"/>',
+    "bell": '<path d="M6 9a6 6 0 0 1 12 0c0 6 2 7 2 8H4c0-1 2-2 2-8zM10 21h4"/>',
+    "warn": '<path d="M12 3 22 20H2z"/><path d="M12 10v4M12 17v.01"/>', "dot": '<circle cx="12" cy="12" r="5" fill="currentColor" stroke="none"/>',
+}
+SERIES = ("series-1", "series-3", "series-2")
+SPAN = 220.0   # seconds of the invented fight
+
+
+def ricon(name, size=10, token=None):
+    colour = f' style="color:var(--{token});display:grid"' if token else ' style="display:grid"'
+    return f'<span{colour}>{lib._svg(REPLAY_ICONS.get(name) or ICONS[name], size)}</span>'
+
+
+def clock(seconds, tenths=True):
+    m, s = int(seconds // 60), seconds % 60
+    return f"{m}:{s:04.1f}" if tenths else f"{m}:{int(s):02d}"
+
+
+def names():
+    return (T("UNIT_YOU"), "Bram", "Kor")
+
+
+def chart(kind, width, height, cursor=None, selection=None, legend=True, lanes=True, view=None):
+    """The widget of the timeline as an SVG: legend, chart or note, lanes, event track and time axis. `view` (a, b)
+    in seconds: zoomed on the window of an event."""
+    left, right = 30, width - 6
+    va, vb = view or (0.0, SPAN)
+    x = lambda t: left + (right - left) * (min(max(t, va), vb) - va) / (vb - va)
+    out, y = [], 0
+    who = names()
+    show_chart = kind == "values"
+    if legend and show_chart:
+        lx = left
+        for name, token, peak in zip(who, SERIES, ("94.0 %", "100.0 %", "88.5 %")):
+            out.append(f'<rect x="{lx}" y="7" width="12" height="2" fill="var(--{token})"/>'
+                       f'<text x="{lx + 17}" y="12" class="lg">{esc(name)}</text>'
+                       f'<text x="{lx + 17 + len(name) * 6.5 + 8}" y="12" class="mn">{peak}</text>')
+            lx += 17 + len(name) * 6.5 + 70
+        y = 20
+    lanes_h = (12 + 3 * 8) if lanes else 12
+    if kind == "unknown":
+        lanes_h = 0
+    chart_h = height - y - lanes_h - 2 - 16 - 14 if show_chart else 44
+    bottom = y + chart_h
+    py = lambda p: bottom - chart_h * min(p, 110) / 110
+    if show_chart:
+        for p, label in ((0, "0"), (50, "50"), (100, "100")):
+            out.append(f'<line x1="{left}" x2="{right}" y1="{py(p):.1f}" y2="{py(p):.1f}" stroke="var(--border-'
+                       f'{"strong" if p == 100 else "subtle"})"/><text x="{left - 5}" y="{py(p) + 4:.1f}" class="ax" '
+                       f'text-anchor="end">{label}</text>')
+        for p, token in ((WARNING, "state-warning"), (DANGER, "state-danger")):
+            out.append(f'<line x1="{left}" x2="{right}" y1="{py(p):.1f}" y2="{py(p):.1f}" stroke="var(--{token})" '
+                       f'opacity=".8"/>')
+            # labels only where they do not run into each other
+            if p == DANGER or py(WARNING) - py(DANGER) >= 12:
+                out.append(f'<text x="{right - 2}" y="{py(p) - 3:.1f}" class="ax" text-anchor="end">{p}</text>')
+        # a gap: hatched band with its reason, never crossed by a line (zoomed: a pause of the recording)
+        gap_a, gap_b = (132, 133.4) if view else (96, 118)
+        gx, gw = x(gap_a), x(gap_b) - x(gap_a)
+        out.append(f'<rect x="{gx:.1f}" y="{y}" width="{gw:.1f}" height="{chart_h}" fill="url(#hatch)"/>'
+                   f'<text x="{gx + gw / 2:.1f}" y="{y + 14}" class="gap" text-anchor="middle">'
+                   f'{esc(T("TIMELINE_GAP_TICK", T("REPORT_SECONDS", 1.4)) if view else T("TIMELINE_WHY_SECRET"))}</text>')
+
+        def line(points, token, width_=1.6, dash=False):
+            path = " ".join(f"{x(t):.1f},{py(p):.1f}" for t, p in points)
+            extra = ' stroke-dasharray="4 3"' if dash else ""
+            out.append(f'<polyline points="{path}" fill="none" stroke="var(--{token})" stroke-width="{width_}"{extra}/>')
+
+        if view:
+            line([(129, 100), (130.5, 100), (132, 100)], "series-3")
+            line([(133.4, 100), (136, 100), (139, 100)], "series-3")
+            line([(129, 76), (129.5, 78), (130, 81), (130.5, 82), (131, 85), (131.5, 87), (132, 88)], "series-1", 2)
+            line([(133.4, 92), (134, 94), (135, 86), (136, 79)], "series-1", 2)
+            line([(136, 79), (137.5, 70)], "series-1", 2, True)
+            line([(137.5, 70), (138, 66), (139, 61)], "series-1", 2)
+            line([(131.5, 58), (132, 59)], "series-2")
+            line([(133.4, 62), (135, 66), (137, 72), (139, 78)], "series-2")
+        else:
+            line([(0, 100), (30, 100), (60, 100), (92, 100)], "series-3")
+            line([(120, 100), (150, 100), (190, 100), (220, 100)], "series-3")
+            line([(2, 18), (10, 34), (18, 41), (26, 55), (34, 58), (42, 69), (50, 66), (58, 74), (66, 79), (74, 84),
+                  (82, 82), (92, 86)], "series-1", 2)
+            line([(120, 70), (128, 78), (136, 94), (146, 76), (156, 61)], "series-1", 2)
+            line([(156, 61), (166, 64)], "series-1", 2, True)
+            line([(166, 64), (176, 57), (188, 66), (198, 72), (208, 70), (220, 75)], "series-1", 2)
+            line([(2, 8), (14, 22), (28, 30), (40, 29), (54, 47), (68, 52), (80, 63), (92, 61)], "series-2")
+            line([(120, 44), (134, 55), (150, 88), (162, 70), (180, 73), (200, 60), (220, 66)], "series-2")
+        top = bottom + 2
+    else:
+        text = T("TIMELINE_OUTCOME_STATE") if kind == "state" else T("TIMELINE_OUTCOME_NONE", T("TIMELINE_WHY_SECRET"))
+        out.append(f'<foreignObject x="{left}" y="{y}" width="{right - left}" height="40"><div '
+                   f'xmlns="http://www.w3.org/1999/xhtml" class="onote">{esc(text)}</div></foreignObject>')
+        top = bottom + 2
+    # lanes: who holds the enemy, then the states
+    if lanes_h:
+        holder = [(0, 150, "series-3"), (150, 156, "series-2"), (156, 220, "series-3")]
+        for a, b, token in (h for h in holder if h[1] > va and h[0] < vb):
+            out.append(f'<rect x="{x(a):.1f}" y="{top}" width="{x(b) - x(a):.1f}" height="10" fill="var(--{token})"/>')
+        top += 12
+        rows = [[(0, 66, "safe"), (66, 96, "warning"), (96, 120, "unknown"), (120, 134, "safe"),
+                 (134, 142, "danger"), (142, 220, "safe")],
+                [(0, 220, "safe")],
+                [(0, 78, "safe"), (96, 120, "unknown"), (78, 96, "safe"), (120, 148, "safe"), (148, 160, "warning"),
+                 (160, 220, "safe")]]
+        for lane in rows if lanes else []:
+            for a, b, state in (p for p in lane if p[1] > va and p[0] < vb):
+                fill = "url(#hatch)" if state == "unknown" else f"var(--state-{state})"
+                out.append(f'<rect x="{x(a):.1f}" y="{top}" width="{x(b) - x(a):.1f}" height="6" fill="{fill}"/>')
+            top += 8
+    events = [(0, "flag", "text-2"), (66, "state-warning", "state-warning"), (72.4, "bell", "state-warning"),
+              (134, "state-danger", "state-danger"), (150, "warn", "state-danger"), (156, "tank", "text-2"),
+              (178, "skull", "text-1")]
+    if kind == "unknown":
+        events = [(0, "flag", "text-2"), (96, "warn", "text-2"), (178, "skull", "text-1")]
+    for t, name, token in (e for e in events if va <= e[0] <= vb):
+        out.append(f'<g transform="translate({x(t) - 5:.1f},{top + 3})" style="color:var(--{token})">'
+                   f'{lib._svg(REPLAY_ICONS.get(name) or ICONS[name], 10)}</g>')
+    axis = top + 16
+    for t in (range(int(va) + 1, int(vb) + 1, 2) if view else range(0, 221, 30)):
+        anchor = "start" if t == 0 else "middle"
+        out.append(f'<rect x="{x(t):.1f}" y="{axis}" width="1" height="3" fill="var(--border-strong)"/>'
+                   f'<text x="{x(t):.1f}" y="{axis + 13}" class="ax" text-anchor="{anchor}">{clock(t, False)}</text>')
+    if selection:
+        a, b = selection
+        out.append(f'<rect x="{x(a):.1f}" y="{y}" width="{x(b) - x(a):.1f}" height="{axis - y}" fill="var(--accent)" '
+                   f'opacity=".15"/>')
+    if cursor is not None:
+        out.append(f'<rect x="{x(cursor):.1f}" y="{y}" width="1.5" height="{axis - y}" fill="var(--accent)"/>')
+    total = axis + 15
+    hatch = ('<defs><pattern id="hatch" width="8" height="8" patternUnits="userSpaceOnUse"><rect width="8" height="8" '
+             'fill="var(--surface-2)"/><rect width="4" height="8" fill="var(--state-unknown)" opacity=".5"/></pattern></defs>')
+    return f'<svg class="tl" width="{width}" height="{total}" viewBox="0 0 {width} {total}">{hatch}{"".join(out)}</svg>'
+
+
+def report_timeline(theme):
+    head = report_head("Gorrak · " + T("MON_CLASS_BOSS"))
+    timeline = (f'<div class="card"><h2>{esc(T("TIMELINE_TITLE"))}</h2><div style="margin-top:8px">'
+                f'{chart("values", 478, 140, legend=False, lanes=False)}</div>'
+                f'<div class="note" style="margin-top:6px">{esc(T("TIMELINE_CARD_HINT"))}</div></div>')
+    buttons = (f'<div class="buttons">{button(T("REPORTS_DELETE"))}{button(T("REPORTS_REPLAY"), "primary")}'
+               f'{button(T("REPORTS_CLOSE"), "ghost")}</div>')
+    head = head.replace(f'<div class="buttons">{button(T("REPORTS_DELETE"))}{button(T("REPORTS_CLOSE"), "ghost")}</div>',
+                        buttons)
+    fight = card(T("REPORTS_SECTION_FIGHT"), metric("REPORT_METRIC_DURATION", "detected",
+                                                    "3:40 · " + T("REPORT_IN_COMBAT", "3:36")))
+    cards = [head, timeline, fight]
+    return report_page(theme, cards, LEFT, 0, "idle") + report_page(theme, cards, RIGHT, 150, "idle")
+
+
+def event_row(time, icon_name, token, text, kind="detected", state=""):
+    return (f'<div class="erow{" " + state if state else ""}"><em>{time}</em>{ricon(icon_name, 10, token)}'
+            f'<span>{esc(text)}</span>{cat(kind)}</div>')
+
+
+def event_rows(kind, focus=None):
+    who = names()
+    warning = T("TIMELINE_WITH", T("TIMELINE_STATE", who[0], T("TIMELINE_STATE_WARNING")),
+                T("TIMELINE_THRESHOLDS", WARNING, DANGER))
+    game = T("TIMELINE_WITH", T("TIMELINE_STATE", who[0], T("TIMELINE_STATE_WARNING")), T("TIMELINE_GAME_STATE"))
+    rows = [("0:00.0", "flag", "text-2", T("TIMELINE_COMBAT_STARTED"), "detected")]
+    if kind == "values":
+        rows += [("1:06.0", "state-warning", "state-warning", warning, "calculated"),
+                 ("1:12.4", "bell", "state-warning", T("TIMELINE_ALERT", T("REPORT_ALERT_WARNING")), "calculated"),
+                 ("2:14.0", "state-danger", "state-danger",
+                  T("TIMELINE_STATE", who[0], T("TIMELINE_STATE_DANGER")), "calculated"),
+                 ("2:30.0", "warn", "state-danger", T("TIMELINE_TOOK_FROM", "Kor", "Bram"), "detected"),
+                 ("2:36.0", "tank", "text-2", T("TIMELINE_HOLDS", "Bram"), "detected"),
+                 ("2:58.0", "skull", "text-1", T("TIMELINE_DIED", "Kor"), "detected")]
+    elif kind == "state":
+        rows += [("1:06.0", "state-warning", "state-warning", game, "detected"),
+                 ("2:30.0", "warn", "state-danger", T("TIMELINE_TOOK_FROM", "Kor", "Bram"), "detected"),
+                 ("2:58.0", "skull", "text-1", T("TIMELINE_DIED", "Kor"), "detected")]
+    else:
+        rows += [("1:36.0", "warn", "text-2", T("TIMELINE_MODE_NONE", T("TIMELINE_WHY_SECRET")), "unknown"),
+                 ("2:58.0", "skull", "text-1", T("TIMELINE_DIED", "Kor"), "detected")]
+    return "".join(event_row(*r, state=("focus" if focus == i else "")) for i, r in enumerate(rows[:6]))
+
+
+def dline(text, tone="", style=""):
+    return f'<div class="dline {tone}" style="{style}">{esc(text)}</div>'
+
+
+def unit_row(name, state, reading, token=None, tone=""):
+    dash = f'<i style="background:var(--{token})"></i>' if token else "<i></i>"
+    return (f'<div class="unit"><div class="top">{dash}<b>{esc(name)}</b>{badge(state)}</div>'
+            f'<div class="reading {tone}">{esc(reading)}</div></div>')
+
+
+def moment(kind, time):
+    who = names()
+    mob = "Gorrak"
+    mode = {"values": "REPLAY_MODE_VALUES", "state": "REPLAY_MODE_STATE"}.get(kind)
+    mode = T(mode) if mode else T("REPLAY_MODE_NONE", T("TIMELINE_WHY_SECRET"))
+    out = [f'<div class="dline head">{esc(T("REPLAY_AT", time))}</div>',
+           dline(" · ".join((mob, mode, T("REPLAY_COMBAT"))), "off" if kind == "unknown" else "")]
+    if kind != "unknown":
+        out.append(dline(T("REPLAY_HOLDS_TANK", "Bram")))
+    if kind == "values":
+        out += [unit_row(who[0], "warning", "84.2 %", "series-1"),
+                unit_row("Bram", "safe", "100.0 %", "series-3"),
+                unit_row("Kor", "safe", T("REPLAY_ESTIMATE", "61.0 %", 1.8), "series-2", "warn")]
+    elif kind == "state":
+        out += [unit_row(who[0], "warning", T("REPLAY_SITUATION_1")),
+                unit_row("Bram", "safe", T("REPLAY_SITUATION_3")),
+                unit_row("Kor", "safe", T("REPLAY_SITUATION_0"))]
+    return "".join(out)
+
+
+def replay_window(theme, kind, focus=False):
+    cursor = {"values": 72.4, "state": 72.4, "unknown": 120.0}[kind]
+    focused = None
+    selection = view = None
+    if focus:                      # a focused event of a long fight: its window is selected and in view
+        cursor, focused, selection = 134.0, 3, (129, 139)
+        view = selection
+    head = (f'<div class="bar">{lib.logo()}<span><span class="name">{esc(T("REPLAY_TITLE"))}</span>'
+            f'<span class="state">{esc(report_date("26", "21:14"))} · Gloomhold · Gorrak · 3:40</span></span>'
+            f'<span class="icons"><span>{lib.icon_cross()}</span></span></div>')
+    heights = {"values": 236, "state": 150, "unknown": 90}
+    graph = chart(kind, 796, heights[kind], cursor=cursor, selection=selection, view=view)
+    buttons = ['skip-back', ('step-back', 'step-back'), 'step-back', 'play', 'step-forward',
+               ('step-forward', 'step-forward'), 'skip-forward']
+    controls = "".join(
+        f'<span class="ctl">{"".join(ricon(n, 10) for n in b) if isinstance(b, tuple) else ricon(b, 14)}</span>'
+        for b in buttons)
+    speed = seg([T("REPLAY_SPEED_ITEM", s) for s in (1, 2, 4, 8)], 0)
+    zoom = (f'<span class="zoombtns">{button(T("REPLAY_ZOOM_SELECTION"), "" if focus else "off")}'
+            f'{button(T("REPLAY_WHOLE"), "" if focus else "off")}</span>')
+    controls = (f'<div class="controls">{controls}{speed}<span class="mono time">{clock(cursor)} / 3:40</span>{zoom}</div>')
+    tabs = seg([T("REPLAY_FILTER_KEY"), T("REPLAY_FILTER_ALERTS"), T("REPLAY_FILTER_ALL")], 0)
+    events = (f'<div class="panel"><div class="ph">{"" if len(T("REPLAY_FILTER_ALERTS")) > 14 else "<h2>" + esc(T("REPLAY_EVENTS")) + "</h2>"}'
+              f'{tabs}</div>{event_rows(kind, focused)}</div>')
+    if focus:
+        who = names()
+        detail = (f'<div class="dline head">{esc(T("REPLAY_SELECTED_EVENT"))}</div>'
+                  + dline(T("TIMELINE_STATE", who[0], T("TIMELINE_STATE_DANGER")))
+                  + dline(T("REPLAY_EVENT_READINGS", who[0], 14, "76.0 %", "61.0 %", "94.0 %"))
+                  + f'<div class="dline head">{esc(T("REPLAY_MISSING_TITLE"))}</div>'
+                  + dline(T("REPLAY_MISSING_UNIT", "Kor", "2:09.0", "2:11.5", T("TIMELINE_WHY_SECRET")), "off")
+                  + dline(T("REPLAY_MISSING_TICK", "2:12.0", "2:13.4"), "off") + moment("values", clock(cursor)))
+    else:
+        detail = moment(kind, clock(cursor))
+    body = (f'<div class="rbody">{graph}{controls}<div class="panels">{events}<div class="panel detail">{detail}</div>'
+            f'</div></div>')
+    return (f'<div class="win replay {theme}" style="left:48px;top:9px;transform:scale(1.35);transform-origin:0 0">'
+            f'{head}{body}{lib.GRIP}</div>')
+
+
+def replay_values(theme):
+    return replay_window(theme, "values")
+
+
+def replay_state(theme):
+    return replay_window(theme, "state")
+
+
+def replay_unknown(theme):
+    return replay_window(theme, "unknown")
+
+
+def replay_event(theme):
+    return replay_window(theme, "values", focus=True)
+
+
 # The Recording card of Settings (M4.5, with the `recording` switch on) and the Reset card below it.
 def recording_card():
     def slide(label, fraction, value):
@@ -546,6 +817,23 @@ REPORT_KINDS = [
      "Impostazioni: la card Registrazione, la parte alta e la pagina scorsa in basso"),
 ]
 
+REPLAY_KINDS = [
+    ("replay-values", replay_values, THEMES,
+     "The replay of a fight with threat values: the chart, the controls, the events and the detail at the cursor",
+     "Il replay di uno scontro con i valori di threat: grafico, comandi, eventi e dettaglio al cursore"),
+    ("replay-state", replay_state, ["nebula"],
+     "The replay when only the state is readable: lanes and states, no percentages",
+     "Il replay quando si legge solo lo stato: corsie e stati, niente percentuali"),
+    ("replay-unknown", replay_unknown, ["nebula"], "The replay when nothing was readable, and why",
+     "Il replay quando nulla era leggibile, e perché"),
+    ("replay-event", replay_event, ["nebula"],
+     "A selected event: the window of 5 s around it and its missing data",
+     "Un evento selezionato: la finestra di 5 s intorno e i dati mancanti"),
+    ("report-timeline", report_timeline, ["nebula"],
+     "The report with the Timeline card and the Replay button",
+     "Il report con la card Timeline e il pulsante Replay"),
+]
+
 KINDS = [
     ("window", monitor, "The window of v0.1.0: the Monitor tab before threat monitoring arrives",
      "La finestra della v0.1.0: la scheda Monitor prima che arrivi il monitor della threat"),
@@ -563,7 +851,7 @@ for _lang in ("enUS", "itIT"):
             _name = f"{_kind}-{_theme}" + ("-it" if _lang == "itIT" else "")
             _caption = f"{_en if _lang == 'enUS' else _it} ({THEME_NAMES[_theme]})"
             SCENES.append((_name, _caption, (lambda f=_fn, t=_theme: f(t)), _lang, _theme))
-    for _kind, _fn, _themes, _en, _it in MONITOR_KINDS + COACH_KINDS + REPORT_KINDS:
+    for _kind, _fn, _themes, _en, _it in MONITOR_KINDS + COACH_KINDS + REPORT_KINDS + REPLAY_KINDS:
         for _theme in _themes:
             _name = f"{_kind}-{_theme}" + ("-it" if _lang == "itIT" else "")
             _caption = f"{_en if _lang == 'enUS' else _it} ({THEME_NAMES[_theme]})"

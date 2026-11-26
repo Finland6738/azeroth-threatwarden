@@ -275,3 +275,54 @@ describe("/atw reports in Italian", function()
 		contains(run("/atw help"), "/atw reports - apre i combattimenti registrati e i loro report")
 	end)
 end)
+
+-- The window itself and the choice of the recording are in test_replay_window.lua.
+describe("/atw replay (SPEC-05 §5.5)", function()
+	local requested
+	local function listen()
+		requested = {}
+		Mock.ns.Bus.On("REPLAY_REQUESTED", function(id, t) requested[#requested + 1] = { id = id, t = t } end)
+	end
+
+	local function add(id, started)
+		local Session = Mock.ns.Session
+		local s = Session.New{ id = id, started = started, group = "party", rec = { hz = 2, warning = 82, danger = 91 } }
+		Session.Join(s)
+		s.state, s.ended, s.dur, s.fight = "complete", "combat", 10, 10
+		truthy(Mock.ns.Storage.Add(s))
+	end
+
+	before_boot(function(M)
+		M.features = { monitor = true, recording = true, reports = true, timeline = true, replay = true }
+	end)
+
+	it("asks for the newest recording, or the n-th of the list, with no time", function()
+		listen()
+		add("old", 100)
+		add("new", 200)
+		run("/atw replay")
+		run("/atw replay 2")
+		run("/atw REPLAY 1")
+		deepEq(requested, { { id = "new" }, { id = "old" }, { id = "new" } })
+	end)
+
+	it("says what is wrong, in the player's own chat only, and asks for nothing", function()
+		listen()
+		contains(run("/atw replay"), "No recordings to replay yet.")
+		add("only", 100)
+		contains(run("/atw replay 2"), "No recording number 2: the list has 1.")
+		run("/atw replay |cffff0000")
+		contains(Mock.output[1], "No recording number ||cffff0000: the list has 1.")
+		deepEq(requested, {})
+	end)
+
+	it("is listed by help, and says when it arrives with a switch off", function()
+		contains(run("/atw help"), "/atw replay - ")
+		boot(function(M) M.features = { reports = true, timeline = true, replay = false } end)
+		contains(run("/atw replay"), "This arrives in v0.5.0.")
+		boot(function(M) M.features = { reports = true, timeline = false, replay = true } end)
+		contains(run("/atw replay 1"), "This arrives in v0.5.0.")
+		falsy(run("/atw help"):find("/atw replay", 1, true))
+	end)
+end)
+

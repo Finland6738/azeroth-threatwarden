@@ -56,6 +56,16 @@ see what the category means and why a value is missing:
 
 The report says what happened and when; it never says why.
 
+## Timeline and replay
+
+> **Coming in `v0.5.0`**: not in the released version yet, and not verified in game.
+
+Under the first card of a report a **Timeline** card shows the whole fight: the threat of up to six members, who held the
+enemy and the events. A click on it opens the [[Threat Replay|Threat-Replay]] at that moment; the **Replay** button of
+the first card opens it from the start. Both are off for the fight being recorded.
+
+![The report with the Timeline card and the Replay button](../specs/mockups/previews/report-timeline-nebula.webp)
+
 ## Deleting
 
 **Delete recording** asks for a second click within 8 seconds. Deletion cannot be undone, and it removes the names from

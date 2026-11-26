@@ -21,6 +21,7 @@ local SPEC_IDS = {
 	"addon.Framerate", "addon.ErrorHandler", "ui.Reload", "ui.CreateFrame", "ui.CreateFont", "ui.CreateColor",
 	"ui.ScreenSize",
 	"ui.SettingsPanel", "ui.SpecialFrames", "ui.SlashCmdList", "ui.ClassColor", "ui.PlaySound", "ui.CursorPosition",
+	"ui.Modifiers",
 }
 
 -- What the mock client does not imitate yet (Tests/mock headers): reported missing, never raised.
@@ -699,3 +700,26 @@ describe("the pointer (Compat.CursorPosition, SPEC-05 §4.8)", function()
 		truthy(grown < 512, "bytes: " .. grown)
 	end)
 end)
+
+describe("the modifier keys (Compat.ModifierDown, SPEC-05 §5.5)", function()
+	it("says which modifier is held, and nil when the client cannot say", function()
+		for _, name in ipairs({ "shift", "ctrl", "alt" }) do
+			eq(C().ModifierDown(name), false, name)
+			Mock.modifiers[name] = true
+			eq(C().ModifierDown(name), true, name)
+			Mock.modifiers[name] = nil
+		end
+		eq(C().ApiState("ui.Modifiers"), "available")
+		isNil(C().ModifierDown("meta"))
+		IsShiftKeyDown = nil
+		isNil(C().ModifierDown("shift"))
+		IsShiftKeyDown = function() return Mock.Secret("boolean") end
+		isNil(C().ModifierDown("shift"))
+		IsShiftKeyDown = function() error("restricted") end
+		isNil(C().ModifierDown("shift"))
+		IsShiftKeyDown = function() return 1 end
+		isNil(C().ModifierDown("shift"))
+		eq(#Mock.errors, 0)
+	end)
+end)
+

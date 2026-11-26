@@ -229,6 +229,43 @@ body { font: 400 13px/1.35 'Outfit', 'Segoe UI', sans-serif; color: var(--text-1
 .empty2 { text-align: center; margin-top: 70px; }
 .empty2 h2 { font: 600 14px/17px 'Outfit', sans-serif; }
 .empty2 p { color: var(--text-2); margin-top: 8px; }
+.win.replay { width: 820px; height: 520px; border-radius: 12px; background: var(--bg); }
+.win.replay .bar .state { margin-top: 3px; }
+.rbody { position: absolute; left: 12px; right: 12px; top: 60px; bottom: 12px; display: flex; flex-direction: column; gap: 8px; }
+.tl { display: block; flex: none; }
+.tl text { font: 400 11px 'JetBrains Mono', monospace; fill: var(--text-3); }
+.tl text.lg { font: 400 11px 'Outfit', sans-serif; fill: var(--text-1); }
+.tl text.gap { font: 400 11px 'Outfit', sans-serif; fill: var(--text-2); }
+.onote { font: 400 11px/15px 'Outfit', sans-serif; color: var(--text-2); text-align: center; }
+.controls { display: flex; align-items: center; gap: 4px; height: 28px; flex: none; }
+.controls .ctl { width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; border-radius: 8px; background: var(--surface-3); border: 1px solid var(--border); flex: none; }
+.controls .ctl > span + span { margin-left: -2px; }
+.controls .seg { margin-left: 8px; align-self: center; }
+.controls .seg span { padding: 0 10px; min-width: 40px; }
+.controls .time { margin-left: 8px; color: var(--text-1); white-space: nowrap; }
+.zoombtns { margin-left: auto; display: flex; gap: 6px; }
+.zoombtns .btn { margin-top: 0; height: 28px; padding: 0 9px; white-space: nowrap; font-size: 11px; }
+.panels { flex: 1; min-height: 0; display: flex; gap: 8px; }
+.panel { flex: 1; min-width: 0; background: var(--surface-1); border: 1px solid var(--border-subtle); border-radius: 8px; padding: 4px; overflow: hidden; }
+.panel.detail { padding: 8px 10px; }
+.ph { display: flex; justify-content: space-between; align-items: center; height: 32px; padding: 0 4px; }
+.ph h2 { font: 600 14px/17px 'Outfit', sans-serif; padding-left: 4px; }
+.ph .seg { height: 28px; align-self: center; margin-left: auto; }
+.ph .seg span { height: 20px; font-size: 11px; padding: 0 9px; }
+.erow { display: flex; align-items: center; gap: 6px; height: 20px; padding: 0 4px 0 6px; font-size: 11px; }
+.erow em { width: 40px; font: normal 400 11px/1 'JetBrains Mono', monospace; color: var(--text-3); flex: none; }
+.erow > span:not(.cat):not([style]) { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.erow.focus { background: var(--raised); box-shadow: inset 2px 0 0 var(--accent); }
+.dline { font-size: 11px; line-height: 14px; color: var(--text-2); margin-top: 3px; }
+.dline.head { font-weight: 500; font-size: 13px; line-height: 16px; color: var(--text-1); margin-top: 6px; }
+.dline.head:first-child { margin-top: 0; }
+.dline.off { color: var(--text-3); }
+.unit { margin-top: 5px; }
+.unit .top { display: flex; align-items: center; gap: 6px; height: 15px; }
+.unit .top i { width: 12px; height: 2px; flex: none; }
+.unit .top b { flex: 1; font-weight: 500; font-size: 12px; }
+.unit .reading { margin-left: 18px; font: 400 11px/14px 'JetBrains Mono', monospace; color: var(--text-1); }
+.unit .reading.warn { color: var(--warn); }
 .tip { position: absolute; width: 440px; padding: 14px 18px; border-radius: 14px; background: var(--text-1); color: var(--bg); font: 400 18px/1.55 'Outfit', sans-serif; box-shadow: 0 20px 40px -16px rgba(0,0,0,.6); }
 .tip b { display: block; font-weight: 500; font-size: 20px; }
 """

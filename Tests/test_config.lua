@@ -17,16 +17,16 @@ local function changes()
 end
 
 describe("defaults (SPEC-02 §3.2, §3.3)", function()
-	it("creates both variables, account schema 5 and character schema 1, with every default, with no problem", function()
+	it("creates both variables, account schema 5 and character schema 2, with every default, with no problem", function()
 		eq(AzerothThreatwardenDB.schema, 5)
-		eq(AzerothThreatwardenCharDB.schema, 1)
+		eq(AzerothThreatwardenCharDB.schema, 2)
 		deepEq(AzerothThreatwardenDB.settings, { language = "auto", theme = "nebula", effects = true, animations = true,
 			font = "addon", minimap = { hide = false, minimapPos = 200 },
 			monitor = Mock.ns.Config.MONITOR_DEFAULTS, alerts = Mock.ns.Config.ALERTS_DEFAULTS,
 			coach = Mock.ns.Config.COACH_DEFAULTS, recording = Mock.ns.Config.RECORDING_DEFAULTS })
 		deepEq(AzerothThreatwardenDB.corrupt, {})
 		deepEq(AzerothThreatwardenCharDB.ui, { shown = true, locked = false, scale = 1.0, size = {}, lastTab = "monitor",
-			lastPage = "settings" })
+			lastPage = "settings", replay = { speed = 1 } })
 		isNil(C():Get("char.ui.pos"), "the window starts at the centre")
 		eq(#C().issues, 0)
 		falsy(C():IsReadOnly())
@@ -248,7 +248,7 @@ describe("damaged data (DAT-24)", function()
 	it("a variable that is not a table becomes a new one; only its type goes into `corrupt`", function()
 		boot(function(M) M.saved = { AzerothThreatwardenDB = "garbage", AzerothThreatwardenCharDB = 12 } end)
 		eq(type(AzerothThreatwardenDB), "table")
-		eq(AzerothThreatwardenCharDB.schema, 1)
+		eq(AzerothThreatwardenCharDB.schema, 2)
 		eq(AzerothThreatwardenDB.settings.language, "auto")
 		local corrupt = AzerothThreatwardenDB.corrupt
 		eq(#corrupt, 2)
@@ -319,7 +319,7 @@ describe("damaged data (DAT-24)", function()
 		end)
 		eq(AzerothThreatwardenDB.schema, 5)
 		eq(AzerothThreatwardenDB.settings.theme, "aurora")
-		eq(AzerothThreatwardenCharDB.schema, 1)
+		eq(AzerothThreatwardenCharDB.schema, 2)
 		eq(AzerothThreatwardenCharDB.ui.locked, true)
 		eq(C().found.account, "none")
 		eq(C().found.char, "damaged")
@@ -447,7 +447,7 @@ describe("a newer schema (DAT-21, DAT-25)", function()
 		deepEq(AzerothThreatwardenDB, ACCOUNT)
 		deepEq(AzerothThreatwardenCharDB, CHAR)
 		contains(issues(), "AzerothThreatwardenDB: schema 6 is newer than 5, read-only")
-		contains(issues(), "AzerothThreatwardenCharDB: schema 6 is newer than 1, read-only")
+		contains(issues(), "AzerothThreatwardenCharDB: schema 6 is newer than 2, read-only")
 	end)
 
 	it("the addon works on a clean copy, with its corrections and `corrupt` only in memory", function()
@@ -610,12 +610,7 @@ describe("schema 2: the monitor settings (SPEC-02 §3.5)", function()
 		eq(data.schema, 2)
 	end)
 
-	it("leave the character's schema at 1", function()
-		eq(AzerothThreatwardenCharDB.schema, 1)
-		eq(C().SCHEMAS.char, 1)
-	end)
-
-	it("accept the values within their ranges and refuse the others", function()
+		it("accept the values within their ranges and refuse the others", function()
 		local cases = {
 			{ "rate", { 2, 10 }, { 1, 11, 2.5, "5" } },
 			{ "maxUnits", { 5, 40 }, { 4, 41, 7.5, false } },
@@ -752,12 +747,7 @@ describe("schema 3: the alert settings (SPEC-02 §3.6, SPEC-04 §4.1)", function
 		eq(data.schema, 3)
 	end)
 
-	it("leave the character's schema at 1", function()
-		eq(AzerothThreatwardenCharDB.schema, 1)
-		eq(C().SCHEMAS.char, 1)
-	end)
-
-	it("accept the values within their ranges and refuse the others", function()
+		it("accept the values within their ranges and refuse the others", function()
 		local cases = {
 			{ "enabled", { false, true }, { "no", 0 } },
 			{ "window", { false, true }, { "yes", 1 } },
@@ -938,7 +928,7 @@ describe("schema 4: recording and sessions (SPEC-02 §3.7, SPEC-05 §2.3)", func
 		deepEq(AzerothThreatwardenDB.sessions, {})
 		deepEq(C().RECORD_WHEN, { "group", "instance", "always" })
 		eq(C().SCHEMAS.account, 5)
-		eq(C().SCHEMAS.char, 1)
+		eq(C().SCHEMAS.char, 2)
 	end)
 
 	it("migrate data of schema 3 (3 -> 4) without sessions, keeping every value, once", function()
@@ -1032,5 +1022,81 @@ describe("schema 4: recording and sessions (SPEC-02 §3.7, SPEC-05 §2.3)", func
 		truthy(C():Set("char.ui.lastTab", "reports"))
 		Mock.Reload()
 		eq(C():Get("char.ui.lastTab"), "reports")
+	end)
+end)
+
+describe("character schema 2: the replay window (SPEC-02 §3.9)", function()
+	it("adds ui.replay with its speed, no place and no size", function()
+		eq(C().SCHEMAS.char, 2)
+		eq(AzerothThreatwardenCharDB.schema, 2)
+		deepEq(C():Get("char.ui.replay"), { speed = 1 })
+		isNil(C():Get("char.ui.replay.pos"))
+		isNil(C():Get("char.ui.replay.size"))
+	end)
+
+	it("migrates data of schema 1 (1 -> 2), keeping every value, once", function()
+		local CHAR = { schema = 1, future = 7, ui = { shown = false, scale = 1.25, lastTab = "settings", newKey = "x",
+			pos = { point = "TOP", relativePoint = "TOP", x = 4, y = -5 }, size = { wide = { w = 600, h = 500 } } } }
+		boot(function(M) M.saved = { AzerothThreatwardenCharDB = CHAR } end)
+		eq(C().found.char, 1)
+		falsy(C():IsReadOnly("char"))
+		eq(AzerothThreatwardenCharDB.schema, 2)
+		eq(AzerothThreatwardenCharDB.future, 7)
+		eq(AzerothThreatwardenCharDB.ui.newKey, "x")
+		eq(AzerothThreatwardenCharDB.ui.shown, false)
+		eq(AzerothThreatwardenCharDB.ui.scale, 1.25)
+		deepEq(AzerothThreatwardenCharDB.ui.pos, { point = "TOP", relativePoint = "TOP", x = 4, y = -5 })
+		deepEq(AzerothThreatwardenCharDB.ui.size, { wide = { w = 600, h = 500 } })
+		deepEq(AzerothThreatwardenCharDB.ui.replay, { speed = 1 })
+		eq(#C().issues, 0)
+		Mock.Reload()
+		eq(AzerothThreatwardenCharDB.schema, 2)
+		eq(C().found.char, 2)
+	end)
+
+	it("migrates data that already has a ui.replay key, keeping what is valid in it", function()
+		boot(function(M)
+			M.saved = { AzerothThreatwardenCharDB = { schema = 1, ui = { replay = { speed = 4, extra = true,
+				pos = { point = "CENTER", relativePoint = "CENTER", x = 1, y = 2 }, size = { w = 900, h = 600 } } } } }
+		end)
+		local r = AzerothThreatwardenCharDB.ui.replay
+		eq(r.speed, 4)
+		eq(r.extra, true)
+		deepEq(r.pos, { point = "CENTER", relativePoint = "CENTER", x = 1, y = 2 })
+		deepEq(r.size, { w = 900, h = 600 })
+		eq(#C().issues, 0)
+		local twice = C().Copy(AzerothThreatwardenCharDB)
+		C().migrations.char[2](twice)
+		deepEq(twice, AzerothThreatwardenCharDB, "the step is idempotent")
+	end)
+
+	it("brings wrong values back, the size within its limits, a damaged table set aside", function()
+		boot(function(M)
+			M.saved = { AzerothThreatwardenCharDB = { schema = 2, ui = { replay = { speed = 3, pos = "x",
+				size = { w = 100, h = 5000 } } } } }
+		end)
+		deepEq(C():Get("char.ui.replay"), { speed = 1, size = { w = 640, h = 1000 } })
+		contains(issues(), "char.ui.replay.speed: reset (not an allowed value)")
+		contains(issues(), "char.ui.replay.size: brought within the limits")
+		boot(function(M) M.saved = { AzerothThreatwardenCharDB = { schema = 2, ui = { replay = 5 } } } end)
+		deepEq(C():Get("char.ui.replay"), { speed = 1 })
+		contains(issues(), "char.ui.replay: reset (expected table, got number)")
+	end)
+
+	it("takes the speeds of the replay and the limits of the size, and refuses the others", function()
+		for _, speed in ipairs({ 2, 4, 8, 1 }) do truthy(C():Set("char.ui.replay.speed", speed), speed) end
+		for _, bad in ipairs({ 0, 3, 16, "2", 1.5 }) do falsy(C():Set("char.ui.replay.speed", bad), tostring(bad)) end
+		truthy(C():Set("char.ui.replay.size", { w = 9000, h = 10 }))
+		deepEq(C():Get("char.ui.replay.size"), { w = 1400, h = 420 })
+		falsy(C():Set("char.ui.replay", {}), "a container")
+		falsy(C():Set("char.ui.replay.pos", { point = "MIDDLE" }))
+	end)
+
+	it("works read-only on data of a newer schema", function()
+		boot(function(M) M.saved = { AzerothThreatwardenCharDB = { schema = 3, ui = { replay = { speed = 8 } } } } end)
+		truthy(C():IsReadOnly("char"))
+		eq(C():Get("char.ui.replay.speed"), 8)
+		eq(select(2, C():Set("char.ui.replay.speed", 2)), "read-only")
+		eq(AzerothThreatwardenCharDB.ui.replay.speed, 8)
 	end)
 end)

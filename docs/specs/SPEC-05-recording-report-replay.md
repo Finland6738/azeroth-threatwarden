@@ -721,7 +721,8 @@ delle unità coinvolte nella finestra ±5 s (la prima, l'ultima, la più alta, q
 - Righe da 20 pt in un pool che scorre (al più le righe visibili più due, anche con 6 000 eventi). Durante la
   riproduzione la riga dell'ultimo evento passato si evidenzia e l'elenco la tiene in vista, salvo per 3 s dopo che il
   giocatore l'ha fatto scorrere.
-- Clic: `Replay.Focus(i)`. Tooltip: categoria, campi, e per `L` e `H` la categoria e la confidenza registrate.
+- Clic: `Replay.Focus(i)` (nella disposizione a pannello unico passa a *Details*). Tooltip: categoria, campi, e per `L` e
+  `H` la categoria e la confidenza registrate.
 - Un elenco con soli `C` e `c` dice *Only the start and the end of combat were recorded.*
 - **Serie**: nel dettaglio un clic sul nome di un'unità la mostra o la toglie dal grafico (al più 6: la settima prende il
   posto dell'ultima scelta in automatico).
@@ -928,10 +929,10 @@ Ogni test che passa per il monitor gira sui tre esiti (`Fight.OUTCOMES`, [SPEC-0
 | `UI/Reports.lua` (cambio) | la card *Timeline* (interruttore `timeline`) e il pulsante *Replay* della card di testa (interruttore `replay`) | emette `REPLAY_REQUESTED(id, nil)` | M5.3, M5.5 |
 | `UI/Theme.lua` (cambio) | i token `series-1`…`series-6` in ogni tema; `Theme.Probes()` con `lines` (`CreateLine`) | — | M5.3 |
 | `Data/Replay.lua` | il controllore di §5.2–§5.4: cursore, riproduzione con il tick `replay`, passi, salti, eventi, finestra ±5 s, dettaglio, dati mancanti, filtri, serie | ascolta `COMBAT_STARTED`, `COMBAT_ENDED`, `SESSIONS_CHANGED` | M5.4 |
-| `UI/ReplayWindow.lua` | la finestra di §5.5: barra del titolo, timeline, comandi, elenco degli eventi, dettaglio, stati, tasti, posizione e dimensione | ascolta `REPLAY_REQUESTED`, `COMBAT_STARTED`, `COMBAT_ENDED`, `CONFIG_LOADED`, `DISPLAY_CHANGED` | M5.5 |
+| `UI/ReplayWindow.lua` | la finestra di §5.5: barra del titolo, timeline, comandi, elenco degli eventi, dettaglio, stati, tasti, posizione e dimensione | ascolta `REPLAY_REQUESTED`, `COMBAT_STARTED`, `COMBAT_ENDED`, `CONFIG_LOADED`, `CONFIG_CHANGED`, `DISPLAY_CHANGED`, `SESSIONS_CHANGED`, `SESSION_ENDED` | M5.5 |
 | `Core/Commands.lua` (cambio) | `/atw replay [n]` (interruttore `replay`, *This arrives in v0.5.0.* da spento) | emette `REPLAY_REQUESTED(id, nil)` | M5.5 |
 | `Core/Config.lua` (cambio) | schema **2** del personaggio: `ui.replay` (`pos`, `size`, `speed`), la migrazione 1 → 2 e il suo test | — | M5.5 |
-| `Core/Compat.lua` (cambio) | `Compat.CursorPosition()` (`GetCursorPosition`), `Compat.ModifierDown(name)` (`IsShiftKeyDown`, `IsControlKeyDown`): tutte nel dump, nella tabella di SPEC-01 §8.2 | — | M5.3, M5.5 |
+| `Core/Compat.lua` (cambio) | `Compat.CursorPosition()` (`GetCursorPosition`), `Compat.ModifierDown(name)` (`IsShiftKeyDown`, `IsControlKeyDown`, `IsAltKeyDown`): tutte nel dump, nella tabella di SPEC-01 §8.2 | — | M5.3, M5.5 |
 | `UI/Assets.lua`, `tools/make_media.py` (cambio) | le icone `play`, `pause`, `step-back`, `step-forward`, `skip-back`, `skip-forward` | — | M5.5 |
 
 - **Interruttori** (`Core/Features.lua`, ADR 0014): `timeline` (il modello, il widget, la card *Timeline* del report) e
@@ -1053,6 +1054,40 @@ Ogni test che passa per il monitor gira sui tre esiti (`Fight.OUTCOMES`, [SPEC-0
   (gli indici del replay; budget 2 000 000, come la vista della timeline).
 - `Timeline.TimeText` e `Timeline.PercentText` passano da `UI/Timeline.lua` a `Data/Timeline.lua`; `/atw debug` aggiunge
   alla sezione *Timeline and replay* lo stato del replay e il costo misurato del tick.
+
+**Realizzato in M5.5** (`UI/ReplayWindow.lua`, schema 2 del personaggio), con queste precisazioni:
+
+- **Interfaccia**: `ReplayWindow.Open(id, t)` (falso con un interruttore spento), `ReplayWindow.Close()`; gli stati sono
+  `building`, `ready`, `damaged`, `recording`, `unknown` (eliminata) e `failed` (*The timeline could not be built.*). Chiedere
+  di nuovo la registrazione aperta muove solo il cursore. Gli ascoltatori si registrano al `PLAYER_LOGIN` con gli
+  interruttori accesi; la finestra e il controllore si legano al primo `Open`.
+- **Chiusura**: chiuderla (✕, Esc) chiude il replay e lascia il modello; nascosta con tutta l'interfaccia (Alt+Z) tiene il
+  replay e lo mette in pausa. In `recording` la finestra si riapre sulla registrazione quando finisce
+  (`SESSIONS_CHANGED`, `SESSION_ENDED`).
+- **Tastiera**: `EnableKeyboard(true)` solo fuori dal combattimento e dopo `SetPropagateKeyboardInput(true)`; a
+  `COMBAT_STARTED` solo `EnableKeyboard(false)`, così nessuna funzione della tastiera si chiama in lockdown. Un client
+  senza `SetPropagateKeyboardInput` non ascolta mai (si prenderebbe ogni tasto). «Il puntatore sopra la finestra» è
+  `IsMouseOver()` del frame al momento del tasto. Le azioni dei tasti e dei pulsanti sono le stesse
+  (`Replay.KeyAction`, `Replay.Do`); `Replay.SetSelection(a, b)` tiene l'intervallo trascinato sul grafico, che toglie il
+  focus.
+- **Comandi**: gli eventi precedente e seguente sono due frecce dello stesso foglio (`step-back`, `step-forward`)
+  affiancate. Quando i testi di *Zoom to selection* e *Whole fight* non stanno nella riga diventano i pulsanti con le icone
+  `search` e `refresh` (testo nel tooltip), e solo se non stanno neanche quelli vanno a capo.
+- **Disposizione**: nel pannello unico il filtro sta sulla riga del selettore *Events · Details*; il titolo *Events* si
+  mostra se c'è posto accanto al filtro. Il grafico prende il 55 % sotto la barra del titolo (di più quando le corsie lo
+  chiedono) e si restringe per lasciare alla parte bassa almeno 92 pt: a 640 × 420 restano almeno due righe di eventi.
+  I collegamenti *Continued from…* e *Continues in…* hanno una riga sotto il titolo; l'intestazione di una sessione
+  troncata non ha un distintivo (la banda sul grafico e la riga del dettaglio lo dicono).
+- **Dettaglio**: righe di testo e righe delle unità da due pool; la categoria di ogni riga è nel suo tooltip, le stime nel
+  colore `warn` e gli sconosciuti `text-3`. Con un focus l'evento (letture intorno e dati mancanti) sta sopra *At …*. Si
+  rilegge solo quando cambiano `state.moment` o il focus; fra l'uno e l'altro si aggiornano l'ora e l'età delle stime.
+- **Salvataggi**: schema 2 del personaggio ([SPEC-02 §3.9](SPEC-02-data-model-storage.md#39-schema-2-del-personaggio-m5-la-finestra-del-replay));
+  `/atw reset` non tocca posizione e dimensione del replay ([Q21](SPEC-09-risks-open-questions.md)).
+- **Comando**: `/atw replay` senza numero salta la registrazione in corso (e lo dice se è l'unica); `/atw replay n` con un
+  numero che non c'è risponde *No recording number n: the list has m.*
+- **Prova lunga** (`Tests/long/test_replay_long.lua`): 210 aperture di sessioni a 30 000 righe, 15 eliminate dalla
+  potatura mentre erano aperte; dopo il riscaldamento frame, regioni del grafico, righe e memoria dello stato Lua non
+  crescono.
 
 ## 10. Piano di M5: test per step
 

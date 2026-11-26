@@ -284,7 +284,7 @@ function Widget:GetNumRegions() return #self._regions end
 for _, name in ipairs({
 	"SetMovable", "SetResizable", "SetClampedToScreen", "SetToplevel", "RegisterForDrag", "RegisterForClicks",
 	"StartMoving", "StopMovingOrSizing", "SetUserPlaced", "Raise", "Lower", "SetFixedFrameStrata", "SetFixedFrameLevel",
-	"EnableKeyboard", "SetHitRectInsets", "SetJustifyV", "SetWordWrap", "SetShadowColor", "SetShadowOffset",
+	"SetHitRectInsets", "SetMotionScriptsWhileDisabled", "SetJustifyV", "SetWordWrap", "SetShadowColor", "SetShadowOffset",
 	"SetNonSpaceWrap", "SetMaxLines", "SetBlendMode", "SetDesaturated", "SetGradient",
 	"SetMaskTexture", "SetRotation", "SetMaxLetters", "SetMultiLine", "SetNumeric", "SetOrientation", "SetValueStep",
 	"SetObeyStepOnDrag", "SetStatusBarTexture", "SetStatusBarColor", "SetDisabledFontObject",
@@ -313,7 +313,6 @@ function Widget:SetTexCoord(...) self._texCoord = { ... } end
 function Widget:SetVertexColor(r, g, b, a) self._vertex = { r, g, b, a or 1 } end
 function Widget:GetVertexColor() local c = self._vertex or { 1, 1, 1, 1 }; return c[1], c[2], c[3], c[4] end
 function Widget:SetAtlas(atlas) self._atlas = atlas end
-function Widget:SetPropagateKeyboardInput(v) self._propagate = v and true or false end
 function Widget:SetAutoFocus(v) self._autoFocus = v end
 
 -- EditBox: SetText fires OnTextChanged(self, false) when the text changes; Mock.TypeInto simulates the player.

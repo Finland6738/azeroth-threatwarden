@@ -158,10 +158,18 @@ M4.R. Nothing is added to the sessions and the account schema stays 5.
   (`tools/make_mockups.py`); the wiki page *Threat Replay* and the updates of *Combat Reports*, *Commands* and the
   sidebar, in both languages.
 - Done when:
-  - [ ] A recording opens in the replay window from the button, the timeline card and `/atw replay`; every state of
+  - [x] A recording opens in the replay window from the button, the timeline card and `/atw replay`; every state of
     the table of SPEC-05 §5.5 shows its text; the keys work only out of combat and over the window; position, size and
     speed survive a `/reload`; opening and closing the replay many times does not grow memory or pools; nothing shows
     with the switches off.
+- *Done (2026-11-26, before M0.7): `UI/ReplayWindow.lua` behind `replay` and `timeline` (`AzerothThreatwardenReplay`:
+  title with badge and linked sessions, chart with lanes, controls and speed, pooled event list with filters, detail
+  with the ±5 s missing data, one panel under 760 pt, every state of §5.5, keys only out of combat and over the window,
+  Esc); character schema 2 with its migration; the report's *Replay* button; `/atw replay [n]`; `Replay.KEYS`,
+  `KeyAction`, `Do`, `SetSelection`; `Compat.ModifierDown`; six icons; five previews; the wiki page *Threat Replay* and
+  the updates of *Combat Reports*, *Commands* and the sidebar; `test_replay_window.lua` and the long test (210 openings
+  of 30 000-row sessions: no growth after warm-up). Q21 new. Details in SPEC-05 §9. Nothing was tried in the real
+  client.*
 - Tests: `test_replay_window.lua`, `test_config.lua` (character schema 2), `test_commands.lua` (`/atw replay`),
   `Tests/long/test_replay_long.lua` (source §13: repeated opening and closing of the replay).
 - Real client: `SetPropagateKeyboardInput` out of combat and conflicts with the game's key bindings; the window at

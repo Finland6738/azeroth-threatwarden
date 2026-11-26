@@ -234,6 +234,8 @@ Compat.APIS = {
 	{ id = "ui.ClassColor", paths = { "C_ClassColor.GetClassColor" }, check = "exists", since = "M2", probe = "-" },
 	{ id = "ui.PlaySound", paths = { "PlaySound", "C_Sound.PlaySound" }, check = "exists", since = "M3", probe = "-" },
 	{ id = "ui.CursorPosition", paths = { "GetCursorPosition" }, check = "exists", since = "M5", probe = "game" },
+	{ id = "ui.Modifiers", paths = { "IsShiftKeyDown", "IsControlKeyDown", "IsAltKeyDown" }, all = true,
+		check = "exists", since = "M5", probe = "-" },
 }
 
 local apiById = {}
@@ -612,6 +614,17 @@ function Compat.CursorPosition()
 	local ok, x, y = pcall(fn)
 	if not ok or IsSecret(x) or IsSecret(y) or not plainNumber(x) or not plainNumber(y) then return nil end
 	return x, y
+end
+
+-- Whether a modifier key is held: name "shift", "ctrl" or "alt" (the keys of the replay window, SPEC-05 §5.5): true or
+-- false, nil when the client cannot say or hides it.
+local MODIFIERS = { shift = "IsShiftKeyDown", ctrl = "IsControlKeyDown", alt = "IsAltKeyDown" }
+function Compat.ModifierDown(name)
+	local fn = MODIFIERS[name] and Resolve(MODIFIERS[name])
+	if type(fn) ~= "function" then return nil end
+	local ok, down = pcall(fn)
+	if not ok or IsSecret(down) or type(down) ~= "boolean" then return nil end
+	return down
 end
 
 -- A colour object for the widget methods that want one (SetGradient); a plain table when the client has no CreateColor.

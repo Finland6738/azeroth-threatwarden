@@ -1,4 +1,4 @@
--- Config: the two SavedVariables, their schemas (account 5, character 1), typed rules, defaults, migrations, read-only on a newer schema and damaged
+-- Config: the two SavedVariables, their schemas (account 5, character 2), typed rules, defaults, migrations, read-only on a newer schema and damaged
 -- tables set aside under `corrupt` (SPEC-02 §3, ADR 0005). Lua 5.1, no game API but Compat.ServerTime.
 -- Adapted from Azeroth Accord (Core/Config.lua), same owner, GPL-3.0 (ADR 0012). Kept from there: the copy, the rules
 -- by path checked parents first, the merge of the defaults, the migrations on a copy, read-only on a newer schema, Get
@@ -14,7 +14,8 @@
 --                                               coach = { enabled },
 --                                               recording = { enabled, when, rate, maxSessions, maxKB, notice } },
 --                                               sessions = { ... }, corrupt = { ... } }
---   AzerothThreatwardenCharDB  (character) = { schema, ui = { shown, locked, scale, pos, size, lastTab, lastPage } }
+--   AzerothThreatwardenCharDB  (character) = { schema, ui = { shown, locked, scale, pos, size, lastTab, lastPage,
+--                                               replay = { pos, size, speed } } }
 --
 -- Load() runs at ADDON_LOADED (Core/Init.lua, before Locale.Apply): the defaults are added without overwriting, old data
 -- is migrated step by step, wrong values go back to their defaults and are listed in Config.issues (paths, never
@@ -34,8 +35,8 @@ local type, pairs, ipairs, pcall, tostring, next, select = type, pairs, ipairs, 
 local floor, huge, abs = math.floor, math.huge, math.abs
 local concat, sort = table.concat, table.sort
 
--- The schema of each variable that this version of the addon knows (SPEC-02 §3.2, §3.3, §3.5-§3.8).
-Config.SCHEMAS = { account = 5, char = 1 }
+-- The schema of each variable that this version of the addon knows (SPEC-02 §3.2, §3.3, §3.5-§3.9).
+Config.SCHEMAS = { account = 5, char = 2 }
 
 -- Development build. A checkout of the repository is one; the BigWigs packager comments out the block between the
 -- debug markers below in every packaged build, so a release has DEV = false (tools/check_package.py checks it).
@@ -108,11 +109,13 @@ Config.RECORDING_DEFAULTS = {
 }
 Config.POINTS = { "TOPLEFT", "TOP", "TOPRIGHT", "LEFT", "CENTER", "RIGHT", "BOTTOMLEFT", "BOTTOM", "BOTTOMRIGHT" }
 
--- The window: scale 50-200 % in steps of 5 %; the sizes of the two layouts (SPEC-03 §4).
+-- The window: scale 50-200 % in steps of 5 %; the sizes of the two layouts (SPEC-03 §4) and of the replay window
+-- (SPEC-05 §5.5).
 Config.SCALE = { min = 0.5, max = 2.0, step = 0.05 }
 Config.SIZES = {
 	compact = { minW = 220, minH = 140, maxW = 600, maxH = 800 },
 	wide = { minW = 480, minH = 420, maxW = 900, maxH = 900 },
+	replay = { minW = 640, minH = 420, maxW = 1400, maxH = 1000 },
 }
 
 -- `account.corrupt`: at most MAX_CORRUPT entries, the oldest goes first; the copy of a damaged table keeps
@@ -151,6 +154,8 @@ Config.defaults = {
 			size = {},                -- compact = { w, h }, wide = { w, h }: nil until resized
 			lastTab = "monitor",
 			lastPage = "settings",
+			-- the replay window (schema 2, SPEC-02 §3.9): pos and size nil until moved or resized
+			replay = { speed = 1 },
 		},
 	},
 }
@@ -251,8 +256,8 @@ end
 ---------------------------------------------------------------------------------------------------------------------
 -- Rules
 ---------------------------------------------------------------------------------------------------------------------
--- By path, scope first. type: boolean | number | string | table. number: min, max, integer. string: enum. table:
--- validate(v) for the whole table. optional: nil is allowed (the default is nil). fix(v) -> value, note: a value that
+-- By path, scope first. type: boolean | number | string | table. number: min, max, integer, check(v). string: enum.
+-- table: validate(v) for the whole table. optional: nil is allowed (the default is nil). fix(v) -> value, note: a value that
 -- passes the rule but is corrected (clamped, rounded); note nil when nothing changed. container: a table that holds
 -- other rules (Set refuses it whole). keep = false: a damaged value is reset without a `corrupt` entry.
 local function isArrayOfTables(v)
@@ -327,6 +332,14 @@ Config.rules = {
 	["char.ui.size.wide"] = { type = "table", optional = true, validate = Config.IsSize, fix = sizeFixer("wide") },
 	["char.ui.lastTab"] = { type = "string", enum = Config.TABS },
 	["char.ui.lastPage"] = { type = "string", enum = Config.PAGES },
+	["char.ui.replay"] = { type = "table", container = true },
+	["char.ui.replay.pos"] = { type = "table", optional = true, validate = Config.IsPos },
+	["char.ui.replay.size"] = { type = "table", optional = true, validate = Config.IsSize, fix = sizeFixer("replay") },
+	-- the speeds are those of Data/Replay.lua (SPEC-09 Q19: one place), loaded after this file
+	["char.ui.replay.speed"] = { type = "number", check = function(v)
+		local speeds = ns.Replay and ns.Replay.SPEEDS
+		return speeds ~= nil and contains(speeds, v)
+	end },
 }
 
 -- nil when `value` satisfies `rule`, else the reason (fixed words, no value).
@@ -339,6 +352,7 @@ local function violation(rule, value)
 		if rule.integer and value ~= floor(value) then return "not an integer" end
 		if rule.min and value < rule.min then return "below " .. rule.min end
 		if rule.max and value > rule.max then return "above " .. rule.max end
+		if rule.check and not rule.check(value) then return "not an allowed value" end
 	elseif t == "string" then
 		if rule.enum and not contains(rule.enum, value) then return "not an allowed value" end
 	elseif t == "table" and rule.validate and not rule.validate(value) then
@@ -542,6 +556,8 @@ end
 -- Account step 5 (fix Q7): the default thresholds went from 80 / 95 to 82 / 91. The defaults are written into the saved
 -- data, so a pair still at exactly 80 and 95 is the old default and moves to the new one; any other pair is the
 -- player's and stays (one threshold changed counts as the player's choice of the pair).
+-- Character step 2 (M5.5): `ui.replay` is new, and the defaults add it: nothing to do (a key already there stays and
+-- the rules check it).
 Config.OLD_THRESHOLDS = { warning = 80, danger = 95 }
 Config.migrations = {
 	account = {
@@ -560,6 +576,7 @@ Config.migrations = {
 	},
 	char = {
 		[1] = function(db) end,
+		[2] = function(db) end,
 	},
 }
 

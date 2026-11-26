@@ -377,7 +377,7 @@ senza firma), **assente** (si cerca a runtime). In grassetto le voci il cui comp
 | `ui.ClassColor` | `C_ClassColor.GetClassColor` | esistenza | firma | colore di classe nell'elenco | M2 | — |
 | `ui.PlaySound` | `PlaySound`, altrimenti `C_Sound.PlaySound` | esistenza | firma `(soundKitID, uiSoundSubType, …)` (sistema `Sound`); `Compat.PlaySound` (M3.2) | avviso sonoro (spento di predefinito, [SPEC-04 §1.4](SPEC-04-alerts-coach.md#14-canali)) | M3 | — |
 | `ui.CursorPosition` | `GetCursorPosition` | esistenza | globale | passaggio del mouse, clic e trascinamento sulla timeline (`Compat.CursorPosition`, [SPEC-05 §4.8](SPEC-05-recording-report-replay.md#48-il-widget-uitimelinelua-m53)) | M5 | da provare in gioco (scala) |
-| `ui.Modifiers` | `IsShiftKeyDown`, `IsControlKeyDown` | esistenza | globale | tasti del replay (`Compat.ModifierDown`, [SPEC-05 §5.5](SPEC-05-recording-report-replay.md#55-la-finestra-del-replay-uireplaywindowlua-m55)) | M5 | — |
+| `ui.Modifiers` | `IsShiftKeyDown`, `IsControlKeyDown`, `IsAltKeyDown` | esistenza | globale | tasti del replay (`Compat.ModifierDown`, [SPEC-05 §5.5](SPEC-05-recording-report-replay.md#55-la-finestra-del-replay-uireplaywindowlua-m55)) | M5 | — |
 
 Eventi del gioco (tutti nel dump con il loro payload), registrati solo attraverso `Core/Init.lua` e i moduli `Data/`
 con AceEvent: `ADDON_LOADED`, `PLAYER_LOGIN`, `PLAYER_ENTERING_WORLD` (`isInitialLogin`, `isReloadingUi`),

@@ -13,6 +13,8 @@
 --   Replay.Play / Pause / Toggle  the 10 Hz `replay` tick (Core/Scheduler.lua); in combat Play answers false, "combat"
 --   Replay.Seek(t), Step(dir), Jump(dir), NextEvent(dir), Focus(i)      the cursor
 --   Replay.SetSpeed(x), SetView(a, b), WholeFight(), SetSeries(list), ToggleSeries(u), SetFilter(f)
+--   Replay.SetSelection(a, b)                 an interval chosen on the chart (nil: none)
+--   Replay.KeyAction(key, shift, ctrl, alt), Do(action)      the keys of the window (Q19) and what a control does
 --   Replay.Events(filter), LastRow()          the event list: indexes into model.events, and the last one passed
 --   Replay.Snapshot(t, out)       the detail at a time (§5.3), written into `out` (reused: no table once warm)
 --   Replay.EventDetail(i, out)    an event with the readings around it and the missing data of its window
@@ -31,8 +33,8 @@ local Replay = {}
 ns.Replay, ns.modules.Replay = Replay, Replay
 
 local Timeline, Session, Storage, Scheduler, Compat = ns.Timeline, ns.Session, ns.Storage, ns.Scheduler, ns.Compat
-local type, pairs, ipairs, pcall, tostring, floor, max, min, sort = type, pairs, ipairs, pcall, tostring, math.floor,
-	math.max, math.min, table.sort
+local type, pairs, ipairs, pcall, tostring, tonumber, floor, max, min, sort = type, pairs, ipairs, pcall, tostring,
+	tonumber, math.floor, math.max, math.min, table.sort
 
 Replay.HZ = 10                       -- ticks a second while playing (§5.2)
 Replay.MAX_STEP = 0.5                -- seconds: a client that stood still does not make the cursor jump
@@ -43,7 +45,14 @@ Replay.FOCUS_ZOOM = 200              -- tenths: only a longer session zooms to t
 Replay.PAUSE_IN_COMBAT = true        -- Q18
 Replay.MAX_UNITS = 40                -- units listed in the detail
 Replay.FILTERS = { "key", "alerts", "all" }
-Replay.SPEED_PATH = "char.ui.replay.speed"    -- kept from the character schema 2 (SPEC-02 §3.9, M5.5)
+Replay.SPEED_PATH = "char.ui.replay.speed"    -- the character schema 2 (SPEC-02 §3.9)
+-- The keys of the replay window (Q19, SPEC-05 §5.5), by the client's key names: what each does with no modifier, and
+-- with Shift. Only out of combat and over the window (UI/ReplayWindow.lua); Esc is the game's.
+Replay.KEYS = {
+	SPACE = "toggle", LEFT = "back", RIGHT = "forward", UP = "prevEvent", DOWN = "nextEvent", HOME = "start",
+	END = "finish", ["1"] = "speed1", ["2"] = "speed2", ["3"] = "speed3", ["4"] = "speed4",
+}
+Replay.SHIFT_KEYS = { LEFT = "jumpBack", RIGHT = "jumpForward" }
 
 Replay.state = nil
 
@@ -478,13 +487,43 @@ function Replay.Jump(dir)
 	return true
 end
 
+-- The action of a key, nil for a key the window leaves to the game (any with Ctrl or Alt, and with Shift any but
+-- the arrows of the 5 s jump).
+function Replay.KeyAction(key, shift, ctrl, alt)
+	if ctrl or alt or type(key) ~= "string" then return nil end
+	if shift then return Replay.SHIFT_KEYS[key] end
+	return Replay.KEYS[key]
+end
+
+-- What a control of the window does (a button or a key): "toggle", "back", "forward", "jumpBack", "jumpForward",
+-- "prevEvent", "nextEvent", "start", "finish" or "speed<n>" (the n-th of SPEEDS). False without an open replay.
+local ACTIONS = {
+	toggle = function() return Replay.Toggle() end,
+	back = function() return Replay.Step(-1) end,
+	forward = function() return Replay.Step(1) end,
+	jumpBack = function() return Replay.Jump(-1) end,
+	jumpForward = function() return Replay.Jump(1) end,
+	prevEvent = function() return Replay.NextEvent(-1) end,
+	nextEvent = function() return Replay.NextEvent(1) end,
+	start = function() return Replay.Seek(0) end,
+	finish = function() return Replay.Seek(Replay.state.model.dur) end,
+}
+function Replay.Do(action)
+	if not Replay.state then return false end
+	local speed = type(action) == "string" and tonumber(action:match("^speed(%d)$"))
+	if speed then return Replay.SetSpeed(Replay.SPEEDS[speed]) end
+	local fn = ACTIONS[action]
+	if not fn then return false end
+	return fn()
+end
+
 ---------------------------------------------------------------------------------------------------------------------
 -- The view, the speed, the series and the filter (§5.2, §5.4)
 ---------------------------------------------------------------------------------------------------------------------
 function Replay.SetSpeed(x)
 	if not validSpeed(x) then return false end
 	chosenSpeed = x
-	-- refused while the character data have no key for it (schema 1) or are read-only: the choice stays for this load
+	-- refused while the character data are read-only: the choice stays for this load
 	if ns.Config then ns.Config:Set(Replay.SPEED_PATH, x) end
 	local st = Replay.state
 	if st then
@@ -518,6 +557,22 @@ function Replay.WholeFight()
 	local st = Replay.state
 	if not st then return false end
 	setView(st, 0, st.model.dur)
+	return true
+end
+
+-- An interval chosen on the chart, kept inside the session (nil or an empty one: none). It is no longer the window of
+-- an event, so the focus goes.
+function Replay.SetSelection(a, b)
+	local st = Replay.state
+	if not st then return false end
+	local selection
+	if type(a) == "number" and type(b) == "number" and a == a and b == b then
+		if b < a then a, b = b, a end
+		a, b = max(a, 0), min(b, st.model.dur)
+		if b > a then selection = { a, b } end
+	end
+	st.selection, st.focus = selection, nil
+	notify("focus")
 	return true
 end
 
