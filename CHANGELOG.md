@@ -7,6 +7,14 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
+- M3.3: the Threat Coach rules, behind the `coach` switch (off until `v0.3.0`, so nothing changes yet for players). One
+  tip at a time for your role (tank, DPS, healer), each with its reason, the category of the data it rests on and, for
+  estimates and predictions, a confidence; predictions only with medium or high confidence, with *may* and *about*.
+  *Not enough data for advice* with the reason when your row is unknown, the tank is unknown or the trend is not ready.
+  A tip that leaves does not come back before its cooldown (8 s, 15 s for reassurances); the numbers change at most
+  once a second. No message names a cause, an ability or a class (a test checks every Coach and alert text in both
+  languages). New setting `settings.coach.enabled` (on by default; its switch comes with the Alerts card in M3.5).
+  `/atw debug` shows the current tip and the rules shown.
 - M3.2: the alert manager, behind the `alerts` switch (off until `v0.3.0`, so nothing changes yet for players). An alert
   is raised only when a risk **enters**: your state rises to Warning or Danger, or the unit holding the mob changes (a
   new `AGGRO_CHANGED` event of the monitor). Seven kinds (Warning, Danger, aggro, margin, lost mob, pet, others), one

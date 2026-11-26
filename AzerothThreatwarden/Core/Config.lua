@@ -10,7 +10,8 @@
 --   AzerothThreatwardenDB      (account)   = { schema, settings = { language, theme, effects, animations, font,
 --                                               minimap = { hide, minimapPos }, monitor = { warning, danger, rate,
 --                                               maxUnits, show, sort, pinSelf, followTargetOfTarget },
---                                               alerts = { enabled, window, visual, sound, cooldown, others, pet } },
+--                                               alerts = { enabled, window, visual, sound, cooldown, others, pet },
+--                                               coach = { enabled } },
 --                                               corrupt = { ... } }
 --   AzerothThreatwardenCharDB  (character) = { schema, ui = { shown, locked, scale, pos, size, lastTab, lastPage } }
 --
@@ -84,6 +85,10 @@ Config.ALERTS_DEFAULTS = {
 	cooldown = 8,
 	others = "tank", pet = true,
 }
+-- The Threat Coach (schema 3, SPEC-04 §4.1): the one place of its defaults.
+Config.COACH_DEFAULTS = {
+	enabled = true,
+}
 Config.POINTS = { "TOPLEFT", "TOP", "TOPRIGHT", "LEFT", "CENTER", "RIGHT", "BOTTOMLEFT", "BOTTOM", "BOTTOMRIGHT" }
 
 -- The window: scale 50-200 % in steps of 5 %; the sizes of the two layouts (SPEC-03 §4).
@@ -113,6 +118,7 @@ Config.defaults = {
 			minimap = { hide = false, minimapPos = 200 },   -- handed to LibDBIcon (M1.7), which may add keys of its own
 			monitor = {},             -- filled from MONITOR_DEFAULTS below
 			alerts = {},              -- filled from ALERTS_DEFAULTS below
+			coach = {},               -- filled from COACH_DEFAULTS below
 		},
 		corrupt = {},
 	},
@@ -132,6 +138,7 @@ Config.defaults = {
 
 for key, value in pairs(Config.MONITOR_DEFAULTS) do Config.defaults.account.settings.monitor[key] = value end
 for key, value in pairs(Config.ALERTS_DEFAULTS) do Config.defaults.account.settings.alerts[key] = value end
+for key, value in pairs(Config.COACH_DEFAULTS) do Config.defaults.account.settings.coach[key] = value end
 
 ---------------------------------------------------------------------------------------------------------------------
 -- Helpers
@@ -268,6 +275,8 @@ Config.rules = {
 		max = Config.ALERTS.cooldown.max },
 	["account.settings.alerts.others"] = { type = "string", enum = Config.ALERT_OTHERS },
 	["account.settings.alerts.pet"] = { type = "boolean" },
+	["account.settings.coach"] = { type = "table", container = true },
+	["account.settings.coach.enabled"] = { type = "boolean" },
 	["account.corrupt"] = { type = "table", container = true, keep = false, validate = isArrayOfTables,
 		fix = function(v)
 			if #v <= Config.MAX_CORRUPT then return v end
@@ -465,7 +474,7 @@ end
 -- has the new shape it changes nothing) and has a test that starts from the data of the version before (DAT-20).
 -- Step 1: data without a version is version 0 and needs only the defaults and the rules, so it has nothing to do.
 -- Account step 2 (M2.6): `settings.monitor` is new, and the defaults add its keys: nothing to do either.
--- Account step 3 (M3.2): `settings.alerts` is new (and, from M3.3, `settings.coach`): the defaults again.
+-- Account step 3 (M3.2, M3.3): `settings.alerts` and `settings.coach` are new: the defaults again.
 Config.migrations = {
 	account = {
 		[1] = function(db) end,

@@ -132,7 +132,8 @@ copied from Azeroth Accord and renamed; each copied file says so in its header.
 | `UI/ThreatList.lua` | the threat list in the Monitor tab | M2 (switch `monitor`, on since `v0.2.0`) |
 | `Core/Demo.lua`, `Data/Demo.lua` | demo mode: an invented fight through the same model, states and list, nothing read or saved | M2 (switch `monitor`, on since `v0.2.0`) |
 | `Data/Alerts.lua` | alerts when a state or the aggro holder changes, with a cooldown per kind and unit, channels, sound (through Compat) and mute ([SPEC-04](specs/SPEC-04-alerts-coach.md), Italian) | M3.2 (switch `alerts`, off until `v0.3.0`) |
-| `Data/Coach.lua`, `Data/CoachRules.lua`, `UI/CoachStrip.lua` | rule-based tips with reason and confidence; the Coach strip ([SPEC-04](specs/SPEC-04-alerts-coach.md), Italian) | *planned*, M3 |
+| `Data/Coach.lua`, `Data/CoachRules.lua` | rule-based tips (T1–T7, D1–D5, A1) with reason, category and confidence, one at a time, cooldowns, numbers at most once a second ([SPEC-04](specs/SPEC-04-alerts-coach.md), Italian) | M3.3 (switch `coach`, off until `v0.3.0`) |
+| `UI/CoachStrip.lua` | the Coach strip | *planned*, M3.4 |
 | `Data/Recorder.lua`, `Data/Session.lua`, `Data/Storage.lua`, `Data/Report.lua` | sessions, samples, events, limits, the combat report | *planned*, M4 |
 | `Data/Replay.lua`, `UI/Timeline.lua`, `UI/ReplayWindow.lua` | timeline and replay | *planned*, M5 |
 | `Data/Metrics.lua`, `Data/Export.lua` | descriptive metrics, comparison, text and CSV export | *planned*, M6 |
@@ -153,7 +154,7 @@ copied from Azeroth Accord and renamed; each copied file says so in its header.
 | `TARGET_CHANGED`, `TARGET_STATUS`, `THREAT_SCANNED`, `THREAT_UPDATED`, `STATE_CHANGED`, `THREAT_MODE_CHANGED` | Data | ThreatList, Window; Alerts and Recorder later | M2 (switch `monitor`, on since `v0.2.0`) |
 | `AGGRO_CHANGED(mobKey, unitKey, oldUnitKey)` | ThreatState, before the `STATE_CHANGED` of the same update | Alerts; Coach later | M3.2 (switch `monitor`) |
 | `ALERT_RAISED(alert)`, `MUTE_CHANGED(muted)` | Alerts | Window, Coach strip, Recorder later | M3.2 (switch `alerts`, off until `v0.3.0`) |
-| `COACH_TIP` | Coach | Coach strip, Recorder | *planned*, M3 |
+| `COACH_TIP(tip)` | Coach, after each `THREAT_UPDATED` when the tip changes (`nil`: no tip) | Coach strip, Recorder later | M3.3 (switch `coach`, off until `v0.3.0`) |
 | `SESSION_STARTED`, `SESSION_ENDED`, `SESSIONS_CHANGED` | Recorder, Storage | Reports | *planned*, M4 |
 
 Event arguments never hold a secret value or a player name: threat events pass keys (`unitKey`, `mobKey`) into the

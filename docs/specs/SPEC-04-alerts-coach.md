@@ -239,12 +239,22 @@ prima vera in ordine di priorità.
   vicino alla soglia di rischio.*, *Il tank ha un margine sufficiente secondo i dati attuali.*, *Dati insufficienti per
   formulare un consiglio.*).
 - Con la previsione spenta da **[probe P4]** (SPEC-03 §2.2) D3 e T4 non valgono mai.
+- **Precisato in M3.3** (`Data/CoachRules.lua`): i messaggi della striscia non hanno il punto finale, come gli avvisi;
+  le motivazioni sono frasi intere. D3 vale anche quando l'elenco mostra un ATTENZIONE **previsto** (`predictedIn`, con
+  il tempo a `D`) con una tendenza fra 0 e 2 punti/s, perché il Coach non dica *Dati insufficienti* mentre l'elenco
+  prevede; la seconda forma (oltre 2 punti/s) usa il tempo al superamento e il 100 %. La motivazione di D5 dice *not
+  rising fast* / *non sale in fretta* invece di *steady or falling*, perché D5 vale fino a +2 punti/s. A1 ha anche
+  `COACH_WHY_MARGIN_UNKNOWN` (*Your margin over the second is not known.*) per il tank che tiene il mob senza margine
+  leggibile, e `WHY_LOW_CONFIDENCE` per una tendenza di confidenza bassa. `CoachRules.KEYS` dice per ogni chiave gli
+  argomenti in ordine (`s` nome, `d` intero, `f` un decimale, `c` la parola della confidenza): `Coach.Text` formatta con
+  quella e il test delle parole la controlla nelle due lingue.
 
 ### 2.3 Scelta, durata e cooldown (`Data/Coach.lua`)
 
 - **Quando**: a ogni `THREAT_UPDATED` (dopo `ThreatState`: Coach è più avanti nel TOC, quindi il suo ascoltatore viene
-  dopo), a `STATE_CHANGED` e `AGGRO_CHANGED` della riga del giocatore, a `TARGET_CHANGED`, `COMBAT_STARTED` e
-  `COMBAT_ENDED`. Una valutazione legge solo la riga del giocatore, il secondo e `ThreatState`, non alloca (ARC-06) e
+  dopo), a `COMBAT_ENDED`, `DEMO_CHANGED` e al cambio di `coach.enabled`. *Precisato in M3.3*: non a `STATE_CHANGED` e
+  `AGGRO_CHANGED`, che arrivano mentre `ThreatState` scrive ancora gli stati dello stesso aggiornamento;
+  `TARGET_CHANGED` e `COMBAT_STARTED` portano già un `THREAT_UPDATED` del modello. Una valutazione legge solo la riga del giocatore, il secondo e `ThreatState`, non alloca (ARC-06) e
   costa al più una decina di confronti.
 - **Solo in combattimento con un mob**: fuori dal combattimento, senza mob o con il giocatore fuori dalla lista il
   consiglio è **nessuno** (`COACH_TIP(nil)`) e la striscia torna a riposo (§3.1).
@@ -253,12 +263,18 @@ prima vera in ordine di priorità.
 - **COA-03** MUST: una regola con cooldown che lascia la striscia non torna prima del suo cooldown (8 s, 15 s per le
   rassicurazioni D5 e T7); intanto vale la regola successiva vera, o A1. Le regole con cooldown 0 (aggro, DANGER, tank
   dietro) sono fatti che si mostrano sempre quando sono veri: non lampeggiano perché gli stati sotto hanno isteresi e
-  permanenza (MON-10, MON-12).
+  permanenza (MON-10, MON-12). *Precisato in M3.3*: una regola interrotta da un fatto di priorità più alta **senza**
+  cooldown (aggro, DANGER, tank dietro o che perde il mob) non ha finito e non prende cooldown (da DANGER a WARNING il
+  consiglio di WARNING torna subito); interrotta da una regola con cooldown, sì. Mentre la regola vera aspetta il suo
+  cooldown **non c'è consiglio** (la striscia vuota di §3.1): A1 vale solo quando **nessuna** regola è vera e i dati
+  mancano (riga UNKNOWN, `none`, tank sconosciuto, margine sconosciuto, tendenza assente o di confidenza bassa); con i
+  dati presenti e nessuna regola vera, nessun consiglio. Spegnere il Coach nelle impostazioni dimentica i cooldown.
 - **Numeri**: con la stessa regola i numeri del testo (`%d`) si aggiornano al massimo una volta al secondo, perché il
   testo non tremi; `COACH_TIP` si emette solo quando cambia la regola o un numero mostrato.
-- Il consiglio (`tip`) è una tabella riusata: `{ rule, role, message, reason, args, otherKey, category, confidence,
-  priority, since, mobKey, demo }`; `args` ha al più tre numeri, `otherKey` la chiave dell'unità di `%s`. Mai nomi né
-  valori segreti (SPEC-01 §3.3).
+- Il consiglio (`tip`) è una tabella riusata: `{ rule, name, role, message, reason, args, nargs, reasonArgs, nreason,
+  otherKey, category, confidence, priority, since, mobKey, demo }`; `args` e `reasonArgs` (M3.3: i numeri del messaggio
+  e quelli della motivazione sono separati) hanno al più tre numeri, `otherKey` la chiave dell'unità di `%s` o `false`;
+  per A1 `category` e `confidence` sono `false`. Mai nomi né valori segreti (SPEC-01 §3.3).
 
 ### 2.4 Regole di scrittura
 
@@ -399,7 +415,7 @@ del monitor). I due interruttori sono indipendenti: il Coach senza avvisi e gli 
 | `Data/ThreatState.lua` (cambio) | `AGGRO_CHANGED` (§1.1): l'ultimo detentore noto per mob | emette `AGGRO_CHANGED(mobKey, unitKey, oldUnitKey)` | M3.2 |
 | `Data/Alerts.lua` | tipi (§1.2), cooldown e raffiche (§1.3), canali, suono attraverso Compat, silenzio, esclusioni, consumatore dello Scanner | ascolta `STATE_CHANGED`, `AGGRO_CHANGED`, `COMBAT_ENDED`, `CONFIG_LOADED`, `CONFIG_CHANGED`, `DEMO_CHANGED`; emette `ALERT_RAISED(alert)`, `MUTE_CHANGED(muted)` | M3.2 |
 | `Data/CoachRules.lua` | la tabella di §2.2: dati e condizioni, senza stato | — | M3.3 |
-| `Data/Coach.lua` | ruolo, scelta, cooldown, numeri (§2.3) | ascolta `THREAT_UPDATED`, `STATE_CHANGED`, `AGGRO_CHANGED`, `TARGET_CHANGED`, `COMBAT_STARTED`, `COMBAT_ENDED`, `CONFIG_CHANGED`; emette `COACH_TIP(tip)` (`nil` = nessun consiglio) | M3.3 |
+| `Data/Coach.lua` | ruolo, scelta, cooldown, numeri (§2.3), `Coach.Text` | ascolta `THREAT_UPDATED`, `COMBAT_ENDED`, `DEMO_CHANGED`, `CONFIG_LOADED`, `CONFIG_CHANGED`; emette `COACH_TIP(tip)` (`nil` = nessun consiglio) | M3.3 |
 | `UI/CoachStrip.lua` | la striscia (§3.1), costruita dalla vista di `UI/ThreatList.lua` | ascolta `ALERT_RAISED`, `COACH_TIP`, `MUTE_CHANGED`, `CONFIG_CHANGED`, `THEME_CHANGED` | M3.4 |
 | `UI/Window.lua` (cambio) | l'effetto del bordo (§3.2) | ascolta `ALERT_RAISED` | M3.4 |
 | `UI/Settings.lua`, `Core/Commands.lua`, `Bindings.xml` | card *Alerts*, `/atw mute`, il tasto, il menu della riga | — | M3.5 |

@@ -38,6 +38,8 @@ Data\ThreatCalc.lua
 Data\ThreatModel.lua
 Data\ThreatState.lua
 Data\Alerts.lua
+Data\CoachRules.lua
+Data\Coach.lua
 UI\Assets.lua
 UI\Theme.lua
 UI\Motion.lua

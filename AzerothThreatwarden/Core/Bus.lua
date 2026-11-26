@@ -24,7 +24,7 @@
 --   TARGET_CHANGED, THREAT_SCANNED, THREAT_UPDATED, STATE_CHANGED, THREAT_MODE_CHANGED     Data/ (M2)
 --   AGGRO_CHANGED(mobKey, unitKey, oldUnitKey)                                             Data/ThreatState.lua (M3.2)
 --   ALERT_RAISED(alert), MUTE_CHANGED(muted)                                               Data/Alerts.lua (M3.2)
---   COACH_TIP                                                                              Data/ (M3.3)
+--   COACH_TIP(tip)                                                                         Data/Coach.lua (M3.3)
 --   SESSION_STARTED, SESSION_ENDED, SESSIONS_CHANGED                                       Data/ (M4)
 local ADDON_NAME, ns = ...
 ns = ns or {}

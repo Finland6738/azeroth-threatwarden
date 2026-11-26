@@ -22,7 +22,8 @@ describe("defaults (SPEC-02 §3.2, §3.3)", function()
 		eq(AzerothThreatwardenCharDB.schema, 1)
 		deepEq(AzerothThreatwardenDB.settings, { language = "auto", theme = "nebula", effects = true, animations = true,
 			font = "addon", minimap = { hide = false, minimapPos = 200 },
-			monitor = Mock.ns.Config.MONITOR_DEFAULTS, alerts = Mock.ns.Config.ALERTS_DEFAULTS })
+			monitor = Mock.ns.Config.MONITOR_DEFAULTS, alerts = Mock.ns.Config.ALERTS_DEFAULTS,
+			coach = Mock.ns.Config.COACH_DEFAULTS })
 		deepEq(AzerothThreatwardenDB.corrupt, {})
 		deepEq(AzerothThreatwardenCharDB.ui, { shown = true, locked = false, scale = 1.0, size = {}, lastTab = "monitor",
 			lastPage = "settings" })
@@ -96,7 +97,8 @@ describe("wrong values (DAT-22)", function()
 		eq(#Mock.errors, 0)
 		deepEq(AzerothThreatwardenDB.settings, { language = "auto", theme = "nebula", effects = true, animations = true,
 			font = "addon", minimap = { hide = false, minimapPos = 200 },
-			monitor = Mock.ns.Config.MONITOR_DEFAULTS, alerts = Mock.ns.Config.ALERTS_DEFAULTS })
+			monitor = Mock.ns.Config.MONITOR_DEFAULTS, alerts = Mock.ns.Config.ALERTS_DEFAULTS,
+			coach = Mock.ns.Config.COACH_DEFAULTS })
 		local ui = AzerothThreatwardenCharDB.ui
 		eq(ui.shown, true)
 		eq(ui.locked, false)
@@ -716,7 +718,8 @@ describe("schema 3: the alert settings (SPEC-02 §3.6, SPEC-04 §4.1)", function
 		deepEq(C():Get("account.settings.alerts"), DEFAULTS)
 		deepEq(C().ALERTS_DEFAULTS, DEFAULTS)
 		eq(Mock.ns.Alerts.Cooldown(), 8)
-		isNil(C():Get("account.settings.coach"), "the Coach's come with M3.3")
+		deepEq(C():Get("account.settings.coach"), { enabled = true }, "the Coach's, M3.3")
+		deepEq(C().COACH_DEFAULTS, { enabled = true })
 	end)
 
 	it("migrate data of schema 2 (2 -> 3), keeping every value, once", function()
@@ -799,5 +802,43 @@ describe("schema 3: the alert settings (SPEC-02 §3.6, SPEC-04 §4.1)", function
 		Mock.Reload()
 		eq(C():Get(P .. "cooldown"), 20)
 		eq(Mock.ns.Alerts.Cooldown(), 20)
+	end)
+end)
+
+describe("schema 3: the Coach settings (SPEC-02 §3.6, SPEC-04 §4.1)", function()
+	before_boot(function(M) M.features = { monitor = true, coach = true } end)
+	local PATH = "account.settings.coach.enabled"
+
+	it("are added with their default, migrated from schema 2 and kept through a /reload", function()
+		eq(C():Get(PATH), true)
+		eq(Mock.ns.Coach.Enabled(), true)
+		boot(function(M)
+			M.features = { monitor = true, coach = true }
+			M.saved = { AzerothThreatwardenDB = { schema = 2, settings = { theme = "aurora" } } }
+		end)
+		eq(AzerothThreatwardenDB.schema, 3)
+		deepEq(AzerothThreatwardenDB.settings.coach, { enabled = true })
+		eq(#C().issues, 0)
+		truthy(C():Set(PATH, false))
+		eq(Mock.ns.Coach.Enabled(), false)
+		Mock.Reload()
+		eq(C():Get(PATH), false)
+		eq(Mock.ns.Coach.Enabled(), false)
+	end)
+
+	it("refuse a wrong value, and go back to the default at load and with Reset settings", function()
+		falsy(C():Set(PATH, "no"))
+		falsy(C():Set(PATH, 0))
+		eq(C():Get(PATH), true)
+		eq(select(2, C():Set("account.settings.coach", {})), "not a value")
+		boot(function(M)
+			M.saved = { AzerothThreatwardenDB = { schema = 3, settings = { coach = { enabled = "x", other = 1 } } } }
+		end)
+		deepEq(AzerothThreatwardenDB.settings.coach, { enabled = true, other = 1 })
+		boot(function(M) M.saved = { AzerothThreatwardenDB = { schema = 3, settings = { coach = 5 } } } end)
+		deepEq(AzerothThreatwardenDB.settings.coach, { enabled = true })
+		truthy(C():Set(PATH, false))
+		truthy(C():ResetSettings())
+		eq(C():Get(PATH), true)
 	end)
 end)

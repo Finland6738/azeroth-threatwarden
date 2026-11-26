@@ -72,8 +72,15 @@ them (SPEC-04 §4.3).
   cooldowns, numbers at most once a second, `COACH_TIP`); `settings.coach.enabled` (`Config.COACH_DEFAULTS`); the
   `COACH_*` locale keys in both languages following SPEC-04 §2.4; the Coach part of `/atw debug`.
 - Done when:
-  - [ ] Every rule fires only on its condition and role; predictions only with medium or high confidence; "Not enough
+  - [x] Every rule fires only on its condition and role; predictions only with medium or high confidence; "Not enough
     data for advice" with its reason when the player's row is unknown; no message names a cause or an ability.
+- *Done (2026-11-26, before M0.7): `Data/CoachRules.lua` (T1–T7, D1–D5, A1, the arguments of every key) and
+  `Data/Coach.lua` behind the `coach` switch (role, choice by priority, cooldowns, numbers at most once a second,
+  `COACH_TIP`, `Coach.Text` for M3.4); `settings.coach.enabled` (`Config.COACH_DEFAULTS`, no new migration step); 35
+  `COACH_*` keys in both languages; the Coach lines in *Alerts and Coach* of `/atw debug`. Refined in SPEC-04 §2.2–§2.3
+  and SPEC-09 Q11: no tip (not A1) while the rule that holds waits for its cooldown; no cooldown for a rule interrupted
+  by a fact without one; D3 also on the list's predicted Warning. Tests: `test_coach.lua`, `test_coach_wording.lua`,
+  `test_config.lua`.*
 - Tests: `test_coach.lua` (each rule, each role, the *state only* forms, cooldowns, SPEC-04 §2.5),
   `test_coach_wording.lua` (WR-01–WR-07 on every `COACH_*` and `ALERT_*` key, both languages).
 - Real client: whether the messages help in a real fight (Q11); the roles in a group (P9).

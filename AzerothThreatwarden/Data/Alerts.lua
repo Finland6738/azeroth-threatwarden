@@ -504,6 +504,9 @@ function Alerts.DebugLines()
 	local warn = Compat.api and Compat.api["threat.WarningEnabled"]
 	lines[#lines + 1] = ("threat.WarningEnabled: %s%s"):format(tostring(warn and warn.state or "unknown"),
 		warn and warn.value and (" = " .. warn.value) or "")
+	if ns.Coach then   -- the Coach's part (Data/Coach.lua, loaded after this file)
+		for _, line in ipairs(ns.Coach.DebugLines()) do lines[#lines + 1] = line end
+	end
 	return lines
 end
 
