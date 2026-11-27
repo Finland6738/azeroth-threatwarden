@@ -186,7 +186,11 @@ character schema 2.
   copied, pasted into Discord and opened in a spreadsheet; names replaced; the box with a long fight's readings; the
   table at small sizes and in Italian; Q22–Q24 and Q15 tuning notes); the checklists index; README status.
 - Done when:
-  - [ ] The checklist covers every "Real client" line of M6.2–M6.5 and the exit criterion.
+  - [x] The checklist covers every "Real client" line of M6.2–M6.5 and the exit criterion.
+- *Done (2026-11-27, before M0.7): [docs/checklists/M6.md](../checklists/M6.md) (switches on in the installed copy,
+  backup, recordings, the card in the three outcomes, *Insufficient data*, unstable intervals, comparison, sizes and
+  Italian, every export content and format, names replaced, a long fight, tuning of Q15 and Q22–Q24, a table of open
+  points); checklists index, README status and changelog. Not run in the game.*
 
 ### M6.R — Release preparation `v0.6.0`
 - Branch: `chore/release-v0.6.0`

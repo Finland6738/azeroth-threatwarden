@@ -24,7 +24,8 @@ ciò che è **noto** da ciò che è **stimato**.
 > [comandi](docs/wiki/Commands-it.md) `/atw` e `/threatwarden`, il pulsante della minimappa e la voce nell'Addon
 > Compartment. È controllata solo da test offline: la sonda M0 e le verifiche in gioco della
 > [M1](docs/checklists/M1.md), della [M2](docs/checklists/M2.md), della [M3](docs/checklists/M3.md), della
-> [M4](docs/checklists/M4.md) e della [M5](docs/checklists/M5.md) (in inglese) sono ancora aperte. La
+> [M4](docs/checklists/M4.md), della [M5](docs/checklists/M5.md) e della [M6](docs/checklists/M6.md) (Analytics ed
+> esportazione, non ancora rilasciati; tutte in inglese) sono ancora aperte. La
 > [sonda](docs/spike/README.md) (uno strumento di sviluppo, mai distribuito) verifica nel client vero quali dati di
 > threat WoW Forever dà a un addon, perché in alcune situazioni il client può nascondere i valori agli addon: il client e
 > le funzioni della threat, compreso se i loro valori sono segreti (P1–P4), quali unità e mob rispondono, gli eventi

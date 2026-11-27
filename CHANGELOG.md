@@ -7,6 +7,11 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
+- M6.6: the **in-game checklist of M6** ([docs/checklists/M6.md](docs/checklists/M6.md)), not run yet: how to turn
+  the `analytics` and `export` switches on in the installed copy and back up the saved data, the Analytics card and
+  the comparison, *Insufficient data*, the unstable intervals, every export content and format, names replaced, a long
+  fight in the export box, small sizes and Italian, and the tuning notes of Q15 and Q22–Q24. Nothing changes in the
+  addon.
 - M6.2: the **metrics of one fight** for Threat Analytics (`Data/Metrics.lua`), behind the `analytics` switch, which
   stays off until `v0.6.0`: nothing of it is visible yet. It reads a recorded fight and gives its context, the readable
   samples and how much of combat the enemy was monitored, the threshold crossings of the units with enough data, the
