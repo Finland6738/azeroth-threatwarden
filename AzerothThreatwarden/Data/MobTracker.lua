@@ -207,6 +207,7 @@ local function newEntry(key, guid, now)
 	entry.enteredAt, entry.lastTokenAt, entry.lastOnListAt = now, now, now
 	entry.state, entry.reason, entry.stateSince, entry.selfState, entry.holderKey = nil, nil, 0, nil, nil
 	entry.name, entry.classification, entry.nameAt = nil, nil, -huge
+	entry.targetName, entry.targetAt = nil, -huge
 	clearReading(entry)
 	byKey[key] = entry
 	if guid then byGuid[guid] = entry end
@@ -288,7 +289,7 @@ removeEntry = function(entry, why)
 	goneKey, goneWhy = entry.key, why
 	entry.key, entry.guid, entry.monitored = nil, nil, false
 	entry.holder, entry.top, entry.selfRec = nil, nil, nil
-	entry.name, entry.classification = nil, nil
+	entry.name, entry.classification, entry.targetName = nil, nil, nil
 	pool[#pool + 1] = entry
 end
 
@@ -582,6 +583,43 @@ end
 -- The entry of a key (read only), nil when the mob is not known.
 function MobTracker.Get(key) return byKey[key] end
 
+-- The token to ask about a listed mob now: the monitor's own for the monitored mob, else one checked against its GUID.
+local function askToken(entry, now)
+	if entry.monitored then return RealTracker and RealTracker.mobToken end
+	return tokenFor(entry, now)
+end
+
+-- Name and classification of a listed mob (SPEC-07 §1.3), asked at most once a second: nil when secret or unknown. A mob
+-- that no token names keeps what was read last.
+function MobTracker.NameOf(key)
+	local entry = byKey[key]
+	if not entry then return nil, nil end
+	local now = Compat.Now()
+	if now - entry.nameAt >= 1 - 1e-9 then
+		local token = askToken(entry, now)
+		if token then
+			entry.nameAt = now
+			entry.name = (Unit.Name(token))
+			entry.classification = (Unit.Classification(token))
+		end
+	end
+	return entry.name, entry.classification
+end
+
+-- The name of the unit a listed mob targets (SPEC-07 §2.4: who holds it when no watched unit does), asked at most once
+-- a second; nil when secret, unknown or the mob has no token now.
+function MobTracker.TargetName(key)
+	local entry = byKey[key]
+	if not entry then return nil end
+	local now = Compat.Now()
+	if now - entry.targetAt >= 1 - 1e-9 then
+		local token = askToken(entry, now)
+		entry.targetAt = now
+		entry.targetName = token and (Unit.Name(targetOf(token))) or nil
+	end
+	return entry.targetName
+end
+
 -- The rows of a listed mob (read only) and their count: its slot's rows, or the monitor's records for the monitored mob;
 -- nil for a mob without a place. A row counts only when row.mobKey is the mob's key (Data/MobRisk.lua).
 function MobTracker.Rows(key)
@@ -628,6 +666,7 @@ local function readRow(row, srec, token, key, interval)
 		row.mobKey, row.observedAt = nil, 0
 	end
 	row.unitToken, row.unitKey, row.role, row.always = srec.unitToken, srec.unitKey, srec.role, srec.always
+	row.unitName, row.classFile = srec.unitName, srec.classFile
 	row.mode = Threat.Read(srec.unitToken, token, row)
 	row.mobKey, row.scanned, row.stale, row.interval = key, true, false, interval
 	tickReads = tickReads + 1

@@ -7,6 +7,17 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
+- M7.3: the **Dungeon Focus view**, behind the `multitarget` switch, which stays off until `v0.7.0`: with the switch off
+  nothing of it is visible. In combat a **pull bar** under the header of the Monitor tab says how many mobs are followed
+  and the riskiest one besides the monitored (*On Mage*, *Close*, *No tank*), *All safe*, or, when the game lets only
+  part of the pull be read, *Focus and boss only*, *Only your target can be read here* or *Threat cannot be read here*,
+  with the reason in the tooltip; it never says *All safe* while something is unknown. It opens the **list** in place of
+  the threat list: one line per mob by risk (reordered at most once a second, at once on Danger) with state, name, who
+  holds it, the closest of the others, percentage and margin, the monitored mob ringed, unknown mobs dashed with their
+  reason, *+N more*, and a footer with the reach and the age. A click **pins** a mob as the one the monitor follows (a
+  pin in the header releases it; your game target never changes). A **Dungeon Focus** card in Settings (track other
+  mobs, mobs followed, enemy nameplates), `/atw focus`, an invented pull of five mobs in the demo, the `pull` and `pin`
+  icons, the wiki page *Dungeon Focus* in both languages and design previews in three themes. Not verified in the game.
 - M7.2: the **multi-mob tracker** (`Data/MobTracker.lua`, `Data/MobRisk.lua`), behind the `multitarget` switch, which
   stays off until `v0.7.0`: nothing of it is visible yet, and with the switch off it registers no game event and reads
   nothing. In combat it finds the other mobs of a pull from your focus, the bosses, your group's targets and the enemy

@@ -15,6 +15,8 @@
 -- Order (SPEC-03 §3): "relative" (default), "absolute", "risk", "change"; UNKNOWN rows last, ties in roster order, the
 -- player first with "pin me on top"; computed at most once a second and at once when a row enters DANGER (MON-13). The
 -- order and the pin are `account.settings.monitor.sort` and `.pinSelf`; on read-only data they last for the session.
+-- With the `multitarget` switch on, UI/FocusList.lua adds the pull bar under the header (SPEC-07 §2.3), its list takes
+-- the place of the threat list while open, and the header shows the `pin` icon of a pinned mob (a click releases it).
 -- With the `alerts` switch on, a right click on a row of another unit opens *Mute alerts about this unit* (SPEC-04
 -- §1.5, until the /reload); the tooltip of a muted row says so.
 -- During the demo (Core/Demo.lua) the data modules it reads are the invented ones and the footer says so.
@@ -510,6 +512,7 @@ function View:Layout(width, height)
 	self.reason:SetWidth(width - 8)
 	self.quality:SetWidth(width - 16)
 	if self.strip then self.strip.contentWidth = width end
+	if self.focus then self.focus:Layout(width, self.focus.listHeight or 0) end
 	self:Redraw()
 	if self.strip then self.strip:Update() end
 end
@@ -664,12 +667,22 @@ local function drawHeader(view, situation)
 		class = key and L[key]
 	end
 	title = title or L.MON_NO_TARGET
+	local pinned = ns.Features and ns.Features.On("multitarget") and ns.TargetTracker.Pinned
+		and ns.TargetTracker.Pinned() ~= nil and ns.TargetTracker.Pinned() == ns.TargetTracker.mobKey
+	pinned = pinned == true
+	show(view.unpin, pinned)
+	if view.headerPinned ~= pinned then
+		view.headerPinned = pinned
+		view.mobLayout = nil
+		view.mob:ClearAllPoints()
+		view.mob:SetPoint("TOPLEFT", view.header, "TOPLEFT", pinned and 14 or 0, -1)
+	end
 	if view.mob.shownText ~= title or view.mobLayout ~= view.layoutVersion then
 		setText(view, view.mob, title)
 		-- as wide as its text (the kind sits right after it), cut when it does not fit
 		view.mobLayout = view.layoutVersion
 		view.mob:SetWidth(0)
-		view.mob:SetWidth(min(view.mob:GetStringWidth() + 1, view.mobMax))
+		view.mob:SetWidth(min(view.mob:GetStringWidth() + 1, view.mobMax - (pinned and 14 or 0)))
 	end
 	show(view.class, class ~= nil)
 	if class then setText(view, view.class, class) end
@@ -750,6 +763,8 @@ local function drawFooter(view, situation)
 		else text = L[stateOnly and "MON_QUALITY_STATE_NONE" or "MON_QUALITY_NONE"]:format(age) end
 		if (valid and valid < 50) or age > 2 / Scanner.Rate() then token = "warn" end
 	end
+	local focus = view.focus
+	if focus and focus.open and not (ns.Demo and ns.Demo.IsActive()) then text, token = focus:Footer() end
 	view.valid = valid
 	setText(view, view.quality, text)
 	ink(view.quality, token)
@@ -871,27 +886,77 @@ local function drawRows(view, situation)
 	if reason then setText(view, view.reason, reason) end
 end
 
--- Places the Coach strip (UI/CoachStrip.lua) between the header and the list header while it is present. In a window
--- so low that the list would have fewer than two rows, the list header gives its room to the rows (SPEC-04 §3.1).
+-- Places the pull bar of the Dungeon Focus (UI/FocusList.lua) and the Coach strip (UI/CoachStrip.lua) between the
+-- header and the list header while they are present. In a window so low that the list would have fewer than two rows,
+-- the list header gives its room to the rows (SPEC-04 §3.1). The open list of the Dungeon Focus takes the whole room of
+-- the list header and the list (SPEC-07 §2.3); it closes when the bar goes.
 function View:Arrange()
-	local strip = self.strip
+	local strip, focus = self.strip, self.focus
 	local present = strip ~= nil and ns.CoachStrip.Present()
+	local pull = focus ~= nil and ns.FocusList.Present()
+	if focus and not pull then focus.open = false end
+	local listOpen = pull and focus.open
 	local height = present and ns.CoachStrip.HEIGHT or 0
+	if pull then height = height + ns.FocusList.BAR_HEIGHT end
 	local room = (self.contentHeight or 0) - self.headerHeight - height - ThreatList.LISTHEAD_HEIGHT
 		- ThreatList.FOOTER_HEIGHT
-	local short = present and floor(room / ThreatList.ROW_HEIGHT) < 2
+	local short = (present or pull) and floor(room / ThreatList.ROW_HEIGHT) < 2
 	self.stripHeight = height
 	self.listHeadHeight = short and 0 or ThreatList.LISTHEAD_HEIGHT
-	if present == self.stripPresent and short == self.shortList then return end
-	self.stripPresent, self.shortList = present, short
-	local above = present and strip or self.header
+	if focus then
+		self.focusPresent = pull
+		focus:Layout(self.contentWidth or 0, room + ThreatList.LISTHEAD_HEIGHT)
+	end
+	if present == self.stripPresent and short == self.shortList and pull == self.pullPlaced
+		and listOpen == self.listOpen then
+		return
+	end
+	self.stripPresent, self.shortList, self.pullPlaced, self.listOpen = present, short, pull, listOpen
+	local above = self.header
+	if pull then
+		focus.bar:ClearAllPoints()
+		focus.bar:SetPoint("TOPLEFT", above, "BOTTOMLEFT", 0, 0)
+		focus.bar:SetPoint("TOPRIGHT", above, "BOTTOMRIGHT", 0, 0)
+		above = focus.bar
+	end
+	if present then
+		strip:ClearAllPoints()
+		strip:SetPoint("TOPLEFT", above, "BOTTOMLEFT", 0, 0)
+		strip:SetPoint("TOPRIGHT", above, "BOTTOMRIGHT", 0, 0)
+		above = strip
+	end
 	self.listHead:ClearAllPoints()
 	self.listHead:SetPoint("TOPLEFT", above, "BOTTOMLEFT", 0, 0)
 	self.listHead:SetPoint("TOPRIGHT", above, "BOTTOMRIGHT", 0, 0)
 	self.list:ClearAllPoints()
 	self.list:SetPoint("TOPLEFT", short and above or self.listHead, "BOTTOMLEFT", 0, 0)
 	self.list:SetPoint("BOTTOMRIGHT", self, "BOTTOMRIGHT", 0, ThreatList.FOOTER_HEIGHT)
+	if focus then
+		show(focus.bar, pull)
+		show(focus.list, listOpen)
+		show(self.list, not listOpen)
+		if listOpen then
+			focus.list:ClearAllPoints()
+			focus.list:SetPoint("TOPLEFT", above, "BOTTOMLEFT", 0, 0)
+			focus.list:SetPoint("BOTTOMRIGHT", self, "BOTTOMRIGHT", 0, ThreatList.FOOTER_HEIGHT)
+		end
+	end
 	if strip then show(strip, present) end
+end
+
+-- The Dungeon Focus has read the pull again (MOBS_UPDATED): the bar and its list are drawn, and the whole view only when
+-- the bar comes or goes. A hidden view only notes that it is out of date.
+function View:MobsUpdated()
+	if not self.columns then return end
+	if not self:IsVisible() then
+		self.dirty = true
+		return
+	end
+	if ns.FocusList.Present() ~= (self.focusPresent == true) then return self:Redraw() end
+	if self.focusPresent then
+		self.focus:Draw()
+		if self.focus.open then drawFooter(self, self.situation or ThreatList.Situation()) end
+	end
 end
 
 -- Draws the view from the Data modules. A hidden view only notes that it is out of date.
@@ -907,7 +972,12 @@ function View:Redraw()
 	self.situation = situation
 	drawHeader(self, situation)
 	self:Arrange()
-	drawRows(self, situation)
+	if self.listOpen then
+		show(self.listHead, false)
+	else
+		drawRows(self, situation)
+	end
+	if self.focusPresent then self.focus:Draw() end
 	drawFooter(self, situation)
 end
 
@@ -961,6 +1031,14 @@ function ThreatList.Build(page)
 	view.mob:SetPoint("TOPLEFT", header, "TOPLEFT", 0, -1)
 	view.badge = Widgets.StateBadge(header, { large = true, state = "unknown" })
 	view.badge:SetPoint("TOPRIGHT", header, "TOPRIGHT", 0, 0)
+	view.unpin = CreateFrame("Button", nil, header)
+	view.unpin:SetSize(14, 14)
+	view.unpin:SetPoint("TOPLEFT", header, "TOPLEFT", -1, -1)
+	view.unpin.icon = iconTexture(view.unpin, "pin", 12, "accent-text")
+	view.unpin.icon:SetPoint("CENTER", view.unpin, "CENTER", 0, 0)
+	view.unpin:SetScript("OnClick", function() ns.TargetTracker.Pin(nil) end)
+	Widgets.Tooltip.Attach(view.unpin, L.FOCUS_PIN_TIP, "BOTTOM")
+	view.unpin:Hide()
 	view.class = line(header, "Small", "text-3")
 	view.class:SetPoint("LEFT", view.mob, "RIGHT", 4, 0)
 	view.tankIcon = iconTexture(header, "tank", 10, "text-2")
@@ -979,6 +1057,8 @@ function ThreatList.Build(page)
 		view.strip:SetPoint("TOPLEFT", header, "BOTTOMLEFT", 0, 0)
 		view.strip:SetPoint("TOPRIGHT", header, "BOTTOMRIGHT", 0, 0)
 	end
+
+	if ns.FocusList then view.focus = ns.FocusList.Build(view) end
 
 	view.listHead = CreateFrame("Frame", nil, view)
 	view.listHead:SetHeight(ThreatList.LISTHEAD_HEIGHT)

@@ -312,6 +312,18 @@ Nella scheda **Monitor** (compatta), costruite da `UI/ThreatList.lua` come la st
 - La vista legge solo `MobTracker`, `MobRisk` e `TargetTracker` (nessuna API del gioco, ARC-02); si ridisegna a
   `MOBS_UPDATED` solo se è visibile, e scrive un testo solo quando cambia.
 - Senza mob (fuori dal combattimento, o un solo mob) la barra non c'è e la lista, se era aperta, torna all'elenco.
+- *M7.3* **La barra, ordine delle frasi**: (1) il mob più a rischio diverso dal monitorato in DANGER o WARNING, con il
+  motivo (`near`: *Getting close*); (2) con portata `unknown`, *Reading the pull…*; (3) con la portata ridotta, la frase
+  di §1.4 (mai *All safe* quando non tutto si può leggere); (4) se tutti gli altri sono UNKNOWN, il distintivo UNKNOWN
+  e il motivo breve; (5) se qualcuno è UNKNOWN, *All safe · N unknown* con il distintivo UNKNOWN; (6) *All safe*. La
+  **portata è ridotta** per `none` sempre, per `focus-boss` e `target` solo se c'è un motivo (così un combattimento con
+  un solo mob non è una riduzione). *In un gruppo* vuol dire che le unità dello Scanner hanno un membro `party` o
+  `raid`.
+- *M7.3* La lista mostra le righe che entrano nell'altezza (al più 12); in una finestra di 300 × 220 ne entrano tre e
+  *+N more*. In una finestra stretta restano distintivo, nome, icona di chi lo tiene, percentuale e, per un mob
+  UNKNOWN, il motivo breve nella riga. Chi lo tiene, quando nessuna unità osservata lo tiene, è il bersaglio del mob
+  (`MobTracker.TargetName`, *… (not in the list)*). L'ordine nasce nella vista (`Focus:Order`); nomi e classificazioni
+  da `MobTracker.NameOf`, al più una volta al secondo.
 
 ### 2.4 Clic per monitorare: il mob fissato (`TargetTracker.Pin`)
 
@@ -370,9 +382,12 @@ monitorato, con un tipo nuovo, `mob`:
   other mobs* (`alerts.onlyTarget` al contrario). Con dati in sola lettura come le altre card (*Not saved*).
 - **`/atw focus`** (M7.3): apre la finestra sulla scheda Monitor con la lista aperta; di nuovo la chiude. Con
   l'interruttore spento *This arrives in v0.7.0.*; con l'impostazione spenta *Other mobs are off in Settings.*
+  *M7.3*: quando non c'è la barra (fuori dal combattimento, un solo mob) apre la finestra e risponde *No other mobs to
+  show right now.*
 - **Demo** (M7.3): `Data/Demo.lua` aggiunge un pull inventato di cinque mob (uno sciolto su un DPS, uno vicino a
   strappare, uno senza tank, uno segreto, uno senza token), con la portata `all`; `Core/Demo.lua` mette un tracker
-  inventato in `ns.MobTracker` come fa con lo Scanner. Nulla letto, nulla salvato.
+  inventato in `ns.MobTracker` come fa con lo Scanner. Nulla letto, nulla salvato. *M7.3*: i cinque mob si aggiungono
+  al golem monitorato (*Pull · 6*); nella demo un mob non si fissa (il tooltip lo dice).
 - **`/atw debug`**, sezione *Mobs* (M7.2, gli avvisi M7.4): interruttore e impostazioni, attivo o no, portata e motivo,
   posti usati sul limite, letture dell'ultimo tick e media, turni, mob `secret`, `no-token` e `pending`, eventi per
   genere di token, letture per fonte e modalità, mob fissato sì o no, avvisi `mob` emessi. Mai nomi né GUID.

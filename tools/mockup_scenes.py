@@ -38,6 +38,8 @@ ICONS = {
     "predict": '<path d="M2 12h.01M8 12h.01"/><path d="M14 6l8 6-8 6z" fill="currentColor" stroke="none"/>',
     "check": '<path d="M4 12l5 5L20 6"/>', "minus": '<path d="M5 12h14"/>',
     "mute": '<path d="M6 9a6 6 0 0 1 12 0c0 6 2 7 2 8H4c0-1 2-2 2-8zM10 21h4"/><path d="M3 3l18 18"/>',
+    "pull": '<circle cx="5" cy="15" r="4" fill="currentColor" stroke="none"/><circle cx="12" cy="9" r="4.6" fill="currentColor" stroke="none"/><circle cx="19" cy="15" r="4" fill="currentColor" stroke="none"/>',
+    "chevron": '<path d="M9 4l8 8-8 8"/>', "arrow_down": '<path d="M12 4v16M5 13l7 7 7-7"/>',
     "coach": '<path d="M4 4h16a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-9l-6 5v-5H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z"/><circle cx="12" cy="10.5" r="2" fill="currentColor"/>',
 }
 CLASS = {"warrior": "#C69B6D", "mage": "#3FC7EB", "priest": "#FFFFFF", "rogue": "#FFF468"}
@@ -763,6 +765,75 @@ def about(theme):
     return page(theme, 1, cards, LEFT) + page(theme, 1, cards, RIGHT, 316)
 
 
+# ---- the Dungeon Focus (UI/FocusList.lua, SPEC-07 §2.3). Invented mobs. -----------------------------------------------
+
+def pull_bar(count, state=None, word="", open_=False, text3=False):
+    lead = badge(state) if state else ""
+    ink = "var(--text-3)" if text3 else "var(--text-1)"
+    return (f'<div class="pull">{icon("pull", 12)}<span class="count">{esc(T("FOCUS_PULL", count))}</span>{lead}'
+            f'<span class="word" style="color:{ink}">{esc(word)}</span>{icon("arrow_down" if open_ else "chevron")}</div>')
+
+
+def focus_row(name, state, holder=None, tank=True, closest=None, percent=None, margin=None, why=None, me=False,
+              kind=None):
+    width = 82 if lib.LANG[0] == "itIT" else 66
+    unknown = state == "unknown"
+    sub = f' <small>{esc(kind)}</small>' if kind else ""
+    out = (f'<span class="stripe" style="background:var(--state-{state})"></span>'
+           f'<span class="badgebox" style="width:{width}px;justify-content:flex-start">{badge(state)}</span>'
+           f'<span class="fname"{" style=\'color:var(--text-3)\'" if unknown else ""}>{esc(name)}{sub}</span>')
+    if unknown:
+        out += f'<span class="fwhy">{esc(why)}</span><span class="fpct" style="color:var(--text-3)">{esc(T("FOCUS_UNKNOWN_MARK"))}</span>'
+    else:
+        mark = (f'<span style="color:var(--{"text-2" if tank else "state-warning"});display:grid">'
+                f'{icon("tank" if tank else "state-warning")}</span>') if holder else '<span style="width:10px"></span>'
+        out += (f'{mark}<span class="fholder">{esc(holder or "")}</span><span class="fclose">{esc(closest or T("MON_DASH"))}</span>'
+                f'<span class="fpct">{esc(f"{percent} %" if percent is not None else T("MON_DASH"))}</span>'
+                f'<span class="fmargin">{esc(f"+{margin}" if margin is not None else T("MON_DASH"))}</span>')
+    cls = "frow" + (" self" if me else "") + (" unknown" if unknown else "")
+    return f'<div class="{cls}">{out}</div>'
+
+
+def focus_head():
+    return mon_head("Gorrak", T("MON_CLASS_BOSS"), "safe", T("MON_TANK", "Bram"), "+29")
+
+
+def focus_bar(theme):
+    rows = [mon_row(theme, "Bram", "warrior", "tank", "safe", 100, holder=True),
+            mon_row(theme, "Kor", "rogue", "dps", "safe", 71, trend="up"),
+            mon_row(theme, T("UNIT_YOU"), "mage", "dps", "safe", 30, me=True, trend="flat"),
+            mon_row(theme, "Sela", "priest", "healer", "safe", 8, trend="flat")]
+    body = focus_head() + pull_bar(6, "danger", T("FOCUS_BADGE_AGGRO", "Kor")) + mon_list(rows)
+    lines = [T("FOCUS_PULL", 6), T("DEMO_MOB_LOOSE"), T("FOCUS_WHY_AGGRO"), T("FOCUS_BAR_OPEN")]
+    return mon_window(theme, "live", body, quality(100)) + tip(lines, 200)
+
+
+def focus_list(theme):
+    rows = [focus_row(T("DEMO_MOB_LOOSE"), "danger", "Kor", False, "Bram", 64, 36),
+            focus_row(T("DEMO_MOB_CLOSE"), "danger", "Bram", True, T("UNIT_YOU"), 94, 6),
+            focus_row(T("DEMO_MOB_NO_TANK"), "warning", None, True, "Sela", 55, 45),
+            focus_row("Gorrak", "safe", "Bram", True, "Kor", 71, 29, me=True),
+            focus_row(T("DEMO_MOB_SECRET"), "unknown", why=T("FOCUS_SHORT_SECRET")),
+            focus_row(T("DEMO_MOB_GONE"), "unknown", why=T("FOCUS_SHORT_NO_TOKEN"))]
+    body = focus_head() + pull_bar(6, "danger", T("FOCUS_BADGE_AGGRO", "Kor"), open_=True) + "".join(rows)
+    foot = T("FOCUS_FOOTER", T("FOCUS_REACH_ALL"), 6, 8, 0.4)
+    lines = [T("DEMO_MOB_CLOSE"), T("TIP_STATE", T("STATE_DANGER"), T("CAT_CALCULATED")), T("FOCUS_WHY_CLOSE"),
+             T("FOCUS_TIP_HOLDER", category("Bram", "CAT_DETECTED")),
+             T("FOCUS_TIP_CLOSEST", category(T("UNIT_YOU") + ", 94 %", "CAT_DETECTED")),
+             T("FOCUS_TIP_MARGIN", category("+6", "CAT_CALCULATED")), T("TIP_READ", 0.2),
+             T("FOCUS_TIP_SOURCE", T("FOCUS_SOURCE_GROUP")), T("TIP_MODE", T("MODULE_LIVE")), T("FOCUS_CLICK_PIN")]
+    html = mon_window(theme, "live", body, foot)   # a window dragged taller: every mob of the pull on screen
+    return html.replace("transform-origin:0 0", "transform-origin:0 0;height:266px", 1) + tip(lines, 190)
+
+
+FOCUS_KINDS = [
+    ("focus-bar", focus_bar, THEMES, "The pull bar of the Dungeon Focus: the count and the mob most at risk",
+     "La barra del pull del Dungeon Focus: il numero e il mob più a rischio"),
+    ("focus-list", focus_list, THEMES,
+     "The list of the Dungeon Focus: by risk, the monitored mob ringed, unknown mobs with their reason",
+     "L'elenco del Dungeon Focus: per rischio, il mob monitorato con l'anello, i mob sconosciuti con il motivo"),
+]
+
 COACH_KINDS = [
     ("coach-dps", coach_dps, ["nebula", "warden"],
      "The Coach strip of a damage dealer: a predicted rise with its confidence",
@@ -1062,7 +1133,7 @@ for _lang in ("enUS", "itIT"):
             _name = f"{_kind}-{_theme}" + ("-it" if _lang == "itIT" else "")
             _caption = f"{_en if _lang == 'enUS' else _it} ({THEME_NAMES[_theme]})"
             SCENES.append((_name, _caption, (lambda f=_fn, t=_theme: f(t)), _lang, _theme))
-    for _kind, _fn, _themes, _en, _it in MONITOR_KINDS + COACH_KINDS + REPORT_KINDS + REPLAY_KINDS + ANALYTICS_KINDS:
+    for _kind, _fn, _themes, _en, _it in MONITOR_KINDS + FOCUS_KINDS + COACH_KINDS + REPORT_KINDS + REPLAY_KINDS + ANALYTICS_KINDS:
         for _theme in _themes:
             _name = f"{_kind}-{_theme}" + ("-it" if _lang == "itIT" else "")
             _caption = f"{_en if _lang == 'enUS' else _it} ({THEME_NAMES[_theme]})"

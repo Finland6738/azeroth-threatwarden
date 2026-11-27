@@ -188,6 +188,15 @@ end
 -- "no-token"); Pin(nil) returns whether a pin was released.
 local PINNABLE = { "^mob:", "^tok:focus:%d+$", "^tok:boss[1-5]:%d+$" }
 
+-- true when a mob with this key can be pinned: a GUID key, or the stable token of a mob without a readable GUID.
+function TargetTracker.CanPin(mobKey)
+	if type(mobKey) ~= "string" then return false end
+	for _, pattern in ipairs(PINNABLE) do
+		if mobKey:find(pattern) then return true end
+	end
+	return false
+end
+
 function TargetTracker.Pin(mobKey)
 	if mobKey == nil then
 		if not releasePin() then return false end
@@ -195,11 +204,7 @@ function TargetTracker.Pin(mobKey)
 		return true
 	end
 	if not (multitarget() and TargetTracker.enabled) or type(mobKey) ~= "string" then return false, "off" end
-	local followable = false
-	for _, pattern in ipairs(PINNABLE) do
-		if mobKey:find(pattern) then followable = true break end
-	end
-	if not followable then return false, "no-identity" end
+	if not TargetTracker.CanPin(mobKey) then return false, "no-identity" end
 	if mobKey == TargetTracker.mobKey then return false, "monitored" end
 	local MT = ns.MobTracker
 	local token = MT and MT.TokenOf and MT.TokenOf(mobKey)
@@ -276,7 +281,13 @@ function TargetTracker.MobClassification()
 end
 
 function TargetTracker.HolderName()
-	local of = TARGET_OF[TargetTracker.mobToken or ""]
+	local token = TargetTracker.mobToken or ""
+	local of = TARGET_OF[token]
+	if not of and token ~= "" and TargetTracker.pinned then
+		-- a pinned mob (SPEC-07 §2.4): "focustarget", "boss1target", "nameplate3target", each made once
+		of = token .. "target"
+		TARGET_OF[token] = of
+	end
 	if not of then return nil end
 	return (Unit.Name(of))
 end

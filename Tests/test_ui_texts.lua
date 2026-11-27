@@ -198,3 +198,41 @@ describe("the screens in Italian", function()
 		deepEq(found, {})
 	end)
 end)
+
+describe("nothing on screen without a locale key, with the Dungeon Focus", function()
+	before_boot(function(M)
+		M.features = { monitor = true, multitarget = true, recording = false }
+		M.OnFilesLoaded(function() mark("enUS") end)
+	end)
+
+	it("in the pull bar, the list, their tooltips and the Settings card", function()
+		local ATW = AzerothThreatwarden
+		ATW.Window:Open()
+		ATW.Demo.Start()
+		Mock.Advance(0.3)
+		truthy(ATW.FocusList.SetOpen(true))
+		local view = ATW.ThreatList.view
+		view:Layout(420, 320)
+		local shown = texts({ view })
+		local function tooltipOf(widget)
+			Mock.RunScript(widget, "OnEnter")
+			for _, line in ipairs(ATW.Widgets.Tooltip.Lines()) do shown[#shown + 1] = line end
+		end
+		tooltipOf(view.focus.bar)
+		for _, w in ipairs(view.focus.rows) do
+			if w:IsShown() then tooltipOf(w) end
+		end
+		ATW.Window:SelectTab("settings")
+		for _, text in ipairs(texts({ ATW.Window.frame.pages.settings })) do shown[#shown + 1] = text end
+		local bad = {}
+		for _, text in ipairs(shown) do
+			-- the invented names of the demo's units are not language
+			local plain = text:gsub("Brannok", ""):gsub("Sela", ""):gsub("Kor", ""):gsub("·", ""):gsub("—", "")
+				:gsub("…", "")
+			if leftover(plain) ~= "" then bad[#bad + 1] = text end
+		end
+		deepEq(bad, {})
+		truthy(#shown > 40, "the screens were really read: " .. #shown)
+		eq(#Mock.errors, 0)
+	end)
+end)

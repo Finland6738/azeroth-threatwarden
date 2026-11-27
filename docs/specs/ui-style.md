@@ -192,6 +192,11 @@ Nessun token nuovo: barra e lista stanno nella disposizione **compatta** della s
 | Mob fissato | l'icona `pin` in `accent-text` a sinistra del nome nell'intestazione del monitor; un clic la toglie |
 | Piede | `RowMono` `text-3`, `warn` quando la portata è ridotta |
 
+*M7.3*: nella riga il distintivo occupa la colonna più larga (come nel monitor), poi il nome (con l'età oltre 1 s al
+posto della classificazione), l'icona e, se c'è posto, il nome di chi lo tiene, il più vicino, percentuale e margine;
+un mob UNKNOWN mostra il motivo breve nello spazio dei valori e `?` al bordo destro. La barra, aperta, ha l'icona
+`arrow_down` al posto del chevron.
+
 Un mob non si riconosce dal solo colore (ST-02): lo stato ha sempre l'icona e la parola, il motivo la parola.
 
 ## 4. Il tema Warden e i token di stato

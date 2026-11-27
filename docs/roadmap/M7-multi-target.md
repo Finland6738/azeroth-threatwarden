@@ -114,13 +114,19 @@ with the switch off; the character schema stays 2 and the sessions do not change
   sidebar, saying what depends on the probe) and the *Settings* and *Commands* pages; previews `focus-bar`, `focus-list`
   (also in Aurora and Warden).
 - Done when:
-  - [ ] The bar and the list show every situation of SPEC-07 §2.3 in the three outcomes and the four reaches; an unknown
+  - [x] The bar and the list show every situation of SPEC-07 §2.3 in the three outcomes and the four reaches; an unknown
     mob never looks like a number and always says why; a click pins and the header releases; nothing shows with the
     switch off; the wiki page exists in both languages.
 - Tests: `test_focus_list.lua` (SPEC-07 §2.8); additions to `test_settings.lua`, `test_commands.lua`, `test_demo.lua`,
   `test_ui_texts.lua`, `test_threat_list.lua`.
 - Real client: the readability of the bar and the list in combat, at small sizes and in Italian; whether the click is
   quick enough in a pull.
+- *Done (2026-11-27, before M0.7): behind `multitarget` (off). `UI/FocusList.lua` (pull bar, list, tooltips, click to
+  pin) built by `UI/ThreatList.lua`, which shows the header `pin`; the icons `pull` and `pin`; the *Dungeon Focus* card;
+  `/atw focus`; the invented pull in `Data/Demo.lua` and the invented tracker in `Core/Demo.lua`; `MobTracker.NameOf`,
+  `TargetName`, `TargetTracker.CanPin` and the pinned mob's holder name; wiki *Dungeon Focus* in both languages, the
+  *Settings* and *Commands* pages, previews `focus-bar` and `focus-list` in three themes. Tests: `test_focus_list.lua`
+  and additions. Notes *M7.3* in SPEC-07 §2.3 and §2.6. Not run in the game.*
 
 ### M7.4 — Degradation, alerts and performance with many mobs
 - Branch: `step/m7-4-performance`

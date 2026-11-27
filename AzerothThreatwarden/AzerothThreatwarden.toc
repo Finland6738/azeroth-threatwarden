@@ -60,6 +60,7 @@ UI\Widgets\ThinBar.lua
 UI\Widgets\Tooltip.lua
 UI\Widgets\Threat.lua
 UI\CoachStrip.lua
+UI\FocusList.lua
 UI\ThreatList.lua
 UI\DiagnosticsBox.lua
 UI\Window.lua

@@ -48,6 +48,7 @@ local function monitorOn() return ns.Features ~= nil and ns.Features.On("monitor
 local function alertsOn() return ns.Features ~= nil and ns.Features.On("alerts") end
 local function coachOn() return ns.Features ~= nil and ns.Features.On("coach") end
 local function recordingOn() return ns.Features ~= nil and ns.Features.On("recording") end
+local function focusOn() return ns.Features ~= nil and ns.Features.On("multitarget") end
 
 ---------------------------------------------------------------------------------------------------------------------
 -- Cards and rows (also used by UI/About.lua)
@@ -359,6 +360,37 @@ local function refreshMonitor(f)
 	f.demo:SetLabel(L[ns.Demo.IsActive() and "SET_DEMO_STOP" or "SET_DEMO_START"])
 end
 
+local MOBS = "account.settings.mobs."
+
+-- The *Dungeon Focus* card (SPEC-07 §2.6), only with the `multitarget` switch on.
+local function buildFocus(view, f, page)
+	local Limits = ns.Config.MOBS.max
+	local card = View.StackCard(page.frame)
+	View.CardText(card, "H2", "text-1", L["SET_FOCUS"], 0)
+	f.mobsEnabled = switch(view, card, MOBS .. "enabled", L["SET_FOCUS_ENABLED"])
+	View.CardText(card, "Small", "text-3", L["SET_FOCUS_NOTE"], 2)
+	f.mobsMax = sliderBox(card, { min = Limits.min, max = Limits.max, step = 1, format = tostring,
+		commit = function(v) write(view, card, MOBS .. "max", floor(v + 0.5)) end })
+	card:Add(controlRow(card, L["SET_FOCUS_MAX"], f.mobsMax), 12, { stretch = true })
+	View.CardText(card, "Small", "text-3", L["SET_FOCUS_MAX_NOTE"], 2)
+	f.mobsNameplates = switch(view, card, MOBS .. "nameplates", L["SET_FOCUS_NAMEPLATES"])
+	View.CardText(card, "Small", "text-3", L["SET_FOCUS_NAMEPLATES_NOTE"], 2)
+	statusLine(card)
+	return card
+end
+
+local function refreshFocus(f)
+	local defaults = ns.Config.MOBS_DEFAULTS
+	local function value(key)
+		local v = get(MOBS .. key)
+		if v == nil then v = defaults[key] end
+		return v
+	end
+	f.mobsEnabled.control:SetOn(value("enabled") == true, true)
+	f.mobsMax:Update(value("max"))
+	f.mobsNameplates.control:SetOn(value("nameplates") == true, true)
+end
+
 local ALERTS = "account.settings.alerts."
 
 -- The *Alerts* card (SPEC-04 §4.2): the channels stay on screen but inactive while the alerts are off; the Coach's
@@ -567,6 +599,7 @@ local function refreshSettings(view, f)
 	f.scaleBox:Update((get("char.ui.scale") or 1) * 100)
 	f.minimap.control:SetOn(get("account.settings.minimap.hide") ~= true, true)
 	if f.warning then refreshMonitor(f) end
+	if f.mobsMax then refreshFocus(f) end
 	if f.cooldown then refreshAlerts(f) end
 	if f.when then refreshRecording(f) end
 
@@ -589,6 +622,10 @@ local function buildSettingsPage(holder, view)
 	if monitorOn() then
 		f.monitorCard = buildMonitor(view, f, page)
 		page.cards[#page.cards + 1] = f.monitorCard
+	end
+	if focusOn() then
+		f.focusCard = buildFocus(view, f, page)
+		page.cards[#page.cards + 1] = f.focusCard
 	end
 	if alertsOn() then
 		f.alertsCard = buildAlerts(view, f, page)

@@ -25,7 +25,8 @@ ciò che è **noto** da ciò che è **stimato**.
 > ([Monitor della threat](docs/wiki/Threat-Monitor-it.md)). Ha anche le impostazioni salvate (con versione e
 > migrazioni), l'aspetto dell'ecosistema, una finestra spostabile con le Impostazioni e la pagina Info con i crediti, i
 > [comandi](docs/wiki/Commands-it.md) `/atw` e `/threatwarden`, il pulsante della minimappa e la voce nell'Addon
-> Compartment. È controllata solo da test offline: la sonda M0 e le verifiche in gioco della
+> Compartment. Il
+> [Dungeon Focus](docs/wiki/Dungeon-Focus-it.md) della prossima versione, la `v0.7.0`, è pronto ma spento. È controllata solo da test offline: la sonda M0 e le verifiche in gioco della
 > [M1](docs/checklists/M1.md), della [M2](docs/checklists/M2.md), della [M3](docs/checklists/M3.md), della
 > [M4](docs/checklists/M4.md), della [M5](docs/checklists/M5.md) e della [M6](docs/checklists/M6.md) (tutte in inglese)
 > sono ancora aperte. La

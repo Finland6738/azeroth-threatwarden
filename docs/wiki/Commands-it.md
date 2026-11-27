@@ -23,8 +23,9 @@ compaiono solo nella tua finestra di chat, nella lingua dell'addon; nulla viene 
 | `/atw reports` | apre la [scheda Report](Combat-Reports-it) |
 | `/atw replay` | apre il [Replay della threat](Threat-Replay-it) dell'ultimo scontro finito |
 | `/atw replay 2` | il replay del secondo scontro dell'elenco (1 è il più recente) |
+| `/atw focus` | dalla `v0.7.0`: apre l'elenco del [Dungeon Focus](Dungeon-Focus-it) (scritto di nuovo, lo chiude); lo dice quando non ci sono altri mob o la parte è spenta nelle Impostazioni |
 
-Prima della loro versione, `/atw reports` e `/atw replay` rispondono con la versione che li porterà.
+Prima della loro versione, `/atw reports`, `/atw replay` e `/atw focus` rispondono con la versione che li porterà.
 
 ## Assegnazione di un tasto
 

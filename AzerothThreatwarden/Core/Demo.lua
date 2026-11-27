@@ -4,9 +4,10 @@
 -- no copy of the saved data; the demo stands in for the two modules that read the game, TargetTracker and
 -- ThreatScanner, and writes nothing.
 --
---   * Reads nothing: while it runs, ns.TargetTracker and ns.ThreatScanner are two invented sources (Data/Demo.lua);
---     Data/ThreatModel.lua, Data/ThreatState.lua and UI/ThreatList.lua read them as they read the real ones. The real
---     modules stay as they were and are put back at the end.
+--   * Reads nothing: while it runs, ns.TargetTracker and ns.ThreatScanner (and, with the `multitarget` switch on,
+--     ns.MobTracker) are invented sources (Data/Demo.lua); Data/ThreatModel.lua, Data/ThreatState.lua, UI/ThreatList.lua
+--     and UI/FocusList.lua read them as they read the real ones. The real modules stay as they were and are put back at
+--     the end. A mob cannot be pinned in the demo.
 --   * Saves nothing: the demo writes no setting; it shows the window without recording it (`char.ui` stays). What the
 --     player does meanwhile (a setting, the list's order, moving the window) is saved as always.
 --   * Stops by itself: at the start of a real combat, before any module reacts to it (this file loads before the Data
@@ -17,7 +18,8 @@
 -- Alerts (M3) and recording (M4) must ignore the events of a demo: Demo.IsActive().
 --
 -- One tick (Scheduler "demo") at the configured rate (account.settings.monitor.rate), so the setting can be tried.
--- Bus: THREAT_SCANNED(mobKey) at every step, DEMO_CHANGED(active) after the mode changed.
+-- Bus: THREAT_SCANNED(mobKey) at every step (and MOBS_UPDATED() with `multitarget`), DEMO_CHANGED(active) after the
+-- mode changed.
 local ADDON_NAME, ns = ...
 ns = ns or {}
 ns.modules = ns.modules or {}
@@ -25,13 +27,13 @@ ns.modules = ns.modules or {}
 local Demo = {}
 ns.Demo, ns.modules.Demo = Demo, Demo
 
-local ipairs, type, floor = ipairs, type, math.floor
+local ipairs, pairs, type, floor = ipairs, pairs, type, math.floor
 
 Demo.TICK = "demo"
 local RATE_PATH = "account.settings.monitor.rate"
 
 local active = false
-local real = {}           -- the modules put aside: real.tracker, real.scanner
+local real = {}           -- the modules put aside: real.tracker, real.scanner, real.mobs
 local startedAt = 0       -- of the current turn of the fight
 local turns = 0           -- every turn is a new mob, so samples and states start again
 Demo.starts = 0
@@ -43,6 +45,9 @@ local Tracker = { status = "active", enabled = true }
 function Tracker.MobName() return ns.L.DEMO_MOB end
 function Tracker.MobClassification() return "elite" end
 function Tracker.HolderName() return nil end
+function Tracker.CanPin() return false end
+function Tracker.Pin() return false, "demo" end
+function Tracker.Pinned() return nil end
 
 local Scanner = { records = {}, count = 0, inCombat = true, mode = "values", scans = 0, lastScanAt = 0 }
 local rate = 5
@@ -64,6 +69,70 @@ local function buildRecords()
 		Scanner.records[i] = rec
 	end
 	Scanner.count = #units
+end
+
+---------------------------------------------------------------------------------------------------------------------
+-- The invented multi-mob tracker (SPEC-07 §2.6): the monitored golem and the five mobs of Data/Demo.lua, all read-only
+---------------------------------------------------------------------------------------------------------------------
+local Mobs = { reach = "all", reachReason = nil, lastTickAt = nil, list = {}, listCount = 0 }
+local mobByKey, mobEntries = {}, {}
+local golem = { key = nil, n = 1, monitored = true, source = "monitored", stateSince = 0 }
+
+function Mobs.Enabled()
+	local value = ns.Config and ns.Config:Get("account.settings.mobs.enabled")
+	if type(value) ~= "boolean" then return ns.Config.MOBS_DEFAULTS.enabled end
+	return value
+end
+function Mobs.Max()
+	local value = ns.Config and ns.Config:Get("account.settings.mobs.max")
+	return type(value) == "number" and floor(value) or ns.Config.MOBS_DEFAULTS.max
+end
+function Mobs.List() return Mobs.list, Mobs.listCount end
+function Mobs.Reach() return Mobs.reach, Mobs.reachReason end
+function Mobs.Get(key) return mobByKey[key] end
+function Mobs.Rows(key)
+	local entry = mobByKey[key]
+	if not entry then return nil, 0 end
+	if entry.monitored then return Scanner.records, Scanner.count end
+	return entry.rows, entry.rows and #entry.rows or 0
+end
+function Mobs.NameOf(key)
+	local entry = mobByKey[key]
+	if not entry then return nil, nil end
+	if entry.monitored then return ns.L.DEMO_MOB, "elite" end
+	return entry.nameKey and ns.L[entry.nameKey] or nil, entry.classification
+end
+function Mobs.TargetName() return nil end
+
+local function buildMobs()
+	for i = #mobEntries, 1, -1 do mobEntries[i] = nil end
+	for key in pairs(mobByKey) do mobByKey[key] = nil end
+	local entries = ns.DemoData.Mobs(Scanner.records)
+	local n = 1
+	Mobs.list[1] = golem
+	golem.state, golem.reason, golem.stateSince = nil, nil, 0
+	for i, entry in ipairs(entries) do
+		mobEntries[i] = entry
+		n = n + 1
+		Mobs.list[n] = entry
+		mobByKey[entry.key] = entry
+	end
+	for i = n + 1, #Mobs.list do Mobs.list[i] = nil end
+	Mobs.listCount = n
+end
+
+local function tickMobs(now)
+	if golem.key ~= Tracker.mobKey then
+		if golem.key then mobByKey[golem.key] = nil end
+		golem.key, golem.state = Tracker.mobKey, nil
+		mobByKey[golem.key] = golem
+	end
+	ns.DemoData.TickMobs(mobEntries, now)
+	if ns.MobRisk then
+		ns.MobRisk.Evaluate(golem, Scanner.records, Scanner.count, now, nil, 1, 0.5)
+	end
+	golem.observedAt = now
+	Mobs.lastTickAt = now
 end
 
 local function emit(event, ...)
@@ -96,6 +165,10 @@ function Demo.Tick()
 	end
 	Scanner.lastScanAt, Scanner.scans = now, Scanner.scans + 1
 	emit("THREAT_SCANNED", key)
+	if real.mobs then
+		tickMobs(now)
+		emit("MOBS_UPDATED")
+	end
 	return true
 end
 
@@ -115,6 +188,10 @@ function Demo.Start()
 	Scanner.scans = 0
 	real.tracker, real.scanner = ns.TargetTracker, ns.ThreatScanner
 	ns.TargetTracker, ns.ThreatScanner = Tracker, Scanner
+	if ns.Features.On("multitarget") and ns.MobTracker then
+		real.mobs, ns.MobTracker = ns.MobTracker, Mobs
+		buildMobs()
+	end
 	active = true
 	Demo.starts = Demo.starts + 1
 	newTurn(ns.Compat.Now())
@@ -131,7 +208,8 @@ function Demo.Stop()
 	active = false
 	ns.Scheduler.Stop(Demo.TICK)
 	ns.TargetTracker, ns.ThreatScanner = real.tracker, real.scanner
-	real.tracker, real.scanner = nil, nil
+	if real.mobs then ns.MobTracker = real.mobs end
+	real.tracker, real.scanner, real.mobs = nil, nil, nil
 	-- the model and the states go back to what the real modules last read
 	emit("THREAT_SCANNED", ns.TargetTracker and ns.TargetTracker.mobKey)
 	emit("DEMO_CHANGED", false)

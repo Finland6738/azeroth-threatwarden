@@ -100,7 +100,9 @@ ICON_NAMES = ["chevron", "check", "cross", "dashed", "skull", "shield", "heal", 
               # Threatwarden (M3.4, SPEC-04 §3.1): the Coach's tip and the muted alerts
               "coach", "mute",
               # Threatwarden (M5.5, SPEC-05 §5.5): the controls of the replay
-              "play", "pause", "step-back", "step-forward", "skip-back", "skip-forward"]
+              "play", "pause", "step-back", "step-forward", "skip-back", "skip-forward",
+              # Threatwarden (M7.3, SPEC-07 §2.3-§2.4): the pull bar of the Dungeon Focus and the pinned mob
+              "pull", "pin"]
 
 
 def draw_icon(name):
@@ -327,6 +329,14 @@ def draw_icon(name):
             bar, tri = (10.8, 13.2), [(16 - x, y) for x, y in tri]
         d.rectangle([pt(bar[0], 2.8), pt(bar[1], 13.2)], fill=255)
         d.polygon([pt(*p) for p in tri], fill=255)
+    elif name == "pull":           # three mob heads side by side
+        for x, y, r in ((3.6, 9.6, 2.9), (8, 6.4, 3.4), (12.4, 9.6, 2.9)):
+            d.ellipse([pt(x - r, y - r), pt(x + r, y + r)], fill=255)
+            for dx in (-1.0, 1.0):
+                d.ellipse([pt(x + dx - 0.6, y - 0.9), pt(x + dx + 0.6, y + 0.3)], fill=0)
+    elif name == "pin":            # a drawing pin
+        d.polygon([pt(5, 2), pt(11, 2), pt(10, 6.6), pt(12.6, 9.4), pt(3.4, 9.4), pt(6, 6.6)], fill=255)
+        d.line([pt(8, 9.4), pt(8, 14.6)], fill=255, width=w)
     elif name == "role-dps":       # a sword, point up to the right
         d.line([pt(4.2, 11.8), pt(13.4, 2.6)], fill=255, width=int(2.2 * u))
         d.line([pt(3, 7.8), pt(8.2, 13)], fill=255, width=w)

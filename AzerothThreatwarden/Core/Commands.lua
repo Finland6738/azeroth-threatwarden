@@ -58,6 +58,22 @@ local function replay(rest)
 	ns.Bus.Emit("REPLAY_REQUESTED", chosen.id, nil)
 end
 
+-- /atw focus (SPEC-07 §2.6): the window on the Monitor tab with the list of the Dungeon Focus open; again, closed.
+local function focus()
+	local MT, view = ns.MobTracker, ns.ThreatList and ns.ThreatList.view
+	if MT and MT.Enabled and not MT.Enabled() then return say(L["CMD_FOCUS_OFF"]) end
+	local window = ns.Window
+	if view and view.focus and view.focus.open and view:IsVisible() then
+		ns.FocusList.SetOpen(false)
+		return
+	end
+	window:Open()
+	window:SelectTab("monitor")
+	view = ns.ThreatList and ns.ThreatList.view
+	if not view or not view.focus then return end
+	if not ns.FocusList.SetOpen(true) then say(L["CMD_FOCUS_NONE"]) end
+end
+
 -- In the order of `help`. `help`: the key of its line. `feature` and `version`: a part of a later milestone.
 Commands.LIST = {
 	{ name = "show", help = "HELP_SHOW", run = function() ns.Window:Open() end },
@@ -79,6 +95,7 @@ Commands.LIST = {
 			ns.Window:SelectTab("reports")
 		end },
 	{ name = "replay", help = "HELP_REPLAY", feature = "replay", also = "timeline", version = "v0.5.0", run = replay },
+	{ name = "focus", help = "HELP_FOCUS", feature = "multitarget", also = "monitor", version = "v0.7.0", run = focus },
 }
 
 local function featureOn(name) return name == nil or (ns.Features ~= nil and ns.Features.On(name)) end

@@ -80,6 +80,18 @@ frequenza e numero di unità sono provvisori finché non vengono tarati in gioco
 
 Le aperture e chiusure automatiche non cambiano mai la tua scelta a mano.
 
+## Dungeon Focus
+
+> **In arrivo nella `v0.7.0`**: la card compare con lei. Non verificata in gioco.
+
+Salvata per tutto l'account, sotto *Monitor*. Che cosa mostra è in [[Dungeon Focus|Dungeon-Focus-it]].
+
+| Opzione | Cosa fa | Scelte | Predefinito |
+|---|---|---|---|
+| Segui gli altri mob | la barra del pull e l'elenco degli altri mob, in combattimento; spento, di loro non si legge nulla | sì / no | sì |
+| Mob seguiti | quanti mob insieme, compreso quello monitorato; si salva quando rilasci il cursore | da 2 a 12 | 8 |
+| Usa le targhe dei nemici | trova i mob dalle targhe dei nemici; le mostra solo mentre le targhe dei nemici del gioco sono attive | sì / no | sì |
+
 ## Avvisi
 
 > **Nuova nella `v0.3.0`**, non verificata in gioco.

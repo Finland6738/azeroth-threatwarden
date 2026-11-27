@@ -327,3 +327,67 @@ describe("/atw replay (SPEC-05 §5.5)", function()
 	end)
 end)
 
+
+describe("/atw focus (SPEC-07 §2.6)", function()
+	before_boot(function(M) M.features = { monitor = true, multitarget = true, recording = false } end)
+
+	local function pull()
+		local p = Fight.new{
+			player = { class = "MAGE", role = "DAMAGER" },
+			party = { { key = "tank", class = "WARRIOR", role = "TANK" } },
+			mobs = { { key = "boss", tokens = { "target" } }, { key = "add", tokens = { "nameplate1" } } },
+		}
+		p:at(0):start():threat("boss", "tank", 100):threat("add", "tank", 100)
+		p:to(3)
+		return p
+	end
+	local function focus() return Mock.ns.ThreatList.view.focus end
+
+	it("is listed by help", function()
+		contains(run("/atw help"), "/atw focus - ")
+	end)
+
+	it("opens the window on the Monitor tab with the list open, and closes it again", function()
+		pull()
+		Mock.ns.Window:SelectTab("settings")
+		eq(run("/atw focus"), "")
+		eq(Mock.ns.Window:Tab(), "monitor")
+		truthy(focus().open)
+		truthy(focus().list:IsShown())
+		run("/atw focus")
+		falsy(focus().open)
+		truthy(Mock.ns.Window:IsShown())
+	end)
+
+	it("opens the window when it is closed", function()
+		pull()
+		Mock.ns.Window:Close()
+		run("/atw focus")
+		truthy(Mock.ns.Window:IsShown())
+		truthy(focus().open)
+	end)
+
+	it("says there is no other mob out of combat", function()
+		contains(run("/atw focus"), "No other mobs to show right now.")
+		falsy(focus().open)
+		truthy(Mock.ns.Window:IsShown())
+	end)
+
+	it("says that the other mobs are off in Settings", function()
+		Mock.ns.Config:Set("account.settings.mobs.enabled", false)
+		Mock.ns.Window:Close()
+		contains(run("/atw focus"), "Other mobs are off in Settings.")
+		falsy(Mock.ns.Window:IsShown())
+	end)
+
+	it("says when it arrives with the switch off, and is not in help", function()
+		boot(function(M) M.features = { monitor = true, multitarget = false } end)
+		contains(run("/atw focus"), "This arrives in v0.7.0.")
+		falsy(run("/atw help"):find("/atw focus", 1, true))
+	end)
+
+	it("answers in Italian", function()
+		boot(function(M) M.player.locale = "itIT"; M.features = { monitor = true, multitarget = true } end)
+		contains(run("/atw focus"), "Per ora non ci sono altri mob da mostrare.")
+	end)
+end)

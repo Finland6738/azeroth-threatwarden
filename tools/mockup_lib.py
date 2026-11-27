@@ -209,6 +209,19 @@ body { font: 400 13px/1.35 'Outfit', 'Segoe UI', sans-serif; color: var(--text-1
 .mmsg small { font: 400 11px/14px 'Outfit', sans-serif; color: var(--text-3); }
 .mfoot { position: absolute; left: 0; right: 12px; bottom: 0; height: 16px; font: 400 10px/16px 'JetBrains Mono', monospace; color: var(--text-3); white-space: nowrap; overflow: hidden; }
 .mfoot.warn { color: var(--warn); }
+.pull { display: flex; align-items: center; gap: 4px; height: 20px; padding: 0 4px; background: var(--surface-2); border-radius: 4px; color: var(--text-2); font: 400 11px/14px 'Outfit', sans-serif; white-space: nowrap; }
+.pull .word { flex: 1; min-width: 0; margin-left: 2px; overflow: hidden; text-overflow: ellipsis; }
+.frow { position: relative; display: flex; align-items: center; gap: 4px; height: 20px; padding-left: 6px; white-space: nowrap; }
+.frow.self { box-shadow: inset 0 0 0 1px var(--accent); border-radius: 4px; }
+.frow.unknown { border-top: 1px dashed var(--state-unknown); border-bottom: 1px dashed var(--state-unknown); }
+.frow .stripe { position: absolute; left: 0; top: 0; bottom: 0; width: 3px; }
+.frow .badgebox { display: flex; flex: none; }
+.frow .fname { flex: 1.3; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.frow .fname small { font: 400 10px/14px 'Outfit', sans-serif; color: var(--text-3); }
+.frow .fholder, .frow .fclose { flex: .8; min-width: 0; overflow: hidden; text-overflow: ellipsis; color: var(--text-2); }
+.frow .fwhy { flex: 2; min-width: 0; overflow: hidden; text-overflow: ellipsis; color: var(--text-3); }
+.frow .fpct { width: 36px; flex: none; text-align: right; font: 500 11px/14px 'JetBrains Mono', monospace; }
+.frow .fmargin { width: 28px; flex: none; text-align: right; font: 500 11px/14px 'JetBrains Mono', monospace; color: var(--text-3); margin-right: 4px; }
 .usage { display: flex; align-items: center; gap: 8px; height: 20px; font: 500 13px/16px 'Outfit', sans-serif; }
 .cat { display: inline-block; height: 16px; padding: 0 6px; border-radius: 8px; color: var(--text-2); background: color-mix(in srgb, var(--text-2) 16%, transparent); font: 600 9px/16px 'Outfit', sans-serif; white-space: nowrap; }
 .cat.estimated, .cat.warn { color: var(--warn); background: color-mix(in srgb, var(--warn) 16%, transparent); }

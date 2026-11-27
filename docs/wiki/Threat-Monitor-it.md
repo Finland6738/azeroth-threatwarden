@@ -23,7 +23,9 @@ resto sono nella [card Monitor delle Impostazioni](Settings-it#monitor).
 - **Margine**: per un DPS o un guaritore, quanto sei lontano dal 100 % (prendere l'aggro); per il tank, quanto il
   secondo è lontano dal 100 %.
 
-Dalla `v0.3.0` sotto l'intestazione c'è una striscia con [[avvisi e consigli|Alerts-and-Coach-it]].
+Dalla `v0.3.0` sotto l'intestazione c'è una striscia con [[avvisi e consigli|Alerts-and-Coach-it]]. Dalla `v0.7.0`
+(spento fino ad allora), in un pull con più mob una barra sotto l'intestazione apre il [[Dungeon Focus|Dungeon-Focus-it]],
+e una puntina accanto al nome segna un mob che hai scelto di seguire dal suo elenco.
 
 ## L'elenco
 

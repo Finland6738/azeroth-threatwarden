@@ -79,6 +79,18 @@ number of units are provisional until they are tuned in the game.
 
 Opening or closing by itself never changes what you chose by hand.
 
+## Dungeon Focus
+
+> **Coming in `v0.7.0`**: the card appears with it. Not verified in game.
+
+Saved for the whole account, below *Monitor*. What it shows is on [[Dungeon Focus|Dungeon-Focus]].
+
+| Option | What it does | Choices | Default |
+|---|---|---|---|
+| Track other mobs | the pull bar and the list of the other mobs, in combat; off, nothing of them is read | on / off | on |
+| Mobs followed | how many mobs at once, the monitored one included; saved when you release the slider | 2 to 12 | 8 |
+| Use enemy nameplates | finds mobs through the enemy nameplates; it shows mobs only while the game's enemy nameplates are on | on / off | on |
+
 ## Alerts
 
 > **New in `v0.3.0`**, not verified in game.

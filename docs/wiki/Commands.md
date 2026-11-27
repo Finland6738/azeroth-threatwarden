@@ -23,8 +23,9 @@ own chat window, in the addon's language; nothing is ever posted to other player
 | `/atw reports` | opens the [Reports tab](Combat-Reports) |
 | `/atw replay` | opens the [Threat Replay](Threat-Replay) of the latest finished fight |
 | `/atw replay 2` | the replay of the second fight of the list (1 is the newest) |
+| `/atw focus` | from `v0.7.0`: opens the list of the [Dungeon Focus](Dungeon-Focus) (typed again, closes it); it says so when there is no other mob or the part is off in Settings |
 
-Until its version, `/atw reports` and `/atw replay` answer with the version that will bring them.
+Until its version, `/atw reports`, `/atw replay` and `/atw focus` answer with the version that will bring them.
 
 ## Key binding
 
