@@ -67,6 +67,13 @@ Quale di questi casi capiti dipende dalle risposte della sonda M0: quali fonti r
 dei mob è nascosta, se la loro threat è segreta. Finché non è eseguita, nulla qui è verificato in gioco. Il Dungeon
 Focus **mostra soltanto**: nulla viene salvato o registrato, e si seguono al più 8 mob insieme.
 
+## Avvisi
+
+La barra basta per vedere gli altri mob, quindi di base gli [avvisi](Alerts-and-Coach-it) parlano solo di quello
+monitorato. Accendi **Avvisi sugli altri nemici** nella [card Avvisi](Settings-it#avvisi) per essere avvisato quando un
+altro mob va su qualcuno che non è un tank, quando qualcuno sta per strapparne uno, quando nessun tank ne ha preso uno o
+quando la tua threat su uno è molto alta: vedi [Avvisi sugli altri nemici](Alerts-and-Coach-it#avvisi-sugli-altri-nemici).
+
 ## Impostazioni e demo
 
 La [card Dungeon Focus](Settings-it#dungeon-focus) delle Impostazioni lo spegne e stabilisce quanti mob seguire e se

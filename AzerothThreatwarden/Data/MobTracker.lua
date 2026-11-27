@@ -52,7 +52,7 @@ local huge = math.huge
 
 -- SPEC-09 Q26: the one place of the constants (the M0 probe P6 and P10 may change RATE and READ_BUDGET, SPEC-07 §0).
 MobTracker.RATE = 2
-MobTracker.READ_BUDGET = 48
+MobTracker.READ_BUDGET = 40
 MobTracker.UNITS_PER_MOB = 10
 MobTracker.RETRY = 5
 MobTracker.FORGET = 10
@@ -1141,7 +1141,8 @@ function MobTracker.Refresh()
 	return MobTracker.ticking
 end
 
--- A consumer wants the other mobs (on) or no longer (off): the pull bar and the list (M7.3), the `mob` alerts (M7.4).
+-- A consumer wants the other mobs (on) or no longer (off): the pull bar and the list ("window"), the `mob` alerts with
+-- their sound on ("alerts", Data/Alerts.lua).
 function MobTracker.Want(name, on)
 	if type(name) ~= "string" then return false end
 	MobTracker.consumers[name] = on and true or nil
@@ -1300,7 +1301,7 @@ function MobTracker.DebugLines()
 	local e, b = stats.events, stats.bySource
 	local function modes(t) return ("%d/%d/%d"):format(t.values, t.state, t.none) end
 	local Tracker = RealTracker
-	return {
+	local lines = {
 		("switch %s, setting %s, %s, nameplates %s, max %d"):format(switchOn() and "on" or "off",
 			settingOn and "on" or "off", MobTracker.ticking and (MobTracker.reading and "reading" or "sweeping") or "idle",
 			plates and "on" or "off", maxMobs),
@@ -1315,6 +1316,8 @@ function MobTracker.DebugLines()
 		("reads by source (values/state/none): focus %s, boss %s, group %s, plate %s, lookup %s"):format(
 			modes(b.focus), modes(b.boss), modes(b.group), modes(b.plate), modes(b.lookup)),
 	}
+	if ns.Alerts then lines[#lines + 1] = ns.Alerts.MobDebugLine() end   -- Data/Alerts.lua, loaded after this file
+	return lines
 end
 
 if ns.addon then ns.addon.MobTracker = MobTracker end

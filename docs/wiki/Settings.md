@@ -109,6 +109,7 @@ change applies at once.
 | Cooldown | how long the same alert about the same unit waits before it comes again; saved when you release the slider | 3 to 30 s | 8 s |
 | Alerts about others | alerts about other players | When I tank, Always, Never | When I tank |
 | Your pet takes the mob | the alert when your pet takes the enemy in a group with a tank | on / off | on |
+| Alerts about other mobs | *from `v0.7.0`*: [alerts about the other mobs](Alerts-and-Coach#alerts-about-other-mobs) of a pull, besides the monitored one | on / off | off |
 | Go to the Monitor card | the alerts use the Warning and Danger thresholds of *Monitor*; the card says them | button | |
 | Threat Coach | the advice in the strip | on / off | on |
 

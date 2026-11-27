@@ -113,7 +113,8 @@ describe("the words of the Coach and of the alerts (SPEC-04 §2.4)", function()
 	end
 	local STOP = { "stop", "ease off", "pause", "smetti", "fermati", "rallenta", "interrompi" }
 	local TANK_KEYS = { "ALERT_WARNING_TANK", "ALERT_DANGER_TANK", "ALERT_MARGIN_WARNING", "ALERT_MARGIN_WARNING_STATE",
-		"ALERT_MARGIN_DANGER", "ALERT_MARGIN_DANGER_STATE", "ALERT_BEHIND", "ALERT_LOST" }
+		"ALERT_MARGIN_DANGER", "ALERT_MARGIN_DANGER_STATE", "ALERT_BEHIND", "ALERT_LOST", "ALERT_MOB_AGGRO",
+		"ALERT_MOB_CLOSE", "ALERT_MOB_NO_TANK" }
 
 	for _, code in ipairs(LANGUAGES) do
 		it("tell the damage dealer and the healer what to do at Warning and Danger (Q7, " .. code .. ")", function()
@@ -162,6 +163,31 @@ describe("the words of the Coach and of the alerts (SPEC-04 §2.4)", function()
 		for _, key in ipairs(keys) do
 			local text = L[key]:gsub("%%s", "Abcdefghijkl"):gsub("%%d", "100"):gsub("%%%%", "%%")
 			truthy(#text <= 60, key .. " is " .. #text .. " characters: " .. text)
+		end
+	end)
+
+	-- SPEC-07 §2.5 (M7.4): the alerts about other mobs, their arguments and, since the player may be holding the mob
+	-- when its own alert comes, no "close" and no "about to" in the player's own words.
+	it("have the ALERT_MOB_* keys in both languages with their arguments, and claim no more than what is read", function()
+		local ARGS = { ALERT_MOB_AGGRO = "s", ALERT_MOB_CLOSE = "s", ALERT_MOB_NO_TANK = "", ALERT_MOB_SELF = "",
+			ALERT_WHY_MOB = "", ALERT_WHY_MOB_NO_TANK = "" }
+		local seen = 0
+		for _, key in ipairs(Mock.ns.Alerts.MESSAGES) do
+			if key:sub(1, 10) == "ALERT_MOB_" then seen = seen + 1 end
+		end
+		eq(seen, 4)
+		for _, code in ipairs(LANGUAGES) do
+			local L = strings(code)
+			for key, args in pairs(ARGS) do
+				notNil(L[key], code .. " " .. key)
+				eq(argsOf(L[key]), args, code .. " " .. key)
+			end
+			for _, word in ipairs({ "close", "about to", "vicino" }) do
+				falsy(says(L.ALERT_MOB_SELF, word), code .. " ALERT_MOB_SELF: " .. word)
+			end
+			for _, key in ipairs({ "ALERT_MOB_AGGRO", "ALERT_MOB_CLOSE", "ALERT_MOB_NO_TANK", "ALERT_MOB_SELF" }) do
+				notNil(Mock.ns.Alerts.REASONS[key], key)
+			end
 		end
 	end)
 

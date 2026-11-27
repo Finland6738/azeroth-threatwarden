@@ -45,7 +45,8 @@ la lettura di `IsThreatWarningEnabled`, attraverso `Core/Compat.lua`.
   regola possibile, senza interruttore; l'impostazione `alerts.onlyTarget` arriva con M7, quando l'addon potrà leggere
   altri mob (**[probe P5]**). Fissato in M7.1: `alerts.onlyTarget` (schema 6, acceso di predefinito) e, spento, un tipo
   `mob` per i mob diversi da quello monitorato, con le stesse regole delle entrate e un cooldown per mob
-  ([SPEC-07 §2.5](SPEC-07-multi-target-heatmap-profiles.md#25-avvisi-con-più-mob-alertsonlytarget), M7.4).
+  ([SPEC-07 §2.5](SPEC-07-multi-target-heatmap-profiles.md#25-avvisi-con-più-mob-alertsonlytarget), realizzato in M7.4:
+  il tipo `mob` esce dai dati del multi-mob tracker, con un cooldown per mob, e non si registra).
 - **Solo in combattimento**: lo Scanner legge solo in combattimento (SPEC-03 §1.4), quindi gli stati salgono solo lì;
   in più Alerts ignora ogni evento arrivato fuori dal combattimento. Lo legge da `ThreatScanner.inCombat`, non da un
   proprio ascolto di `COMBAT_STARTED`: lo Scanner fa la prima scansione dentro quell'evento, prima dei moduli che

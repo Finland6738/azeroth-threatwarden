@@ -394,7 +394,7 @@ end
 local ALERTS = "account.settings.alerts."
 
 -- The *Alerts* card (SPEC-04 §4.2): the channels stay on screen but inactive while the alerts are off; the Coach's
--- switch is there with the `coach` switch. The thresholds are the monitor's, in one place: the card says them and links
+-- switch is there with the `coach` switch, *Alerts about other mobs* with the `multitarget` switch. The thresholds are the monitor's, in one place: the card says them and links
 -- to that card. The note about the game's own threat warning shows only while the client says it is on (ALR-03).
 local function buildAlerts(view, f, page)
 	local Limits = ns.Config.ALERTS.cooldown
@@ -417,6 +417,11 @@ local function buildAlerts(view, f, page)
 	f.others = Widgets.Segmented(card, choices, function(id) write(view, card, ALERTS .. "others", id) end)
 	card:Add(f.others, 8)
 	f.alertsPet = switch(view, card, ALERTS .. "pet", L["SET_ALERTS_PET"])
+	if focusOn() then
+		-- the setting says the opposite: "only the target" off is "about other mobs" on (SPEC-07 §2.6)
+		f.alertsMobs = switch(view, card, ALERTS .. "onlyTarget", L["SET_ALERTS_MOBS"], true)
+		View.CardText(card, "Small", "text-3", L["SET_ALERTS_MOBS_NOTE"], 2)
+	end
 
 	f.thresholds = View.CardText(card, "Small", "text-2", "", 12)
 	if f.monitorCard then
@@ -442,6 +447,10 @@ local function refreshAlerts(f)
 	f.cooldown:Update(get(ALERTS .. "cooldown") or ns.Config.ALERTS_DEFAULTS.cooldown)
 	f.others:Select(get(ALERTS .. "others") or ns.Config.ALERTS_DEFAULTS.others)
 	f.alertsPet.control:SetOn(get(ALERTS .. "pet") == true, true)
+	if f.alertsMobs then
+		f.alertsMobs.control:SetOn(get(ALERTS .. "onlyTarget") == false, true)
+		f.alertsMobs.control:SetEnabled(enabled)
+	end
 	local defaults = ns.Config.MONITOR_DEFAULTS
 	f.thresholds:SetText(L["SET_ALERTS_THRESHOLDS"]:format(get(MONITOR .. "warning") or defaults.warning,
 		get(MONITOR .. "danger") or defaults.danger))

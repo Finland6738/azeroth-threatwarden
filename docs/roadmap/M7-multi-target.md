@@ -140,13 +140,21 @@ with the switch off; the character schema stays 2 and the sessions do not change
   reshuffled), the offline cost of a mobs tick against the monitor's tick (SPEC-01 §5.1) and the constants of Q26
   adjusted if the measure says so; the wiki pages *Alerts and Coach* and *Dungeon Focus* for the alerts.
 - Done when:
-  - [ ] Every `mob` alert enters once per transition and never with `alerts.onlyTarget` on or the switch off; nothing of
+  - [x] Every `mob` alert enters once per transition and never with `alerts.onlyTarget` on or the switch off; nothing of
     them is recorded or posted; in the long test the reads per tick stay within the budget, the cost of a mobs tick is
     at most that of a monitor tick with 40 units, the memory does not grow and no mob is shown with numbers older than
     its staleness limit.
 - Tests: additions to `test_alerts.lua`, `test_recorder.lua`, `test_coach_wording.lua` (the `ALERT_MOB_*` keys);
   `Tests/long/test_multi_mob_long.lua` (SPEC-07 §2.8).
 - Real client: the FPS with 40 nameplates in a raid (P10); whether the `mob` alerts help a tank or are noise (Q26).
+- *Done (2026-11-27, before M0.7): behind `multitarget` (off). The `mob` kind in `Data/Alerts.lua` (the four
+  `ALERT_MOB_*` messages, read from the list after each `MOBS_UPDATED` so that a change of reason or of the player's own
+  state counts as an entry; one alert per mob and update, the player first; cooldown per mob; the tracker wanted with the
+  sound on), *Alerts about other mobs* in the Alerts card, the Recorder ignoring `mob` alerts, the lines of
+  `/atw debug`. `Tests/long/test_multi_mob_long.lua` measured a mobs tick above a monitor tick with 48 reads:
+  `MobTracker.READ_BUDGET` is now 40 (SPEC-01 §5.1, SPEC-09 Q26). `ALERT_MOB_SELF` reads *Your threat on another mob is
+  very high*, true also when the player holds the mob. Tests: additions to `test_alerts.lua`, `test_recorder.lua`,
+  `test_coach_wording.lua`, `test_settings.lua`. Notes *M7.4* in SPEC-07 §1.6 and §2.5. Not run in the game.*
 
 ### M7.5 — In-game checklist M7
 - Branch: `step/m7-5-checklist`

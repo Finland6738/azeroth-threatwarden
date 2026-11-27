@@ -7,6 +7,17 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
+- M7.4: **alerts about other mobs**, behind the `multitarget` switch, which stays off until `v0.7.0`, and behind the new
+  *Alerts about other mobs* switch of the Alerts card (`alerts.onlyTarget`, on by default: only the monitored mob). A mob
+  on someone who is not a tank, someone about to pull a mob, a mob no tank has picked up (to whoever *Alerts about
+  others* says, by default only the tank), and your own threat on another mob very high (never told to the tank). Only a
+  new and worse condition speaks, once per transition, with a cooldown per mob, the gap between alerts about others, the
+  mute and the muted units; a sound only for Danger; with the window closed only while the sound is on. Nothing is
+  recorded or written in chat. `/atw debug` says how many were raised. Not verified in the game.
+- M7.4: a long offline test of 30 minutes (a raid of 40, 40 nameplates, 12 mobs; mobs out of reach, secrets in the
+  fight, changing GUIDs, reshuffled nameplates) that holds the multi-mob tick to its read budget, to at most the work of
+  a full monitor tick, to flat memory and to no numbers older than their limit (SPEC-01 §5.1). Offline numbers only; the
+  cost in the game is still to be measured.
 - M7.3: the **Dungeon Focus view**, behind the `multitarget` switch, which stays off until `v0.7.0`: with the switch off
   nothing of it is visible. In combat a **pull bar** under the header of the Monitor tab says how many mobs are followed
   and the riskiest one besides the monitored (*On Mage*, *Close*, *No tank*), *All safe*, or, when the game lets only
@@ -31,6 +42,11 @@ All notable changes to this project are documented here. The format follows
   touching your game target; a new hostile target, the mob's death and the end of the fight release it. `/atw debug`
   has a *Mobs* section (counts only). The account settings go to **schema 6** (`settings.mobs` and
   `settings.alerts.onlyTarget`, with a migration that keeps every saved value); nothing of the list is saved.
+
+### Changed
+
+- M7.4: the multi-mob tick reads at most **40** threat values (48 in M7.2): with 48 it cost more work than a monitor
+  tick in a raid of 40 (not yet visible: the switch is off).
 
 ### Documentation
 

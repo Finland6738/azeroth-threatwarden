@@ -344,7 +344,7 @@ describe("budget and rotation (SPEC-07 §1.6)", function()
 			ticks(1)
 			truthy(MT().stats.lastReads <= MT().READ_BUDGET, "reads " .. MT().stats.lastReads)
 		end
-		eq(MT().READ_BUDGET, 48)
+		eq(MT().READ_BUDGET, 40)
 		-- 4 units and a lead per mob: 9 mobs fit... 7 others: all read each tick (35 reads)
 		eq(MT().stats.lastReads, 35)
 		eq(MT().stats.turns, 1)
@@ -364,8 +364,8 @@ describe("budget and rotation (SPEC-07 §1.6)", function()
 		engage(pull)
 		ticks(8)   -- the sweep reaches the nameplates after the 39 members' targets
 		ticks(1)
-		eq(MT().stats.lastReads, 44, "4 mobs of 10 units and a lead")
-		eq(MT().stats.turns, 2)
+		eq(MT().stats.lastReads, 33, "3 mobs of 10 units and a lead")
+		eq(MT().stats.turns, 3)
 		-- the cursor of one mob moves on: after enough of its reads every unit was read once
 		local e = entryOf("m1")
 		local slot = e.slot
@@ -374,7 +374,7 @@ describe("budget and rotation (SPEC-07 §1.6)", function()
 		local scanned = 0
 		for i = 1, count do if rows[i] and rows[i].scanned then scanned = scanned + 1 end end
 		eq(scanned, 10, "one read: the player, the tank, then 8 in turn")
-		ticks(10)
+		ticks(18)
 		local readOnce
 		eq(e.slot, slot, "the same place")
 		readOnce = 0
@@ -390,7 +390,7 @@ describe("budget and rotation (SPEC-07 §1.6)", function()
 		ticks(1)
 		eq(MT().stats.mobsRead > 0, true)
 		truthy(MT().stats.lastReads > 1, "one whole mob")
-		MT().READ_BUDGET = 48
+		MT().READ_BUDGET = 40
 	end)
 
 	it("an event moves a mob forward without a read outside the tick", function()
@@ -410,7 +410,7 @@ describe("budget and rotation (SPEC-07 §1.6)", function()
 		local seen = readsDuring(function() ticks(1) end)
 		truthy(seen.nameplate6, "the marked mob is read first")
 		falsy(entryOf("m6").marked)
-		MT().READ_BUDGET = 48
+		MT().READ_BUDGET = 40
 	end)
 end)
 
@@ -475,7 +475,7 @@ describe("the three outcomes per mob (SPEC-07 §1.5)", function()
 		local stale = 0
 		for _, e in pairs(listed()) do if e.reason == "stale" then stale = stale + 1 end end
 		eq(stale, 2, "the two not read in this tick are too old")
-		MT().READ_BUDGET = 48
+		MT().READ_BUDGET = 40
 	end)
 end)
 

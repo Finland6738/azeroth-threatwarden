@@ -71,6 +71,28 @@ alert says what the game shows, without numbers.
 World of Warcraft has its own threat warning in the game options. If it is on, you may get two warnings for the same
 thing: turn off one of them. The addon never changes the game's setting.
 
+## Alerts about other mobs
+
+> **Coming in `v0.7.0`**, switched off until then, and not verified in game.
+
+By default the alerts speak only about the enemy the monitor follows. Turn on **Alerts about other mobs** in the
+[Alerts card](Settings#alerts) to be told about the other mobs of a pull too (the ones of the
+[[Dungeon Focus|Dungeon-Focus]]), when the game lets an addon read them.
+
+| Alert | When | Who gets it |
+|---|---|---|
+| *A mob is on Kor* | someone who is not a tank takes a mob | as **Alerts about others** says (by default only a tank) |
+| *Kor is about to pull a mob* | someone is close to taking a mob | as **Alerts about others** says |
+| *A mob is not on the tank* | no tank is on the threat list of a mob (a warning, never with a sound) | as **Alerts about others** says |
+| *Your threat on another mob is very high* | your own threat on another mob reaches Danger, close to taking it or holding it | you, unless you are the tank |
+
+- Only a **new** condition speaks, and only a worse one: a mob that gets safer says nothing, a mob that cannot be read
+  says nothing, and the mob that was your target says nothing when you leave it.
+- The same mob waits the cooldown; the alerts about others come at most one every 3 seconds, the most serious first.
+  The mute and the muted units apply, and a tank is never told about being close to pulling.
+- With the window closed they reach you only while the **sound** is on.
+- Nothing is written in chat and nothing of them is recorded: reports and replay hold the monitored enemy only.
+
 ## The Coach
 
 One tip at a time for your role (tank, damage dealer or healer), for example *Threat rising: consider delaying your

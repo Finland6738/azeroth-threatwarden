@@ -176,8 +176,8 @@ this mob now*, *Stale: last read 3.2 s ago*, *Waiting for a read*, *Not availabl
 - **Posti**: `settings.mobs.max` (8) compreso il mob monitorato. A ogni tick i candidati si ordinano per: fonte
   migliore del mob (tabella di §1.2), stato dell'ultima lettura (DANGER, WARNING, SAFE, poi UNKNOWN), leggibili prima
   dei `secret`, ordine di scoperta; i primi prendono i posti. Un mob che perde il posto non tiene nulla.
-- **Budget**: al più `READ_BUDGET` (**48**) letture per tick (ogni `Threat.Read` e ogni `ReadLead` contano una
-  lettura). Una lettura di un mob legge al più `UNITS_PER_MOB` (**10**) unità del roster dello Scanner (le sue
+- **Budget**: al più `READ_BUDGET` (**40**, M7.4; erano 48) letture per tick (ogni `Threat.Read` e ogni `ReadLead`
+  contano una lettura). Una lettura di un mob legge al più `UNITS_PER_MOB` (**10**) unità del roster dello Scanner (le sue
   `ThreatScanner.units`, nello stesso ordine, entro `maxUnits`): `player`, `pet`, i tank designati e chi lo teneva
   all'ultima lettura sempre; gli altri posti a turno, con un cursore per mob. In un party (fino a 6 unità con il
   famiglio) ogni lettura legge tutti.
@@ -185,9 +185,15 @@ this mob now*, *Stale: last read 3.2 s ago*, *Waiting for a read*, *Not availabl
   poi quelli in DANGER, poi a turno dopo l'ultimo letto; ci si ferma quando la lettura del mob seguente non entra nel
   budget, ma almeno un mob per tick. Un evento non fa mai una lettura fuori dal tick: il costo resta nel budget
   (come MON-07). Con eventi puntuali M0.7 può abbassare `RATE` **[probe P6]**.
-- **Costo atteso**: in un party 8 mob × 6 unità ≈ 48 letture per tick, ≈ 96 al secondo (il monitor a 5 Hz con 6 unità
-  ne fa 30); in un raid 4 mob per tick con 10 unità ciascuno, ogni mob riletto circa ogni secondo con 8 posti. M7.4 lo
-  misura nel client finto (§2.8); il budget vero lo dà P10.
+- **Costo atteso**: in un party ogni mob costa 6 unità e la lettura di chi lo tiene (7): 5 mob per tick (35 letture,
+  70 al secondo; il monitor a 5 Hz con 6 unità ne fa 30), i 7 mob oltre a quello monitorato riletti ogni secondo; in
+  un raid ogni mob costa 10 unità e la lettura di chi lo tiene (11): 3 mob per tick, con 8 posti ogni mob riletto ogni
+  1,5 s circa (con 12 posti ogni 2 s), sempre dentro il suo limite di freschezza (`2 · I`).
+- *M7.4* **Budget misurato**: il test lungo ([SPEC-01 §5.1](SPEC-01-platform-architecture.md#51-il-costo-di-un-tick-del-monitor-misura-offline-di-m27))
+  ha trovato che con 48 letture (circa 42 per tick) un tick dei mob in un raid costa più di un tick del monitor con 40
+  unità (165 000 contro 153 000 istruzioni di media con la barra del pull, 174 000 con la lista); con **40** costa meno
+  (138 000 e 149 000, al peggio 184 000 contro 191 000). Fra 33 e 43 letture un raid legge gli stessi 3 mob per tick;
+  il resto è margine per i party. Il budget vero lo dà P10 (Q26).
 - **Allocazioni**: record e righe dei mob vengono da pool fatti una volta per posto e per indice del roster
   (DAT-11), il tick non alloca dopo il riscaldamento (ARC-06); una chiave si costruisce solo quando un mob entra.
 - *M7.2* **Solo spazzata**: quando il tick ha le condizioni sopra ma nessun mob è noto oltre a quello monitorato, il
@@ -365,7 +371,7 @@ monitorato, con un tipo nuovo, `mob`:
 | `ALERT_MOB_AGGRO` *A mob is on %s.* | DANGER `aggro` (`%s` chi lo tiene) | altra unità | 3 | come `alerts.others` (di predefinito solo il tank) |
 | `ALERT_MOB_CLOSE` *%s is about to pull a mob.* | DANGER `close` (`%s` il più vicino) | altra unità | 2 | come `alerts.others` |
 | `ALERT_MOB_NO_TANK` *A mob is not on the tank.* | WARNING `no-tank` | — | 1 | come `alerts.others` |
-| `ALERT_MOB_SELF` *You are close to pulling another mob.* | `selfState` del giocatore entra in DANGER su un altro mob | il giocatore | 2 | il giocatore che non fa il tank (mai al tank, D12) |
+| `ALERT_MOB_SELF` *Your threat on another mob is very high* (M7.4: vero sia quando si è vicini sia quando lo si tiene) | `selfState` del giocatore entra in DANGER su un altro mob | il giocatore | 2 | il giocatore che non fa il tank (mai al tank, D12) |
 
 - Valgono le regole di SPEC-04: solo le **entrate** (ALR-01, da UNKNOWN solo sopra l'ultimo stato noto), il cooldown
   `alerts.cooldown` per tipo `mob` e **per mob** (non per unità), `OTHER_GAP` fra due avvisi sulle altre unità, il
@@ -373,6 +379,30 @@ monitorato, con un tipo nuovo, `mob`:
 - Il Coach resta sul mob monitorato. Gli avvisi `mob` **non** si registrano: il mob non è nella sessione (Recorder li
   ignora, nessun codice nuovo in SPEC-02 §4.3).
 - Con l'interruttore `multitarget` spento `alerts.onlyTarget` non conta (vale acceso).
+
+*M7.4*, come è stato realizzato (`Data/Alerts.lua`):
+
+- Alerts guarda la lista dopo ogni `MOBS_UPDATED` (non solo `MOB_STATE_CHANGED`): anche un cambio di motivo (`close` →
+  `aggro`) o dello stato del giocatore è un'entrata. Tiene per ogni chiave di mob l'ultima condizione conosciuta
+  (`aggro` > `close` > `no-tank` > `near` > SAFE) e l'ultimo stato del giocatore: avvisa solo ciò che **sale**; un mob
+  UNKNOWN, o che non si legge ora anche se mostra ancora l'ultimo stato per la permanenza, non aggiorna nulla (da
+  UNKNOWN solo sopra l'ultimo noto). La memoria si aggiorna anche per il mob monitorato e con `alerts.onlyTarget`
+  acceso, così chi cambia target o accende l'impostazione a metà combattimento non riceve avvisi su condizioni già in
+  corso; si svuota quando il mob esce dal tracker e a fine combattimento.
+- **Un avviso per mob a ogni aggiornamento**, prima quello sul giocatore: se sale `selfState` e il giocatore non fa il
+  tank (ruolo `TANK`, o chi tiene il mob monitorato senza tank designati; senza tank designati chi tiene *quel* mob è
+  il suo tank) esce `ALERT_MOB_SELF`; altrimenti l'avviso sul mob. Gli avvisi sul mob non nominano mai il giocatore
+  (c'è `ALERT_MOB_SELF`); `ALERT_MOB_CLOSE` non esce se il più vicino è un tank (cambio di tank) o è escluso;
+  `ALERT_MOB_AGGRO` non esce per il proprio famiglio con `alerts.pet` spento. Senza un più vicino noto `ALERT_MOB_CLOSE`
+  dice *Unknown*.
+- Gli avvisi che escono nello stesso aggiornamento partono dal più grave (`aggro`, poi quello sul giocatore, poi
+  `close`, poi `no-tank`): l'intervallo `OTHER_GAP` ne lascia passare uno sugli altri, il resto si conta e non si
+  ripete. Il cooldown è per mob (tipo `mob`), con le chiavi vecchie dimenticate oltre `MOB_PRUNE_AT` (64).
+- Con il suono acceso (avvisi accesi, non silenziati, `alerts.onlyTarget` spento) Alerts vuole il tracker
+  (`MobTracker.Want("alerts")`), così il suono funziona a finestra chiusa; senza suono lo vuole solo la finestra, come
+  per lo Scanner (SPEC-04 §1.4). Nella demo non escono avvisi `mob`.
+- Categorie: `detected`, `no-tank` `calculated`; il testo dice su quali dati poggia (`ALERT_WHY_MOB`,
+  `ALERT_WHY_MOB_NO_TANK`; per `aggro` `ALERT_WHY_HOLDER`).
 
 ### 2.6 Impostazioni, comandi, demo e diagnostica
 
@@ -402,7 +432,7 @@ monitorato, con un tipo nuovo, `mob`:
 | `Data/MobTracker.lua` | fonti, chiavi, posti, rotazione, budget, letture, portata, ciclo di vita (§1.2–§1.7); `Want`, `TokenOf`, `List` | emette `MOBS_UPDATED()`; ascolta `COMBAT_STARTED`, `COMBAT_ENDED`, `TARGET_CHANGED`, `THREAT_UPDATED`, `WINDOW_SHOWN`, `TAB_CHANGED`, `CONFIG_LOADED`, `CONFIG_CHANGED`, `DEMO_CHANGED`; dal gioco `NAME_PLATE_UNIT_ADDED`, `NAME_PLATE_UNIT_REMOVED`, `PLAYER_FOCUS_CHANGED`, `INSTANCE_ENCOUNTER_ENGAGE_UNIT`, `UNIT_TARGET`, `UNIT_THREAT_LIST_UPDATE` | M7.2 |
 | `Data/TargetTracker.lua` (cambio) | la regola 0, `Pin`, `Pinned` (§2.4) | emette `PIN_CHANGED(mobKey)`, `TARGET_CHANGED` | M7.2 |
 | `UI/FocusList.lua`, `UI/ThreatList.lua` (cambio), `UI/Settings.lua`, `Core/Commands.lua`, `Data/Demo.lua`, `Core/Demo.lua` | barra del pull, lista, clic, icona `pin` nell'intestazione, card *Dungeon Focus*, `/atw focus`, demo | ascolta `MOBS_UPDATED`, `PIN_CHANGED`, `TARGET_CHANGED`, `COMBAT_*`, `CONFIG_CHANGED`, `THEME_CHANGED`, `DEMO_CHANGED` | M7.3 |
-| `Data/Alerts.lua`, `Data/Recorder.lua` (cambi) | il tipo `mob` e `alerts.onlyTarget` (§2.5); il Recorder ignora `mob`; l'interruttore nella card *Alerts* | ascolta `MOB_STATE_CHANGED` | M7.4 |
+| `Data/Alerts.lua`, `Data/Recorder.lua` (cambi) | il tipo `mob` e `alerts.onlyTarget` (§2.5); il Recorder ignora `mob`; l'interruttore nella card *Alerts* | ascolta `MOBS_UPDATED` | M7.4 |
 
 - Nel TOC `Data/MobRisk.lua` e `Data/MobTracker.lua` dopo `Data/ThreatState.lua` (prima di `Data/Alerts.lua`),
   `UI/FocusList.lua` prima di `UI/ThreatList.lua` (come `UI/CoachStrip.lua`).

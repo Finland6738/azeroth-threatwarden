@@ -24,7 +24,8 @@ which mob, warns you before you pull aggro, records your fights and explains wha
 > rate are provisional ([Threat Monitor](docs/wiki/Threat-Monitor.md)). It also has saved settings (versioned, with
 > migrations), the ecosystem look, a movable window with Settings and an Info page with the credits, the
 > [commands](docs/wiki/Commands.md) `/atw` and `/threatwarden`, a minimap button and the Addon Compartment entry. The
-> [Dungeon Focus](docs/wiki/Dungeon-Focus.md) of the next version, `v0.7.0`, is built but switched off. It is
+> [Dungeon Focus](docs/wiki/Dungeon-Focus.md) of the next version, `v0.7.0`, with its optional alerts about other mobs, is
+> built but switched off. It is
 > checked by offline tests only: the M0 probe and the in-game checks of [M1](docs/checklists/M1.md),
 > [M2](docs/checklists/M2.md), [M3](docs/checklists/M3.md), [M4](docs/checklists/M4.md),
 > [M5](docs/checklists/M5.md) and [M6](docs/checklists/M6.md) are still

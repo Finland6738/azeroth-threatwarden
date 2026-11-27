@@ -64,6 +64,13 @@ Which of these happens depends on the answers of the M0 probe: which sources rep
 is hidden in instances, whether their threat is secret. Until it is run, nothing here is verified in the game. The
 Dungeon Focus is **only shown**: nothing of it is saved or recorded, and at most 8 mobs are followed at once.
 
+## Alerts
+
+The bar is enough to see the other mobs, so by default the [alerts](Alerts-and-Coach) speak only about the monitored
+one. Turn on **Alerts about other mobs** in the [Alerts card](Settings#alerts) to be warned when another mob goes onto
+someone who is not a tank, when someone is about to pull one, when no tank has picked one up, or when your own threat on
+one is very high: see [Alerts about other mobs](Alerts-and-Coach#alerts-about-other-mobs).
+
 ## Settings and demo
 
 The [Dungeon Focus card](Settings#dungeon-focus) of Settings turns it off, sets how many mobs are followed and whether

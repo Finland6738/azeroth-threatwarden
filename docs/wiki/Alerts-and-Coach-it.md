@@ -72,6 +72,28 @@ dall'aggro*. Con i dati *solo stato* l'avviso dice ciò che mostra il gioco, sen
 World of Warcraft ha un suo avviso della threat nelle opzioni del gioco. Se è acceso, potresti ricevere due avvisi per
 la stessa cosa: spegnine uno. L'addon non cambia mai l'impostazione del gioco.
 
+## Avvisi sugli altri nemici
+
+> **In arrivo nella `v0.7.0`**, spento fino ad allora e non verificato in gioco.
+
+Di base gli avvisi parlano solo del nemico che il monitor segue. Accendi **Avvisi sugli altri nemici** nella
+[card Avvisi](Settings-it#avvisi) per sapere anche degli altri nemici di un pull (quelli del
+[[Dungeon Focus|Dungeon-Focus-it]]), quando il gioco lascia leggerli a un addon.
+
+| Avviso | Quando | A chi arriva |
+|---|---|---|
+| *Un nemico è su Kor* | qualcuno che non è un tank prende un nemico | come dice **Avvisi sugli altri** (di base solo un tank) |
+| *Kor è vicino a strappare un nemico* | qualcuno è vicino a prendere un nemico | come dice **Avvisi sugli altri** |
+| *Un nemico non è sul tank* | nessun tank è nell'elenco della threat di un nemico (un'attenzione, mai con il suono) | come dice **Avvisi sugli altri** |
+| *La tua threat su un altro nemico è molto alta* | la tua threat su un altro nemico arriva a Pericolo, perché stai per prenderlo o lo tieni | a te, se non fai il tank |
+
+- Parla solo una condizione **nuova**, e solo se peggiora: un nemico che si calma non dice nulla, uno che non si legge
+  non dice nulla, e il nemico che era il tuo bersaglio non dice nulla quando lo lasci.
+- Lo stesso nemico aspetta il tempo di attesa; gli avvisi sugli altri escono al massimo uno ogni 3 secondi, prima il
+  più grave. Valgono il silenzio e le unità silenziate, e a un tank non si dice mai che sta per strappare.
+- Con la finestra chiusa ti arrivano solo se il **suono** è acceso.
+- Nulla viene scritto in chat e nulla di essi si registra: report e replay contengono solo il nemico monitorato.
+
 ## Il Coach
 
 Un consiglio alla volta per il tuo ruolo (tank, DPS o guaritore), per esempio *Threat in aumento: valuta di ritardare il

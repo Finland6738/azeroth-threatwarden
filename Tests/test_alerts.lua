@@ -1047,6 +1047,559 @@ describe("the work of an event (ARC-06)", function()
 	end)
 end)
 
+---------------------------------------------------------------------------------------------------------------------
+-- The `mob` kind: alerts about the mobs of Data/MobTracker.lua other than the monitored one (SPEC-07 §2.5, M7.4)
+---------------------------------------------------------------------------------------------------------------------
+describe("the alerts about other mobs (SPEC-07 §2.5)", function()
+	before_boot(function(M)
+		M.features = { monitor = true, alerts = true, coach = false, recording = false, multitarget = true }
+	end)
+
+	local function MT() return Mock.ns.MobTracker end
+
+	local PARTY = {
+		{ key = "tank", class = "WARRIOR", role = "TANK" },
+		{ key = "healer", class = "PRIEST", role = "HEALER" },
+		{ key = "rogue", class = "ROGUE", role = "DAMAGER" },
+		{ key = "hunter", class = "HUNTER", role = "DAMAGER" },
+	}
+
+	-- The monitored boss and two adds on nameplates, everything on the tank; the player and the others low. The window is
+	-- closed, the tracker wanted by the test and its tick the test's own.
+	local function mobPull(def)
+		def = def or {}
+		truthy(Mock.ns.Config:Set("account.settings.monitor.show", "manual"))
+		Mock.ns.Window:Close()
+		if def.onlyTarget ~= true then set("onlyTarget", false) end
+		if def.others then set("others", def.others) end
+		local pull = newPull{
+			player = def.player or { class = "MAGE", role = "DAMAGER", ranged = true },
+			party = def.party or PARTY,
+			mobs = {
+				{ key = "boss", tokens = { "target" } },
+				{ key = "add1", tokens = { "nameplate1" } },
+				{ key = "add2", tokens = { "nameplate2" } },
+			},
+		}
+		if def.outcome then pull:outcome(def.outcome) end
+		pull:at(0):start()
+		for _, mob in ipairs({ "boss", "add1", "add2" }) do
+			pull:threat(mob, def.holder or "tank", 1000)
+			for _, unit in ipairs({ "player", "rogue", "healer" }) do
+				if unit ~= (def.holder or "tank") then pull:threat(mob, unit, value(20, 200)) end
+			end
+		end
+		pull:to(0)
+		TS().Want("test", true)
+		MT().Want("test", true)
+		Mock.ns.Scheduler.Stop("mobs")
+		return pull
+	end
+
+	-- `seconds` of fight (the monitor reads on its own), then a tick of the mobs.
+	local function step(pull, seconds)
+		pull:to(pull.elapsed + (seconds or 0.5))
+		MT().Tick()
+	end
+
+	local function settle(pull)
+		step(pull, 0.5)
+		step(pull, 0.5)
+	end
+
+	-- Only the `mob` alerts of `seen`.
+	local function mobs(seen)
+		local out = {}
+		for _, a in ipairs(seen) do
+			if a.kind == "mob" then out[#out + 1] = a end
+		end
+		return out
+	end
+
+	local function said(seen)
+		local out = {}
+		for i, a in ipairs(mobs(seen)) do out[i] = a.message end
+		return table.concat(out, " ")
+	end
+
+	local function mobKey(name) return "mob:" .. Mock.units.Get(name).guid end
+
+	local function tankPlayer(def)
+		def.player = { class = "WARRIOR", role = "TANK" }
+		def.party = {
+			{ key = "tank", class = "PALADIN", role = "TANK" },
+			{ key = "healer", class = "PRIEST", role = "HEALER" },
+			{ key = "rogue", class = "ROGUE", role = "DAMAGER" },
+		}
+		return def
+	end
+
+	for _, outcome in ipairs({ "values", "state" }) do
+		it("says a mob is on someone who is not a tank, once per transition (" .. outcome .. ")", function()
+			local seen = record()
+			local pull = mobPull{ others = "always", outcome = outcome }
+			settle(pull)
+			eq(said(seen), "", "a safe pull says nothing")
+			pull:aggro("add1", "rogue")
+			settle(pull)
+			eq(said(seen), "ALERT_MOB_AGGRO")
+			local a = mobs(seen)[1]
+			eq(a.severity, 3)
+			eq(a.state, "DANGER")
+			eq(a.reason, "aggro")
+			eq(a.subject, "other")
+			eq(a.mobKey, mobKey("add1"))
+			eq(a.otherKey, keyOf("party3"))
+			eq(a.unitKey, keyOf("party3"))
+			eq(a.category, "detected")
+			local text, why = AL().Text(a)
+			eq(text, "A mob is on Rogue")
+			eq(why, "Rogue is at the top of its threat list. The cause is not known.")
+			for _ = 1, 30 do step(pull) end
+			eq(said(seen), "ALERT_MOB_AGGRO", "the same transition does not come again, whatever the time")
+			eq(#Mock.errors, 0)
+			eq(Mock.ns.Bus.errorCount, 0)
+		end)
+	end
+
+	it("says again after a fall and a new rise, once the cooldown is over", function()
+		local seen = record()
+		local pull = mobPull{ others = "always" }
+		settle(pull)
+		pull:aggro("add1", "rogue")
+		settle(pull)
+		pull:aggro("add1", "tank")
+		step(pull, 2)
+		step(pull)
+		eq(said(seen), "ALERT_MOB_AGGRO", "a fall says nothing")
+		pull:aggro("add1", "rogue")
+		step(pull)
+		eq(said(seen), "ALERT_MOB_AGGRO", "a rise inside the cooldown of the mob is not raised")
+		truthy(AL().stats.cooled >= 1)
+		pull:aggro("add1", "tank")
+		step(pull, 9)
+		step(pull)
+		pull:aggro("add1", "rogue")
+		step(pull)
+		step(pull)
+		eq(said(seen), "ALERT_MOB_AGGRO ALERT_MOB_AGGRO")
+	end)
+
+	it("says someone is about to pull a mob, and then that the mob is on them, but never a fall back", function()
+		local seen = record()
+		set("cooldown", 3)
+		local pull = mobPull{ others = "always" }
+		settle(pull)
+		pull:threat("add1", "rogue", value(95, 900))
+		settle(pull)
+		eq(said(seen), "ALERT_MOB_CLOSE")
+		local a = mobs(seen)[1]
+		eq(a.severity, 2)
+		eq(a.subject, "other")
+		eq(a.otherKey, keyOf("party3"))
+		eq(AL().Text(a), "Rogue is about to pull a mob")
+		eq(select(2, AL().Text(a)), "From the threat of a mob you are not monitoring.")
+		step(pull, 4)
+		pull:aggro("add1", "rogue")
+		settle(pull)
+		eq(said(seen), "ALERT_MOB_CLOSE ALERT_MOB_AGGRO", "the condition rose")
+		pull:aggro("add1", "tank")
+		step(pull, 4)
+		settle(pull)
+		eq(said(seen), "ALERT_MOB_CLOSE ALERT_MOB_AGGRO", "back to close is a fall")
+	end)
+
+	it("says a mob is not on the tank, as a warning without a name and without a sound", function()
+		set("sound", true)
+		local seen = record()
+		local pull = mobPull{ others = "always" }
+		settle(pull)
+		Mock.units.Add("stranger", { class = "ROGUE" })
+		pull:drop("add1", "tank"):threat("add1", "stranger", 5000):aggro("add1", "stranger")
+		step(pull, 2)
+		step(pull)
+		eq(said(seen), "ALERT_MOB_NO_TANK")
+		local a = mobs(seen)[1]
+		eq(a.severity, 1)
+		eq(a.state, "WARNING")
+		eq(a.reason, "no-tank")
+		eq(a.category, "calculated")
+		eq(a.otherKey, false)
+		eq(a.unitKey, "")
+		falsy(a.sound)
+		eq(AL().Text(a), "A mob is not on the tank")
+		eq(select(2, AL().Text(a)), "No tank is on the threat list of that mob.")
+	end)
+
+	it("tells the player who is close to pulling another mob, and not the others about it", function()
+		local seen = record()
+		local pull = mobPull{ others = "always" }
+		settle(pull)
+		pull:threat("add2", "player", value(95, 900))
+		settle(pull)
+		eq(said(seen), "ALERT_MOB_SELF", "one alert for the transition, the player first")
+		local a = mobs(seen)[1]
+		eq(a.subject, "self")
+		eq(a.severity, 2)
+		eq(a.reason, "self")
+		eq(a.unitKey, keyOf("player"))
+		eq(a.mobKey, mobKey("add2"))
+		eq(AL().Text(a), "Your threat on another mob is very high")
+		pull:aggro("add2", "player")
+		settle(pull)
+		eq(said(seen), "ALERT_MOB_SELF", "taking it is the same transition of the player, and no alert about oneself")
+	end)
+
+	it("tells the player on a loose mob once, with the sound of a Danger", function()
+		set("sound", true)
+		local seen = record()
+		local pull = mobPull()   -- others = tank: a damage dealer hears only about itself
+		settle(pull)
+		pull:aggro("add1", "player")
+		settle(pull)
+		eq(said(seen), "ALERT_MOB_SELF")
+		truthy(mobs(seen)[1].sound)
+		eq(#Mock.sound.calls, 1)
+	end)
+
+	it("tells only a tank about the others by default (alerts.others)", function()
+		local seen = record()
+		local pull = mobPull()
+		settle(pull)
+		pull:aggro("add1", "rogue")
+		pull:threat("add2", "rogue", value(95, 900))
+		settle(pull)
+		eq(said(seen), "", "a damage dealer hears nothing about others by default")
+	end)
+
+	it("tells a tank about the others by default, and never the tank about itself", function()
+		local seen = record()
+		local pull = mobPull(tankPlayer({}))
+		settle(pull)
+		pull:threat("add2", "player", value(95, 900))
+		settle(pull)
+		eq(said(seen), "", "a tank is not told that it is close to pulling")
+		pull:aggro("add1", "rogue")
+		step(pull, 4)
+		settle(pull)
+		eq(said(seen), "ALERT_MOB_AGGRO")
+	end)
+
+	it("says nothing about others with others = never, but still speaks to the player", function()
+		local seen = record()
+		local pull = mobPull{ others = "never" }
+		settle(pull)
+		pull:aggro("add1", "rogue")
+		pull:threat("add2", "player", value(95, 900))
+		settle(pull)
+		eq(said(seen), "ALERT_MOB_SELF")
+	end)
+
+	it("never speaks of a tank about to pull a mob another tank holds", function()
+		local seen = record()
+		local pull = mobPull(tankPlayer({ others = "always" }))
+		settle(pull)
+		pull:threat("add1", "player", value(95, 900))
+		settle(pull)
+		eq(said(seen), "")
+	end)
+
+	it("keeps one cooldown per mob, and the gap between alerts about others: the worst speaks first", function()
+		local seen = record()
+		local pull = mobPull{ others = "always" }
+		settle(pull)
+		pull:threat("add1", "rogue", value(95, 900))   -- close on add1
+		pull:aggro("add2", "healer")                    -- loose on add2: severity 3
+		step(pull)
+		eq(said(seen), "ALERT_MOB_AGGRO", "one alert about others every few seconds, the most severe first")
+		eq(mobs(seen)[1].mobKey, mobKey("add2"))
+		truthy(AL().stats.dropped >= 1)
+		step(pull, 4)
+		eq(said(seen), "ALERT_MOB_AGGRO", "the dropped one is not repeated: it did not enter again")
+		pull:threat("add1", "rogue", value(20, 200))
+		step(pull, 4)
+		settle(pull)
+		pull:threat("add1", "rogue", value(95, 900))
+		step(pull)
+		eq(said(seen), "ALERT_MOB_AGGRO ALERT_MOB_CLOSE", "another mob has its own cooldown")
+	end)
+
+	it("leaves out an excluded unit", function()
+		local seen = record()
+		local pull = mobPull{ others = "always" }
+		settle(pull)
+		truthy(AL().Exclude(keyOf("party3"), true))
+		pull:aggro("add1", "rogue")
+		settle(pull)
+		pull:threat("add2", "rogue", value(95, 900))
+		step(pull, 4)
+		settle(pull)
+		eq(said(seen), "")
+		truthy(AL().Exclude(keyOf("party3"), false))
+		pull:threat("add2", "rogue", value(20, 200))
+		step(pull, 4)
+		settle(pull)
+		pull:threat("add2", "rogue", value(95, 900))
+		settle(pull)
+		eq(said(seen), "ALERT_MOB_CLOSE")
+	end)
+
+	it("says nothing about an unreadable mob, and comes back from UNKNOWN only above the last known condition", function()
+		local seen = record()
+		local pull = mobPull{ others = "always" }
+		settle(pull)
+		pull:threat("add1", "rogue", value(95, 900))
+		settle(pull)
+		eq(said(seen), "ALERT_MOB_CLOSE")
+		pull:outcome("none")
+		step(pull, 6)
+		step(pull, 6)
+		eq(said(seen), "ALERT_MOB_CLOSE", "UNKNOWN never alerts")
+		pull:outcome("values")
+		step(pull, 6)
+		settle(pull)
+		eq(said(seen), "ALERT_MOB_CLOSE", "the same condition is not new")
+		pull:aggro("add1", "rogue")
+		step(pull, 6)
+		settle(pull)
+		eq(said(seen), "ALERT_MOB_CLOSE ALERT_MOB_AGGRO")
+	end)
+
+	it("learns nothing from a mob that cannot be read but still shows its last state (the dwell)", function()
+		local seen = record()
+		set("cooldown", 3)
+		local pull = mobPull()
+		settle(pull)
+		pull:aggro("add1", "player")
+		settle(pull)
+		eq(said(seen), "ALERT_MOB_SELF")
+		pull:to(pull.elapsed + 5)
+		local entry = MT().Get(mobKey("add1"))
+		local mode, mine = entry.mode, entry.selfState
+		eq(entry.state, "DANGER")
+		entry.mode, entry.selfState = "none", nil   -- stale rows, the state kept (Data/MobRisk.lua)
+		Mock.ns.Bus.Emit("MOBS_UPDATED")
+		entry.mode, entry.selfState = mode, mine
+		Mock.ns.Bus.Emit("MOBS_UPDATED")
+		eq(said(seen), "ALERT_MOB_SELF", "the same condition is not new")
+		eq(Mock.ns.Bus.errorCount, 0)
+	end)
+
+	it("says nothing about the mob that was the target when the player leaves it", function()
+		local seen = record()
+		local pull = mobPull{ others = "always" }
+		settle(pull)
+		pull:aggro("boss", "rogue")
+		settle(pull)
+		eq(said(seen), "", "the monitored mob has the alerts of the monitor")
+		pull:target("player", "add1")
+		settle(pull)
+		step(pull, 2)
+		settle(pull)
+		eq(said(seen), "", "its condition was already known")
+		eq(#Mock.errors, 0)
+	end)
+
+	it("is silenced by the mute, with no channel", function()
+		set("sound", true)
+		local seen = record()
+		local pull = mobPull{ others = "always" }
+		settle(pull)
+		AL().ToggleMute()
+		MT().Want("test", true)
+		Mock.ns.Scheduler.Stop("mobs")
+		pull:aggro("add1", "rogue")
+		settle(pull)
+		local a = mobs(seen)[1]
+		eq(a.message, "ALERT_MOB_AGGRO")
+		truthy(a.muted)
+		falsy(a.window)
+		falsy(a.visual)
+		falsy(a.sound)
+		eq(#Mock.sound.calls, 0)
+	end)
+
+	it("is never raised with alerts.onlyTarget on, and turning it off mid-fight repeats nothing", function()
+		local seen = record()
+		local pull = mobPull{ others = "always", onlyTarget = true }
+		eq(Mock.ns.Config:Get(P .. "onlyTarget"), true)
+		settle(pull)
+		pull:aggro("add1", "rogue")
+		pull:threat("add2", "player", value(95, 900))
+		step(pull, 4)
+		settle(pull)
+		eq(said(seen), "")
+		set("onlyTarget", false)
+		step(pull, 4)
+		settle(pull)
+		eq(said(seen), "", "turning the setting on is not a transition")
+		pull:aggro("add2", "healer")
+		settle(pull)
+		eq(said(seen), "ALERT_MOB_AGGRO")
+		set("onlyTarget", true)
+		pull:aggro("add1", "tank")
+		step(pull, 4)
+		pull:aggro("add1", "healer")
+		settle(pull)
+		eq(said(seen), "ALERT_MOB_AGGRO")
+	end)
+
+	it("says nothing while the alerts are off", function()
+		local seen = record()
+		local pull = mobPull{ others = "always" }
+		set("enabled", false)
+		settle(pull)
+		pull:aggro("add1", "rogue")
+		settle(pull)
+		eq(said(seen), "")
+	end)
+
+	it("starts again with each fight", function()
+		local seen = record()
+		set("cooldown", 3)
+		local pull = mobPull{ others = "always" }
+		settle(pull)
+		pull:aggro("add1", "rogue")
+		settle(pull)
+		pull:stop()
+		pull:to(pull.elapsed + 5)
+		pull:start()
+		pull:threat("boss", "tank", 1000):threat("add1", "rogue", 1000)
+		pull:to(pull.elapsed + 1)
+		Mock.ns.Scheduler.Stop("mobs")
+		settle(pull)
+		eq(said(seen), "ALERT_MOB_AGGRO ALERT_MOB_AGGRO")
+	end)
+
+	it("never writes to chat and never opens the window (ALR-02, ALR-04)", function()
+		local sent = 0
+		SendChatMessage = function() sent = sent + 1 end
+		SendAddonMessage = function() sent = sent + 1 end
+		local before = #Mock.output
+		local seen = record()
+		local pull = mobPull{ others = "always" }
+		settle(pull)
+		pull:aggro("add1", "rogue")
+		settle(pull)
+		eq(said(seen), "ALERT_MOB_AGGRO")
+		eq(sent, 0)
+		eq(#Mock.output, before)
+		falsy(Mock.ns.Window:IsShown())
+	end)
+
+	it("wants the other mobs only while it can speak of them with the window closed", function()
+		truthy(Mock.ns.Config:Set("account.settings.monitor.show", "manual"))
+		Mock.ns.Window:Close()
+		falsy(MT().consumers.alerts)
+		set("sound", true)
+		falsy(MT().consumers.alerts, "only the target")
+		set("onlyTarget", false)
+		truthy(MT().consumers.alerts)
+		AL().ToggleMute()
+		falsy(MT().consumers.alerts)
+		AL().ToggleMute()
+		truthy(MT().consumers.alerts)
+		set("sound", false)
+		falsy(MT().consumers.alerts)
+		set("sound", true)
+		set("enabled", false)
+		falsy(MT().consumers.alerts)
+		set("enabled", true)
+		set("onlyTarget", true)
+		falsy(MT().consumers.alerts)
+	end)
+
+	it("alerts with the window closed and the sound on, through the tracker's own tick", function()
+		truthy(Mock.ns.Config:Set("account.settings.monitor.show", "manual"))
+		Mock.ns.Window:Close()
+		set("sound", true)
+		set("onlyTarget", false)
+		set("others", "always")
+		local seen = record()
+		local pull = newPull{ mobs = { { key = "boss", tokens = { "target" } }, { key = "add1", tokens = { "nameplate1" } } } }
+		pull:at(0):start():threat("boss", "tank", 1000):threat("add1", "tank", 1000)
+			:threat("add1", "rogue", value(20, 200))
+		pull:at(2):aggro("add1", "rogue")
+		pull:to(5)
+		truthy(MT().ticking)
+		eq(said(seen), "ALERT_MOB_AGGRO")
+		eq(#Mock.sound.calls, 1)
+		pull:stop()
+		pull:to(6)
+		falsy(MT().ticking)
+	end)
+
+	it("says nothing in the demo", function()
+		local seen = record()
+		set("onlyTarget", false)
+		set("others", "always")
+		truthy(Mock.ns.Demo.Start())
+		for _ = 1, 100 do Mock.Advance(0.2) end
+		eq(said(seen), "")
+		Mock.ns.Demo.Stop()
+		eq(#Mock.errors, 0)
+		eq(Mock.ns.Bus.errorCount, 0)
+	end)
+
+	it("speaks Italian on an Italian client", function()
+		truthy(Mock.ns.Config:Set("account.settings.language", "itIT"))
+		Mock.Reload()
+		local seen = record()
+		local pull = mobPull{ others = "always" }
+		settle(pull)
+		pull:aggro("add1", "rogue")
+		settle(pull)
+		eq(AL().Text(mobs(seen)[1]), "Un nemico è su Rogue")
+	end)
+
+	it("says in /atw debug how it listens and how many it raised, never a name", function()
+		local pull = mobPull{ others = "always" }
+		settle(pull)
+		pull:aggro("add1", "rogue")
+		settle(pull)
+		local text = Mock.ns.Diagnostics.Report()
+		contains(text, "other mobs: only target no, tracker wanted: no")
+		contains(text, "other 0, mob 1")
+		contains(text, "alerts about other mobs: on, 1 raised")
+		falsy(table.concat(AL().DebugLines(), "\n"):find("Rogue", 1, true))
+		falsy(AL().MobDebugLine():find("Rogue", 1, true))
+	end)
+
+	it("keeps no memory of the mobs that left", function()
+		local pull = mobPull{ others = "always" }
+		settle(pull)
+		for i = 1, 40 do
+			pull:newGUID("add1")
+			pull:threat("add1", "tank", 1000):threat("add1", "rogue", value(20, 200))
+			step(pull, 11)
+			step(pull)
+		end
+		truthy(MT().count <= 4, "known mobs: " .. MT().count)
+	end)
+end)
+
+describe("the alerts about other mobs with multitarget off (SPEC-07 §2.7)", function()
+	before_boot(function(M)
+		M.features = { monitor = true, alerts = true, coach = false, recording = false, multitarget = false }
+	end)
+
+	it("counts onlyTarget as on: no consumer, no alert, nothing about other mobs in /atw debug", function()
+		set("onlyTarget", false)
+		set("sound", true)
+		set("others", "always")
+		truthy(AL().OnlyTarget())
+		local MT = Mock.ns.MobTracker
+		falsy(MT.consumers.alerts)
+		Mock.ns.Bus.Emit("MOBS_UPDATED")
+		eq(AL().stats.raised.mob, 0)
+		local text = Mock.ns.Diagnostics.Report()
+		falsy(text:find("other mobs", 1, true))
+		falsy(text:find("mob 0", 1, true))
+		eq(#Mock.errors, 0)
+		eq(Mock.ns.Bus.errorCount, 0)
+	end)
+end)
+
 describe("the alerts switch off (ADR 0014)", function()
 	before_boot(function(M)
 		M.features = { monitor = true, alerts = false, coach = false, recording = false }

@@ -467,6 +467,7 @@ end
 
 local function onAlert(alert)
 	if not fighting() or type(alert) ~= "table" or alert.demo then return end
+	if alert.kind == "mob" then return end   -- about a mob that is not in the session (SPEC-07 §2.5, ADR 0019)
 	local other = alert.otherKey
 	local n = (Session.CATEGORY_CODE[alert.category] or "u") .. (Session.CONFIDENCE_CODE[alert.confidence] or "u")
 	local severity = type(alert.severity) == "number" and alert.severity >= 1 and alert.severity <= 3

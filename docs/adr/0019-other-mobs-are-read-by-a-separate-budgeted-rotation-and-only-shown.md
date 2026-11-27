@@ -30,7 +30,7 @@ mob's rows and keys. Four questions had to be settled before the modules are wri
    mobs on a tick of its own (`"mobs"`, 2 Hz), and `Data/MobRisk.lua` gives each one a state and a reason with the
    monitor's own thresholds, hysteresis and dwell. The monitored mob's row in the list is built from the monitor's rows,
    never read twice.
-2. **A bounded rotation.** At most 8 mobs (2 to 12, a setting), at most 48 reads per tick, at most 10 units per mob
+2. **A bounded rotation.** At most 8 mobs (2 to 12, a setting), at most 40 reads per tick (48 until M7.4 measured it), at most 10 units per mob
    read (the player, the pet, the designated tanks and the last holder always, the others in turn); events only move a
    mob to the front of the next tick, never read outside it; a mob whose reads are all secret is read again after
    5 s. No trend or prediction on other mobs.
@@ -56,7 +56,7 @@ The detailed rules are in [SPEC-07 §0–§2](../specs/SPEC-07-multi-target-heat
   report, timeline, analytics) would need a mob dimension, the recordings a new format, and the monitor's cost would
   grow with the number of mobs.
 - **Every unit on every mob, every tick.** Complete, but 320 reads per pass in a raid; the rotation keeps a party
-  complete on every tick and a raid fresh within about a second.
+  complete on every tick and a raid fresh within about one and a half seconds.
 - **Nameplates and members' targets keyed by token.** Simpler, but a token that is reassigned would carry one mob's
   numbers onto another, and the same mob would appear under two tokens.
 - **Recording the other mobs.** A fuller report of a pull, but the sessions would grow by up to eight times and change

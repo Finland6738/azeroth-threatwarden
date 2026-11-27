@@ -110,6 +110,7 @@ Ogni modifica si applica subito.
 | Attesa tra avvisi | quanto aspetta lo stesso avviso sulla stessa unità prima di tornare; si salva quando rilasci il cursore | da 3 a 30 s | 8 s |
 | Avvisi sugli altri | avvisi sugli altri giocatori | Se faccio il tank, Sempre, Mai | Se faccio il tank |
 | Il tuo famiglio prende il mob | l'avviso quando il famiglio prende il nemico in un gruppo con un tank | sì / no | sì |
+| Avvisi sugli altri nemici | *dalla `v0.7.0`*: [avvisi sugli altri nemici](Alerts-and-Coach-it#avvisi-sugli-altri-nemici) del pull, oltre a quello monitorato | sì / no | no |
 | Vai alla card Monitor | gli avvisi usano le soglie di Attenzione e Pericolo di *Monitor*; la card le dice | pulsante | |
 | Threat Coach | i consigli nella striscia | sì / no | sì |
 

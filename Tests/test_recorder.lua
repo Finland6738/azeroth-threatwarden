@@ -556,6 +556,37 @@ describe("events (SPEC-05 §1.4)", function()
 	end)
 end)
 
+describe("the alerts about other mobs (SPEC-07 §2.5, M7.4)", function()
+	before_boot(function(M)
+		M.features = { monitor = true, alerts = true, coach = false, recording = true, multitarget = true }
+	end)
+
+	it("are never written: the mob is not in the session", function()
+		truthy(C():Set("account.settings.alerts.onlyTarget", false))
+		truthy(C():Set("account.settings.alerts.others", "always"))
+		local pull = newPull{ mobs = { { key = "boss", tokens = { "target" } },
+			{ key = "add", tokens = { "nameplate2" } } } }
+		pull:at(0):start():threat("boss", "tank", 1000):threat("boss", "player", value(40))
+			:threat("add", "tank", 1000):threat("add", "rogue", value(20, 300))
+		pull:at(2):aggro("add", "rogue")
+		pull:at(6):threat("boss", "player", value(97))
+		pull:at(8):stop()
+		pull:finish()
+		Mock.Advance(6)
+		truthy(Mock.ns.Alerts.stats.raised.mob >= 1, "the mob alert was raised")
+		local s = list()[1]
+		local alerts = eventsOf(s, "L")
+		truthy(#alerts >= 1, "the monitor's alert is recorded")
+		for _, e in ipairs(alerts) do
+			truthy(e.a == "d" or e.a == "w", "only the monitor's alerts: " .. e.a)
+		end
+		eq(#alerts, Mock.ns.Alerts.stats.raised.warning + Mock.ns.Alerts.stats.raised.danger)
+		eq(#s.mobs, 1, "the other mob is not in the session")
+		eq(#Mock.errors, 0)
+		eq(Mock.ns.Bus.errorCount, 0)
+	end)
+end)
+
 describe("reload and logout (SPEC-05 §1.6, REC-04)", function()
 	it("a /reload in combat leaves the session interrupted with the X stamp, and the new one is linked", function()
 		local ended = bus("SESSION_ENDED")

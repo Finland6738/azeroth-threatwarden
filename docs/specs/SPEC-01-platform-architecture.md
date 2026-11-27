@@ -125,7 +125,7 @@ altro modulo caricato dopo di lui al caricamento del file, solo nei suoi gestori
 | `Data/Recorder.lua`, `Data/Session.lua`, `Data/Storage.lua`, `Data/Report.lua`; `UI/Reports.lua` | sessioni con le letture del monitor in colonne compatte, eventi, reload e logout, limiti e potatura, sessioni danneggiate messe da parte, report con categorie e *Insufficient data*; la scheda Reports ([SPEC-05](SPEC-05-recording-report-replay.md), moduli e test per step in §6–§7, [ADR 0016](../adr/0016-recordings-are-the-monitors-readings-in-compact-columns.md)) | Recorder emette `SESSION_STARTED(id)`, `SESSION_ENDED(id, state)`, ascolta `COMBAT_*`, `TARGET_CHANGED`, `STATE_CHANGED`, `AGGRO_CHANGED`, `THREAT_MODE_CHANGED`, `ALERT_RAISED`, `COACH_TIP`, `DEMO_CHANGED`, `CONFIG_*`, `ENTERING_WORLD`; Storage emette `SESSIONS_CHANGED()` | M4 |
 | `Data/Timeline.lua`, `Data/Replay.lua`, `UI/Timeline.lua`, `UI/ReplayWindow.lua` | modello della timeline (serie, riassunto per la larghezza, buchi, marcatori), widget del grafico da pool limitati, controllore del replay (cursore, riproduzione, passi, ±5 s, dettaglio, dati mancanti) e la sua finestra `AzerothThreatwardenReplay` ([SPEC-05 §4–§5](SPEC-05-recording-report-replay.md#4-threat-timeline-datatimelinelua-uitimelinelua-m52m53), moduli e test per step in §9–§10, [ADR 0017](../adr/0017-timeline-and-replay-are-views-over-the-recorded-session.md)) | Timeline ascolta `SESSIONS_CHANGED`; Replay ascolta `COMBAT_*`, `SESSIONS_CHANGED`; il widget, Reports e `/atw replay` emettono `REPLAY_REQUESTED(id, t)`, che la finestra del replay ascolta | M5 |
 | `Data/Metrics.lua`, `Data/Compare.lua`, `UI/Analytics.lua`, `Data/Export.lua`, `UI/ExportBox.lua` | metriche per scontro in memoria con le celle del report e `Report.Walk` (nuovo richiamo `holder`), confronto fra scontri con lo stesso nemico e aggregati, pagina e card *Analytics* della scheda Reports, esportazione testo e CSV in una casella da copiare ([SPEC-06](SPEC-06-analytics-export.md), moduli e test per step in §5–§6, [ADR 0018](../adr/0018-analytics-and-export-are-computed-in-memory-and-leave-only-through-a-copy-box.md)) | Metrics ascolta `SESSIONS_CHANGED`; Compare ascolta `SESSIONS_CHANGED`, `COMBAT_*`; la pagina Analytics emette `REPLAY_REQUESTED(id, t)`; nessun evento nuovo | M6 |
-| `Data/MobRisk.lua`, `Data/MobTracker.lua`, `UI/FocusList.lua` | gli altri mob letti da un tick loro a 2 Hz, a rotazione e con un budget (al più 8 mob, 48 letture per tick, 10 unità per mob), chiavi dai GUID, portata (*tutti*, *focus e boss*, *solo il target*) con il motivo; stato e motivo di ogni mob; la barra del pull e la lista del Dungeon Focus nella scheda Monitor, il clic che fissa il mob del monitor (`TargetTracker.Pin`); avvisi sugli altri mob con `alerts.onlyTarget` spento ([SPEC-07 §0–§2](SPEC-07-multi-target-heatmap-profiles.md), moduli e test per step in §2.7–§2.8, [ADR 0019](../adr/0019-other-mobs-are-read-by-a-separate-budgeted-rotation-and-only-shown.md)) | MobTracker emette `MOBS_UPDATED()`, ascolta `COMBAT_*`, `TARGET_CHANGED`, `THREAT_UPDATED`, `WINDOW_SHOWN`, `TAB_CHANGED`, `CONFIG_*`, `DEMO_CHANGED`, dal gioco `NAME_PLATE_UNIT_ADDED/REMOVED`, `PLAYER_FOCUS_CHANGED`, `INSTANCE_ENCOUNTER_ENGAGE_UNIT`, `UNIT_TARGET`, `UNIT_THREAT_LIST_UPDATE`; MobRisk emette `MOB_STATE_CHANGED(mobKey, old, new, reason)`, che Alerts ascolta (M7.4); TargetTracker emette `PIN_CHANGED(mobKey)` | M7 |
+| `Data/MobRisk.lua`, `Data/MobTracker.lua`, `UI/FocusList.lua` | gli altri mob letti da un tick loro a 2 Hz, a rotazione e con un budget (al più 8 mob, 48 letture per tick, 10 unità per mob), chiavi dai GUID, portata (*tutti*, *focus e boss*, *solo il target*) con il motivo; stato e motivo di ogni mob; la barra del pull e la lista del Dungeon Focus nella scheda Monitor, il clic che fissa il mob del monitor (`TargetTracker.Pin`); avvisi sugli altri mob con `alerts.onlyTarget` spento ([SPEC-07 §0–§2](SPEC-07-multi-target-heatmap-profiles.md), moduli e test per step in §2.7–§2.8, [ADR 0019](../adr/0019-other-mobs-are-read-by-a-separate-budgeted-rotation-and-only-shown.md)) | MobTracker emette `MOBS_UPDATED()`, ascolta `COMBAT_*`, `TARGET_CHANGED`, `THREAT_UPDATED`, `WINDOW_SHOWN`, `TAB_CHANGED`, `CONFIG_*`, `DEMO_CHANGED`, dal gioco `NAME_PLATE_UNIT_ADDED/REMOVED`, `PLAYER_FOCUS_CHANGED`, `INSTANCE_ENCOUNTER_ENGAGE_UNIT`, `UNIT_TARGET`, `UNIT_THREAT_LIST_UPDATE`; MobRisk emette `MOB_STATE_CHANGED(mobKey, old, new, reason)`; Alerts ascolta `MOBS_UPDATED` (M7.4); TargetTracker emette `PIN_CHANGED(mobKey)` | M7 |
 | `UI/ThreatList.lua` | elenco della threat nella scheda Monitor ([SPEC-03 §2.6, §3](SPEC-03-threat-monitor-ui.md#26-cosa-si-vede-in-ogni-stato)) | ascolta `THREAT_UPDATED`, `STATE_CHANGED`, `THREAT_MODE_CHANGED`, `TARGET_CHANGED`, `CONFIG_CHANGED`, `THEME_CHANGED` | M2.5 |
 
 Ogni M<N>.1 completa la riga dei propri moduli (eventi esatti e test) come questa sezione fa per M1: le righe di M2
@@ -157,7 +157,7 @@ Accord.
 | `SESSION_STARTED`, `SESSION_ENDED`, `SESSIONS_CHANGED` | `id`; `id`, `state` (`complete`, `interrupted`, `dropped`); nessuno ([SPEC-05 §6](SPEC-05-recording-report-replay.md#6-moduli-eventi-interruttori-e-diagnostica-m4)) | `Data/Recorder.lua`, `Data/Storage.lua` | Reports, striscia del Coach (avviso di fine scontro), Report | M4 |
 | `REPLAY_REQUESTED` | `id`, `t` (facoltativo, decimi) | card *Timeline* e pulsante *Replay* di Reports, `/atw replay` | `UI/ReplayWindow.lua` ([SPEC-05 §9](SPEC-05-recording-report-replay.md#9-moduli-eventi-interruttori-e-diagnostica-m5)) | M5 |
 | `MOBS_UPDATED` | — | `Data/MobTracker.lua`, dopo un tick dei mob o un cambio della lista | la barra del pull e la lista (`UI/FocusList.lua`) | M7.2 |
-| `MOB_STATE_CHANGED` | `mobKey`, `old`, `new`, `reason` (lo stato mostrato di un mob diverso da quello monitorato, dopo isteresi e permanenza) | `Data/MobRisk.lua` | Alerts con `alerts.onlyTarget` spento (M7.4) | M7.2 |
+| `MOB_STATE_CHANGED` | `mobKey`, `old`, `new`, `reason` (lo stato mostrato di un mob diverso da quello monitorato, dopo isteresi e permanenza) | `Data/MobRisk.lua` | nessuno (Alerts guarda la lista a ogni `MOBS_UPDATED`, M7.4) | M7.2 |
 | `PIN_CHANGED` | `mobKey` (`nil` = nessun mob fissato) | `Data/TargetTracker.lua` (`Pin`) | la barra del pull, l'intestazione del monitor | M7.2 |
 
 `/atw debug` mostra per ogni evento il numero di ascoltatori e gli ultimi errori degli ascoltatori.
@@ -270,6 +270,29 @@ in attesa della misura nel client (P10, [Q14](SPEC-09-risks-open-questions.md)).
 - Il budget si controlla in `Tests/long/test_monitor_budget.lua` ([SPEC-08 §3](SPEC-08-quality-probe-release.md#3-test-lunghi)),
   per 2, 5 e 10 Hz, su un mob e con cambi di bersaglio. Un aumento voluto si misura, si spiega nella pull request e
   sposta i numeri nel test e in questa tabella.
+
+**Il tick dei mob (misura offline di M7.4)**
+
+`Tests/long/test_multi_mob_long.lua`: 30 minuti di un raid da 40 con 40 targhe nemiche (12 mob nel pull, le altre di
+unità fuori dal combattimento), mob che diventano irraggiungibili e tornano, segreti a metà combattimento, GUID che
+cambiano sulla stessa targa, targhe rimescolate, avvisi sugli altri mob accesi (`alerts.onlyTarget` spento, `others`
+sempre), finestra aperta sulla scheda Monitor. Si contano le istruzioni della VM Lua di ogni scansione del monitor
+(40 unità) e di ogni tick dei mob, nello stesso scenario e sulle stesse risposte del client finto; sono misure
+**offline**, il costo nel gioco lo dice P10.
+
+| Per tick | Istruzioni in media | Al peggio |
+|---|---|---|
+| Monitor, 40 unità (elenco della threat visibile) | circa 153 000 | circa 191 000 |
+| Mob, con la barra del pull (avvisi compresi) | circa 138 000 | circa 176 000 |
+| Mob, con la lista del Dungeon Focus aperta | circa 149 000 | circa 184 000 |
+
+- Letture per tick: al più **33** di 40, in media 31,7 (3 mob di un raid, 10 unità e chi li tiene); mob noti insieme
+  al più 14; memoria piatta (7,7 MB, entro 10 KB, misurata ogni 5 minuti; il test fallisce oltre 64 KB di crescita).
+- Il test fallisce se un tick dei mob costa in media o al peggio più di uno del monitor, se legge oltre il budget, se
+  la memoria cresce, o se un mob elencato mostra numeri più vecchi del suo limite di freschezza.
+- Con il budget di M7.1 (48 letture, circa 42 per tick) il tick dei mob costava 165 000 (barra) e 174 000 (lista)
+  istruzioni, più del monitor: `MobTracker.READ_BUDGET` è sceso a **40** (Q26). Il tick dei mob gira a 2 Hz contro i
+  5 Hz del monitor: al secondo pesa circa 300 000 istruzioni contro 765 000.
 
 ## 6. Sicurezza, privacy, conformità (fonte §10)
 
