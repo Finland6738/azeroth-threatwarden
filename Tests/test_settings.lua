@@ -20,9 +20,9 @@ describe("the Settings page", function()
 		isNil(W():Frame().pages.settings.view, "nothing built while the Monitor is on screen")
 		local f, view = open()
 		eq(view.pageId, "settings")
-		eq(#f.cards, 8, "read-only warning, Appearance, Language, Window, Monitor, Alerts, Recording, Reset")
+		eq(#f.cards, 9, "read-only warning, Appearance, Language, Window, Monitor, Dungeon Focus, Alerts, Recording, Reset")
 		falsy(f.cards[1]:IsShown(), "no warning on writable data")
-		for i = 2, 8 do truthy(f.cards[i]:IsShown()) end
+		for i = 2, 9 do truthy(f.cards[i]:IsShown()) end
 		eq(view.pager:Active(), "settings")
 		eq(#Mock.errors, 0)
 	end)
@@ -219,7 +219,7 @@ describe("Reset settings", function()
 		eq(f.theme.control:Active(), "nebula")
 		truthy(f.minimap.control:IsOn())
 		eq(f.reset:GetLabel(), "Reset settings")
-		eq(f.cards[8].status:GetText(), "Settings reset.")
+		eq(f.cards[9].status:GetText(), "Settings reset.")
 	end)
 
 	it("forgets the first click after a few seconds", function()
@@ -272,7 +272,7 @@ describe("saved data of a newer version (read-only)", function()
 		truthy(f.cards[2].status:IsShown())
 		f.reset:Click()
 		f.reset:Click()
-		eq(f.cards[8].status:GetText(), "Nothing was changed: your saved data is read-only (see /atw debug).")
+		eq(f.cards[9].status:GetText(), "Nothing was changed: your saved data is read-only (see /atw debug).")
 		deepEq(AzerothThreatwardenDB, { schema = 99, settings = { theme = "aurora" } })
 		eq(#Mock.errors, 0)
 	end)
@@ -348,7 +348,7 @@ describe("a client without a reload function", function()
 end)
 
 describe("the Monitor card (SPEC-03 §5)", function()
-	before_boot(function(M) M.features = { monitor = true } end)
+	before_boot(function(M) M.features = { monitor = true, multitarget = false } end)
 
 	local function monitor() return account().monitor end
 
@@ -364,7 +364,7 @@ describe("the Monitor card (SPEC-03 §5)", function()
 		eq(#f.cards, 8, "Monitor, Alerts, Recording and Reset")
 		truthy(f.cards[5]:IsShown())
 		notNil(f.warning)
-		boot(function(M) M.features = { monitor = false, alerts = false, coach = false, recording = false } end)
+		boot(function(M) M.features = { monitor = false, alerts = false, coach = false, recording = false, multitarget = false } end)
 		local off = open()
 		eq(#off.cards, 5)
 		isNil(off.warning)
@@ -472,7 +472,7 @@ describe("the Monitor card (SPEC-03 §5)", function()
 
 	it("changes nothing on read-only data, and says why", function()
 		boot(function(M)
-			M.features = { monitor = true }
+			M.features = { monitor = true, multitarget = false }
 			M.saved = { AzerothThreatwardenDB = { schema = 99 } }
 		end)
 		local f = open()
@@ -495,7 +495,7 @@ describe("the Monitor card (SPEC-03 §5)", function()
 	end)
 
 	it("is in Italian on an Italian client", function()
-		boot(function(M) M.features = { monitor = true }; M.player.locale = "itIT" end)
+		boot(function(M) M.features = { monitor = true, multitarget = false }; M.player.locale = "itIT" end)
 		local f = open()
 		eq(f.demo:GetLabel(), "Avvia la demo")
 		eq(f.show.buttons.always.label:GetText(), "Sempre")
@@ -508,7 +508,7 @@ end)
 local function alertsAccount() return AzerothThreatwardenDB.settings.alerts end
 
 describe("the Alerts card with the switches off (ADR 0014)", function()
-	before_boot(function(M) M.features = { monitor = true, alerts = false, coach = false, recording = false } end)
+	before_boot(function(M) M.features = { monitor = true, alerts = false, coach = false, recording = false, multitarget = false } end)
 
 	it("is not there, and Reset says nothing of it", function()
 		local f = open()
@@ -521,7 +521,7 @@ describe("the Alerts card with the switches off (ADR 0014)", function()
 	end)
 
 	it("is not there with the Coach's switch alone", function()
-		boot(function(M) M.features = { monitor = true, alerts = false, coach = true, recording = false } end)
+		boot(function(M) M.features = { monitor = true, alerts = false, coach = true, recording = false, multitarget = false } end)
 		local f = open()
 		isNil(f.alertsCard)
 		isNil(f.coach)
@@ -529,7 +529,7 @@ describe("the Alerts card with the switches off (ADR 0014)", function()
 end)
 
 describe("the Alerts card", function()
-	before_boot(function(M) M.features = { monitor = true, alerts = true, coach = true, recording = false } end)
+	before_boot(function(M) M.features = { monitor = true, alerts = true, coach = true, recording = false, multitarget = false } end)
 
 	it("stands after Monitor and before Reset", function()
 		local f = open()
@@ -642,7 +642,7 @@ describe("the Alerts card", function()
 	end)
 
 	it("has no Coach switch with the `coach` switch off", function()
-		boot(function(M) M.features = { monitor = true, alerts = true, coach = false } end)
+		boot(function(M) M.features = { monitor = true, alerts = true, coach = false, multitarget = false } end)
 		local f = open()
 		truthy(f.alertsCard)
 		isNil(f.coach)
@@ -659,7 +659,7 @@ describe("the Alerts card", function()
 end)
 
 describe("the note of the game's own threat warning (ALR-03)", function()
-	before_boot(function(M) M.features = { monitor = true, alerts = true } end)
+	before_boot(function(M) M.features = { monitor = true, alerts = true, multitarget = false } end)
 
 	it("shows while the client says the warning is on, read when the card shows and entering the world", function()
 		Mock.threat.SetWarning(false)
@@ -697,7 +697,7 @@ end)
 
 describe("the Alerts card on read-only data", function()
 	before_boot(function(M)
-		M.features = { monitor = true, alerts = true, coach = true }
+		M.features = { monitor = true, alerts = true, coach = true, multitarget = false }
 		M.saved = { AzerothThreatwardenDB = { schema = 99, settings = {} } }
 	end)
 
@@ -712,7 +712,7 @@ end)
 
 describe("the Recording card (SPEC-05 §3.6)", function()
 	before_boot(function(M)
-		M.features = { monitor = true, alerts = true, coach = true, recording = true, reports = true }
+		M.features = { monitor = true, alerts = true, coach = true, recording = true, reports = true, multitarget = false }
 	end)
 
 	local function recording() return account().recording end
@@ -807,7 +807,7 @@ describe("the Recording card (SPEC-05 §3.6)", function()
 
 	it("says Not saved and deletes nothing on read-only data", function()
 		T.boot(function(M)
-			M.features = { monitor = true, recording = true, reports = true }
+			M.features = { monitor = true, recording = true, reports = true, multitarget = false }
 			M.saved = { AzerothThreatwardenDB = { schema = 99, sessions = {} } }
 		end)
 		local f = open()
@@ -819,7 +819,7 @@ describe("the Recording card (SPEC-05 §3.6)", function()
 end)
 
 describe("with the `recording` switch off", function()
-	before_boot(function(M) M.features = { monitor = true, alerts = true, recording = false, reports = true } end)
+	before_boot(function(M) M.features = { monitor = true, alerts = true, recording = false, reports = true, multitarget = false } end)
 	it("has no Recording card", function()
 		local f = open()
 		isNil(f.recordingCard)

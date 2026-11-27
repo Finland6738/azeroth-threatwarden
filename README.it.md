@@ -7,10 +7,10 @@ della threat, di coaching e di analisi dei combattimenti per **World of Warcraft
 quale mob, ti avvisa prima che tu prenda l'aggro, registra i combattimenti e spiega cosa è successo, distinguendo sempre
 ciò che è **noto** da ciò che è **stimato**.
 
-> **Stato: sviluppo iniziale. La [`v0.6.0`](https://github.com/Finland6738/azeroth-threatwarden/releases/tag/v0.6.0) è
-> la sesta versione di prova: aggiunge Analytics della threat e l'esportazione in testo e CSV al monitor della threat,
-> agli avvisi, al Threat Coach, alla registrazione dei combattimenti, al report, alla Timeline e al Replay della
-> threat, non verificati in gioco.**
+> **Stato: sviluppo iniziale. La [`v0.7.0`](https://github.com/Finland6738/azeroth-threatwarden/releases/tag/v0.7.0) è
+> la settima versione di prova: aggiunge il Dungeon Focus e i suoi avvisi facoltativi sugli altri nemici al monitor
+> della threat, agli avvisi, al Threat Coach, alla registrazione dei combattimenti, al report, alla Timeline, al Replay
+> e ad Analytics della threat con l'esportazione, non verificati in gioco.**
 > Si scarica da [GitHub Releases](https://github.com/Finland6738/azeroth-threatwarden/releases)
 > ([come installarla](docs/wiki/Installation-it.md)). La scheda Monitor mostra chi minaccia il nemico che selezioni, il
 > tank, la percentuale, il margine, la tendenza e uno stato, oppure *solo stato* / *sconosciuto* con il motivo quando il
@@ -25,9 +25,9 @@ ciò che è **noto** da ciò che è **stimato**.
 > ([Monitor della threat](docs/wiki/Threat-Monitor-it.md)). Ha anche le impostazioni salvate (con versione e
 > migrazioni), l'aspetto dell'ecosistema, una finestra spostabile con le Impostazioni e la pagina Info con i crediti, i
 > [comandi](docs/wiki/Commands-it.md) `/atw` e `/threatwarden`, il pulsante della minimappa e la voce nell'Addon
-> Compartment. Il
-> [Dungeon Focus](docs/wiki/Dungeon-Focus-it.md) della prossima versione, la `v0.7.0`, con i suoi avvisi sugli altri
-> nemici (facoltativi), è pronto ma spento; la sua [checklist in gioco](docs/checklists/M7.md) (in inglese) è scritta. L'addon è controllato solo da test offline: la sonda M0 e le verifiche in gioco della
+> Compartment. In un pull
+> con più nemici, il [Dungeon Focus](docs/wiki/Dungeon-Focus-it.md) elenca quelli a rischio, con avvisi facoltativi su
+> di loro; quanto può mostrare dipende da ciò che il client lascia leggere a un addon. L'addon è controllato solo da test offline: la sonda M0 e le verifiche in gioco della
 > [M1](docs/checklists/M1.md), della [M2](docs/checklists/M2.md), della [M3](docs/checklists/M3.md), della
 > [M4](docs/checklists/M4.md), della [M5](docs/checklists/M5.md), della [M6](docs/checklists/M6.md) e della
 > [M7](docs/checklists/M7.md) (tutte in inglese)

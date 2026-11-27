@@ -2,9 +2,10 @@
 
 *Italiano: [[Installazione|Installation-it]]*
 
-> **`v0.6.0` is the sixth test version: it adds [[Threat Analytics|Threat-Analytics]] and the export as text and CSV
-> to the [[Threat Monitor|Threat-Monitor]], [[Alerts and Coach|Alerts-and-Coach]], [[Combat Reports|Combat-Reports]]
-> and the [[Threat Replay|Threat-Replay]].** It has not been checked in the real client yet.
+> **`v0.7.0` is the seventh test version: it adds the [[Dungeon Focus|Dungeon-Focus]] to the
+> [[Threat Monitor|Threat-Monitor]], [[Alerts and Coach|Alerts-and-Coach]], [[Combat Reports|Combat-Reports]], the
+> [[Threat Replay|Threat-Replay]] and [[Threat Analytics|Threat-Analytics]].** It has not been checked in the real
+> client yet.
 
 ## From a release
 

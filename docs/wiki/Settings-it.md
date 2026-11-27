@@ -82,7 +82,7 @@ Le aperture e chiusure automatiche non cambiano mai la tua scelta a mano.
 
 ## Dungeon Focus
 
-> **In arrivo nella `v0.7.0`**: la card compare con lei. Non verificata in gioco.
+> **Nuovo nella `v0.7.0`**, non verificato in gioco.
 
 Salvata per tutto l'account, sotto *Monitor*. Che cosa mostra è in [[Dungeon Focus|Dungeon-Focus-it]].
 

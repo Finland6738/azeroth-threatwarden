@@ -2,7 +2,7 @@
 
 *English: [[Dungeon Focus|Dungeon-Focus]]*
 
-> **In arrivo nella `v0.7.0`, spento fino ad allora e non verificato in gioco.** Che WoW Forever permetta a un addon di
+> **Nuovo nella `v0.7.0`, non verificato in gioco.** Che WoW Forever permetta a un addon di
 > leggere la threat di mob diversi dal tuo bersaglio è ancora da verificare (la sonda M0). La vista è fatta per ogni
 > risposta: mostra ciò che si può leggere e dice perché quando non si può.
 

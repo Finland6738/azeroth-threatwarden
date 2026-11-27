@@ -23,8 +23,8 @@ group ([when the window shows](Settings#monitor)); thresholds, rate, order and t
 - **Margin**: for a damage dealer or healer, how far you are from 100 % (taking aggro); for the tank, how far the
   second one is from 100 %.
 
-Since `v0.3.0` a strip with [[alerts and advice|Alerts-and-Coach]] sits under the header. From `v0.7.0` (switched off
-until then), in a pull with several mobs a bar under the header opens the [[Dungeon Focus|Dungeon-Focus]], and a pin
+Since `v0.3.0` a strip with [[alerts and advice|Alerts-and-Coach]] sits under the header. From `v0.7.0` (not
+verified in game), in a pull with several mobs a bar under the header opens the [[Dungeon Focus|Dungeon-Focus]], and a pin
 next to the mob's name marks a mob you chose to follow from its list.
 
 ## The list

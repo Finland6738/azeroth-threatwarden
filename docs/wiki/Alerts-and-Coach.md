@@ -73,7 +73,7 @@ thing: turn off one of them. The addon never changes the game's setting.
 
 ## Alerts about other mobs
 
-> **Coming in `v0.7.0`**, switched off until then, and not verified in game.
+> **New in `v0.7.0`**, not verified in game.
 
 By default the alerts speak only about the enemy the monitor follows. Turn on **Alerts about other mobs** in the
 [Alerts card](Settings#alerts) to be told about the other mobs of a pull too (the ones of the

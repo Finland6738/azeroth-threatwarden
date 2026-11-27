@@ -5,6 +5,20 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+## [0.7.0] - 2026-11-27
+
+The seventh test version: the **Dungeon Focus** (milestone M7, multi-target), switched on. In a pull with several mobs a
+bar in the Monitor tab says which other mob is most at risk and opens a list of them; a click makes one of them the mob
+the monitor follows. Alerts about other mobs are off until you turn them on.
+
+It has been checked by offline tests only. The M0 probe (which threat data the client gives an addon) and the in-game
+checklists of [M1](https://github.com/Finland6738/azeroth-threatwarden/blob/v0.7.0/docs/checklists/M1.md), [M2](https://github.com/Finland6738/azeroth-threatwarden/blob/v0.7.0/docs/checklists/M2.md), [M3](https://github.com/Finland6738/azeroth-threatwarden/blob/v0.7.0/docs/checklists/M3.md), [M4](https://github.com/Finland6738/azeroth-threatwarden/blob/v0.7.0/docs/checklists/M4.md), [M5](https://github.com/Finland6738/azeroth-threatwarden/blob/v0.7.0/docs/checklists/M5.md), [M6](https://github.com/Finland6738/azeroth-threatwarden/blob/v0.7.0/docs/checklists/M6.md) and [M7](https://github.com/Finland6738/azeroth-threatwarden/blob/v0.7.0/docs/checklists/M7.md) were
+**not run** before this tag, so nothing below has been verified in the real client and the
+[MVP check](https://github.com/Finland6738/azeroth-threatwarden/blob/v0.7.0/docs/checklists/M4.md#12-mvp-check) is **not met yet**. M7 was built on a **conditional go**: the Dungeon Focus
+reads only what the client allows (probe P5, P6 and P9). If the game does not let an addon read other mobs, it shows
+*focus and boss only* or *only your target*, with the reason. The later parts stay switched off. The probe is a
+development tool in the repository and is not part of this package.
+
 ### Added
 
 - M7.4: **alerts about other mobs**, behind the `multitarget` switch, which stays off until `v0.7.0`, and behind the new
@@ -45,18 +59,21 @@ All notable changes to this project are documented here. The format follows
 
 ### Changed
 
+- M7.R: the `multitarget` switch is on: the multi-mob tracker, the Dungeon Focus, `/atw focus`, the pin and the alerts
+  about other mobs of M7.2–M7.4 are part of this version. Entries below and above that say a part is "behind the switch",
+  "stays off" or that nothing of it is visible yet describe it before this release.
 - M7.4: the multi-mob tick reads at most **40** threat values (48 in M7.2): with 48 it cost more work than a monitor
   tick in a raid of 40 (not yet visible: the switch is off).
 
 ### Documentation
 
-- M7.5: the [in-game checklist of M7](docs/checklists/M7.md): turning `multitarget` on in the installed copy after
+- M7.5: the [in-game checklist of M7](https://github.com/Finland6738/azeroth-threatwarden/blob/v0.7.0/docs/checklists/M7.md): turning `multitarget` on in the installed copy after
   backing up the saved data, dungeon pulls with and without nameplates and focus, loose mobs, the reach and secret
   mobs, pinning, the alerts about other mobs, FPS, small sizes, Italian and the tuning notes (Q25–Q27), with the steps
   that also answer probe checks P5 and P6. Not run yet.
 - M7.1: specification of **multi-target tracking** and the **Dungeon Focus** (SPEC-07, Italian), written before the
   in-game M0 probe like M2–M6, with a new decision record
-  ([ADR 0019](docs/adr/0019-other-mobs-are-read-by-a-separate-budgeted-rotation-and-only-shown.md)). The milestone's
+  ([ADR 0019](https://github.com/Finland6738/azeroth-threatwarden/blob/v0.7.0/docs/adr/0019-other-mobs-are-read-by-a-separate-budgeted-rotation-and-only-shown.md)). The milestone's
   gate (the probe must show that other mobs can be read) is answered as a **conditional go**: the addon reads what the
   game allows and, when other mobs cannot be queried or their threat is secret, shows *focus and boss only* or *only your
   target*, with the reason on every mob; what the probe will change is one table of sources, the rate and the read

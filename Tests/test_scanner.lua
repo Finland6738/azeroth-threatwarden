@@ -6,7 +6,7 @@
 -- assumptions until the M0 probe (Tests/mock/70_threat.lua).
 
 -- recording off: the recorder is a scanner consumer of its own (test_recorder.lua)
-before_boot(function(M) M.features = { monitor = true, recording = false } end)
+before_boot(function(M) M.features = { monitor = true, recording = false, multitarget = false } end)
 
 local function TS() return Mock.ns.ThreatScanner end
 local function Cap(id) return (Mock.ns.Compat.Capability(id)) end

@@ -7,10 +7,10 @@ threat coaching and combat analysis addon for **World of Warcraft: Forever**. It
 which mob, warns you before you pull aggro, records your fights and explains what happened, always telling what is
 **known** from what is **estimated**.
 
-> **Status: early development. [`v0.6.0`](https://github.com/Finland6738/azeroth-threatwarden/releases/tag/v0.6.0) is
-> the sixth test version: it adds Threat Analytics and the export as text and CSV to the Threat Monitor, Alerts, the
-> Threat Coach, the recording of fights, the combat report, the Threat Timeline and the Threat Replay, not verified in
-> game.** Download it
+> **Status: early development. [`v0.7.0`](https://github.com/Finland6738/azeroth-threatwarden/releases/tag/v0.7.0) is
+> the seventh test version: it adds the Dungeon Focus and its optional alerts about other mobs to the Threat Monitor,
+> Alerts, the Threat Coach, the recording of fights, the combat report, the Threat Timeline, the Threat Replay and
+> Threat Analytics with export, not verified in game.** Download it
 > from [GitHub Releases](https://github.com/Finland6738/azeroth-threatwarden/releases)
 > ([how to install](docs/wiki/Installation.md)). The Monitor tab shows who threatens the mob you target, the tank, the
 > percentage, the margin, the trend and a state, or *state only* / *unknown* with the reason when the client gives no
@@ -23,9 +23,9 @@ which mob, warns you before you pull aggro, records your fights and explains wha
 > enemy and exports them as text or CSV that you copy yourself. Thresholds (Warning 82 %, Danger 91 %), cooldown and sampling
 > rate are provisional ([Threat Monitor](docs/wiki/Threat-Monitor.md)). It also has saved settings (versioned, with
 > migrations), the ecosystem look, a movable window with Settings and an Info page with the credits, the
-> [commands](docs/wiki/Commands.md) `/atw` and `/threatwarden`, a minimap button and the Addon Compartment entry. The
-> [Dungeon Focus](docs/wiki/Dungeon-Focus.md) of the next version, `v0.7.0`, with its optional alerts about other mobs, is
-> built but switched off; its [in-game checklist](docs/checklists/M7.md) is written. The addon is
+> [commands](docs/wiki/Commands.md) `/atw` and `/threatwarden`, a minimap button and the Addon Compartment entry. In a pull with
+> several mobs, the [Dungeon Focus](docs/wiki/Dungeon-Focus.md) lists the ones at risk, with optional alerts about them;
+> how much it can show depends on what the client lets an addon read. The addon is
 > checked by offline tests only: the M0 probe and the in-game checks of [M1](docs/checklists/M1.md),
 > [M2](docs/checklists/M2.md), [M3](docs/checklists/M3.md), [M4](docs/checklists/M4.md),
 > [M5](docs/checklists/M5.md), [M6](docs/checklists/M6.md) and [M7](docs/checklists/M7.md) are still

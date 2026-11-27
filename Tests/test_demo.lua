@@ -1,7 +1,7 @@
 -- Core/Demo.lua and Data/Demo.lua (SPEC-03 §5.2): the invented fight goes through the real model, states and list,
 -- reads nothing from the game, writes no saved data, stops at a real combat, at /atw demo stop and with the window.
 
-before_boot(function(M) M.features = { monitor = true } end)
+before_boot(function(M) M.features = { monitor = true, multitarget = false } end)
 
 local function D() return Mock.ns.Demo end
 local function A() return AzerothThreatwarden end
@@ -142,14 +142,14 @@ describe("starting the demo", function()
 		boot(function(M) M.features = { monitor = false } end)
 		deepEq({ D().Start() }, { false, "off" })
 		contains(run("/atw demo"), "This arrives in v0.2.0.")
-		boot(function(M) M.features = { monitor = true }; M.client.project = 1 end)
+		boot(function(M) M.features = { monitor = true, multitarget = false }; M.client.project = 1 end)
 		A().isForever = false
 		deepEq({ D().Start() }, { false, "unsupported" })
 		isNil(Mock.ns.Scheduler.Rate("demo"))
 	end)
 
 	it("speaks Italian on an Italian client", function()
-		boot(function(M) M.features = { monitor = true }; M.player.locale = "itIT" end)
+		boot(function(M) M.features = { monitor = true, multitarget = false }; M.player.locale = "itIT" end)
 		contains(run("/atw demo"), "Demo avviata")
 		eq(V().mob:GetText(), "Golem della demo")
 		eq(V().quality:GetText(), "DEMO · scontro inventato, non il gioco")
@@ -197,7 +197,7 @@ describe("what the demo does not do", function()
 
 	it("changes nothing on read-only data either", function()
 		boot(function(M)
-			M.features = { monitor = true }
+			M.features = { monitor = true, multitarget = false }
 			M.saved = { AzerothThreatwardenDB = { schema = 99 }, AzerothThreatwardenCharDB = { schema = 99 } }
 		end)
 		D().Start()

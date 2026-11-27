@@ -5,7 +5,7 @@
 -- window ("+N more", the player's row always visible), bounded redraws and texts written only on a change, and the
 -- texts in both languages.
 
-before_boot(function(M) M.features = { monitor = true } end)
+before_boot(function(M) M.features = { monitor = true, multitarget = false } end)
 
 local function TL() return Mock.ns.ThreatList end
 local function V() return TL().view end
@@ -551,7 +551,7 @@ describe("bounded redraws", function()
 
 	it("raises no error through a whole fight in the three outcomes", function()
 		for _, outcome in ipairs(Fight.OUTCOMES) do
-			boot(function(M) M.features = { monitor = true } end)
+			boot(function(M) M.features = { monitor = true, multitarget = false } end)
 			local pull = partyPull(84, 97, outcome)
 			pull:to(3)
 			Mock.combat.Leave()
@@ -562,7 +562,7 @@ describe("bounded redraws", function()
 end)
 
 describe("the texts in Italian", function()
-	before_boot(function(M) M.features = { monitor = true } M.player.locale = "itIT" end)
+	before_boot(function(M) M.features = { monitor = true, multitarget = false } M.player.locale = "itIT" end)
 
 	it("writes the view and the tooltips in Italian", function()
 		partyPull(84, 97):to(1)
@@ -577,7 +577,7 @@ end)
 describe("nothing on screen without a locale key, with the monitor", function()
 	local MARK, END = "\194\171", "\194\187"
 	before_boot(function(M)
-		M.features = { monitor = true }
+		M.features = { monitor = true, multitarget = false }
 		M.OnFilesLoaded(function()
 			local strings = AzerothThreatwarden.Locale.Strings("enUS")
 			for key, value in pairs(strings) do
@@ -637,7 +637,7 @@ local function menuRows()
 end
 
 describe("the row menu with the alerts switched off", function()
-	before_boot(function(M) M.features = { monitor = true, alerts = false } end)
+	before_boot(function(M) M.features = { monitor = true, alerts = false, multitarget = false } end)
 
 	it("does not open, and the tooltip says nothing about alerts", function()
 		partyPull():to(0.5)
@@ -648,7 +648,7 @@ describe("the row menu with the alerts switched off", function()
 end)
 
 describe("the row menu", function()
-	before_boot(function(M) M.features = { monitor = true, alerts = true, recording = false } end)
+	before_boot(function(M) M.features = { monitor = true, alerts = true, recording = false, multitarget = false } end)
 
 	it("opens on a right click with the unit's name and the one choice", function()
 		partyPull():to(0.5)

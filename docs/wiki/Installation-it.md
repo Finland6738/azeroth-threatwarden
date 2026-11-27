@@ -2,10 +2,10 @@
 
 *English: [[Installation|Installation]]*
 
-> **La `v0.6.0` è la sesta versione di prova: aggiunge [[Analytics della threat|Threat-Analytics-it]] e
-> l'esportazione in testo e CSV al [[monitor della threat|Threat-Monitor-it]], ad
-> [[Avvisi e Coach|Alerts-and-Coach-it]], ai [[report dei combattimenti|Combat-Reports-it]] e al
-> [[Replay della threat|Threat-Replay-it]].** Non è ancora stata verificata nel client vero.
+> **La `v0.7.0` è la settima versione di prova: aggiunge il [[Dungeon Focus|Dungeon-Focus-it]] al
+> [[monitor della threat|Threat-Monitor-it]], ad [[Avvisi e Coach|Alerts-and-Coach-it]], ai
+> [[report dei combattimenti|Combat-Reports-it]], al [[Replay della threat|Threat-Replay-it]] e ad
+> [[Analytics della threat|Threat-Analytics-it]].** Non è ancora stata verificata nel client vero.
 
 ## Da una versione pubblicata
 

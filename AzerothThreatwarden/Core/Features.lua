@@ -4,7 +4,7 @@
 -- it answers that it arrives in a later version. Modules ask Features.On(name) when they act, never once at load.
 -- Each switch is turned on by the release step of its milestone: `monitor` is on since v0.2.0, `alerts` and `coach`
 -- since v0.3.0, `recording` and `reports` since v0.4.0, `timeline` and `replay` since v0.5.0,
--- `analytics` and `export` since v0.6.0, the others are off.
+-- `analytics` and `export` since v0.6.0, `multitarget` since v0.7.0, the others are off.
 --
 --   monitor          threat reading, threat list, states, demo      M2.R
 --   alerts, coach    alerts; Threat Coach                            M3.R
@@ -28,7 +28,7 @@ local Features = {
 	replay = true,
 	analytics = true,
 	export = true,
-	multitarget = false,
+	multitarget = true,
 	profiles = false,
 	heatmap = false,
 }

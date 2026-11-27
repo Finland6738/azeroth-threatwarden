@@ -6,7 +6,7 @@
 > per lettura; ciò che il probe può cambiare è marcato **[probe Pn]**, ciò che solo il gioco può dire **[da provare in
 > gioco]**. §3–§4 da completare in **M8.1**. Moduli, eventi e test per step in §2.7–§2.8.
 > §1 e §2.4 realizzati in **M7.2** (`Data/MobRisk.lua`, `Data/MobTracker.lua`, la regola 0 di `Data/TargetTracker.lua`,
-> lo schema 6) dietro l'interruttore `multitarget`, spento; le note *M7.2* dicono come il codice ha letto i punti
+> lo schema 6) dietro l'interruttore `multitarget`, spento fino a M7.R (acceso dalla `v0.7.0`); le note *M7.2* dicono come il codice ha letto i punti
 > lasciati aperti.
 > **Gate** (fonte §8): niente promesse di multi-target finché il probe non dimostra che i dati sono ottenibili (P5, P6):
 > la pagina del manuale e le note della versione dicono che cosa dipende dal probe.
@@ -22,8 +22,8 @@ target si può leggere. Il probe non è ancora stato fatto. Per D7 la milestone 
 - il codice non sceglie nulla per contesto (MON-06): ogni lettura dice se un mob risponde, e la **portata** del tracker
   (§1.4) si riduce da sola a *focus e boss* e a *solo il target* quando gli altri mob non si possono interrogare o la
   loro threat è segreta; ogni riga di un mob dice perché è sconosciuta (MT-01, [ADR 0003](../adr/0003-data-reliability-categories.md));
-- l'interruttore `multitarget` resta spento fino a M7.R e la risposta proposta di [Q25](SPEC-09-risks-open-questions.md)
-  lo accende nella `v0.7.0` come M2–M6, con la pagina del manuale e le note della versione che dicono che nulla è
+- l'interruttore `multitarget` è rimasto spento fino a M7.R ed è **acceso** dalla `v0.7.0`, secondo la risposta proposta di
+  [Q25](SPEC-09-risks-open-questions.md), come M2–M6, con la pagina del manuale e le note della versione che dicono che nulla è
   stato provato nel gioco.
 
 **Che cosa cambierà il risultato del probe e dove.** M0.7 legge i risultati e cambia soltanto queste righe; il resto
@@ -437,10 +437,10 @@ monitorato, con un tipo nuovo, `mob`:
 - Nel TOC `Data/MobRisk.lua` e `Data/MobTracker.lua` dopo `Data/ThreatState.lua` (prima di `Data/Alerts.lua`),
   `UI/FocusList.lua` prima di `UI/ThreatList.lua` (come `UI/CoachStrip.lua`).
 - **Interruttore** `multitarget` ([ADR 0014](../adr/0014-one-version-per-milestone-and-feature-switches.md)): spento
-  fino a M7.R. Spento vuol dire: nessun evento del gioco registrato da `MobTracker`, nessun tick, `Pin` non fa nulla,
+  fino a M7.R, acceso dalla `v0.7.0`. Spento vuol dire: nessun evento del gioco registrato da `MobTracker`, nessun tick, `Pin` non fa nulla,
   nessuna barra, lista, card o interruttore *Alerts about other mobs*, `alerts.onlyTarget` vale acceso, `/atw focus`
   risponde *This arrives in v0.7.0.*, nessuna sezione *Mobs* in `/atw debug`. Lo schema 6 e la sua migrazione ci sono
-  comunque (come lo schema 3 con gli avvisi spenti). I test che lo vogliono acceso lo mettono a `true` in `M.features`.
+  comunque (come lo schema 3 con gli avvisi spenti). I test che lo vogliono spento lo mettono a `false` in `M.features`.
 
 ### 2.8 Test per step
 

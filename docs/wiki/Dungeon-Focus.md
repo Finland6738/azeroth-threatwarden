@@ -2,7 +2,7 @@
 
 *Italiano: [[Dungeon Focus|Dungeon-Focus-it]]*
 
-> **Coming in `v0.7.0`, switched off until then, and not verified in game.** Whether WoW Forever lets an addon read the
+> **New in `v0.7.0`, not verified in game.** Whether WoW Forever lets an addon read the
 > threat of mobs other than your target is still to be checked (the M0 probe). The view is made for every answer: it
 > shows what can be read and says why when it cannot.
 

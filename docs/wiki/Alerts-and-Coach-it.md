@@ -74,7 +74,7 @@ la stessa cosa: spegnine uno. L'addon non cambia mai l'impostazione del gioco.
 
 ## Avvisi sugli altri nemici
 
-> **In arrivo nella `v0.7.0`**, spento fino ad allora e non verificato in gioco.
+> **Nuovo nella `v0.7.0`**, non verificato in gioco.
 
 Di base gli avvisi parlano solo del nemico che il monitor segue. Accendi **Avvisi sugli altri nemici** nella
 [card Avvisi](Settings-it#avvisi) per sapere anche degli altri nemici di un pull (quelli del

@@ -81,7 +81,7 @@ Opening or closing by itself never changes what you chose by hand.
 
 ## Dungeon Focus
 
-> **Coming in `v0.7.0`**: the card appears with it. Not verified in game.
+> **New in `v0.7.0`**, not verified in game.
 
 Saved for the whole account, below *Monitor*. What it shows is on [[Dungeon Focus|Dungeon-Focus]].
 
