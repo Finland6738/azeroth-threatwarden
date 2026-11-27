@@ -7,9 +7,10 @@ threat coaching and combat analysis addon for **World of Warcraft: Forever**. It
 which mob, warns you before you pull aggro, records your fights and explains what happened, always telling what is
 **known** from what is **estimated**.
 
-> **Status: early development. [`v0.5.0`](https://github.com/Finland6738/azeroth-threatwarden/releases/tag/v0.5.0) is
-> the fifth test version: it adds the Threat Timeline and the Threat Replay to the Threat Monitor, Alerts, the Threat
-> Coach, the recording of fights and the combat report, not verified in game.** Download it
+> **Status: early development. [`v0.6.0`](https://github.com/Finland6738/azeroth-threatwarden/releases/tag/v0.6.0) is
+> the sixth test version: it adds Threat Analytics and the export as text and CSV to the Threat Monitor, Alerts, the
+> Threat Coach, the recording of fights, the combat report, the Threat Timeline and the Threat Replay, not verified in
+> game.** Download it
 > from [GitHub Releases](https://github.com/Finland6738/azeroth-threatwarden/releases)
 > ([how to install](docs/wiki/Installation.md)). The Monitor tab shows who threatens the mob you target, the tank, the
 > percentage, the margin, the trend and a state, or *state only* / *unknown* with the reason when the client gives no
@@ -17,13 +18,15 @@ which mob, warns you before you pull aggro, records your fights and explains wha
 > short tip with its reason ([Alerts and Coach](docs/wiki/Alerts-and-Coach.md)), never in chat; `/atw mute` silences
 > the alerts. Fights in a group or an instance are recorded on your computer, and the Reports tab (`/atw reports`)
 > shows a [report of each](docs/wiki/Combat-Reports.md), with a timeline of the threat; the
-> [replay](docs/wiki/Threat-Replay.md) (`/atw replay`) steps through a recorded fight. Thresholds (Warning 82 %, Danger 91 %), cooldown and sampling
+> [replay](docs/wiki/Threat-Replay.md) (`/atw replay`) steps through a recorded fight;
+> [Threat Analytics](docs/wiki/Threat-Analytics.md) describes a fight with numbers, compares fights against the same
+> enemy and exports them as text or CSV that you copy yourself. Thresholds (Warning 82 %, Danger 91 %), cooldown and sampling
 > rate are provisional ([Threat Monitor](docs/wiki/Threat-Monitor.md)). It also has saved settings (versioned, with
 > migrations), the ecosystem look, a movable window with Settings and an Info page with the credits, the
 > [commands](docs/wiki/Commands.md) `/atw` and `/threatwarden`, a minimap button and the Addon Compartment entry. It is
 > checked by offline tests only: the M0 probe and the in-game checks of [M1](docs/checklists/M1.md),
 > [M2](docs/checklists/M2.md), [M3](docs/checklists/M3.md), [M4](docs/checklists/M4.md),
-> [M5](docs/checklists/M5.md) and [M6](docs/checklists/M6.md) (Analytics and export, not released yet) are still
+> [M5](docs/checklists/M5.md) and [M6](docs/checklists/M6.md) are still
 > open. The
 > [probe](docs/spike/README.md) (a development tool, never distributed) checks in the real
 > client which threat data WoW Forever gives an addon, because the client may hide threat values from addons in some

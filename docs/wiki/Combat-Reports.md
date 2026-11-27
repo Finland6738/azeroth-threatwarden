@@ -68,9 +68,9 @@ the first card opens it from the start. Both are off for the fight being recorde
 
 ## Analytics
 
-> **Coming in `v0.6.0`**, not released yet and not verified in game.
+> **New in `v0.6.0`**, not verified in game.
 
-A report will also have an **Analytics** card, and the tab a page that compares fights against the same enemy:
+A report also has an **Analytics** card, and the tab a page that compares fights against the same enemy:
 [[Threat Analytics|Threat-Analytics]].
 
 ## Deleting

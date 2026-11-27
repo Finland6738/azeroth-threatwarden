@@ -611,10 +611,10 @@ pulsanti *Export*, con queste precisazioni:
 | `Core/Compat.lua` (cambio, se serve) | la data UTC (`date("!%Y-%m-%d %H:%M", t)`) per `started_utc`, accanto a `Compat.DateText` | — | M6.5 |
 
 - **Interruttori** (`Core/Features.lua`, ADR 0014): `analytics` (Metrics, Compare, la pagina e la card) ed `export`
-  (Export, la casella, i pulsanti *Export*) restano **spenti** fino a M6.R; l'esportazione chiede tutti e due (il
+  (Export, la casella, i pulsanti *Export*) sono rimasti **spenti** fino a M6.R e sono **accesi** dalla `v0.6.0`; l'esportazione chiede tutti e due (il
   contenuto `fight` e `compare` usa le metriche), oltre a `reports`. Spento vuol dire: nessun ascoltatore, nessun frame,
-  `Metrics.Build` e `Compare.Build` rispondono `off`, nessun segmentato, card o pulsante. I test che li vogliono accesi li
-  mettono a `true` in `M.features`.
+  `Metrics.Build` e `Compare.Build` rispondono `off`, nessun segmentato, card o pulsante. I test che li vogliono spenti li
+  mettono a `false` in `M.features`.
 - **Nessun dato nuovo**: nessuna chiave nelle sessioni, nessuno schema nuovo; le scelte della pagina e della casella
   (pagina, chiave, filtri, formato, contenuto, nomi) stanno in memoria fino al `/reload`.
 - **`/atw debug`**, sezione *Analytics and export*: interruttori; la cache delle metriche (sessioni, millisecondi e

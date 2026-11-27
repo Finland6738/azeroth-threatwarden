@@ -2,9 +2,10 @@
 
 *English: [[Installation|Installation]]*
 
-> **La `v0.5.0` è la quinta versione di prova: aggiunge la Timeline e il [[Replay della threat|Threat-Replay-it]] al
-> [[monitor della threat|Threat-Monitor-it]], ad [[Avvisi e Coach|Alerts-and-Coach-it]] e ai
-> [[report dei combattimenti|Combat-Reports-it]].** Non è ancora stata verificata nel client vero.
+> **La `v0.6.0` è la sesta versione di prova: aggiunge [[Analytics della threat|Threat-Analytics-it]] e
+> l'esportazione in testo e CSV al [[monitor della threat|Threat-Monitor-it]], ad
+> [[Avvisi e Coach|Alerts-and-Coach-it]], ai [[report dei combattimenti|Combat-Reports-it]] e al
+> [[Replay della threat|Threat-Replay-it]].** Non è ancora stata verificata nel client vero.
 
 ## Da una versione pubblicata
 

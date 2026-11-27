@@ -69,9 +69,9 @@ teneva il nemico e gli eventi. Un clic apre il [[Replay della threat|Threat-Repl
 
 ## Analytics
 
-> **In arrivo con la `v0.6.0`**, non ancora pubblicata e non verificata in gioco.
+> **Nuovo nella `v0.6.0`**, non verificato in gioco.
 
-Un report avrà anche una card **Analytics**, e la scheda una pagina che confronta gli scontri contro lo stesso nemico:
+Un report ha anche una card **Analytics**, e la scheda una pagina che confronta gli scontri contro lo stesso nemico:
 [[Analytics della threat|Threat-Analytics-it]].
 
 ## Eliminare

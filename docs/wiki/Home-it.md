@@ -7,10 +7,11 @@
 **Conosci la tua threat. Capisci i tuoi errori. Non perdere l'aggro.** Azeroth Threatwarden è un addon di monitoraggio
 della threat, di coaching e di analisi dei combattimenti per World of Warcraft: Forever.
 
-> **Stato: sviluppo iniziale. La `v0.5.0` è la quinta versione di prova: aggiunge la Timeline e il
-> [[Replay della threat|Threat-Replay-it]] al [[monitor della threat|Threat-Monitor-it]], ad
-> [[Avvisi e Coach|Alerts-and-Coach-it]] e ai [[report dei combattimenti|Combat-Reports-it]], non verificati in gioco.** Si
-> scarica da [GitHub Releases](https://github.com/Finland6738/azeroth-threatwarden/releases). Ha anche la finestra, le impostazioni e
+> **Stato: sviluppo iniziale. La `v0.6.0` è la sesta versione di prova: aggiunge
+> [[Analytics della threat|Threat-Analytics-it]] e l'esportazione in testo e CSV al
+> [[monitor della threat|Threat-Monitor-it]], ad [[Avvisi e Coach|Alerts-and-Coach-it]], ai
+> [[report dei combattimenti|Combat-Reports-it]] e al [[Replay della threat|Threat-Replay-it]], non verificati in gioco.**
+> Si scarica da [GitHub Releases](https://github.com/Finland6738/azeroth-threatwarden/releases). Ha anche la finestra, le impostazioni e
 > i crediti, i comandi e il pulsante della minimappa. È controllata solo da test offline: la verifica di quali dati di
 > threat il gioco dà a un addon e le verifiche in gioco sono ancora aperte. Questo manuale cresce a ogni versione.
 
@@ -21,6 +22,8 @@ della threat, di coaching e di analisi dei combattimenti per World of Warcraft: 
 - **[[Avvisi e Coach|Alerts-and-Coach-it]]**: un avviso prima di superare il tank, e brevi consigli con il loro motivo.
 - **[[Report dei combattimenti|Combat-Reports-it]]**: ogni combattimento registrato mentre accade, da rivedere dopo.
 - **Timeline e [[Replay|Threat-Replay-it]]**: come si è mossa la threat durante uno scontro registrato.
+- **[[Analytics della threat|Threat-Analytics-it]]**: numeri sugli scontri registrati, confronti contro lo stesso
+  nemico e un'esportazione che copi tu.
 - **Dati onesti**: l'addon dice sempre se un numero è letto dal gioco, calcolato, stimato o previsto, e mostra
   *Unknown* invece di indovinare.
 
@@ -33,6 +36,7 @@ della threat, di coaching e di analisi dei combattimenti per World of Warcraft: 
 | Capire l'elenco della threat | [[Monitor della threat|Threat-Monitor-it]] |
 | Capire gli avvisi e i consigli | [[Avvisi e Coach|Alerts-and-Coach-it]] |
 | Guardare uno scontro passato (dalla `v0.4.0`) | [[Report dei combattimenti|Combat-Reports-it]] |
+| Confrontare gli scontri ed esportarli (dalla `v0.6.0`) | [[Analytics della threat|Threat-Analytics-it]] |
 | Cambiarne aspetto, lingua o finestra | [[Impostazioni|Settings-it]] |
 | Sapere chi l'ha fatto | [[Informazioni e crediti|About-it]] |
 | Sapere cosa posso scrivere e cosa fa la finestra | [[Comandi|Commands-it]] |

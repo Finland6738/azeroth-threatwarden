@@ -6,7 +6,7 @@
 
 local function features(extra)
 	local on = { monitor = true, alerts = true, coach = true, recording = true, reports = true, timeline = true,
-		replay = true, analytics = true }
+		replay = true, analytics = true, export = false }
 	for k, v in pairs(extra or {}) do on[k] = v end
 	return on
 end

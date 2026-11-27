@@ -2,7 +2,10 @@
 -- state), the selection and the report with a category marker and a reason for every metric, the empty list with each
 -- reason, deletion with a second click that survives a /reload, read-only data, combat, and nothing with the switch off.
 
-local function ALL() return { monitor = true, alerts = true, coach = true, recording = true, reports = true } end
+local function ALL()
+	return { monitor = true, alerts = true, coach = true, recording = true, reports = true, analytics = false,
+		export = false }
+end
 
 before_boot(function(M) M.features = ALL() end)
 

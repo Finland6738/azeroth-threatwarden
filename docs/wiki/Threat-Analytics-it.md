@@ -2,8 +2,7 @@
 
 *English: [[Threat Analytics|Threat-Analytics]]*
 
-> **In arrivo con la `v0.6.0`**, non ancora pubblicata e non verificata in gioco. Nella versione attuale questa parte è
-> spenta: non se ne vede nulla.
+> **Nuovo nella `v0.6.0`**, non verificato in gioco.
 
 Analytics descrive gli scontri registrati con numeri che si possono controllare: una card in ogni
 [[report|Combat-Reports-it]] e una pagina che confronta gli scontri contro lo stesso nemico. Legge soltanto le

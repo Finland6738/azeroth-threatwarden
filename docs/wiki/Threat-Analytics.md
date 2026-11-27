@@ -2,8 +2,7 @@
 
 *Italiano: [[Analytics della threat|Threat-Analytics-it]]*
 
-> **Coming in `v0.6.0`**, not released yet and not verified in game. In the current version the part is switched off:
-> nothing of it shows.
+> **New in `v0.6.0`**, not verified in game.
 
 Analytics describes your recorded fights with numbers you can check: one card in each [[report|Combat-Reports]], and a
 page that compares fights against the same enemy. It only reads the recordings: nothing is saved and nothing leaves

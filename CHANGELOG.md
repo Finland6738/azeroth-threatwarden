@@ -5,9 +5,22 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+## [0.6.0] - 2026-11-27
+
+The sixth test version: **Threat Analytics** and the **export as text and CSV** (milestone M6), switched on. A report of
+a recorded fight gets an *Analytics* card, the Reports tab a page that compares fights against the same enemy, and
+*Export* opens a box with the text to copy yourself. Nothing is saved, sent or posted.
+
+It has been checked by offline tests only. The M0 probe (which threat data the client gives an addon) and the in-game
+checklists of [M1](https://github.com/Finland6738/azeroth-threatwarden/blob/v0.6.0/docs/checklists/M1.md), [M2](https://github.com/Finland6738/azeroth-threatwarden/blob/v0.6.0/docs/checklists/M2.md), [M3](https://github.com/Finland6738/azeroth-threatwarden/blob/v0.6.0/docs/checklists/M3.md), [M4](https://github.com/Finland6738/azeroth-threatwarden/blob/v0.6.0/docs/checklists/M4.md), [M5](https://github.com/Finland6738/azeroth-threatwarden/blob/v0.6.0/docs/checklists/M5.md) and [M6](https://github.com/Finland6738/azeroth-threatwarden/blob/v0.6.0/docs/checklists/M6.md) were
+**not run** before this tag, so nothing below has been verified in the real client and the
+[MVP check](https://github.com/Finland6738/azeroth-threatwarden/blob/v0.6.0/docs/checklists/M4.md#12-mvp-check) is **not met yet**. How much Analytics can show depends on what the
+game gives an addon (probe P3 and P9). The later parts stay switched off. The probe is a development tool in the
+repository and is not part of this package.
+
 ### Added
 
-- M6.6: the **in-game checklist of M6** ([docs/checklists/M6.md](docs/checklists/M6.md)), not run yet: how to turn
+- M6.6: the **in-game checklist of M6** ([docs/checklists/M6.md](https://github.com/Finland6738/azeroth-threatwarden/blob/v0.6.0/docs/checklists/M6.md)), not run yet: how to turn
   the `analytics` and `export` switches on in the installed copy and back up the saved data, the Analytics card and
   the comparison, *Insufficient data*, the unstable intervals, every export content and format, names replaced, a long
   fight in the export box, small sizes and Italian, and the tuning notes of Q15 and Q22–Q24. Nothing changes in the
@@ -68,11 +81,17 @@ All notable changes to this project are documented here. The format follows
 - Tests: `test_export.lua`, `test_export_box.lua`, `Tests/long/test_export_long.lua` and a CSV reader for the tests
   (`Tests/lib/csv.lua`).
 
+### Changed
+
+- M6.R: the `analytics` and `export` switches are on: the metrics, the comparison, the *Analytics* page and card, the
+  export and its box of M6.2–M6.5 are part of this version. Entries above that say a part is "behind the switch", "still
+  off" or that nothing of it is visible yet describe it before this release.
+
 ### Documentation
 
 - M6.1: specification of **Threat Analytics** and the **export** (SPEC-06, Italian), written before the in-game M0
   probe like M2–M5, with a new decision record
-  ([ADR 0018](docs/adr/0018-analytics-and-export-are-computed-in-memory-and-leave-only-through-a-copy-box.md)).
+  ([ADR 0018](https://github.com/Finland6738/azeroth-threatwarden/blob/v0.6.0/docs/adr/0018-analytics-and-export-are-computed-in-memory-and-leave-only-through-a-copy-box.md)).
   Analytics only read recorded fights and save nothing: where the combat report already has a figure (threshold
   crossings, time in Warning and Danger, highest recorded percentage, aggro taken, tank changes, data quality) it is
   the report's own number, and Analytics adds the time with a unit in Warning or Danger, how often the enemy changed

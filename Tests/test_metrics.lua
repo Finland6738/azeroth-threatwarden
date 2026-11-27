@@ -760,7 +760,7 @@ describe("Build (§1.7)", function()
 		local s = add(build(known()))
 		local text = Mock.ns.Diagnostics.Report()
 		contains(text, "== Analytics and export ==")
-		contains(text, "switches: analytics on, export off")
+		contains(text, "switches: analytics on, export on")
 		contains(text, "metrics cache: 0 of 25 sessions")
 		contains(text, "metrics last build: none")
 		Mx().Build(s.id, function() end)
@@ -798,7 +798,7 @@ end)
 describe("with the `analytics` switch off (ADR 0014)", function()
 	before_boot(function(M)
 		M.features = { monitor = true, alerts = true, coach = true, recording = true, reports = true, timeline = true,
-			analytics = false }
+			analytics = false, export = false }
 	end)
 
 	it("builds nothing and listens to nothing", function()
