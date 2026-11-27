@@ -28,10 +28,13 @@ queried. Released as `v0.7.0`.
 | M7.5 In-game checklist M7 | Sonnet | low |
 | M7.R Release preparation `v0.7.0` | Sonnet | medium |
 
+*State (2026-11-27): M7 is complete in code (steps M7.1–M7.5, offline tests in CI) and released as `v0.7.0` (M7.R).
+The exit criterion needs the game and is **open** until the owner runs [the M7 checklist](../checklists/M7.md).*
+
 **Switch.** `multitarget` in `Core/Features.lua` (`Data/MobTracker.lua`, `Data/MobRisk.lua`, the pin of the
-TargetTracker, the pull bar and the list, the *Dungeon Focus* card, `/atw focus`, the `mob` alerts) stays **off** until
-M7.R and is switched on there (SPEC-09 Q25); every step is built and tested behind it (SPEC-07 §2.7), and tests that
-need it on set it to `true` in `M.features`. Off, nothing of M7 is visible, no game event is registered by the tracker
+TargetTracker, the pull bar and the list, the *Dungeon Focus* card, `/atw focus`, the `mob` alerts) stayed **off** until
+M7.R and is **on** from `v0.7.0` (SPEC-09 Q25); every step was built and tested behind it (SPEC-07 §2.7), and tests
+that need it off set it to `false` in `M.features`. Off, nothing of M7 is visible, no game event is registered by the tracker
 and `alerts.onlyTarget` counts as on. The account schema goes to **6** in M7.2 (four settings, a no-op migration) even
 with the switch off; the character schema stays 2 and the sessions do not change.
 
@@ -180,7 +183,14 @@ with the switch off; the character schema stays 2 and the sessions do not change
   (with `--long`), then the tag ([ADR 0014](../adr/0014-one-version-per-milestone-and-feature-switches.md));
   CurseForge only if the owner has set up the project and `CF_API_KEY` (SPEC-09 Q6).
 - Done when:
-  - [ ] The `multitarget` switch is on, `profiles` and `heatmap` off; changelog promoted, status updated; the checks are
+  - [x] The `multitarget` switch is on, `profiles` and `heatmap` off; changelog promoted, status updated; the checks are
     green (quick and long).
-  - [ ] The dry run is green, and the tag `v0.7.0` and its GitHub Release (changelog section as notes, zip with only
+  - [x] The dry run is green, and the tag `v0.7.0` and its GitHub Release (changelog section as notes, zip with only
     the addon) exist.
+- *Done (2026-11-27): `multitarget` switched on, changelog promoted, status, the M7 checklist and the CurseForge draft
+  updated (commit `d4f20e8`, `profiles` and `heatmap` off, 1747 tests with `--long`; tests of the addon without the
+  Dungeon Focus now set the switch off). The dry run of the Release workflow was green; annotated tag `v0.7.0` on that
+  commit, [GitHub Release](https://github.com/Finland6738/azeroth-threatwarden/releases/tag/v0.7.0) with the changelog
+  section as notes and `AzerothThreatwarden-v0.7.0-forever.zip` (197 entries, all in `AzerothThreatwarden/`;
+  `## Version: v0.7.0`). CurseForge skipped (no project ID and no `CF_API_KEY`, SPEC-09 Q6). The zip has not been
+  installed or run in the game; the M0 probe and the M1–M7 checklists are still open.*

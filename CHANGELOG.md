@@ -5,6 +5,11 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Documentation
+
+- M7.R: `v0.7.0` released on GitHub; the release step is ticked in the M7 milestone file. CurseForge was skipped (no
+  project ID and no `CF_API_KEY`).
+
 ## [0.7.0] - 2026-11-27
 
 The seventh test version: the **Dungeon Focus** (milestone M7, multi-target), switched on. In a pull with several mobs a
