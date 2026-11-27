@@ -81,12 +81,12 @@ def to_webp(png, webp):
 
 GROUPS = [("The threat monitor", "monitor-"), ("Alerts and Coach", ("coach-", "alert-")),
           ("Reports", ("reports-", "report-values-", "report-state-", "report-unknown-")),
-          ("Timeline and replay", ("replay-", "report-timeline-")), ("Analytics", ("analytics-", "report-analytics-")), ("The window", "window-"), ("Settings", "settings-"), ("Info and credits", "about-")]
+          ("Timeline and replay", ("replay-", "report-timeline-")), ("Analytics and export", ("analytics-", "report-analytics-", "export-")), ("The window", "window-"), ("Settings", "settings-"), ("Info and credits", "about-")]
 
 
 def index_text(scenes):
     lines = ["# Interface previews", "",
-             "The threat monitor, the alerts and the Coach, the reports, the timeline and the replay, Analytics, the window, the Settings page "
+             "The threat monitor, the alerts and the Coach, the reports, the timeline and the replay, Analytics and the export, the window, the Settings page "
              "and the Info page of Azeroth Threatwarden, in both languages of the interface (players and mobs are invented).", "",
              "> **Design previews, not screenshots.** Drawn from the addon's layout, colours (`UI/Theme.lua`) and texts "
              "(`Locales/`), with original art only (CSS shapes, the addon's logo, the NEBULA logos and the fonts the "

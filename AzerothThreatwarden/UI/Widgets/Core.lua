@@ -520,6 +520,69 @@ function Widgets.EditBox(parent, opts)
 	return f
 end
 
+-- --- CopyArea ---------------------------------------------------------------------------------------------------------
+
+-- A long text to copy, in a read-only multi-line field (the diagnostic report and the export, SPEC-06 §4.6): a surface-2
+-- panel, the text in MonoSmall scrolling with the wheel; what the player types is undone at once and the text stays
+-- selected, and it is all selected when the field gets the keyboard. Moved here from UI/DiagnosticsBox.lua, so that both
+-- boxes use it (as CopyBox.Area of Azeroth Accord). opts: width (of the edit box), onEscape(). The caller places it.
+-- .scroll, .edit, .text; :SetText(text) (one SetText, the cursor and the scroll at the top), :SelectAll(), :Clear().
+Widgets.COPY_WHEEL_STEP = 40
+
+function Widgets.CopyArea(parent, opts)
+	opts = opts or {}
+	local f = CreateFrame("Frame", nil, parent)
+	f.parts = Theme.Panel(f, { radius = 8, fill = "surface-2", border = "border" })
+	local scroll = CreateFrame("ScrollFrame", nil, f)
+	scroll:SetPoint("TOPLEFT", f, "TOPLEFT", 8, -8)
+	scroll:SetPoint("BOTTOMRIGHT", f, "BOTTOMRIGHT", -8, 8)
+	scroll:EnableMouseWheel(true)
+	scroll:SetScript("OnMouseWheel", function(self, delta)
+		local range = self.GetVerticalScrollRange and self:GetVerticalScrollRange() or 0
+		local current = self.GetVerticalScroll and self:GetVerticalScroll() or 0
+		self:SetVerticalScroll(min(range, max(0, current - delta * Widgets.COPY_WHEEL_STEP)))
+	end)
+	local edit = CreateFrame("EditBox", nil, scroll)
+	edit:SetMultiLine(true)
+	edit:SetAutoFocus(false)
+	edit:SetMaxLetters(0)
+	edit:SetFontObject(Theme.Font("MonoSmall"))
+	Theme.Text(edit, "text-1")
+	edit:SetWidth(opts.width or 400)
+	scroll:SetScrollChild(edit)
+	f.scroll, f.edit, f.text = scroll, edit, ""
+
+	-- read-only: typing is undone at once and the text stays selected
+	edit:SetScript("OnTextChanged", function(self, userInput)
+		if userInput and self:GetText() ~= f.text then
+			self:SetText(f.text)
+			self:HighlightText()
+		end
+	end)
+	edit:SetScript("OnEditFocusGained", function(self) self:HighlightText() end)
+	edit:SetScript("OnEscapePressed", function(self)
+		self:ClearFocus()
+		if opts.onEscape then opts.onEscape() end
+	end)
+
+	function f:SetText(text)
+		self.text = text or ""
+		self.edit:SetText(self.text)
+		self.edit:SetCursorPosition(0)
+		self.scroll:SetVerticalScroll(0)
+	end
+	function f:SelectAll()
+		self.edit:SetFocus()
+		self.edit:HighlightText()
+	end
+	-- Nothing of the text stays.
+	function f:Clear()
+		self.edit:ClearFocus()
+		self:SetText("")
+	end
+	return f
+end
+
 -- --- ChoiceList -------------------------------------------------------------------------------------------------------
 
 -- A list of single-choice rows (a radio list: no UIDropDownMenu, which taints, FDCP) inside a

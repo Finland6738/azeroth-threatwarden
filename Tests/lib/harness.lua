@@ -245,8 +245,8 @@ function H.relog(away, change)
 end
 
 -- Test files -------------------------------------------------------------------------------------------------------
--- Test files see: the assertion library, Mock, Fight (Tests/lib/fight.lua), the game's globals, and (while the game is
--- not built, e.g. when the file is first loaded) the plain Lua library.
+-- Test files see: the assertion library, Mock, Fight (Tests/lib/fight.lua), Raid, CSV (Tests/lib/csv.lua), the game's
+-- globals, and (while the game is not built, e.g. when the file is first loaded) the plain Lua library.
 local plainLua = { string = true, table = true, math = true, coroutine = true }
 for _, name in ipairs(STD_GLOBALS) do plainLua[name] = true end
 
@@ -311,6 +311,7 @@ end
 
 rawset(testEnv, "Fight", loadChunk(cfg.fightPath, "Tests/lib/fight.lua", testEnv)(Mock))
 rawset(testEnv, "Raid", loadChunk(cfg.raidPath, "Tests/lib/raid.lua", testEnv)(Mock))
+rawset(testEnv, "CSV", loadChunk(cfg.csvPath, "Tests/lib/csv.lua", testEnv)())
 
 local function matchesFilter(name)
 	local filter = cfg.filter

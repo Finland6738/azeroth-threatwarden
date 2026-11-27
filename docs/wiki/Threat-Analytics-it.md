@@ -76,4 +76,44 @@ possono confrontare. Clicca un nemico per confrontare i suoi scontri:
 Il confronto si calcola uno scontro alla volta e **si ferma durante il combattimento**. Una registrazione eliminata ne
 esce; per quelle nuove compare il pulsante **Aggiorna**.
 
-L'esportazione da copiare (testo o CSV) arriva con un passo successivo della stessa versione.
+## Esportazione
+
+*Esporta* trasforma ciò che vedi in un testo che copi tu. Si trova nella card di testa di un report (quello scontro) e
+nella card **Confronto degli scontri** (il confronto con i suoi filtri). Apre una casella con il testo già selezionato:
+premi **Ctrl+C** e incollalo dove vuoi. L'addon non può scrivere file né raggiungere gli appunti, e non pubblica, non
+invia e non salva il testo: nulla esce dal gioco se non lo copi tu.
+
+![La casella dell'esportazione: uno scontro come testo, già selezionato, sotto l'avviso dei nomi](../specs/mockups/previews/export-box-nebula.webp)
+
+| Contenuto | Formati | Che cosa contiene |
+|---|---|---|
+| Questo scontro | testo, CSV | il contesto, le righe del report, le metriche di Analytics e una riga per ogni unità |
+| Eventi | CSV | ogni evento dello scontro in ordine di tempo |
+| Letture | CSV | ogni lettura registrata, anche quelle illeggibili con il motivo |
+| Confronto | testo, CSV | una riga per scontro, il più recente prima; il testo ha anche gli aggregati su tutti gli scontri |
+
+- Il **testo** è nella lingua dell'interfaccia, dentro blocchi di codice, diviso in parti di al più 1900 caratteri,
+  così ognuna sta in un messaggio di chat. Nella tabella delle unità i nomi oltre 18 caratteri sono tagliati.
+- Il **CSV** è per un foglio di calcolo: nomi delle colonne in inglese, la virgola fra le colonne, i tempi in secondi.
+  Un testo che un foglio di calcolo potrebbe leggere come formula prende davanti un apostrofo.
+- **Categorie e valori mancanti** restano con i numeri. Nel testo: **R** rilevato, **C** calcolato, *~* o *almeno* per
+  una stima, e le parole *Non disponibile*, *Dati insufficienti* e *Non confrontabile* con il motivo. Nel CSV: le
+  colonne `category`, `status`, `reason` e `at_least`; nel confronto le ultime colonne elencano quali valori sono *at
+  least*, non disponibili, insufficienti, non confrontabili, rilevati o calcolati. Un valore che manca non è mai uno
+  zero.
+- **Dimensione.** Al più 256 KB di righe intere. Quando qualcosa non ci sta (le letture di uno scontro lungo) la riga
+  sotto il testo dice quante righe sono rimaste fuori; questa nota non fa parte del testo. In uno scontro di raid lungo
+  ci stanno circa le prime 6.000 letture.
+
+### I nomi
+
+La casella dice sempre che cosa contiene il testo. Di predefinito contiene i **nomi del tuo gruppo**: condividilo solo
+con chi è d'accordo. Accendi **Sostituisci i nomi con Giocatore 1, Giocatore 2…** (spento di predefinito, ricordato
+fino al prossimo `/reload`) e il tuo personaggio diventa *Tu*, il tuo famiglio *Il tuo famiglio*, gli altri famigli
+*Famiglio 1, Famiglio 2…* e tutti gli altri *Giocatore 1, Giocatore 2…*, con lo stesso numero per lo stesso nome in
+tutto il testo. Nel CSV queste parole sono sempre in inglese (*You*, *Your pet*, *Pet 1*, *Player 1*). **I nomi dei
+nemici e della zona restano**, come classi e ruoli: la composizione del gruppo si può ancora leggere. Le registrazioni
+salvate non cambiano.
+
+L'esportazione non è ancora stata provata in gioco: come la casella regge un testo molto lungo e che aspetto ha il
+testo incollato in una chat o in un foglio di calcolo.

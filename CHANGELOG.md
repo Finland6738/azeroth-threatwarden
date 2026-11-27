@@ -50,6 +50,18 @@ All notable changes to this project are documented here. The format follows
   `analytics-overview`, `analytics-compare` (also Aurora and Warden) and `report-analytics`.
 - Tests: `test_analytics_view.lua`; `test_reports.lua` and `test_ui_texts.lua` cover the selector, the card and the
   words of the new screens.
+- M6.5: the **export as text and CSV** (`Data/Export.lua`, `UI/ExportBox.lua`), behind the `export` switch, which
+  stays off until `v0.6.0`: nothing of it is visible yet. *Export* in a report and in the comparison opens a box with
+  the text already selected, to copy with Ctrl+C: one fight (text or CSV), its events or its readings (CSV), or the
+  comparison (text or CSV). Every value carries its category and status; a missing value is never a zero. The CSV is
+  RFC 4180 with an apostrophe before anything a spreadsheet could read as a formula; the text is in the language of the
+  interface, in code blocks of at most 1,900 characters. A warning says that the text holds the names of your group, and
+  a switch (off by default) replaces them with *You*, *Player 1*, *Pet 1*…; enemy and zone names stay. At most 256 KB of
+  whole rows, and the box says how many rows were left out. Nothing is written to a file, to the saved data or to the
+  chat, and nothing is sent. The diagnostic box and the export box now share one read-only field (`Widgets.CopyArea`).
+  `/atw debug` says what the last export was (content, format, size, rows left out, names replaced or not).
+- Tests: `test_export.lua`, `test_export_box.lua`, `Tests/long/test_export_long.lua` and a CSV reader for the tests
+  (`Tests/lib/csv.lua`).
 
 ### Documentation
 

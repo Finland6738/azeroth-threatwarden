@@ -8,6 +8,8 @@
 -- available*, *Insufficient data* and *Not comparable* are words in text-3, never a number. No ranking and no trend
 -- (ANA-01): the enemies and the fights go from the most recent to the oldest.
 --
+-- With the `export` switch the compare card has an *Export* button that opens UI/ExportBox.lua on that comparison.
+--
 --   Analytics.Build(parent) -> page    built by UI/Reports.lua the first time the page shows; page:Layout(w, h),
 --                                      page:Refresh(), page:Choose(key or false)
 --   Analytics.Show(key)                opens the page on the comparison of `key` (the card's *Compare with…*)
@@ -70,6 +72,7 @@ local SESSION_CELLS = { "valid", "crossings", "stateTime", "holders", "aggroTake
 local WITH_BASIS = { crossings = true, stateTime = true, unstable = true, risk = true }
 
 local function featureOn(name) return ns.Features ~= nil and ns.Features.On(name) end
+local function exportOn() return ns.ExportBox ~= nil and ns.Export ~= nil and ns.Export.On() end
 
 function Analytics.On() return featureOn("analytics") end
 
@@ -569,6 +572,12 @@ function Analytics.Build(parent)
 	buttons.refresh = Widgets.Button(buttons, { text = L.ANALYTICS_REFRESH, style = "secondary", height = 28,
 		onClick = function() page:Start() page:Paint() end })
 	buttons.refresh:SetPoint("LEFT", buttons, "LEFT", 0, 0)
+	-- the export of the comparison shown (SPEC-06 §4)
+	if exportOn() then
+		buttons.export = Widgets.Button(buttons, { text = L.EXPORT_BUTTON, style = "secondary", height = 28,
+			onClick = function() ns.ExportBox.Open("compare", ns.Compare.Current()) end })
+		Widgets.Tooltip.Attach(buttons.export, L.EXPORT_COMPARE_TIP, "TOP")
+	end
 	compare.buttons = compare:Add(buttons, 6, { stretch = true })
 	compare.table = compare:Add(comparisonTable(compare), 10, { stretch = true })
 	compare.legend = ns.Settings.CardText(compare, "Small", "text-3", L.ANALYTICS_LEGEND, 6)
@@ -636,8 +645,17 @@ function Analytics.Build(parent)
 		local notes = result and Compare.NoteLines(result) or {}
 		compare.notes:SetText(concat(notes, "\n"))
 		compare.notes:SetShown(#notes > 0)
-		compare.buttons:SetShown(result ~= nil and (result.newFights or 0) > 0)
+		local fresh = result ~= nil and (result.newFights or 0) > 0
 		local rows = result ~= nil and #result.rows > 0
+		local export = compare.buttons.export
+		if export then
+			compare.buttons.refresh:SetShown(fresh)
+			export:SetShown(rows)
+			export:ClearAllPoints()
+			if fresh then export:SetPoint("LEFT", compare.buttons.refresh, "RIGHT", 8, 0)
+			else export:SetPoint("LEFT", compare.buttons, "LEFT", 0, 0) end
+		end
+		compare.buttons:SetShown(fresh or (export ~= nil and rows))
 		compare.table.result = rows and result or nil
 		compare.table:SetShown(rows)
 		compare.legend:SetShown(rows)

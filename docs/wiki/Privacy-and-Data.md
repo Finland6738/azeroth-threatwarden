@@ -11,6 +11,11 @@ Azeroth Threatwarden works **only on your computer**.
   saved variables on your computer (`<WoW folder>/_forever_/WTF/Account/<account>/SavedVariables/`).
 - **Limits.** Recordings have a limit you can change; the oldest are removed first.
 - **Deleting.** You can delete one recording or all of them from the addon.
-- **Exports** (from `v0.6.0`) are text you copy yourself; they can replace names with *Player 1, Player 2…*.
+- **Exports** (from `v0.6.0`) are the only way anything leaves the game, and only through your hands: a text in a box
+  that you copy with Ctrl+C. The addon writes no file, does not touch your clipboard and posts or sends nothing. A text
+  can hold the **names of your group** (a fight, its events and its readings), the names of enemies and zones, classes,
+  roles, dates and the recorded numbers. It never holds character identifiers (GUIDs), your settings or the diagnostic
+  report. The box warns you about the names, and *Replace names with Player 1, Player 2…* writes *You*, *Player 1*,
+  *Pet 1*… instead; enemy and zone names, classes and roles stay. See [[Threat Analytics|Threat-Analytics]].
 
 The rules behind this are in [ADR 0001](https://github.com/Finland6738/azeroth-threatwarden/blob/main/docs/adr/0001-local-only-addon-no-network.md).

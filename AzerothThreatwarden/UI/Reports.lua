@@ -9,7 +9,8 @@
 -- closed recordings. Empty: *No recordings yet* and why recording is off or would not start. Read-only data are shown
 -- and never changed. Nothing here is protected, so the tab works in combat too. With the `analytics` switch a
 -- *Recordings · Analytics* selector sits at the top (the page is UI/Analytics.lua, remembered in memory until a
--- /reload) and the report has an *Analytics* card after the timeline's, built after it, in slices (SPEC-06 §3).
+-- /reload) and the report has an *Analytics* card after the timeline's, built after it, in slices (SPEC-06 §3). With
+-- the `export` switch too, *Export* in the head card opens the export box (UI/ExportBox.lua, SPEC-06 §4).
 --
 --   Reports.Build(parent) -> view     built by UI/Window.lua the first time the tab shows; view:Layout(width, height),
 --                                     view:Refresh(), view:Select(id) (nil closes the report), view:Rebuild(),
@@ -59,6 +60,7 @@ local function recordingOn() return ns.Features ~= nil and ns.Features.On("recor
 local function timelineOn() return ns.Features ~= nil and ns.Features.On("timeline") end
 local function replayOn() return ns.Features ~= nil and ns.Features.On("replay") end
 local function analyticsOn() return ns.Analytics ~= nil and ns.Analytics.On() end
+local function exportOn() return ns.ExportBox ~= nil and ns.Export ~= nil and ns.Export.On() end
 
 Reports.page = "recordings"      -- kept in memory until a /reload (SPEC-06 §3.1)
 function Reports.ShowPage(page)
@@ -435,6 +437,30 @@ local function headCard(view)
 		if card.replay.SetMotionScriptsWhileDisabled then card.replay:SetMotionScriptsWhileDisabled(true) end
 		Widgets.Tooltip.Attach(card.replay, function(self) return self.tip end, "TOP")
 	end
+	-- the export (SPEC-06 §4): off with its reason for a recording that is open or damaged
+	if exportOn() then
+		card.export = Widgets.Button(buttons, { text = L.EXPORT_BUTTON, style = "secondary", width = 120,
+			onClick = function() if view.selected then ns.ExportBox.Open("fight", view.selected) end end })
+		if card.export.SetMotionScriptsWhileDisabled then card.export:SetMotionScriptsWhileDisabled(true) end
+		Widgets.Tooltip.Attach(card.export, function(self) return self.tip end, "TOP")
+		-- the buttons go on a second line in a card too narrow for them
+		local order = { card.delete }
+		order[#order + 1] = card.replay                    -- nil without the `replay` switch
+		order[#order + 1] = card.export
+		order[#order + 1] = card.close
+		function buttons:Reflow(width)
+			local x, y = 0, 0
+			for _, button in ipairs(order) do
+				local w = button:GetWidth()
+				if x > 0 and x + w > width then x, y = 0, y + 40 end
+				button:ClearAllPoints()
+				button:SetPoint("TOPLEFT", self, "TOPLEFT", x, -y)
+				x = x + w + 8
+			end
+			self:SetHeight(y + 32)
+		end
+		card.buttons = buttons
+	end
 	card:Add(buttons, 10, { stretch = true })
 	card.status = ns.Settings.CardText(card, "Small", "warn", "", 8)
 	card.status:Hide()
@@ -496,6 +522,12 @@ local function paintReport(view)
 			or (view.problem == "damaged" and "REPORTS_REPLAY_DAMAGED") or (not h and "REPORTS_GONE") or nil
 		head.replay:SetEnabled(why == nil)
 		head.replay.tip = L[why or "REPORTS_REPLAY_TIP"]
+	end
+	if head.export then
+		local why = (h and h.open and "REPORTS_RECORDING") or (view.problem == "damaged" and "REPORT_DAMAGED")
+			or (not h and "REPORTS_GONE") or nil
+		head.export:SetEnabled(why == nil)
+		head.export.tip = L[why or "EXPORT_BUTTON_TIP"]
 	end
 
 	local cards = view.report.cards

@@ -1,6 +1,6 @@
 -- The wording rules of SPEC-04 §2.4 (WR-01-WR-07, COA-04, COA-05) on every COACH_*, ALERT_*, REPORT_*, TIMELINE_*,
--- REPLAY_* and ANALYTICS_* key (report, timeline, replay and analytics also show no hypothesis, REC-11, RPL-03; analytics
--- no word of merit or ranking, ANA-01), in enUS and itIT (ADR 0009): no cause, no ability or class (the one advice
+-- REPLAY_*, ANALYTICS_* and EXPORT_* key (report, timeline, replay, analytics and export also show no hypothesis, REC-11,
+-- RPL-03; analytics and export no word of merit or ranking, ANA-01), in enUS and itIT (ADR 0009): no cause, no ability or class (the one advice
 -- about spells is the generic "lower ranks", SPEC-09 Q7/Q11), no blame and no call to write to others, may / about for
 -- predictions and
 -- never "will", short messages, the arguments of each key as Data/CoachRules.lua formats them, and a category for every
@@ -13,7 +13,7 @@ local LANGUAGES = { "enUS", "itIT" }
 local function strings(code) return AzerothThreatwarden.Locale.Strings(code) end
 local function rules() return Mock.ns.CoachRules end
 
-local PREFIXES = { "COACH_", "ALERT_", "REPORT_", "TIMELINE_", "REPLAY_", "ANALYTICS_" }
+local PREFIXES = { "COACH_", "ALERT_", "REPORT_", "TIMELINE_", "REPLAY_", "ANALYTICS_", "EXPORT_" }
 
 -- Every key of a language that the wording rules cover, sorted.
 local function wordingKeys(code)
@@ -211,7 +211,7 @@ describe("the words of the Coach and of the alerts (SPEC-04 §2.4)", function()
 	it("shows no hypothesis in the report, the timeline and the replay (REC-11, RPL-03)", function()
 		local HYPOTHESIS = { "probably", "likely", "maybe", "perhaps", "possibly", "seems", "forse", "probabilmente",
 			"possibilmente", "sembra", "may", "might", "potrebbe", "potresti" }
-		local atLeast = { REPORT_ = 80, TIMELINE_ = 80, REPLAY_ = 40, ANALYTICS_ = 40 }
+		local atLeast = { REPORT_ = 80, TIMELINE_ = 80, REPLAY_ = 40, ANALYTICS_ = 40, EXPORT_ = 35 }
 		for _, code in ipairs(LANGUAGES) do
 			for prefix, minimum in pairs(atLeast) do
 				local count = 0
@@ -232,11 +232,11 @@ describe("the words of the Coach and of the alerts (SPEC-04 §2.4)", function()
 		"migliore", "peggiore", "meglio", "peggio", "bravo", "brava", "bene", "male", "ottimo", "pessimo", "perfetto",
 		"migliorato", "peggiorato", "miglioramento", "peggioramento", "errore", "sbaglio", "classifica", "vincitore" }
 
-	it("never rank, judge or declare a trend in the words of Analytics (ANA-01)", function()
+	it("never rank, judge or declare a trend in the words of Analytics and the export (ANA-01)", function()
 		for _, code in ipairs(LANGUAGES) do
 			local count = 0
 			for key, text in pairs(strings(code)) do
-				if key:sub(1, #"ANALYTICS_") == "ANALYTICS_" then
+				if key:sub(1, #"ANALYTICS_") == "ANALYTICS_" or key:sub(1, #"EXPORT_") == "EXPORT_" then
 					count = count + 1
 					for _, list in ipairs({ MERIT, BLAME }) do
 						for _, word in ipairs(list) do falsy(has(text, word), code .. " " .. key .. ": " .. word) end

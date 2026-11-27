@@ -116,11 +116,11 @@ end)
 describe("nothing on screen without a locale key, with Analytics on", function()
 	before_boot(function(M)
 		M.features = { monitor = true, recording = true, reports = true, analytics = true, replay = true,
-			timeline = true }
+			timeline = true, export = true }
 		M.OnFilesLoaded(function() mark("enUS") end)
 	end)
 
-	it("in the Analytics page and the report's card", function()
+	it("in the Analytics page, the report's card and the export box", function()
 		local S, St = Mock.ns.Session, Mock.ns.Storage
 		for i = 1, 2 do
 			local s = S.New{ id = "txt-" .. i, started = 1767225600 + i, group = "party", diff = 1,
@@ -162,6 +162,21 @@ describe("nothing on screen without a locale key, with Analytics on", function()
 		for _ = 1, 100 do Mock.Advance(0.05) end
 		truthy(view.analyticsPage.compare.table:IsShown())
 		check()
+		-- the export box: every label of it (the field holds the export itself, in the words of the keys)
+		for _, open in ipairs({ view.analyticsPage.compare.buttons.export, "txt-1" }) do
+			if type(open) == "string" then truthy(Mock.ns.ExportBox.Open("fight", open)) else open:Click() end
+			for _ = 1, 100 do Mock.Advance(0.05) end
+			local box = Mock.ns.ExportBox.frame
+			local shown = 0
+			for _, widget in ipairs(walk(box, {})) do
+				if widget:GetObjectType() == "FontString" and (widget:GetText() or "") ~= "" then
+					local plain = widget:GetText():gsub("Gorrak", ""):gsub("·", ""):gsub("…", "")
+					shown = shown + 1
+					eq(leftover(plain), "", widget:GetText())
+				end
+			end
+			truthy(shown >= 8, "the box was really read: " .. shown)
+		end
 		eq(#Mock.errors, 0)
 	end)
 end)

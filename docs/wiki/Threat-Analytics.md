@@ -73,4 +73,43 @@ compared. Click an enemy to compare its fights:
 The comparison is built one fight at a time and **pauses during combat**. A deleted recording leaves it; for new ones a
 **Refresh** button appears.
 
-An export to copy (text or CSV) arrives with a later step of the same version.
+## Export
+
+*Export* turns what you see into a text you copy yourself. It is in the head card of a report (that fight) and in the
+**Compare fights** card (the comparison with its filters). It opens a box with the text already selected: press
+**Ctrl+C** and paste it where you want. The addon cannot write files or reach your clipboard, and it never posts,
+sends or saves the text: nothing leaves the game unless you copy it.
+
+![The export box: a fight as text, already selected, under the warning about names](../specs/mockups/previews/export-box-nebula.webp)
+
+| Content | Formats | What is in it |
+|---|---|---|
+| This fight | text, CSV | the context, the lines of the report, the figures of Analytics and one row for each unit |
+| Events | CSV | every event of the fight in order of time |
+| Readings | CSV | every recorded reading, also the unreadable ones with their reason |
+| Comparison | text, CSV | one row for each fight, the newest first; the text also has the totals over all fights |
+
+- **Text** is in the language of the interface, inside code blocks, split into parts of at most 1900 characters so that
+  each fits one chat message. Names longer than 18 characters are cut in the table of the units.
+- **CSV** is for a spreadsheet: English column names, a comma between the columns, times in seconds. A text that a
+  spreadsheet could read as a formula gets an apostrophe in front.
+- **Categories and missing values** stay with the numbers. In the text: **D** detected, **C** calculated, *~* or
+  *at least* for an estimate, and the words *Not available*, *Insufficient data* and *Not comparable* with the reason.
+  In the CSV: the columns `category`, `status`, `reason` and `at_least`; in the comparison the last columns list which
+  figures are *at least*, not available, insufficient, not comparable, detected or calculated. A missing value is never
+  a zero.
+- **Size.** At most 256 KB of whole rows. When something does not fit (the readings of a long fight) the line under the
+  text says how many rows were left out; this note is not part of the text. With a long raid fight about the first
+  6,000 readings fit.
+
+### Names
+
+The box always says what the text holds. By default it holds the **names of your group**: share it only with people who
+agree. Switch on **Replace names with Player 1, Player 2…** (off by default, kept until the next `/reload`) and your
+character becomes *You*, your pet *Your pet*, other pets *Pet 1, Pet 2…* and everybody else *Player 1, Player 2…*, the
+same number for the same name everywhere in the text. In the CSV these words are always English. **Enemy names and zone
+names stay**, and so do classes and roles, so the make-up of the group can still be read. Your saved recordings are not
+changed.
+
+The export has not been tried in the game yet: how the box copes with a very long text, and how the pasted text looks
+in a chat or a spreadsheet.

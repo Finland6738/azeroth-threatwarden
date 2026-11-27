@@ -11,6 +11,12 @@ Azeroth Threatwarden funziona **solo sul tuo computer**.
   salvate del gioco sul tuo computer (`<WoW folder>/_forever_/WTF/Account/<account>/SavedVariables/`).
 - **Limiti.** Le registrazioni hanno un limite che puoi cambiare; le più vecchie si eliminano per prime.
 - **Cancellare.** Puoi eliminare una registrazione o tutte dall'addon.
-- **Le esportazioni** (dalla `v0.6.0`) sono testo che copi tu; possono sostituire i nomi con *Player 1, Player 2…*.
+- **Le esportazioni** (dalla `v0.6.0`) sono l'unico modo in cui qualcosa esce dal gioco, e solo per mano tua: un
+  testo in una casella che copi con Ctrl+C. L'addon non scrive file, non tocca gli appunti e non pubblica né invia
+  nulla. Un testo può contenere i **nomi del tuo gruppo** (uno scontro, i suoi eventi e le sue letture), i nomi dei
+  nemici e delle zone, classi, ruoli, date e i numeri registrati. Non contiene mai identificativi dei personaggi
+  (GUID), le tue impostazioni o il rapporto diagnostico. La casella avvisa dei nomi, e *Sostituisci i nomi con
+  Giocatore 1, Giocatore 2…* scrive invece *Tu*, *Giocatore 1*, *Famiglio 1*…; i nomi dei nemici e della zona, le
+  classi e i ruoli restano. Vedi [[Analytics della threat|Threat-Analytics-it]].
 
 Le regole sono nell'[ADR 0001](https://github.com/Finland6738/azeroth-threatwarden/blob/main/docs/adr/0001-local-only-addon-no-network.md) (in inglese).

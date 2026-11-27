@@ -977,6 +977,58 @@ def report_analytics(theme):
     return shot(LEFT, 90) + shot(RIGHT, 390)
 
 
+def export_box(theme):
+    """UI/ExportBox.lua (M6.5): the box of 640 x 460 on a fight's text, with the names warning."""
+    def cat_word(key):
+        return T("CAT_" + key)
+
+    def entry(key, category, value):
+        return T("TIP_TAGGED", T(key), cat_word(category)) + ": " + value
+
+    title = T("EXPORT_TITLE_TEXT", "Gorrak", report_date("26", "21:14"), "The Deadmines")
+    lines = ["```", title,
+             entry("REPORT_METRIC_DURATION", "DETECTED", "1:42 · " + T("REPORT_IN_COMBAT", "1:40")),
+             entry("REPORT_METRIC_QUALITY", "CALCULATED", T("REPORT_QUALITY", 98, 0, 2)),
+             T("ANALYTICS_PAGE"),
+             entry("ANALYTICS_METRIC_CROSSINGS", "CALCULATED", T("ANALYTICS_CROSSINGS", "4", "1")),
+             "  " + T("REPORT_BASIS_THRESHOLDS", WARNING, DANGER),
+             entry("ANALYTICS_METRIC_STATE_TIME", "CALCULATED", T("ANALYTICS_STATE_TIME", "0:24", "0:06")),
+             T("ANALYTICS_METRIC_RISK") + ": " + T("REPORT_INSUFFICIENT") + " · " + T("ANALYTICS_WHY_SHORT_KNOWN")]
+    d, c = T("ANALYTICS_MARK_DETECTED"), T("ANALYTICS_MARK_CALCULATED")
+    table = [[T("EXPORT_COL_UNIT"), T("EXPORT_COL_WARNING"), T("EXPORT_COL_DANGER"), T("EXPORT_COL_MAX"),
+              T("EXPORT_COL_READABLE")],
+             ["Testchar", f"2 {c}", f"1 {c}", T("TIMELINE_PERCENT", 91.0) + f" {d}", T("ANALYTICS_PCT_WHOLE", 98) + f" {c}"],
+             ["Bram", f"0 {c}", f"0 {c}", T("TIMELINE_PERCENT", 100.0) + f" {d}", T("ANALYTICS_PCT_WHOLE", 98) + f" {c}"],
+             ["Kor", f"2 {c}", f"0 {c}", T("TIMELINE_PERCENT", 96.4) + f" {d}", T("ANALYTICS_PCT_WHOLE", 91) + f" {c}"]]
+    widths = [max(len(r[i]) for r in table) for i in range(len(table[0]))]
+    lines += ["  ".join(v.ljust(widths[i]) for i, v in enumerate(r)).rstrip() for r in table]
+    lines += [T("EXPORT_LEGEND_MARKS"), "```"]
+    text = "".join(f'<div style="white-space:pre-wrap">{esc(line)}</div>' for line in lines)
+    warn = ('<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--state-warning)" stroke-width="2.4" '
+            'stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 22 20H2z"/><path d="M12 10v4M12 17v.01"/></svg>')
+    selectors = (seg([T("EXPORT_CONTENT_FIGHT"), T("EXPORT_CONTENT_EVENTS"), T("EXPORT_CONTENT_READINGS")], 0)
+                 + seg([T("EXPORT_FORMAT_TEXT"), T("EXPORT_FORMAT_CSV")], 0, "margin-left:auto"))
+    at = "position:absolute;left:{}px;top:{}px;"
+    box = (f'<div style="position:absolute;left:280px;top:130px;width:640px;height:460px;background:var(--surface-1);'
+           f'border:1px solid var(--border);border-radius:12px;box-shadow:0 24px 60px -20px rgba(0,0,0,.7)">'
+           f'<div style="{at.format(20, 18)}font:600 20px/24px Outfit,sans-serif">'
+           f'{esc(T("EXPORT_TITLE", T("EXPORT_CONTENT_FIGHT"), "Gorrak"))}</div>'
+           f'<div style="position:absolute;left:16px;right:16px;top:48px;display:flex">{selectors}</div>'
+           f'<div style="{at.format(20, 90)}display:flex;gap:8px;align-items:center;font-size:11px;color:var(--text-2)">'
+           f'<span class="sw" style="zoom:.7"></span>{esc(T("EXPORT_REPLACE"))}</div>'
+           f'<div style="{at.format(20, 116)}display:flex;gap:6px;align-items:center;font-size:11px;color:var(--text-2)">'
+           f'{warn}{esc(T("EXPORT_WARNING"))}</div>'
+           f'<div style="position:absolute;left:16px;right:16px;top:138px;bottom:78px;padding:8px;border-radius:8px;'
+           f'background:var(--surface-2);border:1px solid var(--border);overflow:hidden;{MONO}">{text}</div>'
+           f'<div style="position:absolute;left:20px;bottom:56px;{MONO};color:var(--text-3)">'
+           f'{esc(T("EXPORT_SIZE", T("REPORTS_KB", 3)))}</div>'
+           f'<div style="position:absolute;left:20px;bottom:22px;right:150px;font-size:11px;color:var(--text-2)">'
+           f'{esc(T("EXPORT_HINT"))}</div>'
+           f'<span class="btn primary" style="position:absolute;right:16px;bottom:14px;width:120px;margin:0">'
+           f'{esc(T("EXPORT_CLOSE"))}</span></div>')
+    return box
+
+
 ANALYTICS_KINDS = [
     ("analytics-overview", analytics_overview, ["nebula"],
      "The Analytics page: the enemies, and a comparison in a narrow window with the last columns left out",
@@ -987,6 +1039,9 @@ ANALYTICS_KINDS = [
     ("report-analytics", report_analytics, ["nebula"],
      "The report's Analytics card, with the unstable intervals and the link to the comparison",
      "La card Analytics del report, con gli intervalli instabili e il collegamento al confronto"),
+    ("export-box", export_box, ["nebula"],
+     "The export box: a fight as text, already selected, under the warning about names",
+     "La casella dell'esportazione: uno scontro come testo, già selezionato, sotto l'avviso dei nomi"),
 ]
 
 

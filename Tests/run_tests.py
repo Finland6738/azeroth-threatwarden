@@ -202,6 +202,8 @@ def main(argv):
         b"assertPath": b(os.path.join(HERE, "lib", "assert.lua")),
         b"fightPath": b(os.path.join(HERE, "lib", "fight.lua")),
         b"raidPath": b(os.path.join(HERE, "lib", "raid.lua")),
+        b"csvPath": b(os.path.join(HERE, "lib", "csv.lua")),
+        b"csvPath": b(os.path.join(HERE, "lib", "csv.lua")),
         b"tocFields": lua.table_from({b(k): b(v) for k, v in fields.items()}),
         b"savedVars": lua.table_from([b(v) for v in saved_vars]),
         b"plan": lua.table_from([lua.table_from({(b"code" if "code" in p else b"path"): b(p.get("code") or p["path"]),

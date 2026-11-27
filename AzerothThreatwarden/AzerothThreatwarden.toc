@@ -47,6 +47,7 @@ Data\Report.lua
 Data\Timeline.lua
 Data\Metrics.lua
 Data\Compare.lua
+Data\Export.lua
 Data\Replay.lua
 UI\Assets.lua
 UI\Theme.lua
@@ -65,5 +66,6 @@ UI\Settings.lua
 UI\Timeline.lua
 UI\Reports.lua
 UI\Analytics.lua
+UI\ExportBox.lua
 UI\ReplayWindow.lua
 UI\About.lua

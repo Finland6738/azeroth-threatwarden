@@ -432,7 +432,7 @@ was readable in this fight: only the context can be described.*
   gli intervalli instabili *Click an interval to replay it* con `replay`, e *N more intervals* oltre i primi tre.
 - **Modifiche collegate**: le righe di `Compare` tengono anche `valid`, `coverage` e `lowerBy` di una misura (per i
   tooltip); `Metrics.LowerLines`; `Widgets.Switch{small}`; `content.maxLines` dei tooltip.
-- Il pulsante *Export* arriva con M6.5.
+- Il pulsante *Export* è arrivato con M6.5 (§4.8).
 
 ## 4. Esportazione (`Data/Export.lua`, `UI/ExportBox.lua`, M6.5)
 
@@ -488,7 +488,7 @@ ruolo del gioco (`TANK`, `HEALER`, `DAMAGER`, vuoto).
 | Contenuto | Colonne, in ordine |
 |---|---|
 | `fight` (formato lungo: una riga per metrica, per la sessione e per ogni unità) | `session`, `started_utc`, `zone`, `enemy`, `unit`, `role`, `class`, `metric`, `value`, `category`, `status`, `reason`, `at_least`, `basis` |
-| `compare` (una riga per scontro, il più recente prima) | `session`, `started_utc`, `enemy`, `group`, `difficulty`, `player_role`, `state`, `outcome`, `duration_s`, `combat_s`, `valid_pct`, `coverage_pct`, `warning_crossings`, `danger_crossings`, `warning_any_s`, `danger_any_s`, `holder_changes`, `taken_by_non_tank`, `unstable_intervals`, `unstable_s`, `risk_situations`, `risk_per_min`, `player_max_pct`, `closest_to_tank_pct`, `at_least`, `not_available`, `insufficient`, `not_comparable` |
+| `compare` (una riga per scontro, il più recente prima) | `session`, `started_utc`, `enemy`, `group`, `difficulty`, `player_role`, `state`, `outcome`, `duration_s`, `combat_s`, `valid_pct`, `coverage_pct`, `warning_crossings`, `danger_crossings`, `warning_any_s`, `danger_any_s`, `holder_changes`, `taken_by_non_tank`, `unstable_intervals`, `unstable_s`, `risk_situations`, `risk_per_min`, `player_max_pct`, `closest_to_tank_pct`, `at_least`, `not_available`, `insufficient`, `not_comparable`, `detected`, `calculated` |
 | `events` | `t_s`, `event`, `enemy`, `unit`, `other_unit`, `detail`, `category` |
 | `readings` | `t_s`, `enemy`, `unit`, `percent`, `reading`, `situation`, `reason`, `category`, `at_least` |
 
@@ -497,8 +497,11 @@ ruolo del gioco (`TANK`, `HEALER`, `DAMAGER`, vuoto).
   `warning_time_s`, `danger_time_s`, `warning_any_s`, `danger_any_s`, `max_pct`, `closest_to_tank_pct`,
   `holder_changes`, `tank_to_tank`, `to_non_tank`, `back_to_tank`, `taken_by_non_tank`, `unstable_intervals`,
   `unstable_s`, `risk_situations`, `risk_per_min`, `deaths`, `alerts`); `unit` è vuota per le metriche della sessione.
-- `compare`: le ultime quattro colonne elencano i nomi delle metriche in quello stato, separati da `;` (una cella vuota
-  senza stato non c'è: ogni metrica vuota è in una delle quattro).
+- `compare`: `at_least`, `not_available`, `insufficient`, `not_comparable`, `detected` e `calculated` elencano i nomi
+  delle metriche (le colonne) in quello stato o di quella categoria, separati da `;`. Ogni metrica sta in **una sola**:
+  vuota in `not_available`, `insufficient` o `not_comparable`; con un valore in `at_least` (stimata), `detected` o
+  `calculated`. `detected` e `calculated` sono aggiunte di M6.5: senza, il confronto non diceva la categoria di ogni
+  valore (EXP-06).
 - `events`: `event` è uno fra `combat_start`, `combat_end`, `target`, `state`, `holder`, `mode`, `death`, `alert`,
   `coach_tip`, `encounter`, `recording_paused`, `interrupted`, `limit`; `detail` è un elenco `chiave=valore` separato da
   `;` (`new=warning;old=safe;reason=predicted`, `kind=to_non_tank`, `rule=T1;category=predicted;confidence=medium`,
@@ -559,10 +562,41 @@ Per incollarlo in una chat esterna o in un forum (come il *testo per Discord* di
 
 - `fight` di un raid da 40 unità: circa 40 × 7 metriche più 30 righe, sotto i 20 KB; `compare` di 20 scontri sotto i
   5 KB; `events` di 6 000 eventi circa 250–300 KB (può superare il limite di poco: si taglia); `readings` di 30 000 righe
-  circa 1 MB, quindi in una sessione lunga resta solo l'inizio (circa 7 000 righe) e la riga di stato lo dice
+  circa 1 MB, quindi in una sessione lunga resta solo l'inizio (circa 6 000 righe, §4.8) e la riga di stato lo dice
   ([Q24](SPEC-09-risks-open-questions.md)).
 - La memoria di picco è circa due volte il testo (i pezzi e la stringa unita), solo mentre la casella è aperta; chiusa,
   il testo si dimentica.
+
+### 4.8 Realizzato in M6.5
+
+`Data/Export.lua` (da Accord, ADR 0012), `UI/ExportBox.lua`, `Widgets.CopyArea` (spostata da `UI/DiagnosticsBox.lua`) e i
+pulsanti *Export*, con queste precisazioni:
+
+- **Chiamata**: `Export.Build({ kind, format, id | result, replace }, done)`; il formato si chiama `text` o `csv`;
+  `done(testo, info)` con `rows`, `left`, `bytes`, `replaced`, `parts`, oppure `done(nil, motivo)`. Eventi e letture si
+  costruiscono a fette di `SLICE` record per frame; *This fight* usa `Report.Build` e `Metrics.Build` (a fette loro) e
+  poi compone in un frame; il confronto si compone subito dal risultato di `Compare.Current()`. Un nuovo `Build` o
+  `Export.Cancel` lascia cadere quello in corso. La data UTC usa `Compat.DateText("!%Y-%m-%d %H:%M", …)`: nessun cambio
+  a `Core/Compat.lua`. Le righe del confronto tengono anche `dur` e `coverage`.
+- **CSV**: le righe di *This fight* sono le 25 metriche della sessione (con `warning_threshold` e `danger_threshold`
+  *rilevate*), poi 9 per unità (con `taken_by_non_tank` e i campioni validi). `deaths` e `alerts` contano gli eventi
+  registrati. Negli eventi `detail` ha anche `continued=reload`, `first=yes`, `source=…` per le morti e `reason=…` per il
+  nemico perso; la categoria di `Z` è `detected`; quelle di avvisi e consigli possono essere `predicted` o
+  `hypothesis`.
+- **Testo**: dopo l'etichetta di ogni riga la categoria fra parentesi; *at least* per un limite inferiore e `~` per una
+  stima che non lo dice già (le mediane); nelle tabelle la lettera *D* o *C* accanto al valore. L'intestazione di una
+  tabella si ripete nelle parti che la tabella attraversa. Gli intervalli instabili elencati sono al più
+  `Metrics.MAX_UNSTABLE`.
+- **Nomi**: un nemico con lo stesso nome di un'unità della sessione (un compagno rivoltato contro il gruppo) si
+  sostituisce come quell'unità. Il confronto non esporta nomi di unità.
+- **Casella**: *Replace names*, formato e contenuto restano fino al `/reload`; il segmento *Text* è spento con *CSV
+  only* per eventi e letture. La casella si svuota con *This recording was deleted.* anche per un confronto che ne
+  perde una.
+- **Pulsanti**: nella card di testa del report i pulsanti vanno su due righe in una card stretta; *Export* è spento per
+  una registrazione aperta o danneggiata. Nella card del confronto compare con una tabella.
+- **Misure** (prova lunga, sessione di 40 unità al limite): delle 30 000 righe di letture ne entrano **6 140** in 256 KB
+  (4 frame); di 6 000 avvisi, il caso più lungo, 2 299 eventi; il frame peggiore è quello del report (decodifica e prima
+  fetta); la memoria non cresce ripetendo l'esportazione.
 
 ## 5. Moduli, interruttori, diagnostica (M6)
 

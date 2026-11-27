@@ -162,13 +162,19 @@ character schema 2.
   export lines of `/atw debug`; the *Export* section of the wiki page *Threat Analytics* and what the export lets
   leave on *Privacy and Data*, in both languages; preview `export-box`.
 - Done when:
-  - [ ] Every content and format round-trips through the test CSV reader; every value carries its category and status;
+  - [x] Every content and format round-trips through the test CSV reader; every value carries its category and status;
     with names replaced no name of the sessions appears; the limit keeps whole rows and says what was left out outside
     the text; nothing is sent, posted or written; nothing shows with the switch off.
 - Tests: `test_export.lua`, `test_export_box.lua` (SPEC-06 §6); `test_diagnostics.lua` still passing with the shared
   field; `Tests/long/test_export_long.lua` (`readings` and `events` of a session at the limits).
 - Real client: the copy box with 256 KB (time of `SetText`, scrolling, Ctrl+A and Ctrl+C, `||` copied as `|`); the text
   pasted into Discord and the CSV opened in a spreadsheet (commas, apostrophe before formulas, accents).
+- *Done (2026-11-27, before M0.7): `Data/Export.lua` (from Azeroth Accord) with the four contents, the CSV of §4.3
+  (the comparison also lists which figures are `detected` and `calculated`, EXP-06), the code blocks in parts, the names,
+  the 256 KB limit and slices; `UI/ExportBox.lua` with `Widgets.CopyArea` shared with the diagnostic box; the *Export*
+  buttons of the report and of the comparison; `Tests/lib/csv.lua`, `test_export.lua`, `test_export_box.lua`,
+  `Tests/long/test_export_long.lua` (6,140 of 30,000 readings fit in 256 KB); preview `export-box`; wiki *Export* and
+  *Privacy and Data*; SPEC-06 §4.8. Nothing run in the real client.*
 
 ### M6.6 — In-game checklist M6
 - Branch: `step/m6-6-checklist`

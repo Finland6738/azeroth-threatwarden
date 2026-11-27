@@ -37,6 +37,7 @@ describe("loading the addon", function()
 			"AzerothThreatwarden/Data/Recorder.lua",
 			"AzerothThreatwarden/Data/Report.lua",
 			"AzerothThreatwarden/Data/Timeline.lua", "AzerothThreatwarden/Data/Metrics.lua", "AzerothThreatwarden/Data/Compare.lua",
+			"AzerothThreatwarden/Data/Export.lua",
 			"AzerothThreatwarden/Data/Replay.lua",
 			"AzerothThreatwarden/UI/Assets.lua", "AzerothThreatwarden/UI/Theme.lua",
 			"AzerothThreatwarden/UI/Motion.lua", "AzerothThreatwarden/UI/Widgets/Core.lua",
@@ -45,7 +46,7 @@ describe("loading the addon", function()
 			"AzerothThreatwarden/UI/CoachStrip.lua", "AzerothThreatwarden/UI/ThreatList.lua", "AzerothThreatwarden/UI/DiagnosticsBox.lua", "AzerothThreatwarden/UI/Window.lua",
 			"AzerothThreatwarden/UI/Launcher.lua", "AzerothThreatwarden/UI/Settings.lua",
 			"AzerothThreatwarden/UI/Timeline.lua", "AzerothThreatwarden/UI/Reports.lua",
-			"AzerothThreatwarden/UI/Analytics.lua",
+			"AzerothThreatwarden/UI/Analytics.lua", "AzerothThreatwarden/UI/ExportBox.lua",
 			"AzerothThreatwarden/UI/ReplayWindow.lua",
 			"AzerothThreatwarden/UI/About.lua",
 		})

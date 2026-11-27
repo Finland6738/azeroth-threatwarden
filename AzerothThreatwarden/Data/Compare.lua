@@ -174,6 +174,7 @@ local function extract(row)
 	row.basis = Compare.Basis(m)
 	row.state, row.outcome, row.after, row.role = m.state, m.outcome, m.after, m.role
 	row.group, row.diff, row.hz = m.group, m.diff, m.rec and m.rec.hz
+	row.dur, row.coverage = m.dur, m.coverage       -- for the export (Data/Export.lua)
 	row.interrupted = m.state == "interrupted" or nil
 	local player = playerOf(m)
 	row.hasPlayer = player ~= nil
