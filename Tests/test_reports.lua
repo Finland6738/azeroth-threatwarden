@@ -539,3 +539,47 @@ describe("the Timeline card (SPEC-05 §4.8, M5.3)", function()
 		isNil(Mock.ns.Timeline.Cached())
 	end)
 end)
+
+describe("the Analytics selector and card (SPEC-06 §3.1, §3.3, M6.4)", function()
+	before_boot(function(M)
+		local on = ALL()
+		on.analytics, on.timeline = true, false
+		M.features = on
+	end)
+
+	it("puts Recordings and Analytics at the top, Recordings first, as it was", function()
+		add{}
+		local view = openTab()
+		eq(view.segmented:Active(), "recordings")
+		eq(#shownRows(view), 1)
+		truthy(view.usageMarker:IsShown())
+		view:Layout(520, 400)
+		eq(view.segmented.buttons.analytics.label:GetText(), L().ANALYTICS_PAGE)
+	end)
+
+	it("adds the Analytics card after the head card, built after the report", function()
+		local s = add{}
+		local view = openTab()
+		view:Select(s.id)
+		Mock.Advance(5)
+		eq(view.report.cards[1], view.head)
+		eq(view.report.cards[2], view.analytics)
+		eq(view.report.cards[3], view.fight)
+		eq(view.metrics.id, s.id)
+		truthy(view.analytics:IsShown())
+	end)
+
+	it("has no selector and no card with the switch off", function()
+		T.boot(function(M)
+			local off = ALL()
+			off.analytics, off.timeline = false, false
+			M.features = off
+		end)
+		local s = add{}
+		local view = openTab()
+		view:Select(s.id)
+		isNil(view.segmented)
+		isNil(view.analytics)
+		eq(view.report.cards[2], view.fight)
+	end)
+end)

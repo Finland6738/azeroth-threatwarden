@@ -15,21 +15,23 @@ local max, min, floor = math.max, math.min, math.floor
 function Widgets.Switch(parent, opts)
 	opts = opts or {}
 	local b = CreateFrame("CheckButton", nil, parent)
-	b:SetSize(44, 26)
+	local small = opts.small
+	b:SetSize(small and 32 or 44, small and 18 or 26)
+	local thumbOff, thumbOn = small and 3 or 4, small and 17 or 22
 	b.track = Theme.Slice(b, "rr_fill_12", "surface-3", "BACKGROUND")
 	b.track:SetAllPoints(b)
 	b.ring = Theme.Slice(b, "rr_ring_12", "border", "BORDER")
 	b.ring:SetAllPoints(b)
 	b.thumb = b:CreateTexture(nil, "ARTWORK")
 	b.thumb:SetTexture(Assets.textures.circle.path)
-	b.thumb:SetSize(18, 18)
+	b.thumb:SetSize(small and 12 or 18, small and 12 or 18)
 	Theme.Tint(b.thumb, "text-2")
 	b.on = false
 	local function thumbAt(x)
 		b.thumb:ClearAllPoints()
 		b.thumb:SetPoint("LEFT", b, "LEFT", x, 0)
 	end
-	thumbAt(4)
+	thumbAt(thumbOff)
 	local function paint()
 		if b.on then
 			Theme.Tint(b.track, "accent"); Theme.Tint(b.ring, "accent"); Theme.Tint(b.thumb, "on-accent")
@@ -43,7 +45,7 @@ function Widgets.Switch(parent, opts)
 		if v == self.on then return end
 		self.on = v
 		paint()
-		local to, from = v and 22 or 4, v and 4 or 22
+		local to, from = v and thumbOn or thumbOff, v and thumbOff or thumbOn
 		Motion.Slide(self.thumb, to - from, 0, Motion.BASE, function() thumbAt(to) end)
 		if not silent and opts.onChange then opts.onChange(v) end
 	end
@@ -55,7 +57,7 @@ function Widgets.Switch(parent, opts)
 	b:SetScript("OnClick", function(self)
 		if self:IsEnabled() then self:SetOn(not self.on) end
 	end)
-	if opts.on then b.on = true; paint(); thumbAt(22) else paint() end
+	if opts.on then b.on = true; paint(); thumbAt(thumbOn) else paint() end
 	return b
 end
 

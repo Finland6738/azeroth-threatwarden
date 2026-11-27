@@ -758,6 +758,17 @@ function Metrics.ReasonText(c)
 	return Report.ReasonText(reason)
 end
 
+-- Why a value is a lower bound, one line per cause (`lowerBy` of a cell).
+function Metrics.LowerLines(lowerBy)
+	local lines = {}
+	if lowerBy then
+		for _, pair in ipairs(LOWER_KEYS) do
+			if lowerBy[pair[1]] then lines[#lines + 1] = ns.L[pair[2]] end
+		end
+	end
+	return lines
+end
+
 -- The tooltip of a cell (§1.3): what it measures, the category, the basis, the valid samples and the coverage, the
 -- reason, why it is a lower bound, how far the data go.
 function Metrics.Tooltip(metrics, c)
@@ -777,10 +788,8 @@ function Metrics.Tooltip(metrics, c)
 		local reason = Metrics.ReasonText(c)
 		if reason then lines[#lines + 1] = reason end
 	end
-	if c.lower and c.lowerBy then
-		for _, pair in ipairs(LOWER_KEYS) do
-			if c.lowerBy[pair[1]] then lines[#lines + 1] = L[pair[2]] end
-		end
+	if c.lower then
+		for _, line in ipairs(Metrics.LowerLines(c.lowerBy)) do lines[#lines + 1] = line end
 	end
 	if metrics.recordedUntil then lines[#lines + 1] = L.REPORT_RECORDED_UNTIL:format(Report.Time(metrics.recordedUntil)) end
 	if c.truncated and metrics.trunc then lines[#lines + 1] = L.REPORT_TRUNCATED:format(Report.Time(metrics.trunc)) end

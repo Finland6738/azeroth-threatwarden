@@ -113,6 +113,59 @@ describe("nothing on screen without a locale key", function()
 	end)
 end)
 
+describe("nothing on screen without a locale key, with Analytics on", function()
+	before_boot(function(M)
+		M.features = { monitor = true, recording = true, reports = true, analytics = true, replay = true,
+			timeline = true }
+		M.OnFilesLoaded(function() mark("enUS") end)
+	end)
+
+	it("in the Analytics page and the report's card", function()
+		local S, St = Mock.ns.Session, Mock.ns.Storage
+		for i = 1, 2 do
+			local s = S.New{ id = "txt-" .. i, started = 1767225600 + i, group = "party", diff = 1,
+				rec = { hz = 2, warning = 80, danger = 95 } }
+			S.AddUnit(s, { name = "Testchar", role = "DAMAGER", token = "player", me = true }, 0)
+			S.AddMob(s, { name = "Gorrak", class = "elite", npc = 448 }, 0)
+			for _, e in ipairs({ { 0, "C", 0, 0, 0, "1" }, { 0, "M", 0, 0, 0, "v" }, { 0, "T", 1 },
+				{ 0, "S", 1, 1, 0, "S", "-" }, { 400, "c" } }) do
+				S.AddEvent(s, e[1], e[2], e[3], e[4], e[5], e[6], e[7])
+			end
+			S.AddRow(s, 50, 1, 1, 400, "0")
+			s.q.v[1] = 100
+			S.Join(s)
+			s.state, s.ended, s.dur, s.fight = "complete", "combat", 400, 400
+			St.Add(s)
+			St.Closed(s, true)
+		end
+		local W = AzerothThreatwarden.Window
+		W:Open()
+		W:SelectTab("reports")
+		local view = W:Frame().pages.reports.view
+		view:Layout(900, 600)
+		view:Select("txt-1")
+		for _ = 1, 100 do Mock.Advance(0.05) end
+		local roots = { W:Frame() }
+		local function check()
+			local shown, bad = texts(roots), {}
+			for _, text in ipairs(shown) do
+				-- invented names of the fight, dates and numbers are not language
+				local plain = text:gsub("Gorrak", ""):gsub("Testchar", ""):gsub("·", ""):gsub("–", ""):gsub("…", "")
+				local rest = leftover(plain)
+				if rest ~= "" then bad[#bad + 1] = text end
+			end
+			deepEq(bad, {})
+		end
+		check()
+		view.segmented.buttons.analytics:Click()
+		view.analyticsPage.rows[1]:Click()
+		for _ = 1, 100 do Mock.Advance(0.05) end
+		truthy(view.analyticsPage.compare.table:IsShown())
+		check()
+		eq(#Mock.errors, 0)
+	end)
+end)
+
 describe("the screens in Italian", function()
 	before_boot(function(M) M.player.locale = "itIT" end)
 

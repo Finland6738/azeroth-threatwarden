@@ -67,6 +67,13 @@ teneva il nemico e gli eventi. Un clic apre il [[Replay della threat|Threat-Repl
 
 ![Il report con la card Timeline e il pulsante Replay](../specs/mockups/previews/report-timeline-nebula.webp)
 
+## Analytics
+
+> **In arrivo con la `v0.6.0`**, non ancora pubblicata e non verificata in gioco.
+
+Un report avrà anche una card **Analytics**, e la scheda una pagina che confronta gli scontri contro lo stesso nemico:
+[[Analytics della threat|Threat-Analytics-it]].
+
 ## Eliminare
 
 **Elimina registrazione** chiede un secondo clic entro 8 secondi. L'eliminazione è definitiva e toglie i nomi dai dati

@@ -7,6 +7,7 @@
 - [[Alerts and Coach|Alerts-and-Coach]]
 - [[Combat Reports|Combat-Reports]]
 - [[Threat Replay|Threat-Replay]]
+- [[Threat Analytics|Threat-Analytics]]
 
 **Reference**
 - [[Commands|Commands]]
@@ -24,6 +25,7 @@
 - [[Avvisi e Coach|Alerts-and-Coach-it]]
 - [[Report dei combattimenti|Combat-Reports-it]]
 - [[Replay della threat|Threat-Replay-it]]
+- [[Analytics della threat|Threat-Analytics-it]]
 - [[Comandi|Commands-it]]
 - [[Impostazioni|Settings-it]]
 - [[Informazioni e crediti|About-it]]

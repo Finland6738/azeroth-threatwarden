@@ -7,10 +7,14 @@
 -- *Timeline* card follows the head card (UI/Timeline.lua, SPEC-05 §4.8): built after the report, in slices; with the
 -- `replay` switch too, a click on it asks for the replay at that time. Delete asks twice and is for
 -- closed recordings. Empty: *No recordings yet* and why recording is off or would not start. Read-only data are shown
--- and never changed. Nothing here is protected, so the tab works in combat too.
+-- and never changed. Nothing here is protected, so the tab works in combat too. With the `analytics` switch a
+-- *Recordings · Analytics* selector sits at the top (the page is UI/Analytics.lua, remembered in memory until a
+-- /reload) and the report has an *Analytics* card after the timeline's, built after it, in slices (SPEC-06 §3).
 --
 --   Reports.Build(parent) -> view     built by UI/Window.lua the first time the tab shows; view:Layout(width, height),
---                                     view:Refresh(), view:Select(id) (nil closes the report), view:Rebuild()
+--                                     view:Refresh(), view:Select(id) (nil closes the report), view:Rebuild(),
+--                                     view:SetPage("recordings" | "analytics")
+--   Reports.ShowPage(page)            the page the tab shows next (and now, when built)
 --   Reports.UsageText(usage)          "12 recordings · about 640 KB of 2 MB" (also the Recording card of Settings)
 --   Reports.EmptyReason()             why the list is empty, nil when recording is on and would start
 --
@@ -54,6 +58,14 @@ local function readOnly() return config() ~= nil and config():IsReadOnly("accoun
 local function recordingOn() return ns.Features ~= nil and ns.Features.On("recording") end
 local function timelineOn() return ns.Features ~= nil and ns.Features.On("timeline") end
 local function replayOn() return ns.Features ~= nil and ns.Features.On("replay") end
+local function analyticsOn() return ns.Analytics ~= nil and ns.Analytics.On() end
+
+Reports.page = "recordings"      -- kept in memory until a /reload (SPEC-06 §3.1)
+function Reports.ShowPage(page)
+	if not analyticsOn() then return end
+	Reports.page = page
+	if Reports.view then Reports.view:SetPage(page) end
+end
 
 ---------------------------------------------------------------------------------------------------------------------
 -- Words
@@ -205,7 +217,7 @@ local function pill(parent)
 	return f
 end
 
-Reports.Pill, Reports.CATEGORY = pill, CATEGORY     -- the category markers of the replay window
+Reports.Pill, Reports.CATEGORY = pill, CATEGORY     -- the category markers of the replay window and of Analytics
 
 local function scrollPane(parent)
 	local scroll = CreateFrame("ScrollFrame", nil, parent)
@@ -302,6 +314,8 @@ local function metricRow(card)
 	Widgets.Tooltip.Attach(row, function(self) return self.tip end, "TOP")
 	return row
 end
+
+Reports.MetricRow = metricRow
 
 local function paintMetric(row, report, c)
 	row.cell = c
@@ -494,6 +508,14 @@ local function paintReport(view)
 	elseif view.timeline then
 		view.timeline:Hide()
 	end
+	if analyticsOn() and (report or view.problem == "damaged") then
+		if not view.analytics then view.analytics = ns.Analytics.Card(view) end
+		ns.Analytics.PaintCard(view.analytics, { id = view.selected, metrics = view.metrics,
+			problem = view.problem == "damaged" and "damaged" or view.metricsProblem })
+		cards[#cards + 1] = view.analytics
+	elseif view.analytics then
+		view.analytics:Hide()
+	end
 	view.fight:SetShown(report ~= nil)
 	if report then
 		cards[#cards + 1] = view.fight
@@ -555,6 +577,28 @@ function Reports.Build(parent)
 	view.head = headCard(view)
 	view.fight = sessionCard(view)
 
+	if analyticsOn() then
+		view.segmented = Widgets.Segmented(view, {
+			{ id = "recordings", text = L.ANALYTICS_PAGE_RECORDINGS }, { id = "analytics", text = L.ANALYTICS_PAGE },
+		}, function(id)
+			Reports.page = id
+			if view.ready then
+				disarm(view)
+				view:Refresh()
+			end
+		end)
+		view.segmented:SetPoint("TOPLEFT", view, "TOPLEFT", 0, 0)
+	end
+
+	function view:Page()
+		return self.segmented and Reports.page == "analytics" and "analytics" or "recordings"
+	end
+
+	function view:SetPage(page)
+		if not self.segmented then return end
+		if self.segmented:Active() == page then self:Refresh() else self.segmented:Select(page) end
+	end
+
 	-- Places the parts for `width` x `height` (kept from the last call when not given).
 	function view:Layout(width, height)
 		self.width, self.height_ = width or self.width, height or self.height_
@@ -565,7 +609,24 @@ function Reports.Build(parent)
 		if not total or total <= 0 then total = self:GetHeight() end
 		if not total or total <= 0 then total = 400 end
 		local y = Reports.HEADER_HEIGHT + 6
-		self.usageHit:SetSize(w, Reports.HEADER_HEIGHT)
+		if self.segmented then
+			-- the selector, with the use of the store beside it, or under it in a narrow window
+			local left = self.segmented:GetWidth() + 12
+			local need = (self.usage:GetStringWidth() or 0) + 8 + (self.usageMarker:GetWidth() or 0)
+			local x, top = left, 6
+			y = max(32, Reports.HEADER_HEIGHT) + 6
+			if left + need > w then
+				x, top = 0, 36
+				y = top + Reports.HEADER_HEIGHT + 6
+			end
+			self.usage:ClearAllPoints()
+			self.usage:SetPoint("TOPLEFT", self, "TOPLEFT", x, -(top + 2))
+			self.usageHit:ClearAllPoints()
+			self.usageHit:SetPoint("TOPLEFT", self, "TOPLEFT", x, -top)
+			self.usageHit:SetSize(max(1, w - x), Reports.HEADER_HEIGHT)
+		else
+			self.usageHit:SetSize(w, Reports.HEADER_HEIGHT)
+		end
 		if self.notice:IsShown() then
 			self.notice:ClearAllPoints()
 			self.notice:SetPoint("TOPLEFT", self, "TOPLEFT", 0, -y)
@@ -578,6 +639,12 @@ function Reports.Build(parent)
 		self.emptyReason:ClearAllPoints()
 		self.emptyReason:SetPoint("TOP", self.empty, "BOTTOM", 0, -8)
 		self.emptyReason:SetWidth(w)
+
+		if self.analyticsPage and self:Page() == "analytics" then
+			self.analyticsPage:ClearAllPoints()
+			self.analyticsPage:SetPoint("TOPLEFT", self, "TOPLEFT", 0, -y)
+			self.analyticsPage:Layout(w, max(40, total - y))
+		end
 
 		local step = Reports.ROW_HEIGHT + Reports.ROW_GAP
 		local count = #self.headers
@@ -607,6 +674,7 @@ function Reports.Build(parent)
 		self.headers = Storage.List()
 		local usage = Storage.Usage()
 		local count = #self.headers
+		local analytics = self:Page() == "analytics"
 		self.usage:SetText(Reports.UsageText(usage))
 		local notes = {}
 		local ro = readOnlyText()
@@ -619,6 +687,7 @@ function Reports.Build(parent)
 			and self.building ~= self.selected then
 			self.selected, self.data, self.problem = nil, nil, nil
 			self.model, self.modelProblem = nil, nil
+			self.metrics, self.metricsProblem = nil, nil
 			disarm(self)
 		end
 		for i, h in ipairs(self.headers) do
@@ -628,22 +697,40 @@ function Reports.Build(parent)
 			row:Show()
 		end
 		for i = count + 1, #self.rows do self.rows[i]:Hide() end
-		local empty = count == 0 and not self.selected
+		local empty = count == 0 and (analytics or not self.selected)
 		local why = empty and Reports.EmptyReason() or nil
 		self.empty:SetShown(empty)
 		self.emptyReason:SetShown(empty)
 		self.emptyReason:SetText(empty and (why or L.REPORTS_EMPTY_NEXT) or "")
 		self.usage:SetShown(not empty)
 		self.usageHit:SetShown(not empty)
-		self.list:SetShown(not empty)
-		self.report:SetShown(self.selected ~= nil)
-		if self.selected then paintReport(self) end
+		self.list:SetShown(not empty and not analytics)
+		self.report:SetShown(self.selected ~= nil and not analytics)
+		if self.selected and not analytics then paintReport(self) end
+		if analytics and not empty then
+			if not self.analyticsPage then self.analyticsPage = ns.Analytics.Build(self) end
+			self.analyticsPage:Show()
+			local enemies = ns.Compare.Overview()
+			local known = 0
+			for _, row in ipairs(enemies) do
+				if not row.unknown then known = known + 1 end
+			end
+			local recordings = count == 1 and L.REPORTS_COUNT_ONE or L.REPORTS_COUNT:format(count)
+			self.usage:SetText(L.ANALYTICS_HEADER:format(recordings,
+				known == 1 and L.ANALYTICS_ENEMIES_ONE or L.ANALYTICS_ENEMIES_COUNT:format(known)))
+			self.usageMarker:Hide()
+			self.usageHit:Hide()   -- its tooltip is about the size, which this line no longer says
+		else
+			self.usageMarker:Show()
+			if self.analyticsPage then self.analyticsPage:Hide() end
+		end
 		-- a recording that ended while its report was open can be built now
 		if self.selected and self.problem == "recording" then
 			local h = headerOf(self, self.selected)
 			if h and not h.open then self:Rebuild() return end
 		end
 		self:Layout()
+		if analytics and not empty then self.analyticsPage:Refresh() end
 	end
 
 	function view:Rebuild()
@@ -652,6 +739,7 @@ function Reports.Build(parent)
 		local mine = self.buildToken
 		self.data, self.problem, self.building = nil, nil, id
 		self.model, self.modelProblem = nil, nil
+		self.metrics, self.metricsProblem = nil, nil
 		paintReport(self)
 		self:Layout()
 		ns.Report.Build(id, function(report, why)
@@ -659,7 +747,8 @@ function Reports.Build(parent)
 			self.building = nil
 			self.data, self.problem = report, why
 			if why == "unknown" then self.selected, self.problem = nil, nil end   -- deleted while building
-			if report and timelineOn() then self:BuildTimeline(id, mine) end       -- after the report
+			if report and timelineOn() then self:BuildTimeline(id, mine)           -- after the report
+			elseif report and analyticsOn() then self:BuildAnalytics(id, mine) end
 			if self:IsVisible() then self:Refresh() end
 		end)
 	end
@@ -670,6 +759,18 @@ function Reports.Build(parent)
 		ns.Timeline.Build(id, function(model, why)
 			if mine ~= self.buildToken or self.selected ~= id then return end
 			self.model, self.modelProblem = model, why
+			if analyticsOn() then self:BuildAnalytics(id, mine) end                -- after the timeline
+			if waiting and self:IsVisible() then self:Refresh() end
+		end)
+		waiting = true
+	end
+
+	-- The metrics of the report's Analytics card, built in slices by Data/Metrics.lua; a later selection wins.
+	function view:BuildAnalytics(id, mine)
+		local waiting = false
+		ns.Metrics.Build(id, function(metrics, why)
+			if mine ~= self.buildToken or self.selected ~= id then return end
+			self.metrics, self.metricsProblem = metrics, why
 			if waiting and self:IsVisible() then self:Refresh() end
 		end)
 		waiting = true
@@ -685,6 +786,7 @@ function Reports.Build(parent)
 		end
 		self.selected, self.data, self.problem, self.building = id, nil, nil, nil
 		self.model, self.modelProblem = nil, nil
+		self.metrics, self.metricsProblem = nil, nil
 		self.buildToken = self.buildToken + 1
 		self.report:SetVerticalScroll(0)
 		self:Refresh()
@@ -709,9 +811,14 @@ function Reports.Build(parent)
 		end)
 		-- the summaries are computed at the end of a fight, after the listeners of this one
 		Bus.On("COMBAT_ENDED", function() Compat.After(0, changed) end)
-		Bus.On("REPORT_REQUESTED", function(id) view:Select(id) end)
+		Bus.On("REPORT_REQUESTED", function(id)
+			view:SetPage("recordings")
+			view:Select(id)
+		end)
 	end
 	Reports.view = view
+	view.ready = true
+	if view.segmented then view.segmented:Select(Reports.page) end
 	return view
 end
 

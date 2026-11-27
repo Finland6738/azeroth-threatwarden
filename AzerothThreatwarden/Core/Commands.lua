@@ -73,7 +73,11 @@ Commands.LIST = {
 		run = function(rest) ns.Demo.Command(rest) end },
 	{ name = "mute", help = "HELP_MUTE", feature = "alerts", version = "v0.3.0", run = mute },
 	{ name = "reports", help = "HELP_REPORTS", feature = "reports", version = "v0.4.0",
-		run = function() ns.Window:Open() ns.Window:SelectTab("reports") end },
+		run = function()
+			ns.Window:Open()
+			if ns.Reports and ns.Reports.ShowPage then ns.Reports.ShowPage("recordings") end
+			ns.Window:SelectTab("reports")
+		end },
 	{ name = "replay", help = "HELP_REPLAY", feature = "replay", also = "timeline", version = "v0.5.0", run = replay },
 }
 

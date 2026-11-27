@@ -66,6 +66,13 @@ the first card opens it from the start. Both are off for the fight being recorde
 
 ![The report with the Timeline card and the Replay button](../specs/mockups/previews/report-timeline-nebula.webp)
 
+## Analytics
+
+> **Coming in `v0.6.0`**, not released yet and not verified in game.
+
+A report will also have an **Analytics** card, and the tab a page that compares fights against the same enemy:
+[[Threat Analytics|Threat-Analytics]].
+
 ## Deleting
 
 **Delete recording** asks for a second click within 8 seconds. Deletion cannot be undone, and it removes the names from

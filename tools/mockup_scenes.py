@@ -834,6 +834,162 @@ REPLAY_KINDS = [
      "Il report con la card Timeline e il pulsante Replay"),
 ]
 
+# ---- Analytics (UI/Analytics.lua, M6.4). Invented data: the places, the players and the fights do not exist. --------
+
+def analytics_head(on, reports=True):
+    selector = seg([T("ANALYTICS_PAGE_RECORDINGS"), T("ANALYTICS_PAGE")], on)
+    if on:
+        text = T("ANALYTICS_HEADER", T("REPORTS_COUNT", 12), T("ANALYTICS_ENEMIES_COUNT", 3))
+        side = f'<span style="color:var(--text-1);font-weight:500">{esc(text)}</span>'
+    else:
+        text = T("REPORTS_USAGE", T("REPORTS_COUNT", 12), T("REPORTS_KB", 640), T("REPORTS_MB_WHOLE", 2))
+        side = f'<span style="color:var(--text-1);font-weight:500">{esc(text)}</span>{cat("estimated")}'
+    return (f'<div style="display:flex;flex-wrap:wrap;gap:4px 12px;align-items:center;margin-bottom:8px">{selector}'
+            f'<span style="display:flex;gap:8px;align-items:center">{side}</span></div>')
+
+
+MONO = "font:500 11px/13px 'JetBrains Mono',monospace"
+
+
+def enemy_row(name, group, numbers, on=False):
+    back = "background:var(--surface-2);box-shadow:inset 2px 0 0 var(--accent);" if on else ""
+    right = f'<span style="color:var(--text-2);font-size:11px">{esc(group)}</span>' if group else ""
+    low = f'<div style="{MONO};color:var(--text-2);white-space:nowrap;overflow:hidden">{esc(numbers)}</div>'
+    return (f'<div style="height:32px;padding:1px 8px;{back}"><div style="display:flex;justify-content:space-between">'
+            f'<span>{esc(name)}</span>{right}</div>{low}</div>')
+
+
+def enemies_card(selected):
+    def numbers(count, combat, day, hour, low, high):
+        return " · ".join([T("ANALYTICS_FIGHTS", count), T("ANALYTICS_IN_COMBAT", combat), report_date(day, hour),
+                           T("ANALYTICS_READABLE_RANGE", low, high)])
+    rows = (enemy_row(T("ANALYTICS_ENEMY_CLASS", "Gorrak", T("MON_CLASS_ELITE")), T("ANALYTICS_GROUP_PARTY"),
+                      numbers(5, "8:12", "26", "21:14", 62, 100), selected)
+            + enemy_row("Old Skarn", T("ANALYTICS_GROUP_RAID"), numbers(3, "17:40", "25", "22:40", 88, 97))
+            + enemy_row(T("ANALYTICS_UNKNOWN_ENEMIES"), "", T("ANALYTICS_FIGHTS", 2)))
+    return card(T("ANALYTICS_ENEMIES"), f'<div style="margin-top:8px">{rows}</div>')
+
+
+def mark(kind):
+    colour = "var(--warn)" if kind == "ESTIMATED" else "var(--text-2)"
+    return f'<span style="color:{colour};font-size:11px;margin-right:3px">{esc(T("ANALYTICS_MARK_" + kind))}</span>'
+
+
+def table_cell(value, kind):
+    if kind is None:
+        return f'<span style="color:var(--text-3)">{esc(value)}</span>'
+    colour = "var(--warn)" if kind == "ESTIMATED" else "var(--text-1)"
+    return f'{mark(kind)}<span style="color:{colour}">{esc(value)}</span>'
+
+
+def compare_table(columns):
+    keys = ["DATE", "LENGTH", "READABLE", "CROSSINGS", "DANGER", "HOLDERS", "UNSTABLE", "RISK", "HIGHEST",
+            "CLOSEST"][:columns]
+    c, d, e = "CALCULATED", "DETECTED", "ESTIMATED"
+    na, nc = T("REPORT_INSUFFICIENT"), T("ANALYTICS_NOT_COMPARABLE")
+
+    def pct(v):
+        return T("TIMELINE_PERCENT", v)
+
+    rows = [
+        (T("ANALYTICS_ALL_FIGHTS"), [("1:42", c), (T("ANALYTICS_PCT_WHOLE", 94), c), ("3 / 1", c), ("0:06", c),
+                                     ("2", c), ("1 · 0:08", c), ("1.4", c), (pct(88.0), c), (pct(96.4), c)]),
+        (report_date("26", "21:14"), [("1:42", d), (T("ANALYTICS_PCT_WHOLE", 98), c), ("4 / 1", c), ("0:06", c),
+                                      ("2", d), ("1 · 0:08", c), ("1.8", c), (pct(91.0), d), (pct(96.4), d)]),
+        (report_date("26", "20:51"), [(T("REPORT_AT_LEAST", "2:31"), e), (T("ANALYTICS_PCT_WHOLE", 38), c), (na, None),
+                                      (na, None), (na, None), (na, None), (na, None), (na, None), (na, None)]),
+        (report_date("25", "23:02"), [("1:30", d), (T("ANALYTICS_PCT_WHOLE", 91), c), (nc, None), (nc, None),
+                                      ("1", d), (nc, None), (nc, None), (pct(84.2), d), (pct(90.1), d)]),
+    ]
+    head = "".join(f'<th style="text-align:{"left" if i == 0 else "right"};padding:0 4px;white-space:nowrap">'
+                   f'{esc(T("ANALYTICS_COL_" + k))}</th>' for i, k in enumerate(keys))
+    body = ""
+    for i, (date, cells) in enumerate(rows):
+        back = "background:var(--surface-2);" if i == 0 else ""
+        tds = "".join(f'<td style="text-align:right;padding:0 4px;white-space:nowrap">{table_cell(v, k)}</td>'
+                      for v, k in cells[:columns - 1])
+        body += (f'<tr style="{back}height:22px"><td style="padding:0 4px;white-space:nowrap">{esc(date)}</td>'
+                 f'{tds}</tr>')
+    return (f'<table style="width:100%;border-collapse:collapse;margin-top:10px;{MONO}">'
+            f'<tr style="height:22px;color:var(--text-3);font:600 11px/1 \'Outfit\',sans-serif">{head}</tr>{body}</table>')
+
+
+def compare_card(columns):
+    filters = "".join(
+        f'<span style="display:inline-flex;gap:6px;align-items:center;margin-right:16px">'
+        f'<span class="sw on" style="zoom:.7"></span><span style="font-size:11px;color:var(--text-2)">{esc(t)}</span></span>'
+        for t in (T("ANALYTICS_FILTER_GROUP"), T("ANALYTICS_FILTER_DIFF"),
+                  T("ANALYTICS_FILTER_ROLE_NAMED", T("ROLE_DAMAGER"))))
+    context = " · ".join([T("ANALYTICS_FIGHTS", 3), T("ANALYTICS_CONTEXT_MEDIAN", "1:42"),
+                          T("ANALYTICS_READABLE_RANGE", 38, 98)])
+    inner = (f'<div style="margin-top:8px">{filters}</div><div class="body">{esc(context)}</div>'
+             f'<div class="note" style="color:var(--warn);margin-top:6px">{esc(T("ANALYTICS_EXCLUDED_ONE"))}</div>'
+             + compare_table(columns) + note(T("ANALYTICS_LEGEND"), "margin-top:6px"))
+    return card(T("ANALYTICS_COMPARE_OF", "Gorrak"), inner)
+
+
+def analytics_window(theme, cards, x, style="", module="idle", scroll=0):
+    body = (f'<div class="page">{analytics_head(1)}<div class="column" style="margin-top:-{scroll}px">'
+            f'{"".join(cards)}</div></div>')
+    html = window(theme, "reports", body, x, TOP, module=module, reports=True)
+    return html.replace('style="left:', f'style="{style}left:', 1)
+
+
+def analytics_overview(theme):
+    choose = card(T("ANALYTICS_COMPARE"), f'<div class="body" style="font-weight:500">{esc(T("ANALYTICS_CHOOSE"))}</div>')
+    return (analytics_window(theme, [enemies_card(False), choose], LEFT)
+            + analytics_window(theme, [compare_card(4)], RIGHT))
+
+
+def analytics_compare(theme):
+    return analytics_window(theme, [enemies_card(True), compare_card(9)], LEFT, "width:1152px;height:600px;")
+
+
+def report_analytics(theme):
+    def line(key, kind, value, off=False):
+        return metric(key, kind, value, off)
+
+    first = (line("ANALYTICS_METRIC_VALID", "calculated",
+                  T("REPORT_QUALITY", 82, 0, 18) + " · " + T("ANALYTICS_COVERAGE", 96))
+             + line("ANALYTICS_METRIC_CROSSINGS", "calculated",
+                    T("ANALYTICS_CROSSINGS", "7", "2") + " · " + T("REPORT_BASIS_THRESHOLDS", WARNING, DANGER))
+             + line("ANALYTICS_METRIC_STATE_TIME", "calculated", T("ANALYTICS_STATE_TIME", "0:24", "0:06"))
+             + line("ANALYTICS_METRIC_HOLDERS", "detected", T("ANALYTICS_HOLDERS", "3", 1, 1, 1))
+             + line("ANALYTICS_METRIC_AGGRO_TAKEN", "detected", "1"))
+    intervals = "".join(
+        f'<div style="color:var(--accent-text);font-size:11px;margin:3px 0 0 0">{esc(T("ANALYTICS_INTERVAL", a, b, n))}</div>'
+        for a, b, n in (("0:12", "0:19", 3), ("0:51", "0:58", 4)))
+    second = (line("ANALYTICS_METRIC_UNSTABLE", "calculated", T("ANALYTICS_UNSTABLE", "2", "0:14"))
+              + intervals + note(T("ANALYTICS_REPLAY_HINT"))
+              + line("ANALYTICS_METRIC_RISK", "unknown",
+                     T("REPORT_INSUFFICIENT") + " · " + T("ANALYTICS_WHY_SHORT_KNOWN"), True)
+              + line("ANALYTICS_METRIC_CLOSEST", "detected", T("ANALYTICS_CLOSEST", "Kor", T("TIMELINE_PERCENT", 96.4),
+                                                               "1:12"))
+              + f'<div style="color:var(--accent-text);font-size:11px;margin-top:10px">'
+                f'{esc(T("ANALYTICS_COMPARE_WITH", 4, "Gorrak"))}</div>')
+    cards = [report_head("Gorrak · " + T("MON_CLASS_BOSS")), card(T("ANALYTICS_PAGE"), first + second)]
+
+    def shot(x, scroll):
+        body = (f'<div class="page">{analytics_head(0)}<div style="position:absolute;left:0;right:0;top:44px;bottom:0;'
+                f'overflow:hidden"><div class="column" style="margin-top:-{scroll}px">{"".join(cards)}</div></div></div>')
+        return window(theme, "reports", body, x, TOP, module="idle", reports=True)
+
+    return shot(LEFT, 90) + shot(RIGHT, 390)
+
+
+ANALYTICS_KINDS = [
+    ("analytics-overview", analytics_overview, ["nebula"],
+     "The Analytics page: the enemies, and a comparison in a narrow window with the last columns left out",
+     "La pagina Analytics: i nemici, e un confronto in una finestra stretta con le ultime colonne fuori"),
+    ("analytics-compare", analytics_compare, THEMES,
+     "A comparison of fights: the All fights row, Insufficient data and Not comparable",
+     "Un confronto di scontri: la riga Tutti gli scontri, Dati insufficienti e Non confrontabile"),
+    ("report-analytics", report_analytics, ["nebula"],
+     "The report's Analytics card, with the unstable intervals and the link to the comparison",
+     "La card Analytics del report, con gli intervalli instabili e il collegamento al confronto"),
+]
+
+
 KINDS = [
     ("window", monitor, "The window of v0.1.0: the Monitor tab before threat monitoring arrives",
      "La finestra della v0.1.0: la scheda Monitor prima che arrivi il monitor della threat"),
@@ -851,7 +1007,7 @@ for _lang in ("enUS", "itIT"):
             _name = f"{_kind}-{_theme}" + ("-it" if _lang == "itIT" else "")
             _caption = f"{_en if _lang == 'enUS' else _it} ({THEME_NAMES[_theme]})"
             SCENES.append((_name, _caption, (lambda f=_fn, t=_theme: f(t)), _lang, _theme))
-    for _kind, _fn, _themes, _en, _it in MONITOR_KINDS + COACH_KINDS + REPORT_KINDS + REPLAY_KINDS:
+    for _kind, _fn, _themes, _en, _it in MONITOR_KINDS + COACH_KINDS + REPORT_KINDS + REPLAY_KINDS + ANALYTICS_KINDS:
         for _theme in _themes:
             _name = f"{_kind}-{_theme}" + ("-it" if _lang == "itIT" else "")
             _caption = f"{_en if _lang == 'enUS' else _it} ({THEME_NAMES[_theme]})"

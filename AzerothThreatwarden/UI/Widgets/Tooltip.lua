@@ -2,7 +2,8 @@
 -- `bg`, one frame for the whole addon, 13 pt body. It shows lines the caller already translated.
 -- Adapted from Azeroth Accord (UI/Widgets/Tooltip.lua), same owner, GPL-3.0 (ADR 0012); the game's item tooltip is not
 -- needed here. Lua 5.1; one unprotected frame made on first use.
---   Widgets.Tooltip.Show(owner, content, anchor)   content: "text" | { "title", "line", { text = "...", token = "ok" } ... }
+--   Widgets.Tooltip.Show(owner, content, anchor)   content: "text" | { "title", "line", { text = "...", token = "ok" } ... },
+--                                                  at most MAX_LINES lines (content.maxLines for more)
 --   Widgets.Tooltip.Hide()
 --   Widgets.Tooltip.Attach(frame, source, anchor)  source: content | function(owner) -> content (nil shows nothing)
 -- anchor: "BOTTOM" (default, under the owner), "TOP", "RIGHT", "LEFT". The first line is the title (medium weight).
@@ -44,7 +45,8 @@ end
 local function normalise(content)
 	local list = {}
 	if type(content) == "table" and content.text == nil then
-		for i = 1, min(#content, Tooltip.MAX_LINES) do list[i] = content[i] end
+		-- a content may ask for more lines than the default (the comparison of Analytics, one line per measure)
+		for i = 1, min(#content, content.maxLines or Tooltip.MAX_LINES) do list[i] = content[i] end
 	elseif content ~= nil then
 		list[1] = content
 	end

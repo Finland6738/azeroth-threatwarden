@@ -169,7 +169,7 @@ Nessun token nuovo: la pagina Analytics e la card *Analytics* sono card della di
 | Selettore *Recordings · Analytics* | `Widgets.Segmented` in testa alla scheda Reports, a sinistra della riga d'uso |
 | Righe della panoramica | 32 pt da pool, il nome del nemico in `Body` `text-1`, il resto in `Small` `text-2`, i numeri in `MonoSmall`; la riga scelta con lo sfondo `surface-2` e il bordo sinistro `accent` da 2 pt |
 | Tabella del confronto | righe da 22 pt, intestazione in `Th` `text-3`, numeri in `MonoSmall` allineati a destra; la riga *All fights* su `surface-2`; le colonne meno importanti spariscono da destra sotto la larghezza (mai testo tagliato a metà) |
-| Categorie | come la scheda Reports: l'indicatore accanto al valore; *stimata* nel colore `warn` con *at least* o `~`; *Insufficient data*, *Not available* e *Not comparable* in `text-3`, con il motivo nel tooltip |
+| Categorie | nella card come la scheda Reports (la pillola); nella tabella una lettera accanto al valore (*D / C / E*, *R / C / S*) con la legenda sotto; *stimata* nel colore `warn` con *at least* o `~`; *Insufficient data*, *Not available* e *Not comparable* in `text-3`, con il motivo nel tooltip |
 | Filtri | `Widgets.Switch` piccoli in una riga, con l'etichetta in `Small` `text-2` |
 | Intervalli instabili nella card | righe cliccabili `accent-text` quando il replay è acceso, `text-2` altrimenti |
 | Casella dell'esportazione | 640 × 460 pt; il campo `surface-2` con il bordo `border`, testo `MonoSmall` `text-1`; l'avviso dei nomi con l'icona `warn` in `state-warning` e il testo `Small` `text-2`; la riga di stato `MonoSmall` `text-3`, `warn` quando qualcosa è rimasto fuori |

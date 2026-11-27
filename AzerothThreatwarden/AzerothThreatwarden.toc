@@ -64,5 +64,6 @@ UI\Launcher.lua
 UI\Settings.lua
 UI\Timeline.lua
 UI\Reports.lua
+UI\Analytics.lua
 UI\ReplayWindow.lua
 UI\About.lua

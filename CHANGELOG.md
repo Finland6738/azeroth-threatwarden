@@ -36,6 +36,20 @@ All notable changes to this project are documented here. The format follows
   now carries each one's main enemy and the player's role in its header (nothing saved changes).
 - Tests: `test_compare.lua`; `Tests/long/test_compare_long.lua` (twenty fights at the row limit: every frame within
   the report's, the memory within the cache of the metrics).
+- M6.4: the **Analytics view** (`UI/Analytics.lua`), behind the same `analytics` switch, still off: nothing of it is
+  visible yet. The Reports tab gets a *Recordings · Analytics* selector (`/atw reports` opens Recordings; the choice
+  stays until a `/reload`). The Analytics page lists the enemies (nothing decoded) and compares the fights of the one
+  clicked: filters for group size, difficulty and role, a context line, a table with an *All fights* row of medians and
+  one row per fight, the category of every value as a letter (D, C, E) with category, reason, basis and aggregates in
+  the tooltips, *Insufficient data*, *Not available* and *Not comparable* written as words, the least important
+  columns dropped in a narrow window and kept in the row tooltip, a click opening the fight's report, *Building*,
+  *Paused during combat* and *Refresh*. Each report gets an **Analytics** card after the Timeline card, built after it:
+  the readable samples, the metrics of the fight with their category, the unstable intervals (a click replays one) and
+  *Compare with other fights*. Small switches for the filters, and tooltips of the table may use up to 32 lines.
+- Wiki: new page *Threat Analytics* (English and Italian), linked from *Combat Reports* and the sidebar; previews
+  `analytics-overview`, `analytics-compare` (also Aurora and Warden) and `report-analytics`.
+- Tests: `test_analytics_view.lua`; `test_reports.lua` and `test_ui_texts.lua` cover the selector, the card and the
+  words of the new screens.
 
 ### Documentation
 

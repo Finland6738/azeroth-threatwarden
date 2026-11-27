@@ -131,9 +131,17 @@ character schema 2.
   and `Threat-Analytics-it.md`, linked from *Combat Reports* and the sidebar); previews `analytics-overview`,
   `analytics-compare` (also in Aurora and Warden), `report-analytics`.
 - Done when:
-  - [ ] The page and the card show every metric of SPEC-06 §1.4 and every aggregate of §2.2 with its category marker,
+  - [x] The page and the card show every metric of SPEC-06 §1.4 and every aggregate of §2.2 with its category marker,
     reason and basis, in the three outcomes; *Insufficient data*, *Not available* and *Not comparable* never look like
     a number; every state of §3.4 is shown; nothing shows with the switch off; the wiki page exists in both languages.
+- *Done (2026-11-27, before M0.7): `UI/Analytics.lua` behind `analytics` (off) and the change to `UI/Reports.lua`
+  (selector, card after the timeline's, `Reports.ShowPage`); `/atw reports` opens Recordings. The comparison table
+  marks each value with a letter (D, C, E) beside it and gives category, reason, basis and the aggregates in the cell
+  tooltips (all twenty measures have a column); the card shows the metrics of §3.3, while context, highest percentage
+  per unit, deaths and alerts stay in the report's own cards (the report's numbers, ANA-03). Small changes below the
+  view: `Compare` rows keep `valid`, `coverage` and `lowerBy` for the tooltips, `Metrics.LowerLines`, small switches
+  and `content.maxLines` for tooltips. No *Export* button yet (M6.5). `test_analytics_view.lua`, additions to
+  `test_reports.lua` and `test_ui_texts.lua`; previews and wiki page; SPEC-06 §3.6 *Realizzato in M6.4*.*
 - Tests: `test_analytics_view.lua` (SPEC-06 §6); `test_reports.lua` (the selector and the card); `test_ui_texts.lua`
   (no text without a locale key).
 - Real client: the readability of the comparison table at small widths and in Italian; the cost of opening the page

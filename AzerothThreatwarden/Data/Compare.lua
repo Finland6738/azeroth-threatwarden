@@ -185,15 +185,15 @@ local function extract(row)
 		if type(c) ~= "table" then
 			entry = { status = "na", reason = ms.unit and "no-player" or nil }
 		elseif c.status ~= "ok" then
-			entry = { status = c.status, reason = c.reason }
+			entry = { status = c.status, reason = c.reason, valid = c.valid, coverage = c.coverage }
 		else
 			local value = ms.get(c.value, m)
 			if type(value) ~= "number" then
 				entry = { status = "na" }
 			else
 				local lower = c.lower == true or (row.interrupted and (ms.kind == "count" or ms.kind == "time")) or false
-				entry = { status = "ok", value = value, lower = lower,
-					category = lower and "estimated" or c.category }
+				entry = { status = "ok", value = value, lower = lower, lowerBy = c.lowerBy, valid = c.valid,
+					coverage = c.coverage, category = lower and "estimated" or c.category }
 				if ms.kind == "rate" then
 					entry.situations, entry.known, entry.cellLower = c.value.situations, c.value.known, c.lower == true
 				end

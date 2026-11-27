@@ -408,6 +408,32 @@ was readable in this fight: only the context can be described.*
   chat). *Combat Reports* rimanda alla card *Analytics*; *Privacy and Data* dice che cosa può uscire con
   l'esportazione e che lo copia solo il giocatore.
 
+### 3.6 Realizzato in M6.4
+
+`UI/Analytics.lua` (la pagina e la card) e il cambio di `UI/Reports.lua`, con queste precisazioni:
+
+- **Selettore**: a sinistra della riga d'uso; se la finestra è stretta la riga d'uso va sotto. Sulla pagina Analytics
+  la riga dice *12 recordings · 4 enemies* (i nemici sconosciuti non contano) senza l'indicatore *estimated*.
+  `Reports.ShowPage` (da `/atw reports`) e `REPORT_REQUESTED` aprono *Recordings*.
+- **Pagina**: nessun nemico scelto all'apertura (*Click an enemy to compare its fights*); la riga *Unknown enemies* si
+  può cliccare e dice che non si confrontano. Il confronto in corso mostra *Building …* o *Paused during combat* al
+  posto della tabella; *Refresh* compare con le sessioni nuove. Se tutte le registrazioni del nemico scelto spariscono,
+  la scelta si azzera.
+- **Tabella**: l'indicatore della categoria è una lettera accanto al valore (*D / C / E*, in italiano *R / C / S*) con
+  la legenda sotto; *stimata* anche nel colore `warn`. Le colonne e i loro dati (la prima misura è quella mostrata, due
+  per i superamenti e per gli intervalli instabili): durata e morti; campioni validi (stato e valori); superamenti;
+  tempo in Danger e in Warning o Danger; cambi di detentore e prese di un non tank; intervalli instabili e il loro
+  tempo; rischio; il giocatore (percentuale massima, superamenti, tempi, prese); la più vicina al tank. Il tooltip di
+  una cella dice ogni sua misura con categoria, base, campioni validi, motivo; quello della riga *All fights* dà
+  mediana, totale, minimo e massimo (con la data), la frequenza pesata, la categoria e quanti scontri. Le colonne che
+  non ci stanno tolgono posto dalla fine e vanno nel tooltip della riga (fino a `Analytics.TIP_LINES` = 32 righe).
+- **Card**: le righe di §3.3; con una metrica non `ok` *Not available* o *Insufficient data* con il motivo accanto;
+  contesto, percentuale massima per unità, morti e avvisi restano nelle card del report (stessi numeri, ANA-03). Sotto
+  gli intervalli instabili *Click an interval to replay it* con `replay`, e *N more intervals* oltre i primi tre.
+- **Modifiche collegate**: le righe di `Compare` tengono anche `valid`, `coverage` e `lowerBy` di una misura (per i
+  tooltip); `Metrics.LowerLines`; `Widgets.Switch{small}`; `content.maxLines` dei tooltip.
+- Il pulsante *Export* arriva con M6.5.
+
 ## 4. Esportazione (`Data/Export.lua`, `UI/ExportBox.lua`, M6.5)
 
 Fonte §4.2: *esportazione testuale/CSV, se supportata*. Gli addon non scrivono file e non raggiungono gli appunti del
