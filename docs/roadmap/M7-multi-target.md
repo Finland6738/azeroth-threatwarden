@@ -78,7 +78,7 @@ with the switch off; the character schema stays 2 and the sessions do not change
   `TokenOf`, `List`, `MOBS_UPDATED`); the pin in `Data/TargetTracker.lua` (rule 0, `Pin`, `Pinned`, release on a new
   hostile target, death, loss, `COMBAT_ENDED`, `PIN_CHANGED`); the *Mobs* section of `/atw debug`; the TOC.
 - Done when:
-  - [ ] Known pulls give known mob lists, keys, reaches and states in the three outcomes per mob and the three levels of
+  - [x] Known pulls give known mob lists, keys, reaches and states in the three outcomes per mob and the three levels of
     identity; the same mob never appears twice; a reassigned nameplate keeps its mob; reads per tick never exceed the
     budget and a tick allocates nothing after the warm-up; the monitored mob is never read by the tracker; the pin
     follows its rules; with the switch or the setting off nothing is registered or read.
@@ -86,6 +86,18 @@ with the switch off; the character schema stays 2 and the sessions do not change
   `test_config.lua` (schema 6), `test_compat.lua`, `test_api_boundary.lua`; the monitor's tests unchanged and passing.
 - Real client: which sources answer (P5), whether `UnitTokenFromGUID` finds a mob again, whether the GUIDs and the
   comparison of tokens are readable in instances (P9); the events for nameplates and bosses (P6).
+- *Done (2026-11-27, before M0.7): behind `multitarget` (off). `Core/Compat.lua` `Unit.TokenFromGUID`,
+  `Unit.CanCompare` and the API entry `secret.CanCompare`; account schema 6 (`Config.MOBS_DEFAULTS`, `Config.MOBS`,
+  `ALERTS_DEFAULTS.onlyTarget`, the no-op step `account[6]`); `Data/MobRisk.lua` (the rules of §1.8, hysteresis and
+  dwell of the monitor, `MOB_STATE_CHANGED`, `REASON_ORDER`, `Before`, `Order`); `Data/MobTracker.lua` (`SOURCES`,
+  the sweep, `mob:` and `tok:` keys with the three levels of identity, tokens checked against the GUID and found again
+  with `UnitTokenFromGUID`, slots, `RATE` 2, `READ_BUDGET` 48, `UNITS_PER_MOB` 10, a cursor per slot, events moving a
+  mob forward, `RETRY` 5, `FORGET` 10, the life cycle, the reach and its reason, `otherMobs`, the monitored mob from
+  the monitor's records, `Want`, `TokenOf`, `Get`, `Rows`, `List`, `MOBS_UPDATED`, a tick that only sweeps while no
+  other mob is known); the pin (rule 0, `Pin`, `Pinned`, `PIN_CHANGED`); the *Mobs* section of `/atw debug`; the TOC.
+  Tests: `test_multi_mob.lua` (44), `test_mob_risk.lua` (20), additions to `test_target_tracker.lua`,
+  `test_config.lua`, `test_compat.lua`, `test_api_boundary.lua`; the monitor's tests unchanged. Notes *M7.2* in
+  SPEC-07 §1.2, §1.6, §1.7, §2.4.*
 
 ### M7.3 — Dungeon focus view
 - Branch: `step/m7-3-focus-view`

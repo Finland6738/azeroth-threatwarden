@@ -10,7 +10,8 @@ local function api(id) return C().api[id] end
 local SPEC_IDS = {
 	"client.GetBuildInfo", "client.GetLocale", "client.ProjectID", "client.RealmName", "secret.issecretvalue",
 	"secret.issecrettable", "secret.canaccessvalue", "secret.HasSecretRestrictions", "secret.ThreatValues",
-	"secret.ThreatState", "secret.Identity", "secret.Comparison", "threat.Detailed", "threat.Situation",
+	"secret.ThreatState", "secret.Identity", "secret.Comparison", "secret.CanCompare", "threat.Detailed",
+	"threat.Situation",
 	"threat.PercentageOfLead", "threat.LeadSituation", "threat.StatusColor", "threat.WarningEnabled", "unit.Exists",
 	"unit.GUID", "unit.TokenFromGUID", "unit.Name", "unit.Class", "unit.Classification", "unit.CanAttack",
 	"unit.IsDead", "unit.IsUnit", "unit.AffectingCombat", "unit.Role", "group.InGroup", "group.InRaid", "group.Size",
@@ -616,6 +617,46 @@ describe("units and the group (M2.2)", function()
 		eq(G.Size(), 0)
 		Mock.Remove("UnitInRaid")
 		isNil(G.RaidIndex())
+	end)
+end)
+
+describe("finding a mob again and comparing tokens (M7.2, SPEC-07 §1.3)", function()
+	before_boot(fight)
+
+	it("Unit.TokenFromGUID gives a token naming a readable GUID now, never touching a secret", function()
+		local U = C().Unit
+		local guid = Mock.units.Get("boss").guid
+		eq(U.TokenFromGUID(guid), "target")
+		Mock.units.SetToken("nameplate4", "boss")
+		Mock.units.Target("player", nil)
+		eq(U.TokenFromGUID(guid), "nameplate4")
+		local token, why = U.TokenFromGUID("Creature-0-1-0-1-100-FFFFFFFFFF")
+		isNil(token)
+		eq(why, "nil")
+		eq(select(2, U.TokenFromGUID(Mock.Secret("string"))), "no-guid")
+		eq(select(2, U.TokenFromGUID(nil)), "no-guid")
+		eq(select(2, U.TokenFromGUID("")), "no-guid")
+		UnitTokenFromGUID = function() return Mock.Secret("string") end
+		eq(select(2, U.TokenFromGUID(guid)), "secret")
+		UnitTokenFromGUID = function() error("boom") end
+		eq(select(2, U.TokenFromGUID(guid)), "error")
+		Mock.Remove("UnitTokenFromGUID")
+		eq(select(2, U.TokenFromGUID(guid)), "missing")
+		eq(#Mock.errors, 0)
+	end)
+
+	it("Unit.CanCompare says whether two tokens may be compared, true only when readable", function()
+		local U = C().Unit
+		eq(U.CanCompare("target", "party1"), true)
+		Mock.secrets.Set{ comparison = true }
+		eq(U.CanCompare("target", "party1"), false)
+		eq(select(2, U.CanCompare("target", Mock.Secret("string"))), "no-unit")
+		eq(select(2, U.CanCompare("target", nil)), "no-unit")
+		C_Secrets.CanCompareUnitTokens = function() return Mock.Secret("boolean") end
+		eq(select(2, U.CanCompare("target", "party1")), "secret")
+		Mock.Remove("C_Secrets.CanCompareUnitTokens")
+		eq(select(2, U.CanCompare("target", "party1")), "missing")
+		eq(#Mock.errors, 0)
 	end)
 end)
 

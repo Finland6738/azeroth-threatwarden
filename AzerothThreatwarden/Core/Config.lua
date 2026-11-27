@@ -1,4 +1,4 @@
--- Config: the two SavedVariables, their schemas (account 5, character 2), typed rules, defaults, migrations, read-only on a newer schema and damaged
+-- Config: the two SavedVariables, their schemas (account 6, character 2), typed rules, defaults, migrations, read-only on a newer schema and damaged
 -- tables set aside under `corrupt` (SPEC-02 §3, ADR 0005). Lua 5.1, no game API but Compat.ServerTime.
 -- Adapted from Azeroth Accord (Core/Config.lua), same owner, GPL-3.0 (ADR 0012). Kept from there: the copy, the rules
 -- by path checked parents first, the merge of the defaults, the migrations on a copy, read-only on a newer schema, Get
@@ -10,8 +10,9 @@
 --   AzerothThreatwardenDB      (account)   = { schema, settings = { language, theme, effects, animations, font,
 --                                               minimap = { hide, minimapPos }, monitor = { warning, danger, rate,
 --                                               maxUnits, show, sort, pinSelf, followTargetOfTarget },
---                                               alerts = { enabled, window, visual, sound, cooldown, others, pet },
---                                               coach = { enabled },
+--                                               alerts = { enabled, window, visual, sound, cooldown, others, pet,
+--                                               onlyTarget }, coach = { enabled },
+--                                               mobs = { enabled, max, nameplates },
 --                                               recording = { enabled, when, rate, maxSessions, maxKB, notice } },
 --                                               sessions = { ... }, corrupt = { ... } }
 --   AzerothThreatwardenCharDB  (character) = { schema, ui = { shown, locked, scale, pos, size, lastTab, lastPage,
@@ -35,8 +36,8 @@ local type, pairs, ipairs, pcall, tostring, next, select = type, pairs, ipairs, 
 local floor, huge, abs = math.floor, math.huge, math.abs
 local concat, sort = table.concat, table.sort
 
--- The schema of each variable that this version of the addon knows (SPEC-02 §3.2, §3.3, §3.5-§3.9).
-Config.SCHEMAS = { account = 5, char = 2 }
+-- The schema of each variable that this version of the addon knows (SPEC-02 §3.2, §3.3, §3.5-§3.10).
+Config.SCHEMAS = { account = 6, char = 2 }
 
 -- Development build. A checkout of the repository is one; the BigWigs packager comments out the block between the
 -- debug markers below in every packaged build, so a release has DEV = false (tools/check_package.py checks it).
@@ -78,7 +79,8 @@ Config.MONITOR_DEFAULTS = {
 	followTargetOfTarget = true,
 }
 -- The alerts (schema 3, SPEC-04 §4.1): who may be alerted about besides the player and the pet, the range of the
--- cooldown (seconds) and the one place of their defaults, the proposed answers of Q12 (SPEC-09).
+-- cooldown (seconds) and the one place of their defaults, the proposed answers of Q12 (SPEC-09). `onlyTarget` (schema 6,
+-- SPEC-07 §2.5, Q26): alerts only about the monitored mob; it counts as on while the `multitarget` switch is off.
 Config.ALERT_OTHERS = { "tank", "always", "never" }
 Config.ALERTS = { cooldown = { min = 3, max = 30 } }
 Config.ALERTS_DEFAULTS = {
@@ -86,6 +88,15 @@ Config.ALERTS_DEFAULTS = {
 	window = true, visual = true, sound = false,
 	cooldown = 8,
 	others = "tank", pet = true,
+	onlyTarget = true,
+}
+-- The other mobs (schema 6, SPEC-02 §3.10, SPEC-07 §1.9): the range of the mobs followed (the monitored mob included,
+-- MT-02) and the one place of the defaults, the proposed answers of Q26 (SPEC-09).
+Config.MOBS = { max = { min = 2, max = 12 } }
+Config.MOBS_DEFAULTS = {
+	enabled = true,
+	max = 8,
+	nameplates = true,
 }
 -- The Threat Coach (schema 3, SPEC-04 §4.1): the one place of its defaults.
 Config.COACH_DEFAULTS = {
@@ -140,6 +151,7 @@ Config.defaults = {
 			alerts = {},              -- filled from ALERTS_DEFAULTS below
 			coach = {},               -- filled from COACH_DEFAULTS below
 			recording = {},           -- filled from RECORDING_DEFAULTS below
+			mobs = {},                -- filled from MOBS_DEFAULTS below (schema 6, M7)
 		},
 		sessions = {},                -- the recorded sessions, the oldest first (SPEC-02 §4; their content is Storage's)
 		corrupt = {},
@@ -164,6 +176,7 @@ for key, value in pairs(Config.MONITOR_DEFAULTS) do Config.defaults.account.sett
 for key, value in pairs(Config.ALERTS_DEFAULTS) do Config.defaults.account.settings.alerts[key] = value end
 for key, value in pairs(Config.COACH_DEFAULTS) do Config.defaults.account.settings.coach[key] = value end
 for key, value in pairs(Config.RECORDING_DEFAULTS) do Config.defaults.account.settings.recording[key] = value end
+for key, value in pairs(Config.MOBS_DEFAULTS) do Config.defaults.account.settings.mobs[key] = value end
 
 ---------------------------------------------------------------------------------------------------------------------
 -- Helpers
@@ -300,6 +313,12 @@ Config.rules = {
 		max = Config.ALERTS.cooldown.max },
 	["account.settings.alerts.others"] = { type = "string", enum = Config.ALERT_OTHERS },
 	["account.settings.alerts.pet"] = { type = "boolean" },
+	["account.settings.alerts.onlyTarget"] = { type = "boolean" },
+	["account.settings.mobs"] = { type = "table", container = true },
+	["account.settings.mobs.enabled"] = { type = "boolean" },
+	["account.settings.mobs.max"] = { type = "number", integer = true, min = Config.MOBS.max.min,
+		max = Config.MOBS.max.max },
+	["account.settings.mobs.nameplates"] = { type = "boolean" },
 	["account.settings.coach"] = { type = "table", container = true },
 	["account.settings.coach.enabled"] = { type = "boolean" },
 	["account.settings.recording"] = { type = "table", container = true },
@@ -556,6 +575,8 @@ end
 -- Account step 5 (fix Q7): the default thresholds went from 80 / 95 to 82 / 91. The defaults are written into the saved
 -- data, so a pair still at exactly 80 and 95 is the old default and moves to the new one; any other pair is the
 -- player's and stays (one threshold changed counts as the player's choice of the pair).
+-- Account step 6 (M7.2): `settings.mobs` and `settings.alerts.onlyTarget` are new, and the defaults add them: nothing to
+-- do (a key already there stays and the rules check it). Written with the `multitarget` switch off too.
 -- Character step 2 (M5.5): `ui.replay` is new, and the defaults add it: nothing to do (a key already there stays and
 -- the rules check it).
 Config.OLD_THRESHOLDS = { warning = 80, danger = 95 }
@@ -573,6 +594,7 @@ Config.migrations = {
 				monitor.warning, monitor.danger = Config.MONITOR_DEFAULTS.warning, Config.MONITOR_DEFAULTS.danger
 			end
 		end,
+		[6] = function(db) end,
 	},
 	char = {
 		[1] = function(db) end,

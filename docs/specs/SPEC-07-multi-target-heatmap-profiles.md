@@ -5,6 +5,9 @@
 > D7, come M2–M6): il go / no-go di M7 è **condizionato** (§0) e il tracker legge ciò che il client permette, lettura
 > per lettura; ciò che il probe può cambiare è marcato **[probe Pn]**, ciò che solo il gioco può dire **[da provare in
 > gioco]**. §3–§4 da completare in **M8.1**. Moduli, eventi e test per step in §2.7–§2.8.
+> §1 e §2.4 realizzati in **M7.2** (`Data/MobRisk.lua`, `Data/MobTracker.lua`, la regola 0 di `Data/TargetTracker.lua`,
+> lo schema 6) dietro l'interruttore `multitarget`, spento; le note *M7.2* dicono come il codice ha letto i punti
+> lasciati aperti.
 > **Gate** (fonte §8): niente promesse di multi-target finché il probe non dimostra che i dati sono ottenibili (P5, P6):
 > la pagina del manuale e le note della versione dicono che cosa dipende dal probe.
 
@@ -91,6 +94,10 @@ i token e i due eventi).
   prima lettura, §1.7). Un mob fuori dal combattimento non entra.
 - **Spazzata**: oltre agli eventi, ogni tick controlla a turno `SWEEP` (**12**) token delle fonti accese
   (`UnitExists`, `UnitGUID`), così un mob compare anche se il suo evento non è arrivato **[probe P5, P6]**.
+  *M7.2*: la lista della spazzata è `focus`, `boss1`–`boss5`, i target dei membri e `nameplate1`–`nameplate40`; un
+  giro intero dura circa 2 s in un party (51 token) e 4 s in un raid da 40 (85 token). Un token che nomina ancora lo
+  stesso GUID costa `UnitExists` e `UnitGUID` (e `UnitIsDead`); un token nuovo passa per tutte le domande del
+  candidato.
 
 ### 1.3 Identità e chiavi
 
@@ -183,6 +190,14 @@ this mob now*, *Stale: last read 3.2 s ago*, *Waiting for a read*, *Not availabl
   misura nel client finto (§2.8); il budget vero lo dà P10.
 - **Allocazioni**: record e righe dei mob vengono da pool fatti una volta per posto e per indice del roster
   (DAT-11), il tick non alloca dopo il riscaldamento (ARC-06); una chiave si costruisce solo quando un mob entra.
+- *M7.2* **Solo spazzata**: quando il tick ha le condizioni sopra ma nessun mob è noto oltre a quello monitorato, il
+  tick gira lo stesso e fa **soltanto** la spazzata (nessuna lettura della threat, `UNIT_THREAT_LIST_UPDATE` non
+  registrato); altrimenti, senza eventi di scoperta (P6), nessun mob comparirebbe mai. Appena c'è un altro mob il tick
+  legge e registra l'evento; `/atw debug` dice *sweeping* o *reading*.
+- *M7.2* **Intervallo atteso**: un mob letto in questo tick ha `I = (1 / RATE) · giri`, dove i giri sono i mob con un
+  posto diviso i mob letti nel tick (arrotondato in su); una riga letta a turno dentro il mob ha `I` per i giri del
+  suo cursore. Il costo stimato di un mob prima di leggerlo è le sue unità più la lettura di chi lo tiene
+  (`ReadLead`).
 
 ### 1.7 Ciclo di vita di un mob
 
@@ -197,6 +212,12 @@ this mob now*, *Stale: last read 3.2 s ago*, *Waiting for a read*, *Not availabl
 | Cambio del roster | `GROUP_ROSTER_UPDATE`, `UNIT_PET` (lo Scanner ricostruisce le unità) | cursori per mob azzerati, letture tenute |
 | Fine del combattimento | `COMBAT_ENDED` | lista vuota, tick fermo, portata conservata come `lastReach`; `MOBS_UPDATED()` |
 | Inizio del combattimento | `COMBAT_STARTED` | si riparte da capo, portata `unknown` |
+
+*M7.2*: `MOBS_UPDATED()` si emette alla fine di ogni tick (anche di sola spazzata) e a `COMBAT_ENDED`: un mob nuovo
+entra nella lista al tick seguente, entro mezzo secondo. Senza tick (nessun consumatore) gli eventi di scoperta restano
+registrati in combattimento, ma un mob che nessun token nomina più esce subito, così la memoria non cresce in un
+combattimento che nessuno guarda. Un mob che perde il posto (o lo cede al mob monitorato) esce dalla lista con
+`MOB_STATE_CHANGED(mobKey, old, nil)` e ci rientra `pending` con le righe pulite.
 
 ### 1.8 Stato e rischio di un mob (`Data/MobRisk.lua`)
 
@@ -311,6 +332,14 @@ Nella scheda **Monitor** (compatta), costruite da `UI/ThreatList.lua` come la st
   fissato: la registrazione resta com'è (REC-02).
 - Il nome di chi lo tiene, quando nessuna unità osservata lo tiene, è `UnitName(mobToken .. "target")` (`focustarget`,
   `boss1target`, `nameplate3target`) **[probe P5]**.
+- *M7.2*: `TargetTracker.Pin(mobKey)` risponde `true`, oppure `false` e il motivo: `off` (interruttore spento),
+  `no-identity` (una chiave che non si segue, per esempio `tgt:` o `tok:nameplate…`), `monitored` (il mob già
+  monitorato), `no-token` (nessun token lo nomina ora); `Pin(nil)` dice se c'era un mob da lasciare.
+  `MobTracker.TokenOf(mobKey)` dà il token, oppure `nil` e `dead` o `lost`: un mob fissato morto lascia lo stato
+  `died`, uno scomparso `lost`. Un nuovo target ostile lascia il mob fissato se il suo GUID è diverso (o non si legge);
+  per una chiave `tok:` solo se `UnitIsUnit` non dice che è lo stesso mob. Per la vista (M7.3) ci sono anche
+  `MobTracker.Get(mobKey)` (la voce, in sola lettura) e `MobTracker.Rows(mobKey)` (le righe del suo posto, o i record
+  del monitor per il mob monitorato).
 
 ### 2.5 Avvisi con più mob (`alerts.onlyTarget`)
 

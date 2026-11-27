@@ -5,6 +5,22 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Added
+
+- M7.2: the **multi-mob tracker** (`Data/MobTracker.lua`, `Data/MobRisk.lua`), behind the `multitarget` switch, which
+  stays off until `v0.7.0`: nothing of it is visible yet, and with the switch off it registers no game event and reads
+  nothing. In combat it finds the other mobs of a pull from your focus, the bosses, your group's targets and the enemy
+  nameplates (only while the game shows them), keys each by its GUID so that the same mob is never listed twice and a
+  nameplate that moves keeps its mob, and reads at most 8 of them (the monitored one included) on a tick of its own at
+  2 Hz, in turn, within 48 threat reads per tick. Each mob gets a state with the monitor's thresholds: a mob on a
+  non-tank, someone about to pull it, a mob no tank has picked up, someone close; unknown mobs say why (waiting for a
+  read, no unit names it, too old, secret). When the game hides GUIDs or other mobs, it drops to *focus and boss only*
+  or *only your target* and says why. The monitored mob's row comes from the monitor itself and is never read twice.
+  A mob of the list can be **pinned** as the one the monitor follows (the click comes with the view in M7.3) without
+  touching your game target; a new hostile target, the mob's death and the end of the fight release it. `/atw debug`
+  has a *Mobs* section (counts only). The account settings go to **schema 6** (`settings.mobs` and
+  `settings.alerts.onlyTarget`, with a migration that keeps every saved value); nothing of the list is saved.
+
 ### Documentation
 
 - M7.1: specification of **multi-target tracking** and the **Dungeon Focus** (SPEC-07, Italian), written before the

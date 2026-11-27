@@ -170,6 +170,8 @@ Compat.APIS = {
 		probe = "P9" },
 	{ id = "secret.Comparison", paths = { "C_Secrets.ShouldUnitComparisonBeSecret" }, check = "exists", since = "M2",
 		probe = "P9" },
+	{ id = "secret.CanCompare", paths = { "C_Secrets.CanCompareUnitTokens" }, check = "exists", since = "M7",
+		probe = "P5, P9" },
 	{ id = "threat.Detailed", paths = { "UnitDetailedThreatSituation" }, check = "exists", since = "M1",
 		probe = "P2-P5" },
 	{ id = "threat.Situation", paths = { "UnitThreatSituation" }, check = "exists", since = "M1", probe = "P2, P3" },
@@ -764,6 +766,26 @@ end
 function Unit.GUID(unit) return text("UnitGUID", unit) end
 -- The name shown for a unit (never stored outside the sessions, SPEC-02 §1) [probe P9].
 function Unit.Name(unit) return text("UnitName", unit) end
+
+-- A token naming the unit of a readable GUID now (UnitTokenFromGUID, nilable in the dump; M7, SPEC-07 §1.3), or nil and
+-- why: "no-guid" (not a plain string, or a secret: never handed to the client), "nil" (no token names it), "missing",
+-- "error", "secret". Allocation-free: the multi-mob tick finds a mob again with it [probe P5, P9].
+function Unit.TokenFromGUID(guid)
+	if type(guid) ~= "string" or guid == "" or IsSecret(guid) then return nil, "no-guid" end
+	local value, reason = one("UnitTokenFromGUID", guid)
+	if reason then return nil, reason end
+	value = plainString(value)
+	if value == nil then return nil, "nil" end
+	return value, nil
+end
+
+-- Whether the client permits comparing two unit tokens (C_Secrets.CanCompareUnitTokens; M7, SPEC-07 §1.3): true or
+-- false, or nil and why ("no-unit", "missing", "error", "secret"). Only a readable true lets Data/MobTracker.lua ask
+-- UnitIsUnit about two mobs without GUIDs; any other answer means "cannot tell them apart" [probe P9].
+function Unit.CanCompare(unit, other)
+	if not unitArg(other) then return nil, "no-unit" end
+	return ask("C_Secrets.CanCompareUnitTokens", unit, other)
+end
 
 -- The creature number of a mob from a readable GUID ("Creature-0-1-2-3-<npcID>-<spawn>", or "Vehicle-..."): the sixth
 -- field, a whole number; nil and why otherwise ("no-guid": not a plain string or secret; "not-creature": a player, a

@@ -227,7 +227,7 @@ describe("when a fight is recorded (SPEC-05 §1.1, Q16)", function()
 		Mock.ns.Demo.Stop()
 		boot(function(M)
 			M.features = { monitor = true, recording = true }
-			M.saved = { AzerothThreatwardenDB = { schema = 6 } }
+			M.saved = { AzerothThreatwardenDB = { schema = 7 } }
 		end)
 		partyFight(5):finish()
 		Mock.Advance(6)

@@ -37,6 +37,8 @@ Data\ThreatScanner.lua
 Data\ThreatCalc.lua
 Data\ThreatModel.lua
 Data\ThreatState.lua
+Data\MobRisk.lua
+Data\MobTracker.lua
 Data\Alerts.lua
 Data\CoachRules.lua
 Data\Coach.lua

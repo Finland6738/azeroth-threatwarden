@@ -2,6 +2,9 @@
 --
 -- One rule, evaluated again at PLAYER_TARGET_CHANGED, at UNIT_TARGET for "target", at COMBAT_STARTED and COMBAT_ENDED,
 -- and whenever a scan of Data/ThreatScanner.lua calls TargetTracker.Check():
+--   0. (M7, only with the `multitarget` switch on) the pinned mob (TargetTracker.Pin, SPEC-07 §2.4), while
+--      Data/MobTracker.lua has a token naming it (MobTracker.TokenOf, asked again at every Check: a nameplate's index
+--      may change) and it can be attacked and is not dead;
 --   1. the target ("target") when it exists, the player can attack it and it is not dead;
 --   2. else, with *Follow target of target* on (the default) and a friendly target, the target's target
 --      ("targettarget") on the same conditions: a healer who selects the tank sees the tank's mob;
@@ -12,6 +15,13 @@
 -- TARGET_CHANGED(mobKey) is emitted on the Bus when the monitored mob changes (nil: no mob). TargetTracker.status says
 -- why there is none: "none" (no hostile target), "died" (the mob died), "lost" (it no longer exists: it vanished, or
 -- the token names nobody any more). After a death or a loss the status stays until another mob is monitored.
+--
+-- The pin (SPEC-07 §2.4, SPEC-09 Q27): Pin(mobKey) pins a mob of the list ("mob:" GUID keys, "tok:focus:n" and
+-- "tok:bossN:n" only; not the mob already monitored); Pin(nil) releases it. It is released too when the player picks a new
+-- hostile target that is another mob (PLAYER_TARGET_CHANGED), when the mob dies or no token names it any more (status
+-- "died" or "lost", then rules 1-3), at COMBAT_ENDED, and when the switch or settings.mobs.enabled is off. Pinning or
+-- releasing emits TARGET_CHANGED (the monitor starts again on that mob) and then PIN_CHANGED(mobKey) (nil: no pin).
+-- Nothing of it is saved; no protected function is called (MT-06): the game's target and focus never change.
 --
 -- A change of `status` with no mob before or after (a dead mob deselected) emits TARGET_STATUS(status) for the view.
 -- It reads existence, hostility, death and GUID (and, when the view asks, the names and classification of the header)
@@ -27,7 +37,7 @@ ns.TargetTracker, ns.modules.TargetTracker = TargetTracker, TargetTracker
 
 local Compat = ns.Compat
 local Unit = Compat.Unit
-local type = type
+local type, ipairs = type, ipairs
 
 -- The setting account.settings.monitor.followTargetOfTarget and its default are Core/Config.lua's.
 TargetTracker.DEFAULTS = { followTargetOfTarget = ns.Config.MONITOR_DEFAULTS.followTargetOfTarget }
@@ -39,6 +49,11 @@ TargetTracker.mobGUID = nil    -- the readable GUID of the mob, nil when secret 
 TargetTracker.status = "none"  -- "active", "none", "died", "lost"
 TargetTracker.changes = 0      -- n of the "tgt:" keys: grows at every change seen
 TargetTracker.enabled = false  -- game events registered (the monitor switch was on at login)
+TargetTracker.pinned = nil     -- the key of the pinned mob (M7), or nil
+TargetTracker.pinnedGUID = nil -- its readable GUID, nil for a "tok:" key
+local pinToken = nil           -- the stable token of a "tok:" pin, to compare it with a new target
+local pinChanged = false       -- a pin or a release waits to be announced at the end of Evaluate
+local pinGone = nil            -- why the pinned mob was released by the rule: "died" or "lost"
 
 local function emit(event, ...)
 	if ns.Bus then ns.Bus.Emit(event, ...) end
@@ -57,8 +72,27 @@ local function isMob(token)
 	return Unit.IsDead(token) ~= true
 end
 
--- The token of the mob the rule picks, or nil.
+local function multitarget() return ns.Features ~= nil and ns.Features.On("multitarget") end
+
+local function releasePin()
+	if TargetTracker.pinned == nil then return false end
+	TargetTracker.pinned, TargetTracker.pinnedGUID, pinToken = nil, nil, nil
+	pinChanged = true
+	return true
+end
+
+-- The token of the mob the rule picks, or nil; the key a "tok:" pin keeps second.
 local function pick()
+	local pin = TargetTracker.pinned
+	if pin then
+		local MT = ns.MobTracker
+		local token, why = nil, "lost"
+		if multitarget() and MT and MT.TokenOf then token, why = MT.TokenOf(pin) end
+		if token and isMob(token) then return token, pin end
+		if token and Unit.Exists(token) == true and Unit.IsDead(token) == true then why = "dead" end
+		pinGone = why == "dead" and "died" or "lost"
+		releasePin()
+	end
 	if isMob("target") then return "target" end
 	if TargetTracker.FollowTargetOfTarget() and Unit.Exists("target") == true
 		and Unit.CanAttack("player", "target") == false and isMob("targettarget") then
@@ -76,8 +110,8 @@ local function setIdentity(guidReason)
 end
 
 -- Monitors `token` (nil: no mob, with `status`). `fresh`: an event says the unit behind the token changed, so an
--- unreadable GUID makes a new "tgt:" key.
-local function apply(token, fresh, status)
+-- unreadable GUID makes a new "tgt:" key. `fixedKey`: the key of a pinned mob without a readable GUID.
+local function apply(token, fresh, status, fixedKey)
 	local old = TargetTracker.mobKey
 	if not token then
 		TargetTracker.mobToken, TargetTracker.mobKey, TargetTracker.mobGUID = nil, nil, nil
@@ -91,7 +125,9 @@ local function apply(token, fresh, status)
 	local guid, reason = Unit.GUID(token)
 	setIdentity(reason)
 	local key
-	if guid then
+	if fixedKey and not guid then
+		key = fixedKey
+	elseif guid then
 		if guid == TargetTracker.mobGUID and old then
 			key = old
 		else
@@ -120,25 +156,92 @@ local function goneStatus()
 	return "none"
 end
 
+local function announcePin()
+	if not pinChanged then return end
+	pinChanged = false
+	emit("PIN_CHANGED", TargetTracker.pinned)
+end
+
 -- Evaluates the rule again. `fresh`: an event says the unit behind a token changed. Returns the mobKey.
 function TargetTracker.Evaluate(fresh)
 	if not (ns.Features and ns.Features.On("monitor")) then
+		releasePin()
 		apply(nil, true, "none")
+		announcePin()
 		return nil
 	end
-	local token = pick()
+	pinGone = nil
+	local token, pinKey = pick()
 	if not token then
-		apply(nil, fresh, goneStatus())
+		apply(nil, fresh, pinGone or goneStatus())
 	else
-		apply(token, fresh, nil)
+		apply(token, fresh, nil, pinKey and pinKey:find("^tok:") and pinKey or nil)
 	end
+	pinGone = nil
+	announcePin()
 	return TargetTracker.mobKey
+end
+
+-- Pins the mob of `mobKey` from the Dungeon Focus list (rule 0), or releases the pin with nil. Only with the
+-- `multitarget` switch on, for a key that can be followed, not the mob already monitored, and while Data/MobTracker.lua
+-- has a token naming a living hostile mob. Returns true, or false and why ("off", "no-identity", "monitored",
+-- "no-token"); Pin(nil) returns whether a pin was released.
+local PINNABLE = { "^mob:", "^tok:focus:%d+$", "^tok:boss[1-5]:%d+$" }
+
+function TargetTracker.Pin(mobKey)
+	if mobKey == nil then
+		if not releasePin() then return false end
+		TargetTracker.Evaluate(true)
+		return true
+	end
+	if not (multitarget() and TargetTracker.enabled) or type(mobKey) ~= "string" then return false, "off" end
+	local followable = false
+	for _, pattern in ipairs(PINNABLE) do
+		if mobKey:find(pattern) then followable = true break end
+	end
+	if not followable then return false, "no-identity" end
+	if mobKey == TargetTracker.mobKey then return false, "monitored" end
+	local MT = ns.MobTracker
+	local token = MT and MT.TokenOf and MT.TokenOf(mobKey)
+	if not token or not isMob(token) then return false, "no-token" end
+	local entry = MT.Get and MT.Get(mobKey)
+	TargetTracker.pinned = mobKey
+	TargetTracker.pinnedGUID = entry and entry.guid or nil
+	pinToken = mobKey:find("^tok:") and token or nil
+	pinChanged = true
+	TargetTracker.Evaluate(true)
+	return true
+end
+
+-- The key of the pinned mob, nil when none.
+function TargetTracker.Pinned() return TargetTracker.pinned end
+
+-- PLAYER_TARGET_CHANGED: a new hostile target that is another mob than the pinned one releases the pin (Q27).
+local function targetReleasesPin()
+	if TargetTracker.pinned == nil or not isMob("target") then return false end
+	local known = TargetTracker.pinnedGUID
+	if known then return Unit.GUID("target") ~= known end   -- an unreadable GUID cannot be told apart: the player chose
+	if pinToken and Unit.CanCompare("target", pinToken) == true and Unit.IsUnit("target", pinToken) == true then
+		return false
+	end
+	return true
 end
 
 -- Called by every scan: true while the monitored mob is still there and the same. A dead or vanished mob, or a readable
 -- GUID different from the key (the same tokens now name another creature, without an event), evaluates the rule again
 -- (TARGET_CHANGED). Allocation-free while nothing changed.
 function TargetTracker.Check()
+	local pin = TargetTracker.pinned
+	if pin and TargetTracker.mobKey == pin then
+		-- the pinned mob: its token is asked again (a nameplate's index may change)
+		local MT = ns.MobTracker
+		local token = MT and MT.TokenOf and MT.TokenOf(pin)
+		if not token then
+			TargetTracker.Evaluate(false)
+			return TargetTracker.mobToken ~= nil
+		end
+		TargetTracker.mobToken = token
+	end
 	local token = TargetTracker.mobToken
 	if not token then return false end
 	if Unit.Exists(token) ~= true or Unit.IsDead(token) == true then
@@ -186,6 +289,7 @@ function TargetTracker.Status() return TargetTracker.status end
 local events = {}
 
 function events.PLAYER_TARGET_CHANGED()
+	if targetReleasesPin() then releasePin() end
 	TargetTracker.Evaluate(true)
 end
 
@@ -215,7 +319,11 @@ end
 
 if ns.Bus then
 	ns.Bus.On("COMBAT_STARTED", function() if TargetTracker.enabled then TargetTracker.Evaluate(false) end end)
-	ns.Bus.On("COMBAT_ENDED", function() if TargetTracker.enabled then TargetTracker.Evaluate(false) end end)
+	ns.Bus.On("COMBAT_ENDED", function()
+		if not TargetTracker.enabled then return end
+		releasePin()   -- the pin never outlives the fight (SPEC-07 §2.4)
+		TargetTracker.Evaluate(false)
+	end)
 	ns.Bus.On("CONFIG_CHANGED", function(path)
 		if TargetTracker.enabled and path == FOLLOW_PATH then TargetTracker.Evaluate(false) end
 	end)

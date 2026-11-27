@@ -29,6 +29,9 @@
 --                                   when the client gives none).
 --   SESSION_STARTED(id), SESSION_ENDED(id, state)                                          Data/Recorder.lua (M4.2)
 --   SESSIONS_CHANGED()                                                                     Data/Storage.lua (M4.3)
+--   MOBS_UPDATED()                  Data/MobTracker.lua (M7.2), after each tick of the other mobs and at COMBAT_ENDED.
+--   MOB_STATE_CHANGED(mobKey, old, new, reason)  Data/MobRisk.lua (M7.2), a mob other than the monitored one.
+--   PIN_CHANGED(mobKey)             Data/TargetTracker.lua (M7.2), a mob pinned (nil: released).
 local ADDON_NAME, ns = ...
 ns = ns or {}
 ns.modules = ns.modules or {}

@@ -217,3 +217,155 @@ describe("the debug section", function()
 		falsy(line:find(Mock.units.Get("boss").guid, 1, true))
 	end)
 end)
+
+describe("the pinned mob (rule 0, SPEC-07 §2.4, M7.2)", function()
+	before_boot(function(M) M.features = { monitor = true, multitarget = true, recording = false } end)
+
+	-- In combat: the boss is the target, the add is on a nameplate; the tracker of the other mobs runs.
+	local function pinPull(def)
+		def = def or {}
+		truthy(Mock.ns.Config:Set("account.settings.monitor.show", "manual"))
+		Mock.ns.Window:Close()
+		local mobs = def.mobs or { { key = "boss", tokens = { "target" } }, { key = "add", tokens = { "nameplate2" } },
+			{ key = "other", tokens = { "nameplate3" } } }
+		local pull = Fight.new{
+			player = { class = "MAGE", role = "DAMAGER" },
+			party = { { key = "tank", role = "TANK" }, { key = "rogue", class = "ROGUE", role = "DAMAGER" } },
+			mobs = mobs,
+		}
+		pull:at(0):start()
+		for _, mob in ipairs(mobs) do pull:threat(mob.key, "tank", 100) end
+		pull:to(0)
+		if def.before then def.before(pull) end
+		Mock.ns.MobTracker.Want("test", true)
+		Mock.ns.Scheduler.Stop("mobs")
+		Mock.ns.MobTracker.Tick()
+		return pull
+	end
+
+	local function events()
+		local seen = {}
+		Mock.ns.Bus.On("TARGET_CHANGED", function(key) seen[#seen + 1] = "target " .. tostring(key) end)
+		Mock.ns.Bus.On("PIN_CHANGED", function(key) seen[#seen + 1] = "pin " .. tostring(key) end)
+		return seen
+	end
+
+	it("pins a mob of the list: its token, its key, TARGET_CHANGED then PIN_CHANGED", function()
+		pinPull()
+		local seen = events()
+		truthy(TT().Pin(mobKeyOf("add")))
+		eq(TT().Pinned(), mobKeyOf("add"))
+		eq(TT().MobKey(), mobKeyOf("add"))
+		eq(TT().MobToken(), "nameplate2")
+		eq(TT().Status(), "active")
+		deepEq(seen, { "target " .. mobKeyOf("add"), "pin " .. mobKeyOf("add") })
+		eq(UnitGUID("target"), Mock.units.Get("boss").guid, "the game's target never changes (MT-06)")
+	end)
+
+	it("asks the token again at every check: a nameplate that changes index keeps the pin", function()
+		local pull = pinPull()
+		truthy(TT().Pin(mobKeyOf("add")))
+		pull:token("nameplate2", nil)
+		pull:token("nameplate8", "add")
+		truthy(TT().Check())
+		eq(TT().MobToken(), "nameplate8")
+		eq(TT().MobKey(), mobKeyOf("add"))
+		eq(TT().Pinned(), mobKeyOf("add"))
+	end)
+
+	it("is released by a new hostile target that is another mob, not by the same mob nor a friendly target", function()
+		local pull = pinPull()
+		truthy(TT().Pin(mobKeyOf("add")))
+		pull:target("player", "tank")
+		eq(TT().Pinned(), mobKeyOf("add"), "a friendly target")
+		pull:target("player", "add")
+		eq(TT().Pinned(), mobKeyOf("add"), "the pinned mob itself")
+		local seen = events()
+		pull:target("player", "other")
+		isNil(TT().Pinned())
+		eq(TT().MobKey(), mobKeyOf("other"))
+		deepEq(seen, { "target " .. mobKeyOf("other"), "pin nil" })
+	end)
+
+	it("is released when the mob dies (Target died, then rules 1-3) or vanishes (Target lost)", function()
+		local pull = pinPull()
+		truthy(TT().Pin(mobKeyOf("add")))
+		pull:die("add")
+		falsy(TT().Check() and TT().MobKey() == mobKeyOf("add"))
+		isNil(TT().Pinned())
+		eq(TT().MobKey(), mobKeyOf("boss"), "back to the target")
+		truthy(TT().Pin(mobKeyOf("other")))
+		pull:target("player", nil)
+		eq(TT().Pinned(), mobKeyOf("other"), "clearing the target is not a new hostile target")
+		pull:vanish("other")
+		TT().Check()
+		isNil(TT().Pinned())
+		isNil(TT().MobKey())
+		eq(TT().Status(), "lost")
+	end)
+
+	it("says Target died when the pinned mob died and nothing else is monitored", function()
+		local pull = pinPull()
+		truthy(TT().Pin(mobKeyOf("add")))
+		pull:target("player", nil)
+		pull:die("add")
+		TT().Check()
+		isNil(TT().Pinned())
+		eq(TT().Status(), "died")
+	end)
+
+	it("is released at COMBAT_ENDED, with the setting off, and by Pin(nil)", function()
+		local pull = pinPull()
+		truthy(TT().Pin(mobKeyOf("add")))
+		local seen = events()
+		truthy(TT().Pin(nil))
+		isNil(TT().Pinned())
+		eq(TT().MobKey(), mobKeyOf("boss"))
+		deepEq(seen, { "target " .. mobKeyOf("boss"), "pin nil" })
+		falsy(TT().Pin(nil), "nothing to release")
+		truthy(TT().Pin(mobKeyOf("add")))
+		truthy(Mock.ns.Config:Set("account.settings.mobs.enabled", false))
+		isNil(TT().Pinned())
+		truthy(Mock.ns.Config:Set("account.settings.mobs.enabled", true))
+		for _ = 1, 4 do Mock.ns.MobTracker.Tick() end   -- found again by the sweep
+		truthy(TT().Pin(mobKeyOf("add")))
+		pull:stop()
+		isNil(TT().Pinned())
+		eq(TT().MobKey(), mobKeyOf("boss"))
+	end)
+
+	it("refuses the monitored mob, a key that cannot be followed and a mob no token names", function()
+		pinPull()
+		eq(select(2, TT().Pin(mobKeyOf("boss"))), "monitored")
+		eq(select(2, TT().Pin("tgt:1")), "no-identity")
+		eq(select(2, TT().Pin("tok:nameplate3:1")), "no-identity")
+		eq(select(2, TT().Pin("mob:Creature-0-1-0-1-100-FFFFFFFFFF")), "no-token")
+		isNil(TT().Pinned())
+	end)
+
+	it("keeps the key of a focus mob without a readable GUID [probe P9]", function()
+		pinPull{
+			mobs = { { key = "boss", tokens = { "target" } }, { key = "add", tokens = { "focus" } } },
+			before = function(pull) pull:secrets{ identity = true } end,
+		}
+		truthy(TT().Pin("tok:focus:1"))
+		eq(TT().MobKey(), "tok:focus:1")
+		eq(TT().MobToken(), "focus")
+		truthy(TT().Check())
+		eq(TT().MobKey(), "tok:focus:1")
+		isNil(TT().mobGUID)
+		eq(#Mock.errors, 0)
+	end)
+end)
+
+describe("the pin with the multitarget switch off", function()
+	before_boot(function(M) M.features = { monitor = true, multitarget = false, recording = false } end)
+
+	it("does nothing (ADR 0014)", function()
+		newPull()
+		Mock.units.Target("player", "boss")
+		eq(select(2, TT().Pin(mobKeyOf("add"))), "off")
+		isNil(TT().Pinned())
+		eq(TT().MobKey(), mobKeyOf("boss"))
+	end)
+end)

@@ -159,6 +159,20 @@ describe("the door to the game (ARC-02)", function()
 		deepEq(problems, {})
 	end)
 
+	it("covers the modules of the other mobs (M7.2): MobRisk and MobTracker are checked like the others", function()
+		local files = {}
+		for _, file in ipairs(addonFiles()) do files[file] = true end
+		local game = gameNames()
+		for _, name in ipairs({ "Data/MobRisk.lua", "Data/MobTracker.lua" }) do
+			truthy(files[ADDON .. name], name .. " is loaded and scanned")
+			deepEq(violations(name, Mock.ReadSource(ADDON .. name), game, false), {}, name)
+		end
+		-- the new client functions they use are named only by Core/Compat.lua
+		local compat = Mock.ReadSource(ADDON .. "Core/Compat.lua")
+		truthy(compat:find("UnitTokenFromGUID", 1, true))
+		truthy(compat:find("C_Secrets.CanCompareUnitTokens", 1, true))
+	end)
+
 	it("Core/Compat.lua is where the game is named", function()
 		local game = gameNames()
 		truthy(#violations("Compat", Mock.ReadSource(ADDON .. "Core/Compat.lua"), game, false) > 0)
