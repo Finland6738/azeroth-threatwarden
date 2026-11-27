@@ -50,6 +50,10 @@ All notable changes to this project are documented here. The format follows
 
 ### Documentation
 
+- M7.5: the [in-game checklist of M7](docs/checklists/M7.md): turning `multitarget` on in the installed copy after
+  backing up the saved data, dungeon pulls with and without nameplates and focus, loose mobs, the reach and secret
+  mobs, pinning, the alerts about other mobs, FPS, small sizes, Italian and the tuning notes (Q25–Q27), with the steps
+  that also answer probe checks P5 and P6. Not run yet.
 - M7.1: specification of **multi-target tracking** and the **Dungeon Focus** (SPEC-07, Italian), written before the
   in-game M0 probe like M2–M6, with a new decision record
   ([ADR 0019](docs/adr/0019-other-mobs-are-read-by-a-separate-budgeted-rotation-and-only-shown.md)). The milestone's

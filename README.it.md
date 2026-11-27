@@ -27,9 +27,10 @@ ciò che è **noto** da ciò che è **stimato**.
 > [comandi](docs/wiki/Commands-it.md) `/atw` e `/threatwarden`, il pulsante della minimappa e la voce nell'Addon
 > Compartment. Il
 > [Dungeon Focus](docs/wiki/Dungeon-Focus-it.md) della prossima versione, la `v0.7.0`, con i suoi avvisi sugli altri
-> nemici (facoltativi), è pronto ma spento. È controllata solo da test offline: la sonda M0 e le verifiche in gioco della
+> nemici (facoltativi), è pronto ma spento; la sua [checklist in gioco](docs/checklists/M7.md) (in inglese) è scritta. L'addon è controllato solo da test offline: la sonda M0 e le verifiche in gioco della
 > [M1](docs/checklists/M1.md), della [M2](docs/checklists/M2.md), della [M3](docs/checklists/M3.md), della
-> [M4](docs/checklists/M4.md), della [M5](docs/checklists/M5.md) e della [M6](docs/checklists/M6.md) (tutte in inglese)
+> [M4](docs/checklists/M4.md), della [M5](docs/checklists/M5.md), della [M6](docs/checklists/M6.md) e della
+> [M7](docs/checklists/M7.md) (tutte in inglese)
 > sono ancora aperte. La
 > [sonda](docs/spike/README.md) (uno strumento di sviluppo, mai distribuito) verifica nel client vero quali dati di
 > threat WoW Forever dà a un addon, perché in alcune situazioni il client può nascondere i valori agli addon: il client e

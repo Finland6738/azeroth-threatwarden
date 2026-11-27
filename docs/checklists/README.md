@@ -13,3 +13,4 @@ before `v1.0.0`. Results are reported with the *In-game test report* issue form.
 | [M4.md](M4.md) | M4 Recording and report, MVP check | written, **not run yet** (after or with M2 and M3) |
 | [M5.md](M5.md) | M5 Threat Timeline and Replay | written, **not run yet** (after or with M4; the switches are on from `v0.5.0`) |
 | [M6.md](M6.md) | M6 Threat Analytics and export | written, **not run yet** (after or with M5; the switches are on from `v0.6.0`) |
+| [M7.md](M7.md) | M7 Multi-target and Dungeon Focus | written, **not run yet** (with checks P5 and P6 of the probe; turn `multitarget` on in the installed copy until `v0.7.0`) |

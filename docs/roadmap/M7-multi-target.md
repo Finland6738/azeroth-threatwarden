@@ -166,7 +166,10 @@ with the switch off; the character schema stays 2 and the sessions do not change
   `alerts.onlyTarget` off; the FPS with 40 nameplates; the bar and the list at small sizes and in Italian; Q25–Q27
   tuning notes); the checklists index; README status.
 - Done when:
-  - [ ] The checklist covers every "Real client" line of M7.2–M7.4 and the exit criterion.
+  - [x] The checklist covers every "Real client" line of M7.2–M7.4 and the exit criterion.
+- *Done (2026-11-27): [`docs/checklists/M7.md`](../checklists/M7.md) (switch off then on, backup, pulls, nameplates and
+  focus, loose mobs, reach, pin, alerts, FPS, sizes and Italian, Q25–Q27, a table linking every open point to a step,
+  probe checks P5, P6, P9, P10 marked); checklists index and README status. Not run in the game.*
 
 ### M7.R — Release preparation `v0.7.0`
 - Branch: `chore/release-v0.7.0`
