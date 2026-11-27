@@ -150,6 +150,12 @@ prints or stores player or guild names.
   owner when R2 bites; updates to SPEC-01–SPEC-09, ADR 0002 and 0004 (or new ADRs), the milestone files, ROADMAP and
   the READMEs. M2 started before M0.7 (owner's decision of 2026-11-25): M0.7 also **revises M2** (SPEC-03 §1–§3, the
   `[probe Pn]` marks, the code already shipped and its defaults) where the results contradict it.
+- **M7 (conditional go, D21, 2026-11-27):** M7 started before M0.7 like M2–M6, on a *conditional* go / no-go
+  ([SPEC-07 §0](../specs/SPEC-07-multi-target-heatmap-profiles.md#0-il-gate-di-m7-go-condizionato)): the tracker
+  reads what the client allows and drops to *focus and boss* or to *the target only* by itself. With the results, M0.7
+  turns off in `MobTracker.SOURCES` the sources that never answer (P5), sets `MobTracker.RATE` and `READ_BUDGET` (P6,
+  P10) and, if P5 is *not supported*, proposes to the owner to switch `multitarget` off and replace M7 as its gate says
+  (SPEC-09 Q25).
 - Done when:
   - [ ] Every check P1–P12 has a result and a consequence; go / revise per area written.
   - [ ] The roadmap reflects the results; the owner's decisions are recorded in SPEC-09.

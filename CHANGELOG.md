@@ -7,6 +7,20 @@ All notable changes to this project are documented here. The format follows
 
 ### Documentation
 
+- M7.1: specification of **multi-target tracking** and the **Dungeon Focus** (SPEC-07, Italian), written before the
+  in-game M0 probe like M2–M6, with a new decision record
+  ([ADR 0019](docs/adr/0019-other-mobs-are-read-by-a-separate-budgeted-rotation-and-only-shown.md)). The milestone's
+  gate (the probe must show that other mobs can be read) is answered as a **conditional go**: the addon reads what the
+  game allows and, when other mobs cannot be queried or their threat is secret, shows *focus and boss only* or *only your
+  target*, with the reason on every mob; what the probe will change is one table of sources, the rate and the read
+  budget, and, if no other mob answers at all, the switch of the whole part. The monitor keeps following one mob; the
+  other mobs of a pull (focus, bosses, your group's targets and the enemy nameplates) are read on a slower tick in
+  turn, at most 8 of them and 48 reads per tick, and are only shown, never recorded. A pull bar in the Monitor tab
+  opens a list ordered by risk (a mob on a damage dealer or a healer, someone about to pull, a mob the tank has not
+  picked up), and a click makes that mob the one the monitor follows without touching your game target. Alerts about
+  other mobs come only if you turn them on. Also: SPEC-00 D21–D24, SPEC-09 Q25 (the release before the probe), Q26
+  (limits, sources and alerts), Q27 (the click and the order), R4 revised and R13, the account schema 6 (SPEC-02
+  §3.10), ui-style §3.7, and the M7 steps detailed in the milestone file. Nothing changes in the addon yet.
 - M6.R: `v0.6.0` released on GitHub; the release step is ticked in the M6 milestone file. CurseForge was skipped (no
   project yet).
 

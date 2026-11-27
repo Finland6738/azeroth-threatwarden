@@ -125,6 +125,7 @@ altro modulo caricato dopo di lui al caricamento del file, solo nei suoi gestori
 | `Data/Recorder.lua`, `Data/Session.lua`, `Data/Storage.lua`, `Data/Report.lua`; `UI/Reports.lua` | sessioni con le letture del monitor in colonne compatte, eventi, reload e logout, limiti e potatura, sessioni danneggiate messe da parte, report con categorie e *Insufficient data*; la scheda Reports ([SPEC-05](SPEC-05-recording-report-replay.md), moduli e test per step in §6–§7, [ADR 0016](../adr/0016-recordings-are-the-monitors-readings-in-compact-columns.md)) | Recorder emette `SESSION_STARTED(id)`, `SESSION_ENDED(id, state)`, ascolta `COMBAT_*`, `TARGET_CHANGED`, `STATE_CHANGED`, `AGGRO_CHANGED`, `THREAT_MODE_CHANGED`, `ALERT_RAISED`, `COACH_TIP`, `DEMO_CHANGED`, `CONFIG_*`, `ENTERING_WORLD`; Storage emette `SESSIONS_CHANGED()` | M4 |
 | `Data/Timeline.lua`, `Data/Replay.lua`, `UI/Timeline.lua`, `UI/ReplayWindow.lua` | modello della timeline (serie, riassunto per la larghezza, buchi, marcatori), widget del grafico da pool limitati, controllore del replay (cursore, riproduzione, passi, ±5 s, dettaglio, dati mancanti) e la sua finestra `AzerothThreatwardenReplay` ([SPEC-05 §4–§5](SPEC-05-recording-report-replay.md#4-threat-timeline-datatimelinelua-uitimelinelua-m52m53), moduli e test per step in §9–§10, [ADR 0017](../adr/0017-timeline-and-replay-are-views-over-the-recorded-session.md)) | Timeline ascolta `SESSIONS_CHANGED`; Replay ascolta `COMBAT_*`, `SESSIONS_CHANGED`; il widget, Reports e `/atw replay` emettono `REPLAY_REQUESTED(id, t)`, che la finestra del replay ascolta | M5 |
 | `Data/Metrics.lua`, `Data/Compare.lua`, `UI/Analytics.lua`, `Data/Export.lua`, `UI/ExportBox.lua` | metriche per scontro in memoria con le celle del report e `Report.Walk` (nuovo richiamo `holder`), confronto fra scontri con lo stesso nemico e aggregati, pagina e card *Analytics* della scheda Reports, esportazione testo e CSV in una casella da copiare ([SPEC-06](SPEC-06-analytics-export.md), moduli e test per step in §5–§6, [ADR 0018](../adr/0018-analytics-and-export-are-computed-in-memory-and-leave-only-through-a-copy-box.md)) | Metrics ascolta `SESSIONS_CHANGED`; Compare ascolta `SESSIONS_CHANGED`, `COMBAT_*`; la pagina Analytics emette `REPLAY_REQUESTED(id, t)`; nessun evento nuovo | M6 |
+| `Data/MobRisk.lua`, `Data/MobTracker.lua`, `UI/FocusList.lua` | gli altri mob letti da un tick loro a 2 Hz, a rotazione e con un budget (al più 8 mob, 48 letture per tick, 10 unità per mob), chiavi dai GUID, portata (*tutti*, *focus e boss*, *solo il target*) con il motivo; stato e motivo di ogni mob; la barra del pull e la lista del Dungeon Focus nella scheda Monitor, il clic che fissa il mob del monitor (`TargetTracker.Pin`); avvisi sugli altri mob con `alerts.onlyTarget` spento ([SPEC-07 §0–§2](SPEC-07-multi-target-heatmap-profiles.md), moduli e test per step in §2.7–§2.8, [ADR 0019](../adr/0019-other-mobs-are-read-by-a-separate-budgeted-rotation-and-only-shown.md)) | MobTracker emette `MOBS_UPDATED()`, ascolta `COMBAT_*`, `TARGET_CHANGED`, `THREAT_UPDATED`, `WINDOW_SHOWN`, `TAB_CHANGED`, `CONFIG_*`, `DEMO_CHANGED`, dal gioco `NAME_PLATE_UNIT_ADDED/REMOVED`, `PLAYER_FOCUS_CHANGED`, `INSTANCE_ENCOUNTER_ENGAGE_UNIT`, `UNIT_TARGET`, `UNIT_THREAT_LIST_UPDATE`; MobRisk emette `MOB_STATE_CHANGED(mobKey, old, new, reason)`, che Alerts ascolta (M7.4); TargetTracker emette `PIN_CHANGED(mobKey)` | M7 |
 | `UI/ThreatList.lua` | elenco della threat nella scheda Monitor ([SPEC-03 §2.6, §3](SPEC-03-threat-monitor-ui.md#26-cosa-si-vede-in-ogni-stato)) | ascolta `THREAT_UPDATED`, `STATE_CHANGED`, `THREAT_MODE_CHANGED`, `TARGET_CHANGED`, `CONFIG_CHANGED`, `THEME_CHANGED` | M2.5 |
 
 Ogni M<N>.1 completa la riga dei propri moduli (eventi esatti e test) come questa sezione fa per M1: le righe di M2
@@ -155,6 +156,9 @@ Accord.
 | `REPORT_REQUESTED` | `id` | striscia del Coach (clic sull'avviso di fine scontro) | Reports (M4.5) | M4.4 |
 | `SESSION_STARTED`, `SESSION_ENDED`, `SESSIONS_CHANGED` | `id`; `id`, `state` (`complete`, `interrupted`, `dropped`); nessuno ([SPEC-05 §6](SPEC-05-recording-report-replay.md#6-moduli-eventi-interruttori-e-diagnostica-m4)) | `Data/Recorder.lua`, `Data/Storage.lua` | Reports, striscia del Coach (avviso di fine scontro), Report | M4 |
 | `REPLAY_REQUESTED` | `id`, `t` (facoltativo, decimi) | card *Timeline* e pulsante *Replay* di Reports, `/atw replay` | `UI/ReplayWindow.lua` ([SPEC-05 §9](SPEC-05-recording-report-replay.md#9-moduli-eventi-interruttori-e-diagnostica-m5)) | M5 |
+| `MOBS_UPDATED` | — | `Data/MobTracker.lua`, dopo un tick dei mob o un cambio della lista | la barra del pull e la lista (`UI/FocusList.lua`) | M7.2 |
+| `MOB_STATE_CHANGED` | `mobKey`, `old`, `new`, `reason` (lo stato mostrato di un mob diverso da quello monitorato, dopo isteresi e permanenza) | `Data/MobRisk.lua` | Alerts con `alerts.onlyTarget` spento (M7.4) | M7.2 |
+| `PIN_CHANGED` | `mobKey` (`nil` = nessun mob fissato) | `Data/TargetTracker.lua` (`Pin`) | la barra del pull, l'intestazione del monitor | M7.2 |
 
 `/atw debug` mostra per ogni evento il numero di ascoltatori e gli ultimi errori degli ascoltatori.
 
@@ -171,7 +175,7 @@ scritto; un comando di quella parte risponde che arriva in una versione successi
 | `recording`, `reports` | registrazione; report e scheda *Reports* | M4.R |
 | `timeline`, `replay` | timeline; replay | M5.R |
 | `analytics`, `export` | metriche e confronto; esportazione | M6.R |
-| `multitarget` | più mob e dungeon focus (solo se P5 lo consente) | M7.R |
+| `multitarget` | più mob e dungeon focus (go condizionato prima del probe, [SPEC-07 §0](SPEC-07-multi-target-heatmap-profiles.md#0-il-gate-di-m7-go-condizionato)) | M7.R |
 | `profiles`, `heatmap` | profili per ruolo; heatmap | M8.R |
 
 ## 4. Librerie
@@ -329,6 +333,7 @@ senza firma), **assente** (si cerca a runtime). In grassetto le voci il cui comp
 | `secret.ThreatState` | `C_Secrets.ShouldUnitThreatStateBeSecret` | esistenza | firma `(unit [, mobUnit])` | previsione prima della lettura | M1 | **P3** |
 | `secret.Identity` | `C_Secrets.ShouldUnitIdentityBeSecret` | esistenza | firma | GUID e nomi in istanza | M2 | **P9** |
 | `secret.Comparison` | `C_Secrets.ShouldUnitComparisonBeSecret` | esistenza | firma | `UnitIsUnit` in istanza | M2 | **P9** |
+| `secret.CanCompare` | `C_Secrets.CanCompareUnitTokens` | esistenza | firma `(unit1, unit2)` | se due token di mob senza GUID si possono confrontare ([SPEC-07 §1.3](SPEC-07-multi-target-heatmap-profiles.md#13-identità-e-chiavi)) | M7 | **P5, P9** |
 | `threat.Detailed` | `UnitDetailedThreatSituation` | esistenza | firma `(unit, mobGUID: UnitToken)` | valori del monitor | M1 (lettura M2) | **P2–P5** |
 | `threat.Situation` | `UnitThreatSituation` | esistenza | firma, risultato nilable | modalità *state only* | M1 (lettura M2) | **P2, P3** |
 | `threat.PercentageOfLead` | `UnitThreatPercentageOfLead` | esistenza | firma, nilable | margine del tank | M1 (lettura M2) | **P2** |
@@ -337,14 +342,14 @@ senza firma), **assente** (si cerca a runtime). In grassetto le voci il cui comp
 | `threat.WarningEnabled` | `IsThreatWarningEnabled` | chiamata | firma | non duplicare l'avviso nativo (M3) | M1 | — |
 | `unit.Exists` | `UnitExists` | esistenza | firma | target presente | M2 | P2 |
 | `unit.GUID` | `UnitGUID` | chiamata (`"player"`) | firma, nilable, argomento `UnitTokenPvPRestrictedForAddOns` | chiavi di unità e mob | M2 | **P9** |
-| `unit.TokenFromGUID` | `UnitTokenFromGUID` | esistenza | firma, nilable | ritrovare un mob | M7 | **P5, P9** |
+| `unit.TokenFromGUID` | `UnitTokenFromGUID` | esistenza | firma, nilable | ritrovare il token di un mob dal suo GUID ([SPEC-07 §1.3](SPEC-07-multi-target-heatmap-profiles.md#13-identità-e-chiavi)) | M7 | **P5, P9** |
 | `unit.Name` | `UnitName` | esistenza | firma | nome mostrato (mai salvato fuori dalle sessioni) | M2 | P9 |
 | `unit.Class` | `UnitClass` | esistenza | firma | colore di classe | M2 | — |
 | `unit.Classification` | `UnitClassification` | esistenza | firma | élite, boss | M2 | P5 |
 | `unit.CanAttack` | `UnitCanAttack` | esistenza | firma | mob ostile | M2 | P2 |
 | `unit.IsDead` | `UnitIsDead` | esistenza | firma | mob morto | M2 | P7 |
 | `unit.IsUnit` | `UnitIsUnit` | esistenza | firma | target del target, "me" | M2 | **P9** |
-| `unit.AffectingCombat` | `UnitAffectingCombat` | chiamata (`"player"`) | firma | stato del combattimento | M1 | P7 |
+| `unit.AffectingCombat` | `UnitAffectingCombat` | chiamata (`"player"`) | firma | stato del combattimento; da M7 anche se un mob combatte (SPEC-07 §1.2) | M1 | P7 |
 | `unit.Role` | `UnitGroupRolesAssigned` | esistenza | firma | ruolo (tank) | M2 | **P9** |
 | `group.InGroup` | `IsInGroup` | chiamata | globale | unità da leggere | M2 | P5 |
 | `group.InRaid` | `IsInRaid` | chiamata | globale | unità da leggere | M2 | P5 |
@@ -429,7 +434,7 @@ che leggono a ogni scansione, Compat ha anche letture senza allocazione: `Compat
 | `threatLead` | margine del tank (`UnitThreatPercentageOfLead`) | come sopra | Scanner (M2) | **P2** |
 | `threatEvents` | gli eventi `UNIT_THREAT_*` arrivano | `unknown` | Scanner (M2) | **P6** |
 | `groupThreat` | la threat dei membri del gruppo sul mob | `unknown` | Scanner in gruppo (M2) | **P5** |
-| `otherMobs` | la threat su mob diversi dal target | `unknown` | M7 | **P5** |
+| `otherMobs` | la threat su mob diversi dal target | `unknown` | MobTracker (M7.2), dalla portata ([SPEC-07 §1.4](SPEC-07-multi-target-heatmap-profiles.md#14-la-portata-mobtrackerreach)) | **P5** |
 | `mobIdentity` | GUID dei mob leggibili e stabili | `unknown` | TargetTracker (M2) | **P9** |
 | `roles` | ruoli del gruppo leggibili | `unknown` | M2 | **P9** |
 | `combatLog` | il combat log è leggibile da un addon | `missing` se `CombatLogGetCurrentEventInfo` manca (atteso) | — | **P7** |

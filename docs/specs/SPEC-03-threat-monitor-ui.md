@@ -78,7 +78,9 @@ dice che l'unità del token è cambiata; senza evento si tiene la chiave.
 
 Il TargetTracker legge solo esistenza, ostilità, morte e GUID, su eventi: non legge la threat e funziona anche fuori
 dal combattimento (l'intestazione mostra il mob anche prima del pull). Un mob alla volta: i mob non selezionati e la
-storia di un mob lasciato sono M7 ([SPEC-07](SPEC-07-multi-target-heatmap-profiles.md), **[probe P5]**).
+storia di un mob lasciato sono M7 ([SPEC-07](SPEC-07-multi-target-heatmap-profiles.md), **[probe P5]**). Fissato in
+M7.1: il monitor resta su un mob (MT-03); M7.2 aggiunge una regola **0** prima delle tre, il mob **fissato** con un clic
+nel Dungeon Focus (`TargetTracker.Pin`, [SPEC-07 §2.4](SPEC-07-multi-target-heatmap-profiles.md#24-clic-per-monitorare-il-mob-fissato-targettrackerpin)).
 
 ### 1.3 Unità osservate e limite (`Data/ThreatScanner.lua`)
 

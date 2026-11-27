@@ -99,7 +99,7 @@ nuove arrivano solo al ritmo dello Scanner) e non scrive doppioni. A ogni tick, 
    evento `Z` con `a = r`; gli eventi continuano fino al loro limite. Lo stesso se `t` supererebbe 238 327 (`a = t`).
 
 - **REC-02** MUST: campioni solo in combattimento, alla frequenza della registrazione, sulle unità che il monitor legge
-  (al più 40, `maxUnits`) e sul mob monitorato (uno in M4; M7 ne aggiungerà se P5 lo consente), con i limiti di §1.7.
+  (al più 40, `maxUnits`) e sul mob monitorato (uno; M7 non ne aggiunge: gli altri mob si mostrano soltanto, e un mob fissato dal Dungeon Focus è il mob monitorato, [SPEC-07 §2.4](SPEC-07-multi-target-heatmap-profiles.md#24-clic-per-monitorare-il-mob-fissato-targettrackerpin)), con i limiti di §1.7.
 - **REC-06** MUST: una lettura già scritta non si scrive di nuovo (stesso `observedAt`); una lettura più vecchia
   dell'ultima scritta per l'unità si ignora (fuori ordine); `t` non decresce mai.
 

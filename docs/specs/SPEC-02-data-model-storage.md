@@ -108,15 +108,15 @@ lo **schema 1** qui sotto è quello che M1.5 realizza; nessuna chiave dipende da
 
 | Chiave | Contenuto | Da |
 |---|---|---|
-| `db.schema` | numero di versione dello schema | M1 (schema 1), M2 (schema 2, §3.5), M3 (schema 3, §3.6), M4 (schema 4, §3.7), correzione Q7 (schema 5, §3.8) |
-| `db.settings` | lingua, aspetto, minimappa (M1); soglie, frequenza, quando mostrare la finestra, ordinamento (M2); avvisi e Coach (M3, §3.6); registrazione e suoi limiti (M4, §3.7) | M1 → |
+| `db.schema` | numero di versione dello schema | M1 (schema 1), M2 (schema 2, §3.5), M3 (schema 3, §3.6), M4 (schema 4, §3.7), correzione Q7 (schema 5, §3.8), M7 (schema 6, §3.10) |
+| `db.settings` | lingua, aspetto, minimappa (M1); soglie, frequenza, quando mostrare la finestra, ordinamento (M2); avvisi e Coach (M3, §3.6); registrazione e suoi limiti (M4, §3.7); altri mob e avvisi sugli altri mob (M7, §3.10) | M1 → |
 | `db.sessions` | registrazioni (§4), la più vecchia prima; il contenuto lo controlla `Data/Storage.lua` | M4 (schema 4, §3.7) |
 | `db.profiles` | preset per ruolo | M8 |
 | `db.corrupt` | tabelle danneggiate messe da parte (§3.4) | M1 |
 | `char.schema`, `char.ui` | finestra: aperta, blocco, scala, posizione, dimensioni, ultima scheda; finestra del replay (M5, §3.9) | M1 (schema 1), M5 (schema 2, §3.9) |
 
 Ogni milestone che cambia la forma dei dati alza lo schema di uno con una migrazione (DAT-20); il numero esatto lo
-fissa lo step di specifica di quella milestone (M2.1, M3.1, M4.1, M5.1, M8.1). Le impostazioni dell'aspetto e la lingua sono
+fissa lo step di specifica di quella milestone (M2.1, M3.1, M4.1, M5.1, M7.1, M8.1). Le impostazioni dell'aspetto e la lingua sono
 per **account** (gusti della persona, come in Accord); la finestra è per **personaggio**.
 
 ### 3.2 Schema 1: account (`AzerothThreatwardenDB`)
@@ -325,6 +325,30 @@ scrive anche con l'interruttore spento, come i predefiniti di M4 prima di M4.R.
 **Realizzato in M5.5** (`Core/Config.lua`): i limiti della dimensione sono `Config.SIZES.replay` (un valore fuori limite
 si riporta dentro, come per la finestra principale); `ui.replay.speed` è un numero controllato sull'elenco
 `Replay.SPEEDS`; una `ui.replay` che non è una tabella va in `corrupt` e torna al predefinito.
+
+### 3.10 Schema 6 (M7): più mob e avvisi sugli altri mob
+
+Fissato in **M7.1**, realizzato da **M7.2** (le chiavi, la migrazione); la card *Dungeon Focus* è di M7.3 e
+l'interruttore *Alerts about other mobs* della card *Alerts* di M7.4
+([SPEC-07 §1.9, §2.6](SPEC-07-multi-target-heatmap-profiles.md#19-impostazioni-schema-6-dellaccount)). Lo schema
+dell'account passa a **6** con la tabella `settings.mobs` e la chiave `settings.alerts.onlyTarget`; quello del
+personaggio resta **2**. La migrazione `Config.migrations.account[6]` non fa nulla (i predefiniti aggiungono le chiavi
+che mancano), ma esiste e ha il suo test, che parte dai dati dello schema 5 (DAT-20). I predefiniti hanno un solo posto,
+`Config.MOBS_DEFAULTS` (intervalli `Config.MOBS`) e `Config.ALERTS_DEFAULTS.onlyTarget`: sono le risposte proposte di
+[Q26](SPEC-09-risks-open-questions.md). Lo schema si scrive anche con l'interruttore `multitarget` spento, come lo
+schema 3 con gli avvisi spenti; una versione precedente (`v0.6.0` o prima) che trova lo schema 6 lavora in sola lettura
+(§3.4, punto 4).
+
+| Percorso | Tipo | Predefinito | Regola | Uso |
+|---|---|---|---|---|
+| `settings.mobs` | tabella | `{}` | — | |
+| `settings.mobs.enabled` | booleano | `true` | — | segue gli altri mob ([SPEC-07 §1.6](SPEC-07-multi-target-heatmap-profiles.md#16-lettura-rotazione-e-limite-mt-02)) |
+| `settings.mobs.max` | intero | `8` | 2–12 | mob osservati, compreso il mob monitorato (MT-02) |
+| `settings.mobs.nameplates` | booleano | `true` | — | le targhe nemiche come fonte ([SPEC-07 §1.2](SPEC-07-multi-target-heatmap-profiles.md#12-fonti-dei-mob-datamobtrackerlua)) |
+| `settings.alerts.onlyTarget` | booleano | `true` | — | avvisi solo sul mob monitorato ([SPEC-07 §2.5](SPEC-07-multi-target-heatmap-profiles.md#25-avvisi-con-più-mob-alertsonlytarget)) |
+
+Non si salvano: il mob fissato, la lista dei mob, la portata, le letture. Nessun nome né GUID nelle impostazioni (§3.3).
+Le sessioni (§4) non cambiano: registrano il mob monitorato, anche quando è fissato dalla lista.
 
 ## 4. Sessioni registrate (schema 4, M4)
 

@@ -112,6 +112,7 @@ Nel foglio di icone (bianco, celle di 16 px, generato da `tools/make_media.py`, 
 | `predict` | valore previsto |
 | `stale` | dato vecchio |
 | `coach` (un fumetto con un punto), `mute` (una campana barrata) | striscia del Coach e silenzio degli avvisi (M3.4, [SPEC-04 §3.1](SPEC-04-alerts-coach.md#31-la-striscia)) |
+| `pull` (tre teste di mob affiancate), `pin` (una puntina) | barra del pull e mob fissato del Dungeon Focus (M7.3, [SPEC-07 §2.3–§2.4](SPEC-07-multi-target-heatmap-profiles.md#23-la-barra-del-pull-e-la-lista-uifocuslistlua)) |
 
 ### 3.5 Timeline e replay (M5)
 
@@ -176,6 +177,22 @@ Nessun token nuovo: la pagina Analytics e la card *Analytics* sono card della di
 
 Un valore non si riconosce mai dal solo colore (ST-02, SR-03): la categoria ha sempre la parola nel tooltip e il prefisso
 nel testo.
+
+### 3.7 Dungeon Focus (M7)
+
+Fissato in M7.1; il comportamento è in [SPEC-07 §2.2–§2.4](SPEC-07-multi-target-heatmap-profiles.md#22-che-cosa-si-vede-di-un-mob).
+Nessun token nuovo: barra e lista stanno nella disposizione **compatta** della scheda Monitor, con la densità di §3.1.
+
+| Elemento | Aspetto |
+|---|---|
+| Barra del pull | 20 pt sotto l'intestazione del mob, fondo `surface-2`, l'icona `pull` e *Pull · 5* in `Small` `text-2`, poi il distintivo di stato (§3.3) e il motivo in `Small` `text-1`; con la portata ridotta la frase in `text-3`; il chevron a destra apre e chiude la lista |
+| Righe della lista | 20 pt da un pool di 12: distintivo, nome del mob in `Body` `text-1` con l'etichetta della classificazione in `Small` `text-3`, chi lo tiene (icona `tank`, o `state-warning` se non è un tank) e il più vicino in `Small` `text-2`, percentuale e margine in `RowMono` a destra |
+| Mob monitorato | l'anello `accent` della propria riga (§3.2), nessun colore nuovo |
+| Righe UNKNOWN | come le righe UNKNOWN del monitor: tratteggio, `?`, testo in `text-3`, il motivo nel tooltip |
+| Mob fissato | l'icona `pin` in `accent-text` a sinistra del nome nell'intestazione del monitor; un clic la toglie |
+| Piede | `RowMono` `text-3`, `warn` quando la portata è ridotta |
+
+Un mob non si riconosce dal solo colore (ST-02): lo stato ha sempre l'icona e la parola, il motivo la parola.
 
 ## 4. Il tema Warden e i token di stato
 
@@ -296,6 +313,7 @@ Il nome pubblico è solo "Finland": nessun nome reale, e-mail o percorso persona
 | **M5.5** finestra del replay, icone, anteprime | §3 (finestra autonoma), §8 | §3.5; [SPEC-05 §5.5–§5.6](SPEC-05-recording-report-replay.md#55-la-finestra-del-replay-uireplaywindowlua-m55) |
 | **M6.4** pagina e card Analytics, anteprime | §3 (card, tabelle, righe da pool), §8 | §3.6; [SPEC-06 §3](SPEC-06-analytics-export.md#3-la-vista-analytics-nella-scheda-reports-uianalyticslua-m64) |
 | **M6.5** casella dell'esportazione | §3 (`CopyBox`, dialogo) | §3.6; [SPEC-06 §4.6](SPEC-06-analytics-export.md#46-la-casella-uiexportboxlua) |
+| **M7.3** barra del pull, lista del Dungeon Focus, anteprime | §3 (righe da pool) | §3.4, §3.7; [SPEC-07 §2.3](SPEC-07-multi-target-heatmap-profiles.md#23-la-barra-del-pull-e-la-lista-uifocuslistlua) |
 
 ## 7. Cosa non è verificato nel client
 

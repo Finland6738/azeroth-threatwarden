@@ -43,7 +43,9 @@ la lettura di `IsThreatWarningEnabled`, attraverso `Core/Compat.lua`.
 - **Un solo mob**: in M3 il monitor ne ha uno (il target o il target del target, [SPEC-03 §1.2](SPEC-03-threat-monitor-ui.md#12-il-mob-monitorato-datatargettrackerlua))
   e gli avvisi valgono solo per lui. Per questo l'opzione della fonte *avviso solo sul target corrente* in M3 è la sola
   regola possibile, senza interruttore; l'impostazione `alerts.onlyTarget` arriva con M7, quando l'addon potrà leggere
-  altri mob (**[probe P5]**).
+  altri mob (**[probe P5]**). Fissato in M7.1: `alerts.onlyTarget` (schema 6, acceso di predefinito) e, spento, un tipo
+  `mob` per i mob diversi da quello monitorato, con le stesse regole delle entrate e un cooldown per mob
+  ([SPEC-07 §2.5](SPEC-07-multi-target-heatmap-profiles.md#25-avvisi-con-più-mob-alertsonlytarget), M7.4).
 - **Solo in combattimento**: lo Scanner legge solo in combattimento (SPEC-03 §1.4), quindi gli stati salgono solo lì;
   in più Alerts ignora ogni evento arrivato fuori dal combattimento. Lo legge da `ThreatScanner.inCombat`, non da un
   proprio ascolto di `COMBAT_STARTED`: lo Scanner fa la prima scansione dentro quell'evento, prima dei moduli che
@@ -154,7 +156,7 @@ tank designati, chi tiene il mob. La **gravità** ordina gli avvisi: 1 WARNING, 
 | Soglia WARNING, soglia DANGER | le stesse del monitor, `settings.monitor.warning` e `.danger` (card *Monitor*, [SPEC-03 §5](SPEC-03-threat-monitor-ui.md#5-comandi-e-configurazione)): un solo posto. La card *Alerts* le ricorda con una riga e un collegamento |
 | Cooldown | `alerts.cooldown` (§1.3) |
 | Solo in combattimento | regola fissa (§1.1) |
-| Solo sul target corrente | regola fissa in M3, impostazione da M7 (§1.1) |
+| Solo sul target corrente | regola fissa in M3, impostazione `alerts.onlyTarget` da M7 (§1.1, [SPEC-07 §2.5](SPEC-07-multi-target-heatmap-profiles.md#25-avvisi-con-più-mob-alertsonlytarget)) |
 | Esclusione di unità | `alerts.others` e `alerts.pet` (salvate) più l'esclusione per sessione (sotto) |
 | Disattivazione rapida | `/atw mute` e il tasto assegnabile (sotto) |
 | Canali | §1.4 |
@@ -485,7 +487,7 @@ Ogni test che passa per il monitor gira sui tre esiti del probe (`Fight.OUTCOMES
 
 - **[probe P2]** i significati di `g` e `l` (§1.2, §2.2); **[probe P3]** quale modalità ci sarà in gruppo e in istanza
   (§2.5); **[probe P4]** se la previsione resta accesa (D3, T4, `ALERT_WARNING_PREDICTED`); **[probe P5]** l'opzione
-  *solo sul target corrente* (M7); **[probe P6]** quanto presto arriva un avviso dopo il passaggio vero (eventi o tick);
+  *solo sul target corrente* (M7, SPEC-07 §2.5); **[probe P6]** quanto presto arriva un avviso dopo il passaggio vero (eventi o tick);
   **[probe P9]** ruoli e quindi il ruolo del Coach e i tipi `lost`, `pet`, `other`.
 - **[da provare in gioco]** (checklist M3.6): il kit sonoro 8959 su Forever e il suo volume; il tasto nelle
   impostazioni dei tasti del gioco; che cosa fa l'avviso nativo e se si duplica; la leggibilità della striscia e

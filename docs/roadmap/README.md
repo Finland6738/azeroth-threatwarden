@@ -14,7 +14,7 @@ the behaviour every step implements is in the [specification](../specs/README.md
 | **M4** | [M4-recording-report.md](M4-recording-report.md) | Recorder, sessions, storage limits, combat report (**MVP**) | 7 + R | `v0.4.0` |
 | **M5** | [M5-timeline-replay.md](M5-timeline-replay.md) | Threat Timeline and Threat Replay | 6 + R | `v0.5.0` |
 | **M6** | [M6-analytics-export.md](M6-analytics-export.md) | Descriptive metrics, comparison, export | 6 + R | `v0.6.0` |
-| **M7** | [M7-multi-target.md](M7-multi-target.md) | Several mobs and the dungeon focus, **only if M0 allows it** | 5 + R | `v0.7.0` |
+| **M7** | [M7-multi-target.md](M7-multi-target.md) | Several mobs and the dungeon focus, a **conditional go** before M0 (reads what the client allows, D21) | 5 + R | `v0.7.0` |
 | **M8** | [M8-profiles-polish.md](M8-profiles-polish.md) | Role profiles, heatmap, accessibility, translations, CurseForge page | 8 + R | `v0.8.0`, then `v1.0.0` |
 
 ```mermaid
