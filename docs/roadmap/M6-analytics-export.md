@@ -23,10 +23,13 @@ export can be copied as text or CSV, with names replaceable. Released as `v0.6.0
 | M6.6 In-game checklist M6 | Sonnet | low |
 | M6.R Release preparation `v0.6.0` | Sonnet | medium |
 
+*State (2026-11-27): M6 is complete in code (steps M6.1–M6.6, offline tests in CI) and released as `v0.6.0` (M6.R).
+The exit criterion needs the game and is **open** until the owner runs [the M6 checklist](../checklists/M6.md).*
+
 **Switches.** `analytics` (`Data/Metrics.lua`, `Data/Compare.lua`, the *Analytics* page and the report's *Analytics*
-card) and `export` (`Data/Export.lua`, the export box, the *Export* buttons) in `Core/Features.lua` stay **off** until
-M6.R; the export needs both (and `reports`). Every step works and is tested behind them (SPEC-06 §5); tests that need
-them set them to `true` in `M.features`. Nothing is added to the sessions, the account schema stays 5 and the
+card) and `export` (`Data/Export.lua`, the export box, the *Export* buttons) in `Core/Features.lua` stayed **off** until
+M6.R and are **on** from `v0.6.0`; the export needs both (and `reports`). Every step was built and tested behind them
+(SPEC-06 §5); tests that need them off set them to `false` in `M.features`. Nothing is added to the sessions, the account schema stays 5 and the
 character schema 2.
 
 ### M6.1 — Specification of analytics and export
@@ -201,7 +204,14 @@ character schema 2.
   ([ADR 0014](../adr/0014-one-version-per-milestone-and-feature-switches.md)); CurseForge only if the owner has set up
   the project and `CF_API_KEY` (SPEC-09 Q6).
 - Done when:
-  - [ ] The `analytics` and `export` switches are on, the later ones off; changelog promoted, status updated; the
+  - [x] The `analytics` and `export` switches are on, the later ones off; changelog promoted, status updated; the
     checks are green (quick and long).
-  - [ ] The dry run is green, and the tag `v0.6.0` and its GitHub Release (changelog section as notes, zip with only
+  - [x] The dry run is green, and the tag `v0.6.0` and its GitHub Release (changelog section as notes, zip with only
     the addon) exist.
+- *Done (2026-11-27): `analytics` and `export` switched on, changelog promoted, status and the CurseForge draft updated
+  (commit `8c2761d`, every later switch off, 1531 quick tests and 1574 with `--long`). The dry run of the Release
+  workflow was green; annotated tag `v0.6.0` on that commit,
+  [GitHub Release](https://github.com/Finland6738/azeroth-threatwarden/releases/tag/v0.6.0) with the changelog section
+  as notes and `AzerothThreatwarden-v0.6.0-forever.zip` (194 entries, all in `AzerothThreatwarden/`; `## Version: v0.6.0`).
+  CurseForge skipped (no project ID and no `CF_API_KEY`, SPEC-09 Q6). The zip has not been installed or run in the
+  game; the M0 probe and the M1–M6 checklists are still open.*

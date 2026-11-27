@@ -5,6 +5,11 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Documentation
+
+- M6.R: `v0.6.0` released on GitHub; the release step is ticked in the M6 milestone file. CurseForge was skipped (no
+  project yet).
+
 ## [0.6.0] - 2026-11-27
 
 The sixth test version: **Threat Analytics** and the **export as text and CSV** (milestone M6), switched on. A report of
