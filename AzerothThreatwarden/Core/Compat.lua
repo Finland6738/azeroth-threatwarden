@@ -238,6 +238,10 @@ Compat.APIS = {
 	{ id = "ui.CursorPosition", paths = { "GetCursorPosition" }, check = "exists", since = "M5", probe = "game" },
 	{ id = "ui.Modifiers", paths = { "IsShiftKeyDown", "IsControlKeyDown", "IsAltKeyDown" }, all = true,
 		check = "exists", since = "M5", probe = "-" },
+	-- the game's party and raid frames (M8.3, SPEC-07 §3.3): interface code the dump does not list by name, looked up
+	-- with rawget (raw); "missing" before the game builds them or with the frames of another addon
+	{ id = "frames.Raid", paths = { "CompactPartyFrameMember1", "CompactRaidFrame1", "CompactRaidGroup1Member1" },
+		raw = true, check = "read", since = "M8", probe = "P11" },
 }
 
 local apiById = {}
@@ -245,7 +249,7 @@ for _, entry in ipairs(Compat.APIS) do apiById[entry.id] = entry end
 
 -- The capabilities of SPEC-01 §8.4, in report order; restricted.<Type> entries follow, one per restriction type.
 Compat.CAPABILITIES = { "threatValues", "threatState", "threatLead", "threatEvents", "groupThreat", "otherMobs",
-	"mobIdentity", "roles", "combatLog", "damageMeter" }
+	"mobIdentity", "roles", "combatLog", "damageMeter", "raidFrames" }
 local CAPABILITY_STATES = { available = true, missing = true, restricted = true, unknown = true }
 
 Compat.api = {}            -- id -> { state, detail, path (the one found), value (show entries only) }
@@ -264,8 +268,12 @@ end
 local function probeEntry(entry)
 	local result = { state = MISSING }
 	local found = {}
+	local function look(path)
+		if entry.raw then return rawget(_G, path) end   -- never through a metatable (frames of the game, M8.3)
+		return Resolve(path)
+	end
 	for _, path in ipairs(entry.paths) do
-		local value = Resolve(path)
+		local value = look(path)
 		if not IsSecret(value) and value ~= nil then found[#found + 1] = path end
 	end
 	if entry.all and #found < #entry.paths then
@@ -274,7 +282,7 @@ local function probeEntry(entry)
 	end
 	if #found == 0 then return result end
 	result.path = found[1]
-	local value = Resolve(found[1])
+	local value = look(found[1])
 	if entry.check == "read" then
 		result.state = AVAILABLE
 		return result
@@ -335,7 +343,7 @@ local function initialCapabilities()
 	fromApi("threatValues", "threat.Detailed")
 	fromApi("threatState", "threat.Situation")
 	fromApi("threatLead", "threat.PercentageOfLead")
-	for _, id in ipairs({ "threatEvents", "groupThreat", "otherMobs", "mobIdentity", "roles" }) do
+	for _, id in ipairs({ "threatEvents", "groupThreat", "otherMobs", "mobIdentity", "roles", "raidFrames" }) do
 		setCapability(id, UNKNOWN, nil)
 	end
 	-- the combat log is not used (ADR 0004); the report says whether an addon could read it [probe P7]
@@ -853,6 +861,145 @@ function Group.RaidIndex()
 	local n = plainNumber((one("UnitInRaid", "player")))
 	if n and n >= 1 then return math.floor(n) end
 	return nil
+end
+
+---------------------------------------------------------------------------------------------------------------------
+-- The game's party and raid frames (M8.3, SPEC-07 §3.3, ADR 0021): found by name, READ only, out of combat only.
+---------------------------------------------------------------------------------------------------------------------
+-- The frames of the game's own Compact Raid Frames are secure code. They are never written to, hooked, anchored to or
+-- parented to: this is the one place that touches them, and it only reads, out of combat (InCombatLockdown false):
+--   * the frame by its global name with rawget (the dump lists the CompactUnitFrame_* functions but no frame by name,
+--     so a missing name is an answer, PRB-05);
+--   * its `unit` field (or `displayedUnit`) with rawget, never through the frame's metatable;
+--   * IsVisible(), GetRect() and GetEffectiveScale(), the three reads of SimpleScriptRegionAPI and SimpleFrameAPI in
+--     the dump, each under pcall; a secret, an error or an answer of the wrong type is a frame that is not there.
+-- No other method is called on them and no field of theirs is set. Whether these reads are harmless on Forever, and
+-- the frame names themselves, are [probe P11, to be tried in game] (SPEC-09 Q29, R14).
+local RaidFrames = {}
+Compat.RaidFrames = RaidFrames
+
+-- The names looked for, in the order a mark takes them: the party frames, the raid frames without groups, the raid
+-- frames kept in groups. `kinds[i]` is "party", "raid" or "group".
+RaidFrames.NAMES, RaidFrames.KINDS = {}, {}
+do
+	local names, kinds = RaidFrames.NAMES, RaidFrames.KINDS
+	local function add(name, kind) names[#names + 1], kinds[#kinds + 1] = name, kind end
+	for i = 1, 5 do add("CompactPartyFrameMember" .. i, "party") end
+	for i = 1, 40 do add("CompactRaidFrame" .. i, "raid") end
+	for g = 1, 8 do
+		for m = 1, 5 do add("CompactRaidGroup" .. g .. "Member" .. m, "group") end
+	end
+end
+RaidFrames.MAX = 40   -- frames handed out by one Collect (the pool of marks)
+
+-- What the last Collect found (numbers only, for /atw debug and the card).
+RaidFrames.stats = { party = 0, raid = 0, group = 0, visible = 0, failed = 0, collects = 0, refused = 0 }
+
+-- InCombatLockdown without allocating: true, false, or nil when the client cannot say.
+local function lockdown()
+	local v = one("C_RestrictedActions.InCombatLockdown")
+	if v == nil then v = one("InCombatLockdown") end
+	if type(v) ~= "boolean" then return nil end
+	return v
+end
+
+local function readUnit(frame)
+	local unit = rawget(frame, "unit")
+	if IsSecret(unit) or type(unit) ~= "string" or unit == "" then
+		unit = rawget(frame, "displayedUnit")
+		if IsSecret(unit) or type(unit) ~= "string" or unit == "" then return nil end
+	end
+	return unit
+end
+
+local function method(frame, name)
+	local ok, value = pcall(index, frame, name)
+	if not ok or IsSecret(value) or type(value) ~= "function" then return nil end
+	return value
+end
+
+local function number(v)
+	if IsSecret(v) or type(v) ~= "number" or v ~= v then return nil end
+	return v
+end
+
+-- One frame: "hidden", "read" (with unit, left, bottom, width, height in UIParent's coordinates) or "failed".
+local function readFrame(frame, parentScale)
+	local isVisible, getRect, getScale = method(frame, "IsVisible"), method(frame, "GetRect"),
+		method(frame, "GetEffectiveScale")
+	if not (isVisible and getRect and getScale) then return "failed" end
+	local ok, visible = pcall(isVisible, frame)
+	if not ok or IsSecret(visible) or type(visible) ~= "boolean" then return "failed" end
+	if not visible then return "hidden" end
+	local unit = readUnit(frame)
+	local okRect, left, bottom, width, height = pcall(getRect, frame)
+	local okScale, scale = pcall(getScale, frame)
+	if not okRect or not okScale then return "failed" end
+	left, bottom, width, height, scale = number(left), number(bottom), number(width), number(height), number(scale)
+	if not (left and bottom and width and height and scale) or scale <= 0 or width <= 0 or height <= 0 then
+		return "failed"
+	end
+	if not unit then return "hidden" end   -- a frame without a unit shows nobody
+	local k = scale / parentScale
+	return "read", unit, left * k, bottom * k, width * k, height * k
+end
+
+-- RaidFrames.Collect(out) -> count, state. Fills out[1..count] with { unit, left, bottom, width, height } (tables of
+-- `out` are reused; out.count = count) for the visible frames, in UIParent's coordinates. state:
+--   "available"   at least one frame was read (visible or not)
+--   "missing"     no frame of these names exists (the frames of another addon, or the game's not built yet)
+--   "restricted"  frames exist but every read was secret or failed
+--   "combat"      in combat lockdown (or the client cannot say): nothing is read, `out` is left as it was
+-- Out of combat only; it sets the capability `raidFrames` (CAPABILITY_CHANGED) except for "combat". About 85 rawget
+-- and, per frame that exists, three method calls; it allocates only the first time a place of `out` is used.
+function RaidFrames.Collect(out)
+	local stats = RaidFrames.stats
+	if lockdown() ~= false then
+		stats.refused = stats.refused + 1
+		return 0, "combat"
+	end
+	stats.collects = stats.collects + 1
+	stats.party, stats.raid, stats.group, stats.visible, stats.failed = 0, 0, 0, 0, 0
+	local parent = Compat.UIParent()
+	local parentScale
+	if parent then
+		local fn = method(parent, "GetEffectiveScale")
+		local ok, s = false, nil
+		if fn then ok, s = pcall(fn, parent) end
+		parentScale = ok and number(s) or nil
+	end
+	if not parentScale or parentScale <= 0 then parentScale = 1 end
+	local names, kinds = RaidFrames.NAMES, RaidFrames.KINDS
+	local count, existing, read = 0, 0, 0
+	for i = 1, #names do
+		local frame = rawget(_G, names[i])
+		if frame ~= nil and not IsSecret(frame) and type(frame) == "table" then
+			existing = existing + 1
+			local kind = kinds[i]
+			local okCall, what, unit, left, bottom, width, height = pcall(readFrame, frame, parentScale)
+			if not okCall or what == "failed" then
+				stats.failed = stats.failed + 1
+			else
+				read = read + 1
+				stats[kind] = stats[kind] + 1
+				if what == "read" and count < RaidFrames.MAX then
+					count = count + 1
+					local slot = out[count]
+					if not slot then slot = {}; out[count] = slot end
+					slot.unit, slot.left, slot.bottom, slot.width, slot.height, slot.kind =
+						unit, left, bottom, width, height, kind
+				end
+			end
+		end
+	end
+	stats.visible = count
+	for i = count + 1, #out do out[i].unit = nil end
+	out.count = count
+	local state = AVAILABLE
+	if existing == 0 then state = MISSING elseif read == 0 then state = RESTRICTED end
+	Compat:SetCapability("raidFrames", state, state == MISSING and "no frame by name" or
+		(state == RESTRICTED and "reads secret or failed" or nil))
+	return count, state
 end
 
 ---------------------------------------------------------------------------------------------------------------------

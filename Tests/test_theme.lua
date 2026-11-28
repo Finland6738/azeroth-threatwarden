@@ -545,3 +545,76 @@ describe("motion", function()
 		eq(last, 1, "a hidden frame does not animate")
 	end)
 end)
+
+describe("the heat of the monitor rows (SPEC-07 §3.2, ui-style §3.8, M8.3)", function()
+	local function lin(c) if c <= 0.04045 then return c / 12.92 end return ((c + 0.055) / 1.055) ^ 2.4 end
+	local function lum(r, g, b) return 0.2126 * lin(r) + 0.7152 * lin(g) + 0.0722 * lin(b) end
+	local function ratio(a, b)
+		if a < b then a, b = b, a end
+		return (a + 0.05) / (b + 0.05)
+	end
+	-- the state token at `alpha` over `surface`, as the client blends a texture with that alpha
+	local function heated(state, surface, alpha, theme)
+		local sr, sg, sb = Th().Color(state, theme)
+		local br, bg, bb = Th().Color(surface, theme)
+		return lum(sr * alpha + br * (1 - alpha), sg * alpha + bg * (1 - alpha), sb * alpha + bb * (1 - alpha))
+	end
+	local function round(v) return math.floor(v * 100 + 0.5) / 100 end
+	-- the worst contrast of an ink on every state's heat at step 4, on surface-1 and on surface-2 (the hover)
+	local function worstOnHeat(ink, theme)
+		local alpha = Mock.ns.Heatmap.ALPHA[4]
+		local low
+		for _, state in ipairs({ "state-safe", "state-warning", "state-danger" }) do
+			for _, surface in ipairs({ "surface-1", "surface-2" }) do
+				local c = ratio(luminance(ink, theme), heated(state, surface, alpha, theme))
+				low = low and math.min(low, c) or c
+			end
+		end
+		return round(low)
+	end
+
+	-- written in ui-style §3.8
+	local EXPECTED = {
+		nebula = { ["text-1"] = 13.38, ["text-2"] = 8.08, ["text-3"] = 5.01, ["accent-text"] = 6.53 },
+		aurora = { ["text-1"] = 12.09, ["text-2"] = 5.95, ["text-3"] = 4.24, ["accent-text"] = 4.95 },
+		warden = { ["text-1"] = 10.19, ["text-2"] = 7.26, ["text-3"] = 4.41, ["accent-text"] = 6.42 },
+	}
+	local RULE = { ["text-1"] = 4.5, ["text-2"] = 4.5, ["text-3"] = 3, ["accent-text"] = 4.5 }
+
+	it("step 4 is the strongest, and every step is a fraction of the state colour", function()
+		local A = Mock.ns.Heatmap.ALPHA
+		for step = 1, 4 do truthy(A[step] > A[step - 1], step) end
+		eq(A[0], 0)
+		eq(A[4], 0.18)
+	end)
+
+	it("keeps the text readable on the strongest heat in every theme, with the numbers of the specification", function()
+		for _, id in ipairs(THEMES) do
+			for ink, rule in pairs(RULE) do
+				local c = worstOnHeat(ink, id)
+				truthy(c >= rule, id .. " " .. ink .. " " .. c)
+				eq(c, EXPECTED[id][ink], id .. " " .. ink)
+			end
+		end
+		local text = spec()
+		contains(text, "| Nebula | 13,38 | 8,08 | 5,01 | 6,53 |")
+		contains(text, "| Aurora | 12,09 | 5,95 | 4,24 | 4,95 |")
+		contains(text, "| Warden | 10,19 | 7,26 | 4,41 | 6,42 |")
+	end)
+
+	it("the bar of a row draws its fill on its own opaque track, above the heat: ST-03 holds there unchanged", function()
+		boot(function(M) M.features = { monitor = true, heatmap = true } end)
+		local bar = Mock.ns.Widgets.ThreatBar(UIParent, {})
+		local trackFill = bar.track.fill
+		eq(trackFill._layer, "BACKGROUND")
+		local r, g, b, a = trackFill:GetVertexColor()
+		local er, eg, eb = Th().Color("surface-3")
+		near(r, er, 1e-6) near(g, eg, 1e-6) near(b, eb, 1e-6)
+		eq(a, 1, "opaque: the heat does not show through")
+		for _, id in ipairs(THEMES) do
+			for _, token in ipairs({ "state-safe", "state-warning", "state-danger" }) do
+				truthy(contrast(token, "surface-3", id) >= 3, id .. " " .. token)
+			end
+		end
+	end)
+end)

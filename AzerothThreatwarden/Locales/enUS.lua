@@ -1032,4 +1032,14 @@ ns.Locale.Register("enUS", {
 	CMD_PROFILE_PENDING = "Profile %s: applies after combat.",
 	CMD_PROFILE_AUTO = "Your profile follows your group role again.",
 	CMD_PROFILE_UNKNOWN = "Unknown profile: %s. Use tank, healer, dps or auto.",
+	-- the heatmap (M8.3, SPEC-07 §3.5)
+	HEATMAP_TITLE = "Heatmap",
+	HEATMAP_ROWS = "Colour the monitor rows",
+	HEATMAP_ROWS_NOTE = "Each row gets a light tint of its state, stronger as it nears the next one. The icon and the word stay; an unknown row has no tint.",
+	HEATMAP_RAID = "Mark the game's raid frames",
+	HEATMAP_RAID_NOTE = "Draws on top of the game's own party and raid frames, without changing them. Turn it off if the game reports a problem with an addon.",
+	HEATMAP_RAID_FOUND = "Raid frames found: %d",
+	HEATMAP_RAID_NOT_SHOWN = "The game's raid frames are not shown",
+	HEATMAP_RAID_RESTRICTED = "The game's raid frames cannot be read here.",
+	HEATMAP_RAID_SUSPENDED = "The group changed during the fight: the marks come back when it ends.",
 })

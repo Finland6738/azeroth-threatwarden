@@ -1058,3 +1058,85 @@ describe("the Profile card (SPEC-07 §4.6)", function()
 		isNil(f.profileCard)
 	end)
 end)
+
+describe("the Heatmap card (SPEC-07 §3.5, M8.3)", function()
+	before_boot(function(M) M.features = { monitor = true, alerts = true, multitarget = true, heatmap = true } end)
+
+	it("is there with the switch, after Dungeon Focus and before Alerts", function()
+		local f = open()
+		local at = {}
+		for i, card in ipairs(f.cards) do at[card] = i end
+		notNil(f.heatmapCard)
+		eq(at[f.heatmapCard], at[f.focusCard] + 1)
+		eq(at[f.alertsCard], at[f.heatmapCard] + 1)
+		eq(f.heatmapCard.items[1].region:GetText(), "Heatmap")
+		eq(#Mock.errors, 0)
+	end)
+
+	it("shows the defaults (rows on, raid frames off) and says the risk of the raid frames", function()
+		local f = open()
+		truthy(f.heatRows.control:IsOn())
+		falsy(f.heatRaid.control:IsOn())
+		eq(f.heatRows.label:GetText(), "Colour the monitor rows")
+		eq(f.heatRaid.label:GetText(), "Mark the game's raid frames")
+		local texts = {}
+		for _, it in ipairs(f.heatmapCard.items) do
+			if it.region.GetText then texts[#texts + 1] = it.region:GetText() or "" end
+		end
+		contains(table.concat(texts, "\n"), "Draws on top of the game's own party and raid frames, without changing them. "
+			.. "Turn it off if the game reports a problem with an addon.")
+		falsy(f.heatFound:IsShown(), "nothing found while it is off")
+	end)
+
+	it("writes both settings, and says what the overlay found", function()
+		local f = open()
+		f.heatRows.control:Click()
+		eq(account().heatmap.rows, false)
+		f.heatRaid.control:Click()
+		eq(account().heatmap.raidFrames, true)
+		truthy(f.heatFound:IsShown())
+		eq(f.heatFound:GetText(), "The game's raid frames are not shown")
+		Mock.raidFrames.Party({ "player", "party1" })
+		Mock.Fire("COMPACT_UNIT_FRAME_PROFILES_LOADED")
+		eq(f.heatFound:GetText(), "Raid frames found: 2")
+		for i = 1, 2 do Mock.raidFrames.Get("CompactPartyFrameMember" .. i).mode = "secret" end
+		Mock.Fire("COMPACT_UNIT_FRAME_PROFILES_LOADED")
+		eq(f.heatFound:GetText(), "The game's raid frames cannot be read here.")
+		f.heatRaid.control:Click()
+		eq(account().heatmap.raidFrames, false)
+		falsy(f.heatFound:IsShown())
+		eq(#Mock.raidFrames.log, 0)
+	end)
+
+	it("says when the marks wait for the end of a fight", function()
+		Mock.raidFrames.Party({ "player" })
+		local f = open()
+		f.heatRaid.control:Click()
+		falsy(f.heatSuspended:IsShown())
+		Mock.combat.Enter()
+		Mock.Fire("GROUP_ROSTER_UPDATE")
+		Mock.ns.Settings.RefreshAll()
+		truthy(f.heatSuspended:IsShown())
+		eq(f.heatSuspended:GetText(), "The group changed during the fight: the marks come back when it ends.")
+		Mock.combat.Leave()
+		Mock.ns.Settings.RefreshAll()
+		falsy(f.heatSuspended:IsShown())
+	end)
+
+	it("writes Italian", function()
+		boot(function(M)
+			M.features = { monitor = true, alerts = true, multitarget = true, heatmap = true }
+			M.player.locale = "itIT"
+		end)
+		local f = open()
+		eq(f.heatRows.label:GetText(), "Colora le righe del monitor")
+		eq(f.heatRaid.label:GetText(), "Segna i riquadri del raid del gioco")
+	end)
+
+	it("is absent with the switch off", function()
+		boot(function(M) M.features = { monitor = true, alerts = true, multitarget = true, heatmap = false } end)
+		local f = open()
+		isNil(f.heatmapCard)
+		isNil(f.heatRows)
+	end)
+end)

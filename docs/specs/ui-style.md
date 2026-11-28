@@ -207,10 +207,22 @@ token nuovo: il calore usa i token di stato (§4.2) della tavolozza attiva (§4.
 | Elemento | Aspetto |
 |---|---|
 | Calore di una riga del monitor | una texture piena larga quanto la riga, sotto testo, barra e distintivo, sopra `surface-1`: il token di stato della riga con la trasparenza del passo (0; 0,06; 0,10; 0,14; 0,18, `Heatmap.ALPHA`); l'anello `accent` della propria riga e il passaggio del mouse restano sopra. Il calore non sostituisce la striscia di 3 pt né il distintivo |
-| Segno su un riquadro del raid di Blizzard | un bordo di 2 px nel token di stato (trasparenza 0,9) intorno al rettangolo copiato del riquadro e, al centro del bordo superiore, il distintivo di stato piccolo (alto 12 pt, icona 8 pt, parola in `Badge`); nessun riempimento sul riquadro; nessun bagliore; nessun movimento oltre la dissolvenza di 120 ms |
+| Segno su un riquadro del raid di Blizzard | un bordo di 2 px nel token di stato (trasparenza 0,9) intorno al rettangolo copiato del riquadro e, al centro del bordo superiore, il distintivo di stato piccolo (alto 12 pt, icona 8 pt, parola in `Badge`); nessun riempimento sul riquadro; nessun bagliore; nessun movimento oltre la dissolvenza di 120 ms (M8.3: il segno compare e sparisce subito, senza dissolvenza; un bordo per stato, dipinto una volta) |
 
-La regola del contrasto con il calore (testo sul fondo mescolato al passo 4) è in SPEC-07 §3.2; M8.3 scrive qui la
-tabella dei valori peggiori per tema e tavolozza, come §4.3.
+La regola del contrasto con il calore (testo sul fondo mescolato al passo 4) è in SPEC-07 §3.2. **M8.3** l'ha misurata
+(`Tests/test_theme.lua`): il valore peggiore di ogni inchiostro sul token di stato (SAFE, WARNING, DANGER) al passo 4
+(trasparenza 0,18) sopra `surface-1` e `surface-2`, nella tavolozza `standard`; `Heatmap.ALPHA[4]` resta 0,18 perché
+ogni combinazione regge. M8.4 aggiunge le righe delle altre due tavolozze.
+
+| Tema | `text-1` (≥ 4,5) | `text-2` (≥ 4,5) | `text-3` (≥ 3) | `accent-text` (≥ 4,5) |
+|---|---|---|---|---|
+| Nebula | 13,38 | 8,08 | 5,01 | 6,53 |
+| Aurora | 12,09 | 5,95 | 4,24 | 4,95 |
+| Warden | 10,19 | 7,26 | 4,41 | 6,42 |
+
+La barra della riga non si mescola col calore: il riempimento di stato sta sul suo binario `surface-3` opaco, disegnato
+sopra il calore (e nascosto con il binario nelle righe strette), quindi vale ST-03 com'è (§4.3). Sul fondo mescolato
+direttamente il riempimento non reggerebbe in Aurora (2,75:1): per questo il binario resta opaco.
 
 ## 4. Il tema Warden e i token di stato
 

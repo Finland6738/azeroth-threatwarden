@@ -7,6 +7,18 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
+- M8.3: the **heatmap**, behind the `heatmap` switch, which stays off until `v0.8.0`: nothing of it is visible yet, and
+  with the switch off it makes no frame and registers no game event. Each row of the Threat Monitor gets a light tint of
+  its own state, in five steps (none on Unknown, nor on Safe below 50 %; stronger as a Warning nears Danger; strongest
+  on Danger and on someone who holds the mob without being a tank), changing at most once a second inside a state and
+  at once when the state changes, with a 120 ms fade and no flashing; the text stays readable on it in every theme. On
+  request (*Mark the game's raid frames*, **off by default**) the addon draws marks for Warning, Danger and aggro on a
+  non-tank over the game's own party and raid frames, from a separate overlay that never changes, hooks or attaches to
+  them: it only reads where they are, out of combat, and every mark hides when the group changes during a fight. The
+  risk of protected frames is said on the card and in the manual, with how to turn the marks off; `/atw debug` gets a
+  *Heatmap* section that counts any blocked or forbidden action seen while the marks are on. A *Heatmap* card holds the
+  two options. Not verified in the game: the frame names on WoW Forever, the marks at common UI scales, the game's
+  taint log with the marks on.
 - M8.2: **role profiles** (`Data/Profiles.lua`), behind the `profiles` switch, which stays off until `v0.8.0`: nothing
   of them is visible yet, and with the switch off they register no game event and copy nothing. Three profiles, Tank,
   Healer and Damage, shared by all your characters, hold your thresholds, the order of the list and *Pin me on top*,

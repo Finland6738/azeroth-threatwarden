@@ -134,6 +134,27 @@ Salvata per tutto l'account, sotto *Monitor*. Che cosa mostra è in [[Dungeon Fo
 | Mob seguiti | quanti mob insieme, compreso quello monitorato; si salva quando rilasci il cursore | da 2 a 12 | 8 |
 | Usa le targhe dei nemici | trova i mob dalle targhe dei nemici; le mostra solo mentre le targhe dei nemici del gioco sono attive | sì / no | sì |
 
+## Heatmap
+
+> **In arrivo nella `v0.8.0`**: costruita e provata offline, spenta in questa versione, non verificata in gioco.
+
+Sotto *Dungeon Focus*. Le due opzioni fanno parte dei [profili per ruolo](#profili-per-ruolo). Che cosa mostrano è in
+[Monitor della threat → La heatmap](Threat-Monitor-it#la-heatmap).
+
+| Opzione | Cosa fa | Predefinito |
+|---|---|---|
+| Colora le righe del monitor | ogni riga del monitor prende una tinta leggera del suo stato; icona e parola restano, una riga sconosciuta non ne ha | sì |
+| Segna i riquadri del raid del gioco | segni sopra i riquadri del gruppo e del raid del gioco per Attenzione, Pericolo e l'aggro di chi non è tank, disegnati sopra senza cambiarli | **no** |
+
+Sotto la seconda opzione la card dice che cosa ha trovato: *Riquadri del raid trovati: 25*, *I riquadri del raid del
+gioco non sono visibili* (non sei in un gruppo, i riquadri del gioco sono nascosti, o ci sono quelli di un altro addon),
+o *Qui i riquadri del raid del gioco non si possono leggere.* (il gioco non lascia leggerli all'addon: non si disegna
+nulla). Dopo un cambio del gruppo durante un combattimento dice che i segni tornano quando finisce.
+
+**Spegni i segni sui riquadri del raid** se il gioco segnala un problema con un addon ("*azione bloccata da un addon*",
+riquadri che smettono di funzionare in combattimento): leggono soltanto i riquadri del gioco e non dovrebbero causarlo,
+ma non sono ancora stati provati in gioco. Spegnerli vale subito, senza ricaricare; la tinta delle righe non ne dipende.
+
 ## Avvisi
 
 > **Nuova nella `v0.3.0`**, non verificata in gioco.

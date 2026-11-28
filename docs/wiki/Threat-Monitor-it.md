@@ -67,6 +67,50 @@ di rank più basso), dal **91 %** smette per un attimo di fare danni o di curare
 le avevi mai cambiate, i vecchi 80 % e 95 % sono diventati 82 % e 91 % con questa versione, mentre le soglie scelte da
 te restano tue. Uno stato sale subito e scende solo dopo un secondo, così non lampeggia.
 
+## La heatmap
+
+> **In arrivo nella `v0.8.0`**: costruita e provata offline, spenta in questa versione, non verificata in gioco.
+
+![La heatmap delle righe: una tinta di ogni stato, più forte vicino al successivo](../specs/mockups/previews/monitor-heat-nebula.webp)
+
+**Le righe.** Ogni riga prende una tinta leggera del suo stato dietro nome, barra e distintivo, più forte man mano che
+si avvicina allo stato successivo. Ripete soltanto ciò che dice il distintivo: icona e parola restano, e una riga in
+stato **Sconosciuto** non ha alcuna tinta.
+
+| Tinta | Quando |
+|---|---|
+| nessuna | Sconosciuto; Sicuro sotto il 50 % (per il tank che tiene il nemico: il secondo sotto il 50 %); Sicuro quando il gioco dà solo gli stati |
+| leggerissima | Sicuro dal 50 % |
+| leggera | Attenzione sotto la metà fra le due soglie (86,5 % con 82 e 91), o quando il gioco dà solo gli stati |
+| media | Attenzione da quella metà |
+| forte | Pericolo, e la riga di chi tiene il nemico senza essere un tank |
+
+Una riga cambia tinta al più una volta al secondo finché il suo stato resta lo stesso, e un confine ha 2 punti di
+margine, così la tinta non tremola; un cambio di stato (il Pericolo prima di tutto) la cambia subito. Il cambio sfuma in
+120 ms con le animazioni attive; non lampeggia mai. Il testo resta leggibile sulla tinta più forte in ogni tema. Le
+righe del [[Dungeon Focus|Dungeon-Focus-it]] non hanno tinta. Anche la [demo](#modalità-demo) la mostra.
+
+**I riquadri del raid del gioco (spenti di predefinito).** Con *Segna i riquadri del raid del gioco* acceso, l'addon
+disegna un **segno** sopra i riquadri del gruppo e del raid del gioco (i *Compact Raid Frames*) di chi è in
+**Attenzione** o **Pericolo**, o tiene il nemico senza essere un tank: un bordo del colore del suo stato e un piccolo
+distintivo con icona e parola sul lato alto. Sicuro e Sconosciuto non hanno nulla. I segni non prendono mai il mouse:
+clic, menu e clic con incantesimo restano del gioco. Nella demo non si mostrano.
+
+Come resta fuori dai piedi del gioco: i segni stanno in un frame separato dell'addon sopra lo schermo. L'addon non
+cambia, non aggancia e non attacca nulla ai riquadri del gioco: fuori dal combattimento ne **legge** soltanto la
+posizione e di chi sono, e la copia. In combattimento le posizioni restano quelle copiate; se il gruppo cambia durante
+un combattimento (qualcuno entra, esce o si sposta) i riquadri possono essersi mossi, quindi **tutti i segni si
+nascondono fino alla fine del combattimento**. I riquadri di altri addon che sostituiscono quelli del gioco non hanno
+segni.
+
+> **Il rischio, detto com'è.** I riquadri del raid del gioco sono codice protetto. Un addon che ci scrive dentro può far
+> bloccare al gioco un'azione ("*azione bloccata da un addon*") o rompere i riquadri in combattimento; questo li legge
+> soltanto e non dovrebbe, ma **non è ancora stato provato in gioco**. Se il gioco segnala un problema con un addon
+> mentre i segni sono accesi, **spegnili**: [Impostazioni → Heatmap](Settings-it#heatmap) → *Segna i riquadri del raid
+> del gioco*. `/atw debug` (sezione *Heatmap*) conta le azioni bloccate o vietate viste mentre i segni sono accesi;
+> mettila in una [[segnalazione|Reporting-Bugs-and-Feedback-it]]. Se il gioco dà la colpa ai segni anche una sola
+> volta, l'opzione sarà tolta e la tinta delle righe resta.
+
 ## Quando il gioco nasconde i numeri
 
 ![Solo stato: stati senza percentuali](../specs/mockups/previews/monitor-state-nebula.webp)

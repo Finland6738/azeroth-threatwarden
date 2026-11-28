@@ -13,7 +13,8 @@
 --   timeline, replay threat timeline; replay                         M5.R
 --   analytics, export metrics and comparison; text and CSV export    M6.R (the export needs analytics and reports)
 --   multitarget      several mobs and dungeon focus (only if the probe allows it)   M7.R
---   profiles, heatmap role profiles (Data/Profiles.lua, the Profile card, /atw profile); heatmap   M8.R
+--   profiles, heatmap role profiles (Data/Profiles.lua, the Profile card, /atw profile); the heat of the monitor
+--                    rows, the overlay on the game's raid frames (UI/RaidOverlay.lua), the Heatmap card   M8.R
 local ADDON_NAME, ns = ...
 ns = ns or {}
 ns.modules = ns.modules or {}

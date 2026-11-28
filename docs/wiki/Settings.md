@@ -133,6 +133,27 @@ Saved for the whole account, below *Monitor*. What it shows is on [[Dungeon Focu
 | Mobs followed | how many mobs at once, the monitored one included; saved when you release the slider | 2 to 12 | 8 |
 | Use enemy nameplates | finds mobs through the enemy nameplates; it shows mobs only while the game's enemy nameplates are on | on / off | on |
 
+## Heatmap
+
+> **Coming in `v0.8.0`**: built and tested offline, switched off in this version, not verified in game.
+
+Below *Dungeon Focus*. Both options are part of the [role profiles](#role-profiles). What they show is on
+[Threat Monitor → The heatmap](Threat-Monitor#the-heatmap).
+
+| Option | What it does | Default |
+|---|---|---|
+| Colour the monitor rows | each row of the monitor gets a light tint of its state; the icon and the word stay, an unknown row has none | on |
+| Mark the game's raid frames | marks over the game's own party and raid frames for Warning, Danger and aggro on a non-tank, drawn on top of them without changing them | **off** |
+
+Under the second option the card says what it found: *Raid frames found: 25*, *The game's raid frames are not shown*
+(not in a group, the game's raid frames hidden, or another addon's frames instead), or *The game's raid frames cannot be
+read here.* (the game does not let the addon read them: nothing is drawn). After a change of group during a fight it
+says the marks come back when the fight ends.
+
+**Turn the raid frame marks off** if the game reports a problem with an addon ("*action blocked by an addon*", frames
+that stop working in combat): they only read the game's frames and should not cause it, but they have not been tried in
+the game yet. Turning them off takes effect at once, without a reload; the tint of the rows does not depend on it.
+
 ## Alerts
 
 > **New in `v0.3.0`**, not verified in game.

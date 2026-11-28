@@ -34,6 +34,8 @@
 --   PIN_CHANGED(mobKey)             Data/TargetTracker.lua (M7.2), a mob pinned (nil: released).
 --   PROFILE_CHANGED(id, old, why)   Data/Profiles.lua (M8.2), a role profile applied ("role", "manual", "copy", "reset").
 --   PROFILE_ROLE_READ(role, reason) Data/Profiles.lua (M8.2), the player's assigned role read differs from the last read.
+--   RAID_FRAMES_READ(count, state)  UI/RaidOverlay.lua (M8.3), a copy of the game's raid frames found another number or
+--                                   capability state, or the marks hid after a roster change in combat.
 local ADDON_NAME, ns = ...
 ns = ns or {}
 ns.modules = ns.modules or {}

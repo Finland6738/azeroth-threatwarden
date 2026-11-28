@@ -20,7 +20,8 @@ local SAME = {
 		TIMELINE_PERCENT = true, TIMELINE_GROUP = true, REPLAY_SPEED_ITEM = true, REPLAY_TIME = true,
 		REPORTS_REPLAY = true, ANALYTICS_PCT_WHOLE = true, ANALYTICS_APPROX = true, ANALYTICS_PAGE = true,
 		ANALYTICS_HEADER = true, ANALYTICS_ENEMY_CLASS = true, ANALYTICS_AGG_PART = true, ANALYTICS_AGG_DATED = true,
-		ANALYTICS_MARK_CALCULATED = true, EXPORT_FORMAT_CSV = true, EXPORT_TITLE_TEXT = true },
+		ANALYTICS_MARK_CALCULATED = true, EXPORT_FORMAT_CSV = true, EXPORT_TITLE_TEXT = true,
+		HEATMAP_TITLE = true },
 }
 
 -- The checks, as functions that return a list of problems: the group at the end proves they find them. -----------

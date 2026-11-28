@@ -408,6 +408,7 @@ senza firma), **assente** (si cerca a runtime). In grassetto le voci il cui comp
 | `ui.PlaySound` | `PlaySound`, altrimenti `C_Sound.PlaySound` | esistenza | firma `(soundKitID, uiSoundSubType, …)` (sistema `Sound`); `Compat.PlaySound` (M3.2) | avviso sonoro (spento di predefinito, [SPEC-04 §1.4](SPEC-04-alerts-coach.md#14-canali)) | M3 | — |
 | `ui.CursorPosition` | `GetCursorPosition` | esistenza | globale | passaggio del mouse, clic e trascinamento sulla timeline (`Compat.CursorPosition`, [SPEC-05 §4.8](SPEC-05-recording-report-replay.md#48-il-widget-uitimelinelua-m53)) | M5 | da provare in gioco (scala) |
 | `ui.Modifiers` | `IsShiftKeyDown`, `IsControlKeyDown`, `IsAltKeyDown` | esistenza | globale | tasti del replay (`Compat.ModifierDown`, [SPEC-05 §5.5](SPEC-05-recording-report-replay.md#55-la-finestra-del-replay-uireplaywindowlua-m55)) | M5 | — |
+| `frames.Raid` | `CompactPartyFrameMember1`, `CompactRaidFrame1`, `CompactRaidGroup1Member1` (cercati con `rawget`, mai attraverso una metatabella) | lettura | assente (codice dell'interfaccia: il dump elenca le funzioni `CompactUnitFrame_*`, nessun frame per nome) | i riquadri del raid di Blizzard per la sovrapposizione (`Compat.RaidFrames.Collect`: dei riquadri `CompactPartyFrameMember1–5`, `CompactRaidFrame1–40`, `CompactRaidGroup1–8Member1–5` legge solo `unit`/`displayedUnit` con `rawget`, `IsVisible`, `GetRect`, `GetEffectiveScale` dei sistemi `SimpleScriptRegionAPI` e `SimpleFrameAPI`, fuori da `InCombatLockdown`; [SPEC-07 §3.3](SPEC-07-multi-target-heatmap-profiles.md#33-i-riquadri-del-raid-di-blizzard-uiraidoverlaylua), [ADR 0021](../adr/0021-raid-frames-are-only-overlaid-never-touched.md)); `missing` prima che il gioco li crei o con i riquadri di un altro addon | M8 | P11, gioco |
 
 Eventi del gioco (tutti nel dump con il loro payload), registrati solo attraverso `Core/Init.lua` e i moduli `Data/`
 con AceEvent: `ADDON_LOADED`, `PLAYER_LOGIN`, `PLAYER_ENTERING_WORLD` (`isInitialLogin`, `isReloadingUi`),
@@ -416,7 +417,11 @@ con AceEvent: `ADDON_LOADED`, `PLAYER_LOGIN`, `PLAYER_ENTERING_WORLD` (`isInitia
 (`unitTarget`), `PLAYER_TARGET_CHANGED`, `UNIT_TARGET`, `GROUP_ROSTER_UPDATE`, `UNIT_PET` (M2, **[probe P6, P7]**);
 `ENCOUNTER_START`, `ENCOUNTER_END`, `UNIT_DIED` (`unitGUID`), `PLAYER_DEAD` (M4, **[probe P7]**), registrati da
 `Data/Recorder.lua` con `PLAYER_LOGOUT` ([SPEC-05 §1.4, §1.6](SPEC-05-recording-report-replay.md#14-eventi)); in M4
-`PLAYER_ENTERING_WORLD` passa `isInitialLogin` e `isReloadingUi` nell'evento `ENTERING_WORLD` del Bus.
+`PLAYER_ENTERING_WORLD` passa `isInitialLogin` e `isReloadingUi` nell'evento `ENTERING_WORLD` del Bus. In M8.3, solo
+con l'interruttore `heatmap` e l'impostazione `heatmap.raidFrames` accesi: `GROUP_ROSTER_UPDATE` (`PartyInfo`) e
+`COMPACT_UNIT_FRAME_PROFILES_LOADED` (`CompactUnitFrames`) da `UI/RaidOverlay.lua`, `ADDON_ACTION_BLOCKED` e
+`ADDON_ACTION_FORBIDDEN` (`RestrictedActions`, payload `isTainted` cioè il nome dell'addon, e `function`) da
+`Core/Diagnostics.lua`, che li conta e basta ([SPEC-07 §3.5](SPEC-07-multi-target-heatmap-profiles.md#35-card-diagnostica-e-demo)).
 
 ### 8.3 Lettura normalizzata della threat (M1.4, usata da M2)
 

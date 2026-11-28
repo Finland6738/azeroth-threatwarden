@@ -523,6 +523,15 @@ trasparenza viene dal **passo**:
 - Le righe del **Dungeon Focus** (§2.3) **non** hanno calore in M8: il margine del tick dei mob sul tick del monitor è
   di circa il 2 % (M7.4); M8.6 può aggiungerlo se la misura lo permette, con una nota qui.
 - La demo (`/atw demo`) mostra il calore sulle righe inventate.
+- *M8.3*: fatto in `UI/ThreatList.lua` (`ThreatList.Heatmap`: `ALPHA`, `HYSTERESIS`, `HOLD` = 1 s, `SAFE_FROM` = 50,
+  `Step`, `For`). Il limite di un cambio al secondo vale **dentro lo stesso stato** (i due confini); un cambio dello
+  stato mostrato sposta il passo subito, perché lo stato ha già isteresi e permanenza (MON-10, MON-12): così l'entrata
+  in DANGER e il passaggio a UNKNOWN non sono mai in ritardo. Senza valore (`state`, una WARNING prevista sotto la metà,
+  il tank solo sul mob) il passo è il più basso dello stato: SAFE 0, WARNING 2. La memoria (passo, stato, unità, ora)
+  è una tabella per riga del modello, fatta una volta. La texture `w.heat` (strato `BACKGROUND` della riga) si crea solo
+  quando serve: con l'interruttore o l'impostazione spenti non esiste. Il colore si scrive solo quando cambia lo stato
+  della riga, la trasparenza solo quando cambia il passo; la dissolvenza solo per la stessa unità, altrimenti subito.
+  Misura offline (40 unità, 5 Hz, `Tests/long/test_monitor_budget.lua`): **+3 560** istruzioni per tick, 0 byte.
 
 ### 3.3 I riquadri del raid di Blizzard (`UI/RaidOverlay.lua`)
 
@@ -584,6 +593,29 @@ gioco).
 una raccolta con almeno un riquadro letto, `missing` quando nessun nome esiste, `restricted` quando le letture sono
 segrete o in errore, `unknown` prima della prima raccolta (ARC-12).
 
+*M8.3*, com'è fatto:
+
+- `Compat.RaidFrames.Collect(out)` cerca gli 85 nomi in quell'ordine (`NAMES`, `KINDS`), legge un riquadro sotto
+  `pcall` e con `rawget` per i campi, converte con `GetEffectiveScale` del riquadro diviso quello di `UIParent`, dà al
+  più 40 rettangoli (`MAX`) in una tabella riusata e rifiuta (`"combat"`, nulla letto, capacità invariata) se
+  `InCombatLockdown` è vero **o non risponde**. Un riquadro senza unità o non visibile conta come letto ma non dà un
+  rettangolo. La voce `frames.Raid` della tabella delle API cerca i primi tre nomi con `rawget`.
+- `UI/RaidOverlay.lua`: il segno ha **un bordo per stato** (WARNING, DANGER), dipinto una volta; un cambio di stato
+  mostra l'altro, così in combattimento nulla si ricolora. Il segno compare e sparisce **subito**, senza dissolvenza
+  (nessun movimento sopra i riquadri del gioco; la dissolvenza dei segni allocava a ogni comparsa). Il riquadro del
+  giocatore in un raid (`raidN` di `Compat.Group.RaidIndex`) è la riga `player`. Un segno si sceglie solo mentre il mob
+  del modello è quello del bersaglio (`ThreatModel.mobKey == TargetTracker.mobKey`).
+- Oltre al cambio del roster, **anche** `COMPACT_UNIT_FRAME_PROFILES_LOADED` e `DISPLAY_CHANGED` in combattimento
+  nascondono tutti i segni fino alla fine del combattimento (i riquadri possono essersi spostati e non si possono
+  rileggere); fuori dal combattimento ricopiano le posizioni. La copia ogni 2 s è un tick di `Core/Scheduler.lua` a
+  1 Hz (`raidoverlay`), acceso solo fuori dal combattimento, in un gruppo e con l'impostazione accesa.
+- Misura offline (40 riquadri, 5 Hz): **+1 925** istruzioni per tick sopra il calore, 0 byte. Il client finto
+  (`Tests/mock/55_raidframes.lua`) registra ogni lettura che non sia `IsVisible`, `GetRect` o `GetEffectiveScale`,
+  ogni scrittura, ogni metodo chiamato, ogni `hooksecurefunc` su un riquadro o su `CompactUnitFrame_*`, ogni chiamata a
+  `CompactUnitFrame_*`, ogni ancoraggio o genitore riferito a un riquadro: ogni test della sovrapposizione (e quello
+  del costo) controlla che il registro resti vuoto, e `Tests/test_api_boundary.lua` che nessun file dell'addon fuori da
+  `Core/Compat.lua` nomini un riquadro e che nessuno nomini `hooksecurefunc` o `CompactUnitFrame_`.
+
 ### 3.4 Impostazioni (schema 7 dell'account)
 
 | Percorso | Tipo | Predefinito | Uso |
@@ -606,6 +638,13 @@ predefiniti in un solo posto, `Config.HEATMAP_DEFAULTS` (Q29).
   combattimento (sì o no e quante volte), `ADDON_ACTION_BLOCKED` e `ADDON_ACTION_FORBIDDEN` visti da quando la
   sovrapposizione è accesa. Mai nomi.
 - **Demo**: righe con il calore, nessun segno sui riquadri.
+- *M8.3*: la card ha anche una nota sotto *Colour the monitor rows* (*Each row gets a light tint of its state, stronger
+  as it nears the next one. The icon and the word stay; an unknown row has no tint.*) e, quando i segni aspettano la
+  fine di un combattimento, *The group changed during the fight: the marks come back when it ends.* Lo stato sotto
+  l'interruttore compare solo con la sovrapposizione accesa e dopo la prima copia. La sezione *Heatmap* di `/atw debug`
+  la aggiunge `UI/RaidOverlay.lua` con l'interruttore acceso; i blocchi li conta `Core/Diagnostics.lua`
+  (`Diag.WatchActions`, `Diag.ActionSeen`: tutti e quelli che nominano l'addon, l'ultima funzione come parola fissa),
+  con gli eventi registrati solo mentre la sovrapposizione è accesa. Bus: `RAID_FRAMES_READ(count, state)`.
 
 ## 4. Profili e preset (M8.2)
 

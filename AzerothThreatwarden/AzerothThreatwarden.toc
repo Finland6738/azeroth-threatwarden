@@ -63,6 +63,7 @@ UI\Widgets\Threat.lua
 UI\CoachStrip.lua
 UI\FocusList.lua
 UI\ThreatList.lua
+UI\RaidOverlay.lua
 UI\DiagnosticsBox.lua
 UI\Window.lua
 UI\Launcher.lua

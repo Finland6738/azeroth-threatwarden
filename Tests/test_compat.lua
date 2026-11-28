@@ -22,11 +22,12 @@ local SPEC_IDS = {
 	"addon.Framerate", "addon.ErrorHandler", "ui.Reload", "ui.CreateFrame", "ui.CreateFont", "ui.CreateColor",
 	"ui.ScreenSize",
 	"ui.SettingsPanel", "ui.SpecialFrames", "ui.SlashCmdList", "ui.ClassColor", "ui.PlaySound", "ui.CursorPosition",
-	"ui.Modifiers",
+	"ui.Modifiers", "frames.Raid",
 }
 
 -- What the mock client does not imitate yet (Tests/mock headers): reported missing, never raised.
-local NOT_MOCKED = { ["ui.ClassColor"] = true }
+-- frames.Raid: the game's raid frames exist only when a test makes them (Tests/mock/55_raidframes.lua).
+local NOT_MOCKED = { ["ui.ClassColor"] = true, ["frames.Raid"] = true }
 
 describe("the API table (SPEC-01 §8.2, ARC-02)", function()
 	it("has every API of the specification, once, in its order", function()
@@ -764,3 +765,99 @@ describe("the modifier keys (Compat.ModifierDown, SPEC-05 §5.5)", function()
 	end)
 end)
 
+
+describe("the game's raid frames (Compat.RaidFrames.Collect, SPEC-07 §3.3, M8.3)", function()
+	local RF = function() return C().RaidFrames end
+
+	it("looks for the 85 names of the party, raid and grouped raid frames, in that order", function()
+		eq(#RF().NAMES, 85)
+		eq(RF().NAMES[1], "CompactPartyFrameMember1")
+		eq(RF().NAMES[6], "CompactRaidFrame1")
+		eq(RF().NAMES[46], "CompactRaidGroup1Member1")
+		eq(RF().NAMES[85], "CompactRaidGroup8Member5")
+		eq(RF().KINDS[1], "party") eq(RF().KINDS[6], "raid") eq(RF().KINDS[85], "group")
+		eq(RF().MAX, 40)
+	end)
+
+	it("reads unit, visibility and rectangle, in UIParent's coordinates, and nothing else", function()
+		Mock.raidFrames.Add("CompactPartyFrameMember1", { unit = "player", left = 10, bottom = 20, width = 60,
+			height = 30, scale = 0.5 })
+		Mock.raidFrames.Add("CompactRaidFrame3", { displayedUnit = "raid3", left = 100, bottom = 200, width = 72,
+			height = 36 })
+		Mock.raidFrames.Add("CompactRaidGroup2Member1", { unit = "raid7", visible = false })
+		local seen = {}
+		Mock.ns.Bus.On("CAPABILITY_CHANGED", function(id, state) seen[#seen + 1] = id .. "=" .. state end)
+		local out = {}
+		local count, state = RF().Collect(out)
+		eq(count, 2) eq(state, "available") eq(out.count, 2)
+		deepEq({ out[1].unit, out[1].left, out[1].bottom, out[1].width, out[1].height, out[1].kind },
+			{ "player", 5, 10, 30, 15, "party" })
+		deepEq({ out[2].unit, out[2].left, out[2].bottom, out[2].kind }, { "raid3", 100, 200, "raid" },
+			"displayedUnit when there is no unit")
+		local s = RF().stats
+		eq(s.party, 1) eq(s.raid, 1) eq(s.group, 1) eq(s.visible, 2) eq(s.failed, 0)
+		eq(C().Capability("raidFrames"), "available")
+		deepEq(seen, { "raidFrames=available" })
+		deepEq(Mock.raidFrames.log, {}, "no forbidden touch")
+	end)
+
+	it("reuses the places of its output and clears the ones it no longer fills", function()
+		Mock.raidFrames.Party({ "player", "party1", "party2" })
+		local out = {}
+		RF().Collect(out)
+		local first = out[1]
+		Mock.raidFrames.Get("CompactPartyFrameMember3").visible = false
+		eq(RF().Collect(out), 2)
+		eq(out[1], first)
+		isNil(out[3].unit)
+	end)
+
+	it("reads nothing in combat lockdown, or when the client cannot say", function()
+		Mock.raidFrames.Party({ "player" })
+		Mock.combat.Enter()
+		local out = {}
+		deepEq({ RF().Collect(out) }, { 0, "combat" })
+		isNil(out.count)
+		eq(RF().stats.collects, 0)
+		eq(C().Capability("raidFrames"), "unknown", "a refused read proves nothing (ARC-12)")
+		Mock.combat.Leave()
+		local saved1, saved2 = InCombatLockdown, C_RestrictedActions.InCombatLockdown
+		InCombatLockdown, C_RestrictedActions.InCombatLockdown = nil, nil
+		eq(select(2, RF().Collect(out)), "combat")
+		InCombatLockdown, C_RestrictedActions.InCombatLockdown = saved1, saved2
+		eq(select(2, RF().Collect(out)), "available")
+	end)
+
+	it("is missing without frames, restricted when every read is secret or fails", function()
+		local out = {}
+		deepEq({ RF().Collect(out) }, { 0, "missing" })
+		eq(C().Capability("raidFrames"), "missing")
+		Mock.raidFrames.Party({ "player", "party1" })
+		Mock.raidFrames.Get("CompactPartyFrameMember1").mode = "secret"
+		Mock.raidFrames.Get("CompactPartyFrameMember2").mode = "error"
+		deepEq({ RF().Collect(out) }, { 0, "restricted" })
+		eq(RF().stats.failed, 2)
+		eq(C().Capability("raidFrames"), "restricted")
+		Mock.raidFrames.Get("CompactPartyFrameMember2").mode = "ok"
+		deepEq({ RF().Collect(out) }, { 1, "available" }, "one readable frame is enough")
+		eq(#Mock.errors, 0)
+	end)
+
+	it("treats a secret frame, a secret unit or a frame that is not a table as absent", function()
+		Mock.raidFrames.Add("CompactPartyFrameMember1", { unit = Mock.Secret("string") })
+		CompactPartyFrameMember2 = Mock.Secret("table")
+		CompactPartyFrameMember3 = "a string"
+		local out = {}
+		eq(RF().Collect(out), 0)
+		eq(RF().stats.party, 1, "the first one is read: visible, without a unit")
+		CompactPartyFrameMember2, CompactPartyFrameMember3 = nil, nil
+	end)
+
+	it("is in the API table as frames.Raid, found with rawget", function()
+		eq(C().ApiState("frames.Raid"), "missing")
+		Mock.raidFrames.Party({ "player" })
+		C():Probe()
+		eq(C().ApiState("frames.Raid"), "available")
+		deepEq(Mock.raidFrames.log, {})
+	end)
+end)

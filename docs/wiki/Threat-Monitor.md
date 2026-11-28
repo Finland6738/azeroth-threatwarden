@@ -65,6 +65,49 @@ healing, or lower spell ranks), from **91 %** they stop damage or healing for a 
 [[alerts and the Coach|Alerts-and-Coach]] say so. You can change them in [Settings](Settings#monitor); if you had never
 changed them, the old 80 % and 95 % became 82 % and 91 % with this version, while thresholds you chose stay yours. A state rises at once and falls only after a second, so it does not flicker.
 
+## The heatmap
+
+> **Coming in `v0.8.0`**: built and tested offline, switched off in this version, not verified in game.
+
+![The heatmap of the rows: a tint of each state, stronger near the next one](../specs/mockups/previews/monitor-heat-nebula.webp)
+
+**The rows.** Each row gets a light tint of its own state behind its name, bar and badge, stronger as it nears the next
+state. It only repeats what the badge says: the icon and the word stay, and a row whose state is **Unknown** has no tint
+at all.
+
+| Tint | When |
+|---|---|
+| none | Unknown; Safe below 50 % (for the tank holding the mob: the second below 50 %); Safe when the game gives only states |
+| very light | Safe from 50 % |
+| light | Warning below the middle of the two thresholds (86.5 % with 82 and 91), or when the game gives only states |
+| medium | Warning from that middle |
+| strong | Danger, and the row of someone who holds the mob without being a tank |
+
+A row changes tint at most once a second while its state stays the same, and a border has 2 points of margin, so the
+tint does not flicker; a change of state (Danger above all) changes it at once. The change fades in 120 ms when
+animations are on; it never flashes. The text stays readable on the strongest tint in every theme. The rows of the
+[[Dungeon Focus|Dungeon-Focus]] have no tint. The [demo](#demo-mode) shows it too.
+
+**The game's raid frames (off by default).** With *Mark the game's raid frames* on, the addon draws a **mark** over the
+game's own party and raid frames (the *Compact Raid Frames*) of whoever is in **Warning** or **Danger**, or holds the mob
+without being a tank: a border of their state's colour and a small badge with the icon and the word on the top edge.
+Safe and Unknown get nothing. The marks never take the mouse: clicks, menus and click-casting stay the game's. They are
+not shown in the demo.
+
+How it stays out of the game's way: the marks live in a separate frame of the addon on top of the screen. The addon
+never changes, hooks or attaches anything to the game's frames: out of combat it only **reads** where they are and whose
+they are, and copies that. In combat the places stay as they were copied; if the group changes during a fight (someone
+joins, leaves or moves) the frames may have moved, so **every mark hides until the fight ends**. Frames of other addons
+that replace the game's raid frames get no marks.
+
+> **The risk, said plainly.** The game's raid frames are protected code. An addon that writes into them can make the
+> game block an action ("*action blocked by an addon*") or break the frames in combat; this one only reads them and
+> should not, but it has **not been tried in the game yet**. If the game ever reports a problem with an addon while the
+> marks are on, **turn them off**: [Settings → Heatmap](Settings#heatmap) → *Mark the game's raid frames*. `/atw debug`
+> (section *Heatmap*) counts any blocked or forbidden action seen while the marks are on; please include it in a
+> [[bug report|Reporting-Bugs-and-Feedback]]. If the game blames the marks even once, the option will be removed and the
+> tint of the rows stays.
+
 ## When the game hides the numbers
 
 ![State only: states without percentages](../specs/mockups/previews/monitor-state-nebula.webp)

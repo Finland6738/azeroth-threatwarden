@@ -1031,4 +1031,14 @@ ns.Locale.Register("itIT", {
 	CMD_PROFILE_PENDING = "Profilo %s: vale dopo il combattimento.",
 	CMD_PROFILE_AUTO = "Il tuo profilo torna a seguire il tuo ruolo nel gruppo.",
 	CMD_PROFILE_UNKNOWN = "Profilo sconosciuto: %s. Usa tank, healer, dps o auto.",
+	-- la heatmap (M8.3, SPEC-07 §3.5)
+	HEATMAP_TITLE = "Heatmap",
+	HEATMAP_ROWS = "Colora le righe del monitor",
+	HEATMAP_ROWS_NOTE = "Ogni riga prende una tinta leggera del suo stato, più forte man mano che si avvicina al successivo. Icona e parola restano; una riga sconosciuta non ha tinta.",
+	HEATMAP_RAID = "Segna i riquadri del raid del gioco",
+	HEATMAP_RAID_NOTE = "Disegna sopra i riquadri del gruppo e del raid del gioco, senza cambiarli. Spegnilo se il gioco segnala un problema con un addon.",
+	HEATMAP_RAID_FOUND = "Riquadri del raid trovati: %d",
+	HEATMAP_RAID_NOT_SHOWN = "I riquadri del raid del gioco non sono visibili",
+	HEATMAP_RAID_RESTRICTED = "Qui i riquadri del raid del gioco non si possono leggere.",
+	HEATMAP_RAID_SUSPENDED = "Il gruppo è cambiato durante il combattimento: i segni tornano quando finisce.",
 })

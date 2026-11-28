@@ -4,7 +4,8 @@
 -- Changes: the cards are Threatwarden's own (Appearance, Language, Profile while the `profiles` switch is on (SPEC-07
 -- §4.6), Window, Monitor while the `monitor` switch is on,
 -- Alerts while the `alerts` switch is on (SPEC-04 §4.2, its Coach switch with `coach`), Recording while the
--- `recording` switch is on (SPEC-05 §3.6), Reset); no model file, because every value
+-- `recording` switch is on (SPEC-05 §3.6), Heatmap while the `heatmap` switch is on (SPEC-07 §3.5), Reset); no model
+-- file, because every value
 -- is a path of Core/Config.lua; the cards follow the width they get; the scale is saved when the slider is released.
 --
 -- Every control writes through Config:Set and the change applies at once through CONFIG_CHANGED (Theme, Motion,
@@ -21,7 +22,8 @@
 --                                          has none.
 --
 -- Bus: emits SETTINGS_CHANGED(key) after the player changes an option; listens CONFIG_LOADED, CONFIG_CHANGED,
--- THEME_CHANGED, DEMO_CHANGED, ENTERING_WORLD, PROFILE_CHANGED, PROFILE_ROLE_READ and, with the Recording card, SESSIONS_CHANGED, SESSION_STARTED and
+-- THEME_CHANGED, DEMO_CHANGED, ENTERING_WORLD, PROFILE_CHANGED, PROFILE_ROLE_READ, RAID_FRAMES_READ and, with the
+-- Recording card, SESSIONS_CHANGED, SESSION_STARTED and
 -- SESSION_ENDED; ENTERING_WORLD (the game's own threat warning is read again) to repaint the pages
 -- on screen.
 local ADDON_NAME, ns = ...
@@ -50,6 +52,7 @@ local function alertsOn() return ns.Features ~= nil and ns.Features.On("alerts")
 local function coachOn() return ns.Features ~= nil and ns.Features.On("coach") end
 local function recordingOn() return ns.Features ~= nil and ns.Features.On("recording") end
 local function focusOn() return ns.Features ~= nil and ns.Features.On("multitarget") end
+local function heatmapOn() return ns.Features ~= nil and ns.Features.On("heatmap") end
 -- the Profile card: the `profiles` switch was on at login (Data/Profiles.lua registered its events)
 local function profilesOn() return ns.Profiles ~= nil and ns.Profiles.Enabled() end
 
@@ -527,6 +530,44 @@ local function refreshFocus(f)
 	f.mobsNameplates.control:SetOn(value("nameplates") == true, true)
 end
 
+local HEAT = "account.settings.heatmap."
+
+-- The *Heatmap* card (SPEC-07 §3.5), only with the `heatmap` switch on: the heat of the monitor rows, the marks over
+-- the game's raid frames with their risk said, and under them what the overlay found (UI/RaidOverlay.lua).
+local function buildHeatmap(view, f, page)
+	local card = View.StackCard(page.frame)
+	View.CardText(card, "H2", "text-1", L["HEATMAP_TITLE"], 0)
+	f.heatRows = switch(view, card, HEAT .. "rows", L["HEATMAP_ROWS"])
+	View.CardText(card, "Small", "text-3", L["HEATMAP_ROWS_NOTE"], 2)
+	f.heatRaid = switch(view, card, HEAT .. "raidFrames", L["HEATMAP_RAID"])
+	View.CardText(card, "Small", "text-3", L["HEATMAP_RAID_NOTE"], 2)
+	f.heatFound = View.CardText(card, "Small", "text-2", "", 8)
+	f.heatFound:Hide()
+	f.heatSuspended = View.CardText(card, "Small", "warn", L["HEATMAP_RAID_SUSPENDED"], 4)
+	f.heatSuspended:Hide()
+	statusLine(card)
+	return card
+end
+
+local function refreshHeatmap(f)
+	local defaults = ns.Config.HEATMAP_DEFAULTS
+	local function value(key)
+		local v = get(HEAT .. key)
+		if type(v) ~= "boolean" then v = defaults[key] end
+		return v
+	end
+	f.heatRows.control:SetOn(value("rows") == true, true)
+	f.heatRaid.control:SetOn(value("raidFrames") == true, true)
+	local Overlay = ns.RaidOverlay
+	local key, count
+	if Overlay then key, count = Overlay.Status() end
+	local text = key and L[key] or ""
+	if count then text = text:format(count) end
+	f.heatFound:SetText(text)
+	f.heatFound:SetShown(text ~= "")
+	f.heatSuspended:SetShown(Overlay ~= nil and Overlay.Active() and Overlay.suspended == true)
+end
+
 local ALERTS = "account.settings.alerts."
 
 -- The *Alerts* card (SPEC-04 §4.2): the channels stay on screen but inactive while the alerts are off; the Coach's
@@ -749,6 +790,7 @@ local function refreshSettings(view, f)
 	if f.profile then refreshProfile(f) end
 	if f.warning then refreshMonitor(f) end
 	if f.mobsMax then refreshFocus(f) end
+	if f.heatRows then refreshHeatmap(f) end
 	if f.cooldown then refreshAlerts(f) end
 	if f.when then refreshRecording(f) end
 
@@ -779,6 +821,10 @@ local function buildSettingsPage(holder, view)
 	if focusOn() then
 		f.focusCard = buildFocus(view, f, page)
 		page.cards[#page.cards + 1] = f.focusCard
+	end
+	if heatmapOn() then
+		f.heatmapCard = buildHeatmap(view, f, page)
+		page.cards[#page.cards + 1] = f.heatmapCard
 	end
 	if alertsOn() then
 		f.alertsCard = buildAlerts(view, f, page)
@@ -947,6 +993,7 @@ if ns.Bus then
 	ns.Bus.On("ENTERING_WORLD", View.RefreshAll)
 	ns.Bus.On("PROFILE_CHANGED", View.RefreshAll)
 	ns.Bus.On("PROFILE_ROLE_READ", View.RefreshAll)
+	ns.Bus.On("RAID_FRAMES_READ", View.RefreshAll)
 end
 if ns.OnEnable then ns.OnEnable(function() View.RegisterPanel() end) end
 if ns.addon then

@@ -571,7 +571,7 @@ numeri in SPEC-01 §5.1.
 | Tick del monitor, 40 unità, finestra aperta: lavoro | ≤ 220 000 istruzioni | SPEC-01 §5.1 |
 | — allocazioni: solo monitor / con avvisi e Coach / con la registrazione | ≤ 48 / 160 / 1 200 byte | SPEC-01 §5.1 |
 | — tempo | ≤ 30 cicli di riferimento | SPEC-01 §5.1 |
-| Lo stesso con il calore delle righe e la sovrapposizione accesi (M8.3) | gli stessi budget; il calore aggiunge al più **8 000** istruzioni per tick (circa il 5 %), la sovrapposizione al più **15 000** e **0** byte dopo il riscaldamento | nuovo (M8.1) |
+| Lo stesso con il calore delle righe e la sovrapposizione accesi (M8.3) | gli stessi budget; il calore aggiunge al più **8 000** istruzioni per tick (circa il 5 %), la sovrapposizione al più **15 000** e **0** byte dopo il riscaldamento (tolleranza di misura 4 byte). Misurato in M8.3 a 5 Hz: 160 200 senza heatmap, +3 560 con il calore, +1 925 con la sovrapposizione di 40 riquadri, 0 byte in più | nuovo (M8.1) |
 | Tick di registrazione (40 unità) | 36 000 in media, 90 000 nel peggiore, 1 024 byte con i valori, 48 altrimenti | SPEC-01 §5.1 |
 | Tick dei mob con la lista | non oltre il tick del monitor con 40 unità; M8.6 cerca di riportare il margine ad almeno il **5 %** (oggi circa il 2 %) senza cambiare le costanti di Q26 | ADR 0019, M7.4 |
 | Lavoro in un solo frame fuori dai tick (clic, apertura di un report o di un replay) | ≤ **1 000 000** istruzioni per frame: oltre si spezza su più frame (ARC-07). Oggi la decodifica di una registrazione al limite (30 000 righe, circa 6 milioni) non regge: M8.6 la spezza | nuovo (M8.1) |

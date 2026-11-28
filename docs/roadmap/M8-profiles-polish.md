@@ -114,10 +114,21 @@ every key M8.3 and M8.4 need, even with the switches off.
   `HEATMAP_*` keys; the TOC; the wiki *Threat Monitor* and *Settings* pages (both languages) with the taint risk and
   how to turn the option off; previews `monitor-heat` (three themes).
 - Done when:
-  - [ ] Every state and mode gives the heat step of SPEC-07 §3.2 and UNKNOWN never has heat; the overlay never makes
+  - [x] Every state and mode gives the heat step of SPEC-07 §3.2 and UNKNOWN never has heat; the overlay never makes
     a forbidden call on the mock's frames (the test fails on any), copies positions only out of combat and hides after
     a roster change in combat; the contrast of text on the heat holds in every theme; the monitor tick with the heat
     and the overlay stays within SPEC-08 §8; with the switch or the settings off nothing is created or registered.
+- *Done (2026-11-28): behind `heatmap` (off) the row heat in `UI/ThreatList.lua` (`ThreatList.Heatmap`: `ALPHA`,
+  `HYSTERESIS`, `HOLD`, `Step`, `For`; a change of state moves the step at once, the one-a-second limit is inside a
+  state); `Compat.RaidFrames.Collect` (rawget, three reads, refused in or without an answer of combat lockdown), the API
+  entry `frames.Raid` and the capability `raidFrames`; `UI/RaidOverlay.lua` (`AzerothThreatwardenRaidOverlay` on
+  `UIParent`, a pool of 40 marks with a border per state, no fade, copies at the events and every 2 s through a 1 Hz
+  Scheduler tick, hidden after a roster, frame-profile or screen change in combat, nothing in the demo); the *Heatmap*
+  card; the *Heatmap* section with `Diag.WatchActions`/`ActionSeen`; `StateBadge{ small = true }`; `RAID_FRAMES_READ`
+  on the Bus; the mock's compact frames with the log of every forbidden touch (`Tests/mock/55_raidframes.lua`); the
+  `HEATMAP_*` keys; previews `monitor-heat` (three themes, both languages). Contrast on the heat in ui-style §3.8
+  (0.18 holds everywhere; the bar's fill sits on its opaque track). Offline cost at 5 Hz: +3 560 instructions for the
+  heat, +1 925 for the overlay, 0 bytes.*
 - Tests: `test_heatmap.lua`; additions to `test_theme.lua`, `test_compat.lua`, `test_api_boundary.lua`,
   `test_settings.lua`, `test_diagnostics.lua`, `Tests/long/test_monitor_budget.lua` (SPEC-07 §6).
 - Real client: the frame names on Forever and whether their geometry can be read (P11); the marks in place at common

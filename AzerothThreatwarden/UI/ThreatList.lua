@@ -20,6 +20,9 @@
 -- With the `alerts` switch on, a right click on a row of another unit opens *Mute alerts about this unit* (SPEC-04
 -- §1.5, until the /reload); the tooltip of a muted row says so.
 -- During the demo (Core/Demo.lua) the data modules it reads are the invented ones and the footer says so.
+-- With the `heatmap` switch on and `account.settings.heatmap.rows` on (M8.3, SPEC-07 §3.2, ui-style §3.8), each row
+-- gets a tint of its state behind its content, in five steps (ThreatList.Heatmap): it repeats the badge, never replaces
+-- it, and an UNKNOWN row has none. With the switch or the setting off no heat texture is made.
 local ADDON_NAME, ns = ...
 ns = ns or {}
 ns.modules = ns.modules or {}
@@ -27,7 +30,7 @@ ns.modules = ns.modules or {}
 local ThreatList = {}
 ns.ThreatList, ns.modules.ThreatList = ThreatList, ThreatList
 
-local L, Widgets, Theme, Assets, Compat = ns.L, ns.Widgets, ns.Theme, ns.Assets, ns.Compat
+local L, Widgets, Theme, Assets, Compat, Motion = ns.L, ns.Widgets, ns.Theme, ns.Assets, ns.Compat, ns.Motion
 local type, pairs, ipairs, tostring = type, pairs, ipairs, tostring
 local floor, max, min, sort = math.floor, math.max, math.min, table.sort
 
@@ -128,6 +131,109 @@ function ThreatList.NextSort()
 end
 
 function ThreatList.SetPinSelf(on) store(PIN_PATH, on == true) return true end
+
+---------------------------------------------------------------------------------------------------------------------
+-- The heat of the rows (M8.3, SPEC-07 §3.2, SPEC-09 Q29)
+---------------------------------------------------------------------------------------------------------------------
+-- The step of a row comes from the state it SHOWS (after hysteresis and dwell, SPEC-03 §2.4) and, in `values`, from the
+-- value the state compares (the scaled %; for the tank holding the mob the second's s = 100 - margin):
+--   0  UNKNOWN; SAFE below 50 %; SAFE in `state`               (no heat)
+--   1  SAFE from 50 %
+--   2  WARNING below the middle of the thresholds (W + D) / 2; WARNING in `state`; WARNING without a value
+--   3  WARNING from that middle
+--   4  DANGER, and the row of a unit that holds the mob without being a tank
+-- Inside one state the two borders have a hysteresis of HYSTERESIS points (a higher step is left only that far below
+-- its border), and a row changes step at most once every HOLD seconds. A change of the shown state moves the step at
+-- once (the state has its own hysteresis and dwell): entering DANGER, and going UNKNOWN, are never late. The colour is
+-- the token of the state (UI/Theme.lua); the step gives the alpha, faded in Motion.FAST when animations are on, never
+-- flashing. The memory of a row is kept by data row (Data/ThreatModel.lua's pooled rows): no allocation per update.
+local Heatmap = {
+	ALPHA = { [0] = 0, 0.06, 0.10, 0.14, 0.18 },   -- ui-style §3.8; the contrast of the text on step 4 is in test_theme
+	HYSTERESIS = 2,                                -- points, inside one state
+	HOLD = 1,                                      -- seconds between two changes of step inside one state
+	SAFE_FROM = 50,                                -- percent: a SAFE row from here has step 1
+}
+ThreatList.Heatmap, ns.Heatmap = Heatmap, Heatmap
+local HEAT_PATH = "account.settings.heatmap.rows"
+local heatOn = false
+
+-- True while the rows get heat: the `heatmap` switch and the setting (read when it changes, never per redraw).
+local function readHeat()
+	local v = setting(HEAT_PATH)
+	if type(v) ~= "boolean" then v = ns.Config.HEATMAP_DEFAULTS.rows end
+	heatOn = ns.Features ~= nil and ns.Features.On("heatmap") and v == true
+end
+function Heatmap.RowsOn() return heatOn end
+
+-- The value the step compares, nil when it is not known.
+local function heatValue(row)
+	local rec = row.record
+	if rec.mode ~= "values" then return nil end
+	if row.isHolder and row.isTank then
+		local m = row.margin
+		if type(m) == "number" then return 100 - m end
+		return nil
+	end
+	local p = rec.scaledPercent
+	if type(p) == "number" then return p end
+	return nil
+end
+
+-- The step of `row` from its shown state; `prev` is the step it had in the same state (nil: none), for the
+-- hysteresis of the borders.
+function Heatmap.Step(row, prev)
+	local state = row.state
+	if state == nil or state == "UNKNOWN" then return 0 end
+	if state == "DANGER" or (row.isHolder and not row.isTank) then return 4 end
+	local v = heatValue(row)
+	local h = Heatmap.HYSTERESIS
+	if state == "WARNING" then
+		if not v then return 2 end
+		local warning, danger = ns.ThreatState.Thresholds()
+		local mid = (warning + danger) / 2
+		if v >= mid or (prev == 3 and v >= mid - h) then return 3 end
+		return 2
+	end
+	if not v then return 0 end
+	local from = Heatmap.SAFE_FROM
+	if v >= from or (prev == 1 and v >= from - h) then return 1 end
+	return 0
+end
+
+local step = Heatmap.Step
+local memo = {}   -- data row -> { unit, state, step, at }: one per pooled row, made once
+
+-- The step shown for `row` at `now`: a new unit or a new state at once, else at most one change every HOLD seconds.
+-- UNKNOWN, DANGER and the state-only rows have one step per state: nothing to compare until the state changes.
+function Heatmap.For(row, now)
+	local m = memo[row]
+	if not m then
+		m = {}
+		memo[row] = m
+	end
+	local unit, state, prev = row.record.unitKey, row.state or "UNKNOWN", m.step
+	if prev == nil or m.unit ~= unit or m.state ~= state then
+		local s = step(row, nil)
+		m.unit, m.state, m.step, m.at = unit, state, s, now
+		return s
+	end
+	if state == "UNKNOWN" or state == "DANGER" or row.record.mode ~= "values" then return prev end
+	local s = step(row, prev)
+	if s ~= prev and now - m.at >= Heatmap.HOLD - 1e-6 then
+		m.step, m.at = s, now
+		return s
+	end
+	return prev
+end
+
+-- Forgets every row (the setting turned off).
+function Heatmap.Reset()
+	for _, m in pairs(memo) do m.unit, m.state, m.step, m.at = nil, nil, nil, nil end
+end
+
+-- The animations preference, read when it changes (Theme.AnimationsOn reads the saved data).
+local animOn = true
+local function readAnimations() animOn = Theme.AnimationsOn() end
 
 ---------------------------------------------------------------------------------------------------------------------
 -- Names
@@ -523,6 +629,8 @@ end
 -- The game's colour of a class file as { r, g, b }, asked once per class: the rows change class at every new order
 -- (ARC-06). nil when unknown (asked again the next time).
 local classColors = {}
+local paintHeat
+local heatFor, ALPHA = Heatmap.For, Heatmap.ALPHA
 local function classColor(classFile)
 	if not classFile then return nil end
 	local color = classColors[classFile]
@@ -534,6 +642,38 @@ local function classColor(classFile)
 		end
 	end
 	return color
+end
+
+-- The heat of a row widget (made the first time a row needs it): the state's token at the alpha of its step, faded
+-- while it shows the same unit, set at once when the widget shows another one.
+paintHeat = function(w, row, id, now)
+	local heat = w.heat
+	if not heatOn then
+		if heat and w.heatAlpha ~= 0 then
+			w.heatAlpha = 0
+			Motion.Fade(heat, 0, 0)
+		end
+		return
+	end
+	if not heat then
+		heat = w:CreateTexture(nil, "BACKGROUND")
+		heat:SetAllPoints(w)
+		heat:SetAlpha(0)
+		w.heat, w.heatAlpha = heat, 0
+	end
+	local s = heatFor(row, now)
+	local unit = row.record.unitKey
+	local same = w.heatUnit == unit
+	w.heatUnit, w.heatStep = unit, s
+	if s > 0 and w.heatState ~= id then
+		w.heatState = id
+		Theme.Fill(heat, Theme.State(id).token)
+	end
+	local alpha = ALPHA[s]
+	if w.heatAlpha ~= alpha then
+		w.heatAlpha = alpha
+		Motion.Fade(heat, alpha, (same and animOn) and Motion.FAST or 0)
+	end
 end
 
 local function fillRow(view, w, row)
@@ -613,6 +753,8 @@ local function fillRow(view, w, row)
 	show(w.trend, c.showTrend and arrow ~= nil)
 	show(w.time, c.showTrend and eta ~= nil)
 	if eta then setText(view, w.time, eta) end
+
+	if heatOn or w.heat then paintHeat(w, row, id, view.now or Compat.Now()) end
 
 	if Widgets.Tooltip.Owner() == w then
 		Widgets.Tooltip.Show(w, ThreatList.RowTooltip(row), "TOP")
@@ -818,8 +960,9 @@ local function drawRows(view, situation)
 	local places = max(1, floor(height / ThreatList.ROW_HEIGHT))
 	local total, used = 0, 0
 	local order
+	view.now = Compat.Now()
 	if situation == "list" or situation == "ended" then
-		order = view:Order(Compat.Now())
+		order = view:Order(view.now)
 		total = #order
 	end
 	if total > 0 then
@@ -1128,12 +1271,23 @@ if ns.Bus then
 			view:Redraw()
 		end
 	end)
-	Bus.On("CONFIG_LOADED", readSettings)
+	Bus.On("CONFIG_LOADED", function()
+		readSettings()
+		readHeat()
+		readAnimations()
+	end)
 	Bus.On("STATE_CHANGED", function(_, _, _, new)
 		local view = ThreatList.view
 		if view and new == "DANGER" then view.forceSort = true end
 	end)
 	Bus.On("CONFIG_CHANGED", function(path)
+		if path == "account.settings.animations" then readAnimations() end
+		if path == HEAT_PATH then
+			readHeat()
+			if not heatOn then Heatmap.Reset() end
+			redraw()
+			return
+		end
 		if type(path) ~= "string" or path:sub(1, #MONITOR_PREFIX) ~= MONITOR_PREFIX then return end
 		override[path] = nil
 		readSettings()

@@ -90,6 +90,33 @@ local function quietWidgets()
 	-- the mock runs the show and hide scripts of a frame and its children through tables of arguments
 	widget.Show = function(self) self._shown = true end
 	widget.Hide = function(self) self._shown = false end
+	-- the mock's animations make a closure and a table at every call of a setter (the fades of the heat, M8.3): the
+	-- same calls, written into place
+	local anim = UIParent:CreateAnimationGroup():CreateAnimation("Alpha")
+	local meta, made = getmetatable(anim), {}
+	meta.__index = function(_, key)
+		local fn = made[key]
+		if not fn then
+			local field = key:sub(4)
+			if key:sub(1, 3) == "Set" then
+				fn = function(me, v)
+					local t = me._set[field]
+					if not t then
+						t = {}
+						me._set[field] = t
+					end
+					t[1] = v
+					return me
+				end
+			elseif key:sub(1, 3) == "Get" then
+				fn = function(me) local t = me._set[field]; if t then return t[1] end end
+			else
+				fn = function(me) return me end
+			end
+			made[key] = fn
+		end
+		return fn
+	end
 end
 
 -- A fixed piece of plain Lua of the kind the pipeline does (calls under pcall, table reads and writes, arithmetic): the
@@ -314,4 +341,60 @@ describe("the budget of one recording tick in a raid of 40", function()
 				("allocation: %.1f B per tick, budget %d"):format(bytes, RECORD.bytes[outcome]))
 		end)
 	end
+end)
+
+-- The heat of the rows and the overlay on the game's raid frames (M8.3, SPEC-08 §8, SPEC-07 §3.1 HM-06): the same tick
+-- of the monitor alone at 5 Hz, measured without the heatmap, with the heat of the rows, and with the overlay too (40
+-- frames of the game, Tests/mock/55_raidframes.lua, copied before the fight). The same budgets as the monitor alone;
+-- the heat may add at most HEAT instructions per tick and the overlay at most OVERLAY more, and neither any byte after
+-- the warm-up (within the noise of the measure, NOISE bytes).
+local HEAT, OVERLAY, NOISE = 8000, 15000, 4
+local heatMeasures = {}
+
+describe("the budget of one tick in a raid of 40 with the heatmap (M8.3)", function()
+	before_boot(function(M)
+		M.features = { monitor = true, alerts = false, coach = false, recording = false, reports = false,
+			heatmap = true, multitarget = false }
+		local units = {}
+		for i = 1, 40 do units[i] = "raid" .. i end
+		M.raidFrames.Raid(units, true)
+	end)
+
+	for _, case in ipairs({ { id = "off", rows = false, raid = false }, { id = "rows", rows = true, raid = false },
+		{ id = "overlay", rows = true, raid = true } }) do
+		it("measures the tick at 5 Hz: " .. case.id, function()
+			local ns = Mock.ns
+			truthy(ns.Config:Set("account.settings.heatmap.rows", case.rows))
+			truthy(ns.Config:Set("account.settings.heatmap.raidFrames", case.raid))
+			local tick = setup(5, false, false)
+			if case.raid then
+				truthy(ns.RaidOverlay.Active())
+				eq(ns.RaidOverlay.count, 40)
+				truthy(ns.RaidOverlay.shown > 0, "marks shown in the fight: " .. ns.RaidOverlay.shown)
+			end
+			local instructions, bytes, time, ms = measure(tick)
+			heatMeasures[case.id] = { instructions = instructions, bytes = bytes }
+			eq(#Mock.errors, 0)
+			eq(ns.Bus.errorCount, 0)
+			deepEq(Mock.raidFrames.log, {}, "no forbidden touch of the game's frames")
+			T.log(("heatmap %s: %.2f ms/tick (time %.2f), %.0f instructions, %.1f B/tick"):format(case.id, ms, time,
+				instructions, bytes))
+			truthy(instructions <= BUDGET.instructions,
+				("work: %.0f instructions per tick, budget %d"):format(instructions, BUDGET.instructions))
+			truthy(bytes <= BUDGET.bytes, ("allocation: %.1f B per tick, budget %d"):format(bytes, BUDGET.bytes))
+			truthy(time <= BUDGET.time, ("time: %.1f reference units per tick, budget %d"):format(time, BUDGET.time))
+		end)
+	end
+
+	it("adds at most 8 000 instructions for the heat and 15 000 for the overlay, and no allocation", function()
+		local off, rows, overlay = heatMeasures.off, heatMeasures.rows, heatMeasures.overlay
+		truthy(off and rows and overlay, "the three measures ran")
+		local heat, marks = rows.instructions - off.instructions, overlay.instructions - rows.instructions
+		T.log(("heat of the rows: %+.0f instructions, %+.1f B; overlay: %+.0f instructions, %+.1f B per tick"):format(heat,
+			rows.bytes - off.bytes, marks, overlay.bytes - rows.bytes))
+		truthy(heat <= HEAT, ("heat: %.0f instructions per tick, budget %d"):format(heat, HEAT))
+		truthy(marks <= OVERLAY, ("overlay: %.0f instructions per tick, budget %d"):format(marks, OVERLAY))
+		truthy(rows.bytes - off.bytes <= NOISE, ("heat: %.1f B per tick more"):format(rows.bytes - off.bytes))
+		truthy(overlay.bytes - rows.bytes <= NOISE, ("overlay: %.1f B per tick more"):format(overlay.bytes - rows.bytes))
+	end)
 end)

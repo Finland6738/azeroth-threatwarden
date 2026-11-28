@@ -19,18 +19,22 @@ end
 -- --- StateBadge -------------------------------------------------------------------------------------------------------
 
 Widgets.BADGE_HEIGHT, Widgets.BADGE_HEIGHT_LARGE = 14, 18   -- in a row; in the header of the mob
+Widgets.BADGE_HEIGHT_SMALL = 12                             -- on a mark over the game's raid frames (M8.3)
 
--- A pill filled with the state colour, with the icon and the word of the state in `on-state`. opts: large, state.
+-- A pill filled with the state colour, with the icon and the word of the state in `on-state`. opts: large, small
+-- (12 pt high with an 8 pt icon, ui-style §3.8), state.
 -- :SetState("safe" | "warning" | "danger" | "unknown"; anything else is unknown), :GetState().
 function Widgets.StateBadge(parent, opts)
 	opts = opts or {}
-	local height = opts.large and Widgets.BADGE_HEIGHT_LARGE or Widgets.BADGE_HEIGHT
+	local height = opts.large and Widgets.BADGE_HEIGHT_LARGE or (opts.small and Widgets.BADGE_HEIGHT_SMALL)
+		or Widgets.BADGE_HEIGHT
+	local iconSize = opts.small and 8 or 10
 	local f = CreateFrame("Frame", nil, parent)
 	f:SetHeight(height)
 	f.fill = Theme.Slice(f, "rr_fill_8", "state-unknown", "BACKGROUND")
 	f.fill:SetAllPoints(f)
-	f.icon = stateIcon(f, 10, "on-state")
-	f.icon:SetPoint("LEFT", f, "LEFT", 5, 0)
+	f.icon = stateIcon(f, iconSize, "on-state")
+	f.icon:SetPoint("LEFT", f, "LEFT", opts.small and 4 or 5, 0)
 	f.label = Theme.NewText(f, "Badge", "on-state")
 	f.label:SetPoint("LEFT", f.icon, "RIGHT", 3, 0)
 	function f:SetState(id)
@@ -41,7 +45,7 @@ function Widgets.StateBadge(parent, opts)
 		Theme.Tint(self.fill, def.token)
 		self.icon:SetTexCoord(Assets.IconCoords(def.icon))
 		self.label:SetText(L[def.labelKey])
-		self:SetWidth(max(height * 2, self.label:GetStringWidth() + 5 + 10 + 3 + 7))
+		self:SetWidth(max(height * 2, self.label:GetStringWidth() + 5 + iconSize + 3 + 7))
 	end
 	function f:GetState() return self.state end
 	f:SetState(opts.state)

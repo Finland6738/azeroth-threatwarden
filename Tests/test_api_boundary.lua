@@ -232,3 +232,34 @@ describe("the role profiles (M8.2)", function()
 		truthy(Mock.ReadSource(ADDON .. "Core/Compat.lua"):find("UnitGroupRolesAssigned", 1, true))
 	end)
 end)
+
+describe("the heatmap (M8.3, ADR 0021)", function()
+	it("UI/RaidOverlay.lua is loaded and names no game API; the frames of the game are named only by Core/Compat.lua",
+		function()
+		local files = {}
+		for _, file in ipairs(addonFiles()) do files[file] = true end
+		truthy(files[ADDON .. "UI/RaidOverlay.lua"])
+		local game = gameNames()
+		for _, name in ipairs({ "UI/RaidOverlay.lua", "UI/ThreatList.lua", "UI/Settings.lua" }) do
+			deepEq(violations(name, Mock.ReadSource(ADDON .. name), game, true), {}, name)
+		end
+		for _, file in ipairs(addonFiles()) do
+			if file ~= ADDON .. "Core/Compat.lua" then
+				local code = codeOnly(Mock.ReadSource(file))
+				for _, prefix in ipairs({ "CompactParty", "CompactRaid", "CompactUnitFrame" }) do
+					falsy(code:find(prefix, 1, true), file .. " names no frame of the game")
+				end
+			end
+		end
+		truthy(Mock.ReadSource(ADDON .. "Core/Compat.lua"):find("CompactRaidGroup", 1, true))
+	end)
+
+	it("no file of the addon hooks, or calls a function of, the game's frames", function()
+		for _, file in ipairs(addonFiles()) do
+			local code = codeOnly(Mock.ReadSource(file))
+			falsy(code:find("hooksecurefunc", 1, true), file)
+			falsy(code:find("CompactUnitFrame_", 1, true), file)
+			falsy(code:find("HookScript", 1, true) and file:find("RaidOverlay", 1, true), file)
+		end
+	end)
+end)

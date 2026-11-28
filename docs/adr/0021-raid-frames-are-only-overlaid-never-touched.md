@@ -35,5 +35,8 @@ frame by name; the probe does not test them; the Blizzard frames already highlig
 - It covers only the game's frames; players with replacement raid frames see nothing there (the card says so).
 - Reading fields and geometry of secure frames is assumed harmless, as in the standard client: this is the residual
   risk the release checklist checks with the game's taint log.
+- M8.3 built it as decided, behind the `heatmap` switch: `Compat.RaidFrames.Collect` is the only code that touches the
+  frames (rawget and three reads, out of combat lockdown), the mock client logs every other touch and the tests fail on
+  any; a change of the frames' layout or of the screen in combat hides the marks too. Not yet checked in the game.
 - See [SPEC-07 §3.3](../specs/SPEC-07-multi-target-heatmap-profiles.md#33-i-riquadri-del-raid-di-blizzard-uiraidoverlaylua)
   (Italian) and SPEC-09 R14.

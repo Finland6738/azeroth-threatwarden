@@ -200,6 +200,71 @@ function Diag.ErrorLines()
 	return lines
 end
 
+---------------------------------------------------------------------------------------------------------------------
+-- Blocked and forbidden actions (M8.3, SPEC-07 §3.5, SPEC-09 Q29)
+---------------------------------------------------------------------------------------------------------------------
+-- While the overlay on the game's raid frames is on (UI/RaidOverlay.lua calls WatchActions(true)), the client's
+-- ADDON_ACTION_BLOCKED and ADDON_ACTION_FORBIDDEN (RestrictedActions in the dump: the addon's name and the function)
+-- are counted: all of them, and those that name this addon. The function is kept as a fixed word of the client (a
+-- secret or anything that is not a short plain name is "?"). Nothing is registered while the overlay is off; the
+-- counts last for the session, from the first time it was on. The game's taint log stays the owner's check (Q29).
+Diag.actions = { watching = false, since = nil, blocked = 0, forbidden = 0, blockedOurs = 0, forbiddenOurs = 0,
+	last = nil }
+
+local function plainWord(v)
+	if Compat and Compat.IsSecret(v) then return nil end
+	if type(v) ~= "string" or #v > 64 or v:find("[^%w_%.:%-]") then return nil end
+	return v
+end
+
+-- One ADDON_ACTION_BLOCKED (kind "blocked") or ADDON_ACTION_FORBIDDEN ("forbidden"): (addon name, function).
+function Diag.ActionSeen(kind, addonName, fn)
+	local a = Diag.actions
+	if kind ~= "blocked" and kind ~= "forbidden" then return false end
+	a[kind] = a[kind] + 1
+	local ours = plainWord(addonName) == ADDON_NAME
+	if ours then a[kind .. "Ours"] = a[kind .. "Ours"] + 1 end
+	a.last = ("%s %s%s"):format(kind, plainWord(fn) or "?", ours and " (this addon)" or "")
+	return ours
+end
+
+local actionEvents = { ADDON_ACTION_BLOCKED = "blocked", ADDON_ACTION_FORBIDDEN = "forbidden" }
+local watcher
+
+-- Starts (true) or stops (false) counting. Returns true when the events are registered now.
+function Diag.WatchActions(on)
+	local a = Diag.actions
+	on = on == true
+	if on == a.watching then return a.watching end
+	if not watcher then
+		local AceEvent = LibStub and LibStub("AceEvent-3.0", true)
+		if not AceEvent then return false end
+		watcher = {}
+		AceEvent:Embed(watcher)
+	end
+	for event, kind in pairs(actionEvents) do
+		if on then
+			watcher:RegisterEvent(event, function(_, addonName, fn) Diag.ActionSeen(kind, addonName, fn) end)
+		else
+			watcher:UnregisterEvent(event)
+		end
+	end
+	a.watching = on
+	if on and not a.since then a.since = Compat and Compat.Now() or 0 end
+	return on
+end
+
+-- The lines of the *Heatmap* section of /atw debug about them (English, numbers and fixed words).
+function Diag.ActionLines()
+	local a = Diag.actions
+	if not a.since then return { "blocked and forbidden actions: not counted (the raid frame overlay was never on)" } end
+	return {
+		("blocked and forbidden actions since the overlay was first on (%s now): blocked %d (this addon %d), forbidden %d (this addon %d)")
+			:format(a.watching and "counting" or "not counting", a.blocked, a.blockedOurs, a.forbidden, a.forbiddenOurs),
+		"last: " .. (a.last or "none"),
+	}
+end
+
 local function call(fn)
 	if type(fn) ~= "function" then return { "not loaded" } end
 	return fn()

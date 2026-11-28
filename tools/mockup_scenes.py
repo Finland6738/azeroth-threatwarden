@@ -67,7 +67,7 @@ def mon_head(title, kind=None, state=None, tank=None, margin=None, holder=True):
 
 
 def mon_row(theme, name, cls, role, state, percent=None, holder=False, me=False, trend=None, eta=None,
-            state_only=False):
+            state_only=False, heat=0):
     # on the light theme the name is text-1 and the class colour is the mark before the role icon
     light = theme == "aurora"
     ink = "var(--text-1)" if light else CLASS[cls]
@@ -83,7 +83,10 @@ def mon_row(theme, name, cls, role, state, percent=None, holder=False, me=False,
                f'<span class="pred">{pred}</span><span class="num">{percent} %</span></span>')
     cell = esc(T("MON_TIME", eta)) if eta else (icon("trend-" + trend) if trend else "")
     width = 82 if lib.LANG[0] == "itIT" else 66
-    return (f'<div class="mrow{" self" if me else ""}"><span class="stripe" style="background:var(--state-{state})"></span>'
+    # the heat of the row (M8.3, SPEC-07 §3.2): the state token at the alpha of its step, under the content
+    style = (f' style="background:color-mix(in srgb, var(--state-{state}) {round(heat * 100)}%, transparent)"'
+             if heat else "")
+    return (f'<div class="mrow{" self" if me else ""}"{style}><span class="stripe" style="background:var(--state-{state})"></span>'
             f'{mark}<span class="cell">{icon("role-" + role)}</span>'
             f'<span class="cell" style="color:var(--text-2)">{icon("tank") if holder else ""}</span>'
             f'<span class="name" style="color:{ink}">{esc(name)}</span>{bar}<span class="trend">{cell}</span>'
@@ -242,6 +245,19 @@ def monitor_demo(theme):
             + mon_list(rows))
     lines = ["Brannok", T("MON_DEMO_TIP"), T("TIP_STATE", T("STATE_SAFE"), T("CAT_CALCULATED")), T("TIP_HOLDS")]
     return mon_window(theme, "demo", body, T("MON_DEMO"), True) + tip(lines, 170)
+
+
+# The heat of the monitor rows (M8.3, SPEC-07 §3.2, ui-style §3.8): steps 4 to 1 (.18, .14, .10, .06; nothing on SAFE
+# below 50 % nor on UNKNOWN); the badge keeps its icon and word.
+def monitor_heat(theme):
+    rows = [mon_row(theme, "Bram", "warrior", "tank", "danger", 100, holder=True, heat=0.18),
+            mon_row(theme, "Kor", "rogue", "dps", "danger", 97, trend="up", heat=0.18),
+            mon_row(theme, T("UNIT_YOU"), "mage", "dps", "warning", 88, me=True, trend="up", heat=0.14),
+            mon_row(theme, "Lio", "priest", "dps", "warning", 83, trend="flat", heat=0.10),
+            mon_row(theme, "Sela", "priest", "healer", "safe", 61, trend="flat", heat=0.06)]
+    body = (mon_head("Gorrak", T("MON_CLASS_BOSS"), "warning", T("MON_TANK", "Bram"), "+12")
+            + mon_list(rows))
+    return mon_window(theme, "live", body, quality(100))
 
 
 def pager(on):
@@ -864,6 +880,9 @@ MONITOR_KINDS = [
     ("monitor-no-target", monitor_no_target, ["nebula", "warden"], "No target", "Nessun bersaglio"),
     ("monitor-demo", monitor_demo, ["nebula", "warden"], "Demo mode: an invented fight, said to be one",
      "Modalità demo: uno scontro inventato, dichiarato tale"),
+    ("monitor-heat", monitor_heat, THEMES,
+     "The heatmap of the rows: a tint of each state, stronger near the next one; none on a low SAFE (v0.8.0)",
+     "La heatmap delle righe: una tinta di ogni stato, più forte vicino al successivo; niente su un SAFE basso (v0.8.0)"),
     ("settings-monitor", settings_monitor, ["nebula", "warden"],
      "Settings: the Monitor card, its top and the page scrolled down",
      "Impostazioni: la card Monitor, la parte alta e la pagina scorsa in basso"),
