@@ -32,6 +32,8 @@
 --   MOBS_UPDATED()                  Data/MobTracker.lua (M7.2), after each tick of the other mobs and at COMBAT_ENDED.
 --   MOB_STATE_CHANGED(mobKey, old, new, reason)  Data/MobRisk.lua (M7.2), a mob other than the monitored one.
 --   PIN_CHANGED(mobKey)             Data/TargetTracker.lua (M7.2), a mob pinned (nil: released).
+--   PROFILE_CHANGED(id, old, why)   Data/Profiles.lua (M8.2), a role profile applied ("role", "manual", "copy", "reset").
+--   PROFILE_ROLE_READ(role, reason) Data/Profiles.lua (M8.2), the player's assigned role read differs from the last read.
 local ADDON_NAME, ns = ...
 ns = ns or {}
 ns.modules = ns.modules or {}

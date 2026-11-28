@@ -236,3 +236,85 @@ describe("nothing on screen without a locale key, with the Dungeon Focus", funct
 		eq(#Mock.errors, 0)
 	end)
 end)
+
+describe("nothing on screen without a locale key, with the profiles (M8.2)", function()
+	before_boot(function(M)
+		M.features = { profiles = true }
+		M.OnFilesLoaded(function() mark("enUS") end)
+	end)
+
+	it("in the Profile card, in every state it can show, and in the Reset card", function()
+		local ATW = AzerothThreatwarden
+		local shown = {}
+		local function read()
+			ATW.Window:Frame().pages.settings.view:Refresh()
+			for _, text in ipairs(texts({ ATW.Window:Frame() })) do shown[#shown + 1] = text end
+		end
+		build()
+		read()
+		Mock.player.role = "TANK"
+		Mock.Fire("PLAYER_ROLES_ASSIGNED")
+		read()
+		Mock.player.role = "NONE"
+		Mock.Fire("PLAYER_ROLES_ASSIGNED")
+		read()
+		UnitGroupRolesAssigned = function() return Mock.Secret("string") end
+		Mock.Fire("PLAYER_ROLES_ASSIGNED")
+		read()
+		local f = ATW.Window:Frame().pages.settings.view.settings
+		f.profileCopy:Click()
+		ATW.Widgets.Menu.frame.rows[1]:Click()
+		f.profileReset:Click()
+		read()
+		local pull = Fight.new{ mobs = { { key = "boss", tokens = { "target" } } } }
+		pull:at(0):start()
+		pull:at(1):call(function()
+			f.profile.buttons.healer:Click()
+			read()
+		end)
+		pull:at(2):stop()
+		pull:finish()
+		local bad = {}
+		for _, text in ipairs(shown) do
+			if leftover((text:gsub("…", ""))) ~= "" then bad[#bad + 1] = text end
+		end
+		deepEq(bad, {})
+		local all = table.concat(shown, "\n")
+		for _, key in ipairs({ "PROFILE_TITLE", "PROFILE_AUTO", "PROFILE_ROLE_DETECTED", "PROFILE_ROLE_NONE",
+			"PROFILE_ROLE_UNREADABLE", "PROFILE_COPY_CONFIRM", "PROFILE_RESET_CONFIRM", "PROFILE_NOTE", "PROFILE_PENDING",
+			"SET_RESET_TEXT_PROFILES", "ROLE_TANK" }) do
+			contains(all, key, key .. " was on screen")
+		end
+		eq(#Mock.errors, 0)
+	end)
+end)
+
+describe("the Profile card in Italian", function()
+	before_boot(function(M)
+		M.features = { profiles = true }
+		M.player.locale = "itIT"
+	end)
+
+	it("shows no English text that has an Italian one, and its words fit their places", function()
+		local ATW = AzerothThreatwarden
+		local en, it_ = ATW.Locale.Strings("enUS"), ATW.Locale.Strings("itIT")
+		local translated = {}
+		for key, text in pairs(en) do
+			if it_[key] ~= text then translated[text] = key end
+		end
+		build()
+		local f = ATW.Window:Frame().pages.settings.view.settings
+		Mock.player.role = "HEALER"
+		Mock.Fire("PLAYER_ROLES_ASSIGNED")
+		local found = {}
+		for _, text in ipairs(texts({ ATW.Window:Frame() })) do
+			if translated[text] then found[#found + 1] = translated[text] .. ": " .. text end
+		end
+		deepEq(found, {})
+		eq(f.profileRole:GetText(), "Ruolo nel gruppo: Guaritore (rilevato)")
+		f.profileCopy:Click()
+		ATW.Widgets.Menu.frame.rows[1]:Click()
+		eq(f.profileCopy:GetLabel(), "Clicca ancora per copiare da Tank")
+		truthy(f.profileCopy.label:GetStringWidth() <= f.profileCopy:GetWidth() - 16, "the longest label fits its button")
+	end)
+end)

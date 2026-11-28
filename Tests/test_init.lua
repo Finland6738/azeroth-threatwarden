@@ -32,7 +32,7 @@ describe("loading the addon", function()
 			"AzerothThreatwarden/Data/Demo.lua", "AzerothThreatwarden/Core/Demo.lua", "AzerothThreatwarden/Data/TargetTracker.lua",
 			"AzerothThreatwarden/Data/ThreatScanner.lua", "AzerothThreatwarden/Data/ThreatCalc.lua",
 			"AzerothThreatwarden/Data/ThreatModel.lua", "AzerothThreatwarden/Data/ThreatState.lua",
-			"AzerothThreatwarden/Data/MobRisk.lua", "AzerothThreatwarden/Data/MobTracker.lua",
+			"AzerothThreatwarden/Data/Profiles.lua", "AzerothThreatwarden/Data/MobRisk.lua", "AzerothThreatwarden/Data/MobTracker.lua",
 			"AzerothThreatwarden/Data/Alerts.lua", "AzerothThreatwarden/Data/CoachRules.lua",
 			"AzerothThreatwarden/Data/Coach.lua", "AzerothThreatwarden/Data/Session.lua", "AzerothThreatwarden/Data/Storage.lua",
 			"AzerothThreatwarden/Data/Recorder.lua",
@@ -240,7 +240,7 @@ describe("a /reload", function()
 		local t = GetServerTime()
 		Mock.Relog(3600)
 		eq(GetServerTime(), t + 3600)
-		eq(AzerothThreatwardenDB.schema, 6)
+		eq(AzerothThreatwardenDB.schema, 7)
 		eq(#Mock.errors, 0)
 	end)
 end)

@@ -398,6 +398,13 @@ lavora in sola lettura (§3.4, punto 4).
   valore del preset (non al predefinito di `settings`), e la regola lo scrive in `Config.issues`.
 - Non si salvano: il ruolo letto ogni volta, il cambio in attesa, i riquadri del raid e le loro posizioni, il calore.
   Nessun nome né GUID (§3.3). Le sessioni (§4) non cambiano: registrano già soglie e ruolo del giocatore.
+- *Realizzato in M8.2*: le regole di `account.profiles.<id>.<chiave>` sono **la stessa tabella** della regola di
+  `account.settings.<chiave>`; `Config:Set` controlla la coppia delle soglie anche dentro un profilo; la coppia di un
+  profilo che non rispetta lo scarto torna, al caricamento, a quella del suo preset. `Config:SetProfileValues(id,
+  values)` scrive valori in un profilo (regole, coppia, sola lettura; nessun `CONFIG_CHANGED`) e
+  `Config:ResetSettings(keep)` lascia com'è un insieme di percorsi. Un'installazione nuova pesa circa 2,3 KB (i tre
+  profili). Una migrazione dallo schema 5 o prima non ha ancora `alerts.onlyTarget` e le chiavi `heatmap`: nei profili
+  prendono quella del preset, come dice la regola sopra (il tank ha `onlyTarget` spento).
 
 ## 4. Sessioni registrate (schema 4, M4)
 

@@ -1,4 +1,4 @@
--- Config: the two SavedVariables, their schemas (account 6, character 2), typed rules, defaults, migrations, read-only on a newer schema and damaged
+-- Config: the two SavedVariables, their schemas (account 7, character 3), typed rules, defaults, migrations, read-only on a newer schema and damaged
 -- tables set aside under `corrupt` (SPEC-02 §3, ADR 0005). Lua 5.1, no game API but Compat.ServerTime.
 -- Adapted from Azeroth Accord (Core/Config.lua), same owner, GPL-3.0 (ADR 0012). Kept from there: the copy, the rules
 -- by path checked parents first, the merge of the defaults, the migrations on a copy, read-only on a newer schema, Get
@@ -13,10 +13,12 @@
 --                                               alerts = { enabled, window, visual, sound, cooldown, others, pet,
 --                                               onlyTarget }, coach = { enabled },
 --                                               mobs = { enabled, max, nameplates },
---                                               recording = { enabled, when, rate, maxSessions, maxKB, notice } },
+--                                               recording = { enabled, when, rate, maxSessions, maxKB, notice },
+--                                               heatmap = { rows, raidFrames }, palette, marks },
+--                                               profiles = { tank, healer, damager },
 --                                               sessions = { ... }, corrupt = { ... } }
 --   AzerothThreatwardenCharDB  (character) = { schema, ui = { shown, locked, scale, pos, size, lastTab, lastPage,
---                                               replay = { pos, size, speed } } }
+--                                               replay = { pos, size, speed } }, profile = { active, auto, role } }
 --
 -- Load() runs at ADDON_LOADED (Core/Init.lua, before Locale.Apply): the defaults are added without overwriting, old data
 -- is migrated step by step, wrong values go back to their defaults and are listed in Config.issues (paths, never
@@ -36,8 +38,8 @@ local type, pairs, ipairs, pcall, tostring, next, select = type, pairs, ipairs, 
 local floor, huge, abs = math.floor, math.huge, math.abs
 local concat, sort = table.concat, table.sort
 
--- The schema of each variable that this version of the addon knows (SPEC-02 §3.2, §3.3, §3.5-§3.10).
-Config.SCHEMAS = { account = 6, char = 2 }
+-- The schema of each variable that this version of the addon knows (SPEC-02 §3.2, §3.3, §3.5-§3.11).
+Config.SCHEMAS = { account = 7, char = 3 }
 
 -- Development build. A checkout of the repository is one; the BigWigs packager comments out the block between the
 -- debug markers below in every packaged build, so a release has DEV = false (tools/check_package.py checks it).
@@ -118,6 +120,67 @@ Config.RECORDING_DEFAULTS = {
 	maxKB = 2048,
 	notice = false,
 }
+-- The heatmap (schema 7, SPEC-07 §3.4, Q29): the one place of its defaults; the raid frames are off for their risk.
+Config.HEATMAP_DEFAULTS = {
+	rows = true,
+	raidFrames = false,
+}
+-- The state palettes and the secondary marks (schema 7, SPEC-07 §5.2-§5.4, Q30): per account, not in the profiles.
+Config.PALETTES = { "standard", "redgreen", "blueyellow" }
+Config.MARKS = { "both", "text", "icons" }
+
+-- The role profiles (schema 7 of the account, 3 of the character; SPEC-07 §4, SPEC-02 §3.11, ADR 0020, Q28). Three
+-- profiles named after the game's roles; a profile holds a value for each key of PROFILE_KEYS (paths below
+-- `account.settings.`, in the same shape as the settings). PRESETS is the one place of what each holds when new: the
+-- defaults of today, the owner's thresholds for all (D12), *pin me on top* for healers and damage dealers, alerts about
+-- other mobs for tanks (`onlyTarget` off, the alternative of Q26).
+Config.PROFILE_IDS = { "tank", "healer", "damager" }
+Config.ROLES = { "TANK", "HEALER", "DAMAGER" }
+Config.ROLE_PROFILE = { TANK = "tank", HEALER = "healer", DAMAGER = "damager" }
+Config.PROFILE_KEYS = {
+	"monitor.warning", "monitor.danger", "monitor.sort", "monitor.pinSelf",
+	"alerts.enabled", "alerts.window", "alerts.visual", "alerts.sound", "alerts.cooldown", "alerts.others", "alerts.pet",
+	"alerts.onlyTarget",
+	"coach.enabled",
+	"mobs.enabled",
+	"heatmap.rows", "heatmap.raidFrames",
+}
+Config.PROFILE_GROUPS = { "monitor", "alerts", "coach", "mobs", "heatmap" }   -- the tables of a profile
+-- "monitor.warning" -> { "monitor", "warning" }, split once (the keys are a fixed list).
+Config.PROFILE_KEY_PARTS = {}
+for _, key in ipairs(Config.PROFILE_KEYS) do
+	Config.PROFILE_KEY_PARTS[key] = { key:match("^([^.]+)%.(.+)$") }
+end
+-- "account.settings.monitor.warning" -> "monitor.warning": the live settings a profile holds.
+Config.PROFILE_PATHS = {}
+for _, key in ipairs(Config.PROFILE_KEYS) do Config.PROFILE_PATHS["account.settings." .. key] = key end
+
+local function preset(pinSelf, onlyTarget)
+	local m, a = Config.MONITOR_DEFAULTS, Config.ALERTS_DEFAULTS
+	return {
+		monitor = { warning = m.warning, danger = m.danger, sort = m.sort, pinSelf = pinSelf },
+		alerts = { enabled = a.enabled, window = a.window, visual = a.visual, sound = a.sound, cooldown = a.cooldown,
+			others = a.others, pet = a.pet, onlyTarget = onlyTarget },
+		coach = { enabled = Config.COACH_DEFAULTS.enabled },
+		mobs = { enabled = Config.MOBS_DEFAULTS.enabled },
+		heatmap = { rows = Config.HEATMAP_DEFAULTS.rows, raidFrames = Config.HEATMAP_DEFAULTS.raidFrames },
+	}
+end
+Config.PRESETS = {
+	tank = preset(false, false),
+	healer = preset(true, true),
+	damager = preset(true, true),
+}
+
+-- The value of `key` (of PROFILE_KEYS) in a table shaped like the settings, nil when absent or a parent is no table.
+function Config.ProfileValue(tbl, key)
+	local parts = Config.PROFILE_KEY_PARTS[key]
+	if type(tbl) ~= "table" or not parts then return nil end
+	local group = tbl[parts[1]]
+	if type(group) ~= "table" then return nil end
+	return group[parts[2]]
+end
+
 Config.POINTS = { "TOPLEFT", "TOP", "TOPRIGHT", "LEFT", "CENTER", "RIGHT", "BOTTOMLEFT", "BOTTOM", "BOTTOMRIGHT" }
 
 -- The window: scale 50-200 % in steps of 5 %; the sizes of the two layouts (SPEC-03 §4) and of the replay window
@@ -152,7 +215,11 @@ Config.defaults = {
 			coach = {},               -- filled from COACH_DEFAULTS below
 			recording = {},           -- filled from RECORDING_DEFAULTS below
 			mobs = {},                -- filled from MOBS_DEFAULTS below (schema 6, M7)
+			heatmap = {},             -- filled from HEATMAP_DEFAULTS below (schema 7, M8)
+			palette = "standard",     -- schema 7 (M8.4 uses it)
+			marks = "both",           -- schema 7 (M8.4 uses it)
 		},
+		profiles = {},                -- the three PRESETS below (schema 7, M8.2)
 		sessions = {},                -- the recorded sessions, the oldest first (SPEC-02 §4; their content is Storage's)
 		corrupt = {},
 	},
@@ -169,6 +236,8 @@ Config.defaults = {
 			-- the replay window (schema 2, SPEC-02 §3.9): pos and size nil until moved or resized
 			replay = { speed = 1 },
 		},
+		-- the profile of this character (schema 3, M8.2): active nil until the first choice, role nil until a role chose
+		profile = { auto = true },
 	},
 }
 
@@ -177,6 +246,7 @@ for key, value in pairs(Config.ALERTS_DEFAULTS) do Config.defaults.account.setti
 for key, value in pairs(Config.COACH_DEFAULTS) do Config.defaults.account.settings.coach[key] = value end
 for key, value in pairs(Config.RECORDING_DEFAULTS) do Config.defaults.account.settings.recording[key] = value end
 for key, value in pairs(Config.MOBS_DEFAULTS) do Config.defaults.account.settings.mobs[key] = value end
+for key, value in pairs(Config.HEATMAP_DEFAULTS) do Config.defaults.account.settings.heatmap[key] = value end
 
 ---------------------------------------------------------------------------------------------------------------------
 -- Helpers
@@ -196,6 +266,8 @@ local function copy(value, seen)
 	return out
 end
 Config.Copy = copy
+
+for _, id in ipairs(Config.PROFILE_IDS) do Config.defaults.account.profiles[id] = copy(Config.PRESETS[id]) end
 
 -- true when a and b hold the same plain content (CONFIG_CHANGED is emitted only on a change).
 local function same(a, b)
@@ -331,6 +403,11 @@ Config.rules = {
 	["account.settings.recording.maxKB"] = { type = "number", integer = true, min = Config.RECORDING.maxKB.min,
 		max = Config.RECORDING.maxKB.max },
 	["account.settings.recording.notice"] = { type = "boolean" },
+	["account.settings.heatmap"] = { type = "table", container = true },
+	["account.settings.heatmap.rows"] = { type = "boolean" },
+	["account.settings.heatmap.raidFrames"] = { type = "boolean" },
+	["account.settings.palette"] = { type = "string", enum = Config.PALETTES },
+	["account.settings.marks"] = { type = "string", enum = Config.MARKS },
 	-- Config checks only that `sessions` is a table (anything else: its type in `corrupt`, a new table); every session
 	-- is checked by Data/Storage.lua (M4.3, SPEC-02 §3.7).
 	["account.sessions"] = { type = "table", container = true },
@@ -359,7 +436,21 @@ Config.rules = {
 		local speeds = ns.Replay and ns.Replay.SPEEDS
 		return speeds ~= nil and contains(speeds, v)
 	end },
+	["char.profile"] = { type = "table", container = true },
+	["char.profile.active"] = { type = "string", optional = true, enum = Config.PROFILE_IDS },
+	["char.profile.auto"] = { type = "boolean" },
+	["char.profile.role"] = { type = "string", optional = true, enum = Config.ROLES },
 }
+
+-- The rules of the profiles are those of the settings they hold (SPEC-02 §3.11): one rule table for both paths, so a
+-- change of a range applies to both. A wrong value in a profile goes back to its preset (the default of its path).
+Config.rules["account.profiles"] = { type = "table", container = true }
+for _, id in ipairs(Config.PROFILE_IDS) do
+	local base = "account.profiles." .. id
+	Config.rules[base] = { type = "table", container = true }
+	for _, group in ipairs(Config.PROFILE_GROUPS) do Config.rules[base .. "." .. group] = { type = "table", container = true } end
+	for _, key in ipairs(Config.PROFILE_KEYS) do Config.rules[base .. "." .. key] = Config.rules["account.settings." .. key] end
+end
 
 -- nil when `value` satisfies `rule`, else the reason (fixed words, no value).
 local function violation(rule, value)
@@ -391,6 +482,7 @@ local function pairViolation(warning, danger)
 	end
 	return nil
 end
+Config.PairViolation = pairViolation
 
 -- The default of a path below its scope, a fresh copy.
 local function defaultAt(scope, parts, from)
@@ -559,6 +651,18 @@ function Config.Sanitize(scope, db)
 			issue("account.settings.monitor: thresholds reset (" .. why .. ")")
 		end
 	end
+	-- the pair of each profile goes back to the pair of its preset
+	local profiles = scope == "account" and type(db.profiles) == "table" and db.profiles
+	for _, id in ipairs(profiles and Config.PROFILE_IDS or {}) do
+		local pm = type(profiles[id]) == "table" and profiles[id].monitor
+		if type(pm) == "table" then
+			local why = pairViolation(pm.warning, pm.danger)
+			if why then
+				pm.warning, pm.danger = Config.PRESETS[id].monitor.warning, Config.PRESETS[id].monitor.danger
+				issue("account.profiles." .. id .. ".monitor: thresholds back to the preset (" .. why .. ")")
+			end
+		end
+	end
 	return #Config.issues - before
 end
 
@@ -577,8 +681,14 @@ end
 -- player's and stays (one threshold changed counts as the player's choice of the pair).
 -- Account step 6 (M7.2): `settings.mobs` and `settings.alerts.onlyTarget` are new, and the defaults add them: nothing to
 -- do (a key already there stays and the rules check it). Written with the `multitarget` switch off too.
+-- Account step 7 (M8.2, SPEC-02 §3.11, ADR 0020): `profiles` is new. Today's settings are copied into all three
+-- profiles, so an upgrade changes nothing on screen; a value that is missing or breaks its rule takes the preset of
+-- the profile, and so does a pair of thresholds that breaks the gap. A `profiles` table already there stays (the
+-- defaults add what is missing, the rules check the rest); one that is not a table goes into `corrupt` first.
+-- `settings.heatmap`, `settings.palette` and `settings.marks` are new too: the defaults add them. Written with the
+-- `profiles`, `heatmap` and `accessibility` switches off too.
 -- Character step 2 (M5.5): `ui.replay` is new, and the defaults add it: nothing to do (a key already there stays and
--- the rules check it).
+-- the rules check it). Character step 3 (M8.2): `profile` is new, and the defaults add it: nothing to do.
 Config.OLD_THRESHOLDS = { warning = 80, danger = 95 }
 Config.migrations = {
 	account = {
@@ -595,10 +705,33 @@ Config.migrations = {
 			end
 		end,
 		[6] = function(db) end,
+		[7] = function(db)
+			if type(db.profiles) == "table" then return end
+			if db.profiles ~= nil then setAside("account", "account.profiles", db.profiles) end
+			local settings = type(db.settings) == "table" and db.settings or {}
+			local profiles = {}
+			for _, id in ipairs(Config.PROFILE_IDS) do
+				local preset = Config.PRESETS[id]
+				local profile = {}
+				for _, group in ipairs(Config.PROFILE_GROUPS) do profile[group] = {} end
+				for _, key in ipairs(Config.PROFILE_KEYS) do
+					local value = Config.ProfileValue(settings, key)
+					if violation(Config.rules["account.settings." .. key], value) then value = Config.ProfileValue(preset, key) end
+					local parts = Config.PROFILE_KEY_PARTS[key]
+					profile[parts[1]][parts[2]] = copy(value)
+				end
+				if pairViolation(profile.monitor.warning, profile.monitor.danger) then
+					profile.monitor.warning, profile.monitor.danger = preset.monitor.warning, preset.monitor.danger
+				end
+				profiles[id] = profile
+			end
+			db.profiles = profiles
+		end,
 	},
 	char = {
 		[1] = function(db) end,
 		[2] = function(db) end,
+		[3] = function(db) end,
 	},
 }
 
@@ -743,9 +876,10 @@ function Config:Set(path, value)
 	if rule.fix and value ~= nil then value = (rule.fix(value)) end
 	local parent, leaf = locate(Config.db[scope], parts, 2)
 	if not parent then return false, "parent missing" end
-	if path == THRESHOLDS[1] or path == THRESHOLDS[2] then
-		local w = path == THRESHOLDS[1] and value or parent.warning
-		local d = path == THRESHOLDS[2] and value or parent.danger
+	-- the thresholds of the settings and of a profile keep their gap
+	if scope == "account" and parts[#parts - 1] == "monitor" and (leaf == "warning" or leaf == "danger") then
+		local w = leaf == "warning" and value or parent.warning
+		local d = leaf == "danger" and value or parent.danger
 		local broken = pairViolation(w, d)
 		if broken then return false, broken end
 	end
@@ -773,11 +907,12 @@ function Config:SetThresholds(warning, danger)
 end
 
 -- Puts every path of `prefix` that has a rule and no container back to its default, in place (unknown keys stay).
-local function resetUnder(scope, prefix)
+-- `keep`: paths left as they are (path -> true).
+local function resetUnder(scope, prefix, keep)
 	local changed = {}
 	for _, path in ipairs(rulePaths(scope)) do
 		local rule = Config.rules[path]
-		if not rule.container and path:sub(1, #prefix) == prefix then
+		if not rule.container and path:sub(1, #prefix) == prefix and not (keep and keep[path]) then
 			local parts = split(path)
 			local parent, key = locate(Config.db[scope], parts, 2)
 			local default = defaultAt(scope, parts, 2)
@@ -792,13 +927,45 @@ local function resetUnder(scope, prefix)
 end
 
 -- *Reset settings* (Settings, M1.8): account.settings back to the defaults and `corrupt` emptied. Recordings and
--- profiles are not touched.
-function Config:ResetSettings()
+-- profiles are not touched. `keep` (path -> true): settings left as they are (Data/Profiles.lua passes the paths of
+-- its profiles, which go back to the preset of the active one instead, SPEC-07 §4.4).
+function Config:ResetSettings(keep)
 	if not Config.db.account then return false, "not loaded" end
 	if Config.readOnly.account then return false, "read-only" end
-	resetUnder("account", "account.settings.")
+	resetUnder("account", "account.settings.", type(keep) == "table" and keep or nil)
 	local list = Config.db.account.corrupt
 	for i = #list, 1, -1 do list[i] = nil end
+	return true
+end
+
+-- Writes values into a profile (Data/Profiles.lua, SPEC-07 §4.4): `values` maps keys of PROFILE_KEYS to values. Each
+-- must pass the rule of its key, and the thresholds the profile ends up with their gap; nothing is written otherwise.
+-- No CONFIG_CHANGED: no module reads a profile, the live settings are what they read (ADR 0020). Returns true, or
+-- false and the reason ("unknown profile", "unknown key", "read-only", the rule broken).
+function Config:SetProfileValues(id, values)
+	local db = Config.db.account
+	if not db or type(db.profiles) ~= "table" or not contains(Config.PROFILE_IDS, id) then return false, "unknown profile" end
+	if Config.readOnly.account then return false, "read-only" end
+	if type(values) ~= "table" then return false, "unknown key" end
+	local profile = db.profiles[id]
+	if type(profile) ~= "table" then return false, "unknown profile" end
+	for key, value in pairs(values) do
+		if not Config.PROFILE_KEY_PARTS[key] then return false, "unknown key" end
+		local why = violation(Config.rules["account.settings." .. key], value)
+		if why then return false, why end
+	end
+	local function after(key)
+		local v = values[key]
+		if v == nil then v = Config.ProfileValue(profile, key) end
+		return v
+	end
+	local broken = pairViolation(after("monitor.warning"), after("monitor.danger"))
+	if broken then return false, broken end
+	for key, value in pairs(values) do
+		local parts = Config.PROFILE_KEY_PARTS[key]
+		if type(profile[parts[1]]) ~= "table" then profile[parts[1]] = {} end
+		profile[parts[1]][parts[2]] = copy(value)
+	end
 	return true
 end
 

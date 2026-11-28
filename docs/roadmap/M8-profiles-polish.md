@@ -83,10 +83,18 @@ every key M8.3 and M8.4 need, even with the switches off.
   keys in both languages; the TOC; the wiki *Settings* and *Commands* pages and a section *Role profiles* (both
   languages).
 - Done when:
-  - [ ] Upgrading from schema 6 changes nothing on screen and fills the three profiles; a new installation gets the
+  - [x] Upgrading from schema 6 changes nothing on screen and fills the three profiles; a new installation gets the
     presets; every answer of the role gives the profile of SPEC-07 §4.3; a switch never happens in combat; a change in
     a card lands in the active profile and only there; with the switch off nothing is registered and the settings work
     as today.
+- *Done (2026-11-28): account schema 7 and character schema 3 whole in `Core/Config.lua` (`PROFILE_KEYS`, `PRESETS`,
+  `HEATMAP_DEFAULTS`, `PALETTES`, `MARKS`, profile rules that are the settings' own, migrations `account[7]` and
+  `char[3]`, `Config:SetProfileValues`, `Config:ResetSettings(keep)`); behind `profiles` (off) `Data/Profiles.lua`, the
+  *Profile* card, `/atw profile`, the *Profiles* section of `/atw debug`, `PROFILE_CHANGED` and `PROFILE_ROLE_READ`; a
+  choice by hand records the role read then (SPEC-07 §4.3); copy and reset in combat apply after it; a role switch
+  waits for the end of the demo. SPEC-09 Q28 gains the case of a `v0.7.x` fix made from `main`. Tests:
+  `test_profiles.lua` and additions to `test_config.lua`, `test_settings.lua`, `test_commands.lua`,
+  `test_diagnostics.lua`, `test_ui_texts.lua`, `test_api_boundary.lua`.*
 - Tests: `test_profiles.lua` (SPEC-07 §6); additions to `test_config.lua` (schemas 7 and 3), `test_settings.lua`,
   `test_commands.lua`, `test_diagnostics.lua`, `test_ui_texts.lua`, `test_api_boundary.lua`.
 - Real client: whether `UnitGroupRolesAssigned("player")` answers in a finder group, a hand-made group and a raid

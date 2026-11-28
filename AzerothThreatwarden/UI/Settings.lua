@@ -1,7 +1,8 @@
 -- Settings: the Settings tab of the window and the panel of the game's own Settings window (SPEC-03 §4.4 and §5,
 -- docs/specs/ui-style.md §2 and §3). Lua 5.1; no game API is named here (ARC-02): CreateFrame and Core/Compat.lua.
 -- Adapted from Azeroth Accord (UI/Settings.lua and the panel of UI/SettingsModel.lua), same owner, GPL-3.0 (ADR 0012).
--- Changes: the cards are Threatwarden's own (Appearance, Language, Window, Monitor while the `monitor` switch is on,
+-- Changes: the cards are Threatwarden's own (Appearance, Language, Profile while the `profiles` switch is on (SPEC-07
+-- §4.6), Window, Monitor while the `monitor` switch is on,
 -- Alerts while the `alerts` switch is on (SPEC-04 §4.2, its Coach switch with `coach`), Recording while the
 -- `recording` switch is on (SPEC-05 §3.6), Reset); no model file, because every value
 -- is a path of Core/Config.lua; the cards follow the width they get; the scale is saved when the slider is released.
@@ -20,7 +21,7 @@
 --                                          has none.
 --
 -- Bus: emits SETTINGS_CHANGED(key) after the player changes an option; listens CONFIG_LOADED, CONFIG_CHANGED,
--- THEME_CHANGED, DEMO_CHANGED, ENTERING_WORLD and, with the Recording card, SESSIONS_CHANGED, SESSION_STARTED and
+-- THEME_CHANGED, DEMO_CHANGED, ENTERING_WORLD, PROFILE_CHANGED, PROFILE_ROLE_READ and, with the Recording card, SESSIONS_CHANGED, SESSION_STARTED and
 -- SESSION_ENDED; ENTERING_WORLD (the game's own threat warning is read again) to repaint the pages
 -- on screen.
 local ADDON_NAME, ns = ...
@@ -30,7 +31,7 @@ ns.modules = ns.modules or {}
 local View = {}
 ns.Settings, ns.modules.Settings = View, View
 
-local L, Widgets, Theme, Compat = ns.L, ns.Widgets, ns.Theme, ns.Compat
+local L, Widgets, Theme, Compat, Assets = ns.L, ns.Widgets, ns.Theme, ns.Compat, ns.Assets
 local ipairs, type, max, min, floor = ipairs, type, math.max, math.min, math.floor
 
 View.PAGE_WIDTH = 520        -- the widest a column of cards gets
@@ -49,6 +50,8 @@ local function alertsOn() return ns.Features ~= nil and ns.Features.On("alerts")
 local function coachOn() return ns.Features ~= nil and ns.Features.On("coach") end
 local function recordingOn() return ns.Features ~= nil and ns.Features.On("recording") end
 local function focusOn() return ns.Features ~= nil and ns.Features.On("multitarget") end
+-- the Profile card: the `profiles` switch was on at login (Data/Profiles.lua registered its events)
+local function profilesOn() return ns.Profiles ~= nil and ns.Profiles.Enabled() end
 
 ---------------------------------------------------------------------------------------------------------------------
 -- Cards and rows (also used by UI/About.lua)
@@ -258,6 +261,139 @@ local function sliderBox(card, opts)
 		show(v)
 	end
 	return box
+end
+
+-- The *Profile* card (SPEC-07 §4.6), only with the `profiles` switch on: the three profiles with their role icons,
+-- where the active one comes from, *Follow my group role*, the role read, *Copy from…* and *Reset to preset* (both ask
+-- twice), the note that the cards below write into the active profile, and why a switch waits.
+local PROFILE_ICON = { tank = "role-tank", healer = "role-healer", damager = "role-dps" }
+local function profileName(id) return L["ROLE_" .. tostring(id):upper()] end
+View.ProfileName = profileName
+
+local function buildProfile(view, f, page)
+	local P = ns.Profiles
+	local card = View.StackCard(page.frame)
+	View.CardText(card, "H2", "text-1", L["PROFILE_TITLE"], 0)
+
+	-- a switch, a copy or a reset: done, waiting (combat, demo) or refused (read-only)
+	local function after(ok, why, done)
+		if ok or why == "combat" or why == "demo" then
+			say(card, done or "")
+			if ns.Bus then ns.Bus.Emit("SETTINGS_CHANGED", "char.profile.active") end
+		else
+			say(card, L["SET_NOT_SAVED"]:format(tostring(why)), "warn")
+		end
+		view:Refresh()
+	end
+
+	local items = {}
+	for i, id in ipairs(P.IDS) do items[i] = { id = id, text = Assets.IconText(PROFILE_ICON[id], 14) .. " " .. profileName(id) } end
+	f.profile = Widgets.Segmented(card, items, function(id)
+		if view.refreshing then return end
+		after(P.Switch(id, "manual"))
+	end)
+	card:Add(f.profile, 12)
+	f.profileSource = View.CardText(card, "Small", "text-2", "", 8)
+	local auto = Widgets.Switch(card, { onChange = function(on)
+		if view.refreshing then return end
+		local ok, why = P.SetAuto(on)
+		if ok and ns.Bus then ns.Bus.Emit("SETTINGS_CHANGED", "char.profile.auto") end
+		if not ok then say(card, L["SET_NOT_SAVED"]:format(tostring(why)), "warn") else say(card, "") end
+		view:Refresh()
+	end })
+	f.profileAuto = card:Add(controlRow(card, L["PROFILE_AUTO"], auto), 8, { stretch = true })
+	f.profileRole = View.CardText(card, "Small", "text-2", "", 2)
+
+	-- *Copy from…*: a menu of the other two profiles, then a second click within CONFIRM_SECONDS copies
+	local copyArmed = 0
+	local function disarmCopy()
+		copyArmed = copyArmed + 1
+		f.profileCopy.from = nil
+		f.profileCopy:SetLabel(L["PROFILE_COPY"])
+	end
+	f.profileCopy = Widgets.Button(card, { text = L["PROFILE_COPY"], style = "secondary", width = 300, onClick = function()
+		local from = f.profileCopy.from
+		if from then
+			disarmCopy()
+			local ok, why = P.CopyFrom(from)
+			return after(ok, why, L["PROFILE_COPY_DONE"]:format(profileName(from)))
+		end
+		local choices = {}
+		for _, id in ipairs(P.IDS) do
+			if id ~= P.Active() then
+				choices[#choices + 1] = { text = profileName(id), onClick = function()
+					disarmCopy()
+					f.profileCopy.from = id
+					f.profileCopy:SetLabel(L["PROFILE_COPY_CONFIRM"]:format(profileName(id)))
+					local mine = copyArmed
+					Compat.After(View.CONFIRM_SECONDS, function() if mine == copyArmed then disarmCopy() end end)
+				end }
+			end
+		end
+		Widgets.Menu.Show(f.profileCopy, choices)
+	end })
+	card:Add(f.profileCopy, 12)
+
+	-- *Reset to preset* asks twice too
+	local resetArmed = 0
+	local function disarmReset()
+		resetArmed = resetArmed + 1
+		f.profileReset.armed = false
+		f.profileReset:SetLabel(L["PROFILE_RESET"])
+	end
+	f.profileReset = Widgets.Button(card, { text = L["PROFILE_RESET"], style = "secondary", width = 300, onClick = function()
+		if not f.profileReset.armed then
+			disarmReset()
+			f.profileReset.armed = true
+			f.profileReset:SetLabel(L["PROFILE_RESET_CONFIRM"])
+			local mine = resetArmed
+			Compat.After(View.CONFIRM_SECONDS, function() if mine == resetArmed then disarmReset() end end)
+			return
+		end
+		disarmReset()
+		local ok, why = P.ResetActive()
+		after(ok, why, L["PROFILE_RESET_DONE"])
+	end })
+	card:Add(f.profileReset, 8)
+	f.disarmProfile = function() disarmCopy(); disarmReset() end
+
+	View.CardText(card, "Small", "text-3", L["PROFILE_NOTE"], 12)
+	f.profileWait = View.CardText(card, "Small", "warn", "", 8)
+	statusLine(card)
+	return card
+end
+
+local function refreshProfile(f)
+	local P = ns.Profiles
+	local active = P.Active()
+	if active then f.profile:Select(active) else f.profile:Clear() end
+	local source = P.Source()
+	f.profileSource:SetText(source and L["PROFILE_FROM_" .. source:upper()] or "")
+	f.profileSource:SetShown(source ~= nil)
+	f.profileAuto.control:SetOn(P.Auto(), true)
+	local text
+	if P.role then
+		text = L["PROFILE_ROLE_DETECTED"]:format(L["ROLE_" .. P.role])
+	elseif P.reason == "none" then
+		text = L["PROFILE_ROLE_NONE"]:format(profileName(active or P.DEFAULT))
+	elseif P.reason ~= "unread" then
+		text = L["PROFILE_ROLE_UNREADABLE"]
+	end
+	f.profileRole:SetText(text or "")
+	f.profileRole:SetShown(text ~= nil)
+	local readOnly = config():IsReadOnly()
+	local wait
+	if readOnly then
+		wait = L["PROFILE_READ_ONLY"]
+	elseif P.pending then
+		wait = L[P.pending.reason == "demo" and "PROFILE_PENDING_DEMO" or "PROFILE_PENDING"]
+	end
+	f.profileWait:SetText(wait or "")
+	f.profileWait:SetShown(wait ~= nil)
+	f.profile:SetEnabled(not readOnly)
+	f.profileAuto.control:SetEnabled(not readOnly)
+	f.profileCopy:SetEnabled(not readOnly and active ~= nil)
+	f.profileReset:SetEnabled(not readOnly and active ~= nil)
 end
 
 local function buildWindowCard(view, f, page)
@@ -559,6 +695,7 @@ local function buildReset(view, f, page)
 	local text = monitorOn() and "SET_RESET_TEXT_MONITOR" or "SET_RESET_TEXT"
 	if alertsOn() then text = "SET_RESET_TEXT_ALERTS" end
 	if recordingOn() then text = "SET_RESET_TEXT_RECORDING" end
+	if profilesOn() then text = "SET_RESET_TEXT_PROFILES" end
 	View.CardText(card, "Body", "text-2", L[text], 8)
 	local armed = 0
 	local function disarm()
@@ -576,7 +713,9 @@ local function buildReset(view, f, page)
 			return
 		end
 		disarm()
-		local ok = config():ResetSettings()
+		-- with the profiles: the active profile goes back to its preset, the other two stay (SPEC-07 §4.4)
+		local ok
+		if profilesOn() then ok = ns.Profiles.ResetSettings() else ok = config():ResetSettings() end
 		say(card, L[ok and "SET_RESET_DONE" or "CMD_READ_ONLY"], not ok and "warn" or nil)
 		if ok and ns.Bus then ns.Bus.Emit("SETTINGS_CHANGED", "account.settings") end
 		view:Refresh()
@@ -607,6 +746,7 @@ local function refreshSettings(view, f)
 	f.lock.control:SetOn(get("char.ui.locked") == true, true)
 	f.scaleBox:Update((get("char.ui.scale") or 1) * 100)
 	f.minimap.control:SetOn(get("account.settings.minimap.hide") ~= true, true)
+	if f.profile then refreshProfile(f) end
 	if f.warning then refreshMonitor(f) end
 	if f.mobsMax then refreshFocus(f) end
 	if f.cooldown then refreshAlerts(f) end
@@ -626,8 +766,12 @@ local function buildSettingsPage(holder, view)
 	local f = { page = page }
 	view.settings = f
 	f.readOnlyCard = buildReadOnly(f, page)
-	page.cards = { f.readOnlyCard, buildAppearance(view, f, page), buildLanguage(view, f, page),
-		buildWindowCard(view, f, page) }
+	page.cards = { f.readOnlyCard, buildAppearance(view, f, page), buildLanguage(view, f, page) }
+	if profilesOn() then
+		f.profileCard = buildProfile(view, f, page)
+		page.cards[#page.cards + 1] = f.profileCard
+	end
+	page.cards[#page.cards + 1] = buildWindowCard(view, f, page)
 	if monitorOn() then
 		f.monitorCard = buildMonitor(view, f, page)
 		page.cards[#page.cards + 1] = f.monitorCard
@@ -672,6 +816,7 @@ end
 local function disarmAll(f)
 	f.disarmReset()
 	if f.disarmDelete then f.disarmDelete() end
+	if f.disarmProfile then f.disarmProfile() end
 end
 
 function View.Build(parent, opts)
@@ -800,6 +945,8 @@ if ns.Bus then
 	ns.Bus.On("THEME_CHANGED", View.RefreshAll)
 	ns.Bus.On("DEMO_CHANGED", View.RefreshAll)
 	ns.Bus.On("ENTERING_WORLD", View.RefreshAll)
+	ns.Bus.On("PROFILE_CHANGED", View.RefreshAll)
+	ns.Bus.On("PROFILE_ROLE_READ", View.RefreshAll)
 end
 if ns.OnEnable then ns.OnEnable(function() View.RegisterPanel() end) end
 if ns.addon then

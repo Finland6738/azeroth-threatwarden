@@ -36,6 +36,48 @@ The colours of the threat states do not change with the theme.
 **Italiano**. The change takes effect after a reload of the interface: press **Reload now** (it is active only when the
 choice differs from the language on screen) or type `/reload`.
 
+## Role profiles
+
+> **Coming in `v0.8.0`**: built and tested offline, switched off in this version, not verified in game.
+
+Three profiles, one for each role of the game: **Tank**, **Healer** and **Damage**. A profile holds the settings that
+depend on what you do in a group; the *Profile* card, right after *Language*, shows which one is in use and lets you
+change it. The profiles are shared by all your characters; the profile in use is chosen for each character.
+
+| In a profile | Not in a profile (the same for every role) |
+|---|---|
+| the Warning and Danger thresholds, the order of the list, *Pin me on top* | language, theme, effects, animations, font |
+| the alerts: on or off, message, visual effect, sound, cooldown, alerts about others, your pet, alerts about other mobs | the window, the minimap button |
+| the Threat Coach, *Track other mobs* | reads per second, units per read, when the window shows, *Follow the target of a friend* |
+| the heatmap (from `v0.8.0`) | how many mobs are followed, the nameplates, the recording |
+
+**What a new profile holds.** The thresholds are 82 % and 91 % for every role. *Pin me on top* is on for Healer and
+Damage (you look for your own row) and off for Tank. *Alerts about other mobs* is on for Tank (a tank wants to know about
+loose mobs) and off for the others. The rest is the same as the defaults of the cards.
+
+**When you update** from `v0.7.0` or earlier, your settings of today are copied into all three profiles: nothing on
+screen changes until you change a profile yourself.
+
+| On the card | What it does |
+|---|---|
+| Tank · Healer · Damage | the profile in use; a click chooses one by hand |
+| *Chosen from your group role* / *Chosen by you* | where the profile in use comes from |
+| Follow my group role | the profile follows the role your group gives you (on by default) |
+| *Group role: Tank (detected)* | the role the game says you have; *No group role* when you have none, *Your group role cannot be read here* when the game does not tell the addon |
+| Copy from… | the values of another profile become those of the one in use; asks for a second click within 8 seconds |
+| Reset to preset | the profile in use goes back to what a new profile holds; asks for a second click |
+| *Changes in the cards below are kept in this profile.* | what you change in the cards (thresholds, alerts...) is saved in the profile in use, and only there |
+
+**How the profile follows your role.** With *Follow my group role* on, the profile changes when the group assigns you a
+role (the role chosen in the group finder or by the leader): Tank, Healer or Damage. Alone, or in a group without roles,
+the profile stays as it is; the same when the game hides the role. A profile you choose by hand stays until the group
+gives you a **different** role, also after a reload or a new login. The first time on a character, the profile is the
+one of your role, or **Damage** without a role. The addon never guesses the role from your specialization.
+
+**Never in combat.** A change asked during a fight (by the role or by you) waits for the end of the fight, and the card
+says *Applies after combat*: the thresholds of a fight stay the ones its recording keeps. During the
+[demo](Threat-Monitor#demo-mode) the role does not change the profile.
+
 ## Window
 
 Saved for each character, except the minimap button (whole account).
@@ -144,7 +186,8 @@ recordings take (an estimate) and reminds you that they keep the names of your c
 **Reset settings** puts the appearance, the language, the minimap button, the monitor settings, the alerts and Coach
 and the recording settings back to the defaults, and drops the damaged data the addon had set aside for bug reports. It
 asks for a second click, within a few seconds. Your recordings are not deleted here; the window's place is reset with
-*Reset window*.
+*Reset window*. From `v0.8.0`, with the [role profiles](#role-profiles), the settings of a profile go back to what the
+profile in use holds when new, and the other two profiles are not touched.
 
 ## Read-only data
 

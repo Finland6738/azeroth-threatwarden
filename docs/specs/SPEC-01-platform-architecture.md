@@ -159,6 +159,8 @@ Accord.
 | `MOBS_UPDATED` | — | `Data/MobTracker.lua`, dopo un tick dei mob o un cambio della lista | la barra del pull e la lista (`UI/FocusList.lua`) | M7.2 |
 | `MOB_STATE_CHANGED` | `mobKey`, `old`, `new`, `reason` (lo stato mostrato di un mob diverso da quello monitorato, dopo isteresi e permanenza) | `Data/MobRisk.lua` | nessuno (Alerts guarda la lista a ogni `MOBS_UPDATED`, M7.4) | M7.2 |
 | `PIN_CHANGED` | `mobKey` (`nil` = nessun mob fissato) | `Data/TargetTracker.lua` (`Pin`) | la barra del pull, l'intestazione del monitor | M7.2 |
+| `PROFILE_CHANGED` | `id`, `old`, `why` (`role`, `manual`, `copy`, `reset`): un profilo per ruolo scritto sulle impostazioni, una volta per cambio, dopo i `CONFIG_CHANGED` | `Data/Profiles.lua` ([SPEC-07 §4.4](SPEC-07-multi-target-heatmap-profiles.md#44-scrittura-cambio-copia-e-reset-dataprofileslua)) | la card *Profile* | M8.2 |
+| `PROFILE_ROLE_READ` | `role` (`TANK`, `HEALER`, `DAMAGER` o `nil`), `reason` (`none`, `secret`, `missing`, `error`, `nil`; `nil` quando il ruolo si legge): il ruolo assegnato letto è diverso dall'ultimo | `Data/Profiles.lua` | la card *Profile* | M8.2 |
 
 `/atw debug` mostra per ogni evento il numero di ascoltatori e gli ultimi errori degli ascoltatori.
 

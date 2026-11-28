@@ -36,6 +36,48 @@ solo quando parte. I colori degli stati della threat non cambiano con il tema.
 cambio vale dopo aver ricaricato l'interfaccia: premi **Ricarica ora** (è attivo solo se la scelta è diversa dalla
 lingua a schermo) o scrivi `/reload`.
 
+## Profili per ruolo
+
+> **In arrivo nella `v0.8.0`**: costruiti e provati offline, spenti in questa versione, non verificati in gioco.
+
+Tre profili, uno per ogni ruolo del gioco: **Tank**, **Guaritore** e **Danni**. Un profilo tiene le impostazioni che
+dipendono da ciò che fai in un gruppo; la card *Profilo*, subito dopo *Lingua*, mostra quale si usa e permette di
+cambiarlo. I profili sono comuni a tutti i tuoi personaggi; il profilo in uso si sceglie per ogni personaggio.
+
+| In un profilo | Fuori dai profili (uguali per ogni ruolo) |
+|---|---|
+| le soglie di Attenzione e Pericolo, l'ordine dell'elenco, *Tienimi in cima* | lingua, tema, effetti, animazioni, font |
+| gli avvisi: acceso o spento, messaggio, effetto visivo, suono, attesa, avvisi sugli altri, il tuo pet, avvisi sugli altri mob | la finestra, il pulsante della minimappa |
+| il Threat Coach, *Segui gli altri mob* | letture al secondo, unità per lettura, quando si mostra la finestra, *Segui il bersaglio di un alleato* |
+| la heatmap (dalla `v0.8.0`) | quanti mob si seguono, le targhe, la registrazione |
+
+**Che cosa tiene un profilo nuovo.** Le soglie sono 82 % e 91 % per ogni ruolo. *Tienimi in cima* è acceso per Guaritore e
+Danni (cerchi la tua riga) e spento per Tank. *Avvisi sugli altri mob* è acceso per Tank (un tank vuole sapere dei mob
+sciolti) e spento per gli altri. Il resto è uguale ai predefiniti delle card.
+
+**Quando aggiorni** dalla `v0.7.0` o prima, le tue impostazioni di oggi si copiano in tutti e tre i profili: a schermo
+non cambia nulla finché non cambi tu un profilo.
+
+| Nella card | Che cosa fa |
+|---|---|
+| Tank · Guaritore · Danni | il profilo in uso; un clic ne sceglie uno a mano |
+| *Scelto dal tuo ruolo nel gruppo* / *Scelto da te* | da dove viene il profilo in uso |
+| Segui il mio ruolo nel gruppo | il profilo segue il ruolo che ti dà il gruppo (acceso di serie) |
+| *Ruolo nel gruppo: Tank (rilevato)* | il ruolo che il gioco dice che hai; *Nessun ruolo nel gruppo* quando non ne hai, *Qui il tuo ruolo nel gruppo non si può leggere* quando il gioco non lo dice all'addon |
+| Copia da… | i valori di un altro profilo diventano quelli del profilo in uso; chiede un secondo clic entro 8 secondi |
+| Torna al preset | il profilo in uso torna a ciò che tiene un profilo nuovo; chiede un secondo clic |
+| *Le modifiche nelle card qui sotto restano in questo profilo.* | ciò che cambi nelle card (soglie, avvisi...) si salva nel profilo in uso, e solo lì |
+
+**Come il profilo segue il ruolo.** Con *Segui il mio ruolo nel gruppo* acceso, il profilo cambia quando il gruppo ti
+assegna un ruolo (quello scelto nel cercatore di gruppi o dal capo): Tank, Guaritore o Danni. Da solo, o in un gruppo
+senza ruoli, il profilo resta com'è; così anche quando il gioco nasconde il ruolo. Un profilo scelto a mano resta finché
+il gruppo non ti dà un ruolo **diverso**, anche dopo un reload o un nuovo accesso. La prima volta su un personaggio il
+profilo è quello del tuo ruolo, o **Danni** senza ruolo. L'addon non indovina mai il ruolo dalla specializzazione.
+
+**Mai in combattimento.** Un cambio chiesto durante uno scontro (dal ruolo o da te) aspetta la fine dello scontro, e la
+card dice *Vale dopo il combattimento*: le soglie di uno scontro restano quelle che tiene la sua registrazione. Durante
+la [demo](Threat-Monitor-it#modalità-demo) il ruolo non cambia il profilo.
+
 ## Finestra
 
 Salvata per personaggio, tranne il pulsante della minimappa (tutto l'account).
@@ -145,7 +187,9 @@ occupano (una stima) e ricorda che contengono i nomi dei compagni, solo su quest
 **Ripristina impostazioni** riporta ai valori predefiniti l'aspetto, la lingua, il pulsante della minimappa, le
 impostazioni del monitor, quelle di avvisi e Coach e quelle della registrazione, ed elimina i dati danneggiati che
 l'addon aveva messo da parte per le segnalazioni. Chiede un secondo clic entro pochi secondi. Le registrazioni non si
-eliminano da qui; la posizione della finestra si ripristina con *Ripristina finestra*.
+eliminano da qui; la posizione della finestra si ripristina con *Ripristina finestra*. Dalla `v0.8.0`, con i
+[profili per ruolo](#profili-per-ruolo), le impostazioni di un profilo tornano a ciò che tiene da nuovo il profilo in
+uso, e gli altri due profili non si toccano.
 
 ## Dati in sola lettura
 

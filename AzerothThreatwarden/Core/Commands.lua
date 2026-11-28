@@ -74,6 +74,34 @@ local function focus()
 	if not ns.FocusList.SetOpen(true) then say(L["CMD_FOCUS_NONE"]) end
 end
 
+-- /atw profile [tank|healer|dps|auto] (SPEC-07 §4.6): without a word the active profile and where it comes from; a
+-- role chooses it by hand (after the fight when in combat); `auto` follows the group role again.
+local PROFILE_WORDS = { tank = "tank", healer = "healer", heal = "healer", dps = "damager", damage = "damager",
+	damager = "damager" }
+local function profileName(id) return L["ROLE_" .. id:upper()] end
+
+local function profile(rest)
+	local P = ns.Profiles
+	local word = type(rest) == "string" and rest:lower() or ""
+	if word == "" then
+		local active = P.Active()
+		if not active then return say(L["CMD_PROFILE_NONE"]) end
+		return say(L["CMD_PROFILE_ACTIVE"]:format(profileName(active), L["PROFILE_FROM_" .. P.Source():upper()]))
+	end
+	if word == "auto" then
+		local ok, why = P.SetAuto(true)
+		if not ok then return say(why == "read-only" and L["CMD_READ_ONLY"] or L["SET_NOT_SAVED"]:format(tostring(why))) end
+		return say(L["CMD_PROFILE_AUTO"])
+	end
+	local id = PROFILE_WORDS[word]
+	if not id then return say(L["CMD_PROFILE_UNKNOWN"]:format((rest:gsub("|", "||")))) end
+	local ok, why = P.Switch(id, "manual")
+	if ok then return say(L["CMD_PROFILE_SWITCHED"]:format(profileName(id))) end
+	if why == "combat" or why == "demo" then return say(L["CMD_PROFILE_PENDING"]:format(profileName(id))) end
+	if why == "read-only" then return say(L["CMD_READ_ONLY"]) end
+	say(L["SET_NOT_SAVED"]:format(tostring(why)))
+end
+
 -- In the order of `help`. `help`: the key of its line. `feature` and `version`: a part of a later milestone.
 Commands.LIST = {
 	{ name = "show", help = "HELP_SHOW", run = function() ns.Window:Open() end },
@@ -96,6 +124,7 @@ Commands.LIST = {
 		end },
 	{ name = "replay", help = "HELP_REPLAY", feature = "replay", also = "timeline", version = "v0.5.0", run = replay },
 	{ name = "focus", help = "HELP_FOCUS", feature = "multitarget", also = "monitor", version = "v0.7.0", run = focus },
+	{ name = "profile", help = "HELP_PROFILE", feature = "profiles", version = "v0.8.0", run = profile },
 }
 
 local function featureOn(name) return name == nil or (ns.Features ~= nil and ns.Features.On(name)) end

@@ -5,6 +5,22 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Added
+
+- M8.2: **role profiles** (`Data/Profiles.lua`), behind the `profiles` switch, which stays off until `v0.8.0`: nothing
+  of them is visible yet, and with the switch off they register no game event and copy nothing. Three profiles, Tank,
+  Healer and Damage, shared by all your characters, hold your thresholds, the order of the list and *Pin me on top*,
+  the alert choices, the Coach, *Track other mobs* and the heatmap settings. The profile in use is chosen for each
+  character: it follows the role your group assigns you (the game's `UnitGroupRolesAssigned`), stays as it is when you
+  have no role or the game hides it, keeps a profile you chose by hand until the group gives you a different role (also
+  across a reload), and never changes in combat (a change waits for the end of the fight). A change you make in a card
+  is saved in the profile in use and only there. New profiles have the owner's thresholds 82/91 for every role, *Pin me
+  on top* for healers and damage dealers, and alerts about other mobs for tanks. A *Profile* card (with *Copy from…*
+  and *Reset to preset*), `/atw profile [tank|healer|dps|auto]` and a *Profiles* section of `/atw debug` come with it.
+  The saved data goes to **account schema 7 and character schema 3** now, with every key of M8 (profiles, heatmap,
+  palette, marks): upgrading copies your settings of today into all three profiles, so nothing on screen changes, and
+  every saved value is kept.
+
 ### Documentation
 
 - M8.1: specification of **role profiles**, the **heatmap**, **accessibility** and the **release path to 1.0.0**

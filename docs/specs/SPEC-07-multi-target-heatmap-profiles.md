@@ -683,6 +683,13 @@ Con `char.profile.auto` acceso (predefinito), il profilo segue il ruolo **assegn
   li prova e un personaggio può fare un ruolo diverso da quello della specializzazione; restano fuori (alternativa di
   Q28, una funzione di `Data/Profiles.lua`).
 - **Prima volta** (nessun `char.profile.active`): il ruolo letto, altrimenti `damager`.
+- *M8.2*: una scelta **a mano** (card, `/atw profile`) salva come `char.profile.role` il ruolo letto in quel momento
+  (se si legge): così un cambio del ruolo rimasto in attesa durante uno scontro non riprende il profilo che il giocatore
+  ha scelto dopo. Un ruolo `nil` con un motivo diverso da quelli della tabella (`nil`: il client non risponde con una
+  stringa) vale come *non si legge*. Con `auto` riacceso (card o `/atw profile auto`) il profilo segue subito il ruolo
+  letto, se si legge. La riga *da dove viene* ha tre casi: *from your group role* (il ruolo che lo ha scelto è ancora
+  quello del profilo), *chosen by you*, e *the first profile* (`damager` senza ruolo, finché il giocatore non sceglie da
+  quando l'addon è caricato; ciò che ha fatto l'ultimo cambio non si salva).
 
 ### 4.4 Scrittura, cambio, copia e reset (`Data/Profiles.lua`)
 
@@ -699,6 +706,13 @@ Con `char.profile.auto` acceso (predefinito), il profilo segue il ruolo **assegn
   attivo al suo preset; gli altri due profili non cambiano.
 - **Interruttore `profiles` spento**: `Data/Profiles.lua` non registra eventi né copia nulla; le impostazioni si usano
   come oggi. Gli schemi 7 e 3 e le loro migrazioni ci sono comunque (come lo schema 6 con `multitarget` spento).
+- *M8.2*: `why` di `PROFILE_CHANGED` vale anche `copy` e `reset` (copia e reset si applicano come un cambio; in
+  combattimento i valori entrano subito nel profilo e la scrittura sulle impostazioni aspetta `COMBAT_ENDED`). Durante
+  la demo aspetta solo un cambio **del ruolo** (fino a `DEMO_CHANGED(false)`); un cambio a mano vale subito, come ogni
+  altra impostazione cambiata durante la demo. La copia all'indietro scrive le due soglie insieme. I valori di un profilo
+  si scrivono con `Config:SetProfileValues(id, values)` (regole delle impostazioni, coppia delle soglie, nessun
+  `CONFIG_CHANGED`: nessun modulo legge i profili); *Reset settings* passa a `Config:ResetSettings(keep)` le chiavi dei
+  profili da lasciare, poi riporta il profilo attivo al preset.
 
 ### 4.5 Dati salvati
 
@@ -718,7 +732,13 @@ profili**, così chi aggiorna non vede cambiare nulla; un'installazione nuova pa
   ruolo lo sceglie a mano; `auto` riaccende la scelta dal ruolo. Con l'interruttore spento *This arrives in v0.8.0.*
 - **`/atw debug`**, sezione *Profiles*: interruttore, profilo attivo, `auto`, ultimo ruolo letto e motivo, cambio in
   attesa sì o no, cambi per ruolo e a mano da quando l'addon è caricato, valori riportati al preset. Mai nomi.
-- **Demo**: il profilo non cambia durante la demo.
+- **Demo**: il profilo non cambia durante la demo (dal ruolo; vedi §4.4).
+- *M8.2*: la card mostra il profilo attivo con le icone di ruolo `role-tank`, `role-healer`, `role-dps` e le parole
+  `ROLE_*`; *Copy from…* apre un menu con gli altri due profili e copia al secondo clic entro 8 s, *Reset to preset*
+  chiede un secondo clic; sui dati in sola lettura i controlli sono spenti e la card dice *Profiles do not change while
+  your saved data is read-only.*; un cambio del ruolo in attesa per la demo dice *Applies when the demo ends.* Con
+  l'interruttore acceso la card *Reset* dice che il profilo attivo torna al preset. La sezione *Profiles* di `/atw debug`
+  c'è solo con l'interruttore acceso. `/atw profile` accetta anche `heal`, `damage` e `damager`.
 
 ## 5. Accessibilità (M8.4)
 
@@ -789,8 +809,8 @@ spento, e allora valgono `standard` e `both`.
 | File | Responsabilità | Bus | Step |
 |---|---|---|---|
 | `Core/Config.lua` (cambio) | schema 7 dell'account e 3 del personaggio, `Config.PROFILE_KEYS`, `Config.PRESETS`, `Config.HEATMAP_DEFAULTS`, `Config.PALETTES`, `Config.MARKS`, le regole dei profili generate da quelle delle impostazioni, le migrazioni `account[7]` e `char[3]` | — | M8.2 (tutto lo schema, anche le chiavi di M8.3 e M8.4) |
-| `Data/Profiles.lua` | profilo attivo, scelta dal ruolo, cambio fuori dal combattimento, copia all'indietro, copia e reset (§4) | emette `PROFILE_CHANGED(id, old, why)`; ascolta `CONFIG_LOADED`, `CONFIG_CHANGED`, `ENTERING_WORLD`, `GROUP_CHANGED`, `COMBAT_STARTED`, `COMBAT_ENDED`, `DEMO_CHANGED`; dal gioco `PLAYER_ROLES_ASSIGNED` | M8.2 |
-| `UI/Settings.lua`, `Core/Commands.lua`, `Core/Diagnostics.lua` (cambi) | card *Profile*, `/atw profile`, sezione *Profiles* | ascolta `PROFILE_CHANGED` | M8.2 |
+| `Data/Profiles.lua` | profilo attivo, scelta dal ruolo, cambio fuori dal combattimento, copia all'indietro, copia e reset (§4) | emette `PROFILE_CHANGED(id, old, why)` e `PROFILE_ROLE_READ(role, reason)`; ascolta `CONFIG_LOADED`, `CONFIG_CHANGED`, `ENTERING_WORLD`, `GROUP_CHANGED`, `COMBAT_ENDED`, `DEMO_CHANGED` (se c'è un combattimento lo chiede a `Core/Init.lua`, quindi non ascolta `COMBAT_STARTED`); dal gioco `PLAYER_ROLES_ASSIGNED` | M8.2 |
+| `UI/Settings.lua`, `Core/Commands.lua` (cambi) | card *Profile*, `/atw profile`; la sezione *Profiles* la aggiunge `Data/Profiles.lua` con `AddDebugSection` (nessun cambio di `Core/Diagnostics.lua`) | ascolta `PROFILE_CHANGED`, `PROFILE_ROLE_READ` | M8.2 |
 | `Core/Compat.lua` (cambio) | `Compat.RaidFrames.Collect`, la lettura di `InCombatLockdown`, la voce `frames.Raid` della tabella delle API, la capacità `raidFrames` | emette `CAPABILITY_CHANGED` | M8.3 |
 | `UI/ThreatList.lua` (cambio), `UI/RaidOverlay.lua` | calore delle righe (§3.2), sovrapposizione staccata (§3.3) | ascolta `THREAT_UPDATED`, `STATE_CHANGED`, `COMBAT_*`, `GROUP_CHANGED`, `DISPLAY_CHANGED`, `CONFIG_CHANGED`, `THEME_CHANGED`, `DEMO_CHANGED`; dal gioco `GROUP_ROSTER_UPDATE`, `COMPACT_UNIT_FRAME_PROFILES_LOADED` | M8.3 |
 | `UI/Settings.lua`, `Core/Diagnostics.lua` (cambi) | card *Heatmap*, sezione *Heatmap*; i blocchi `ADDON_ACTION_BLOCKED` e `ADDON_ACTION_FORBIDDEN` contati | — | M8.3 |

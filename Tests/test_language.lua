@@ -100,7 +100,7 @@ describe("a change in the settings", function()
 	end)
 
 	it("of a read-only account still picks the language it holds", function()
-		boot(function(M) M.saved = { AzerothThreatwardenDB = { schema = 7, settings = { language = "itIT" } } } end)
+		boot(function(M) M.saved = { AzerothThreatwardenDB = { schema = 8, settings = { language = "itIT" } } } end)
 		truthy(Config():IsReadOnly("account"))
 		eq(Locale().Active(), "itIT")
 	end)

@@ -17,14 +17,15 @@ local function changes()
 end
 
 describe("defaults (SPEC-02 §3.2, §3.3)", function()
-	it("creates both variables, account schema 6 and character schema 2, with every default, with no problem", function()
-		eq(AzerothThreatwardenDB.schema, 6)
-		eq(AzerothThreatwardenCharDB.schema, 2)
+	it("creates both variables, account schema 7 and character schema 3, with every default, with no problem", function()
+		eq(AzerothThreatwardenDB.schema, 7)
+		eq(AzerothThreatwardenCharDB.schema, 3)
 		deepEq(AzerothThreatwardenDB.settings, { language = "auto", theme = "nebula", effects = true, animations = true,
 			font = "addon", minimap = { hide = false, minimapPos = 200 },
 			monitor = Mock.ns.Config.MONITOR_DEFAULTS, alerts = Mock.ns.Config.ALERTS_DEFAULTS,
 			coach = Mock.ns.Config.COACH_DEFAULTS, recording = Mock.ns.Config.RECORDING_DEFAULTS,
-			mobs = Mock.ns.Config.MOBS_DEFAULTS })
+			mobs = Mock.ns.Config.MOBS_DEFAULTS, heatmap = Mock.ns.Config.HEATMAP_DEFAULTS, palette = "standard",
+			marks = "both" })
 		deepEq(AzerothThreatwardenDB.corrupt, {})
 		deepEq(AzerothThreatwardenCharDB.ui, { shown = true, locked = false, scale = 1.0, size = {}, lastTab = "monitor",
 			lastPage = "settings", replay = { speed = 1 } })
@@ -101,7 +102,8 @@ describe("wrong values (DAT-22)", function()
 			font = "addon", minimap = { hide = false, minimapPos = 200 },
 			monitor = Mock.ns.Config.MONITOR_DEFAULTS, alerts = Mock.ns.Config.ALERTS_DEFAULTS,
 			coach = Mock.ns.Config.COACH_DEFAULTS, recording = Mock.ns.Config.RECORDING_DEFAULTS,
-			mobs = Mock.ns.Config.MOBS_DEFAULTS })
+			mobs = Mock.ns.Config.MOBS_DEFAULTS, heatmap = Mock.ns.Config.HEATMAP_DEFAULTS, palette = "standard",
+			marks = "both" })
 		local ui = AzerothThreatwardenCharDB.ui
 		eq(ui.shown, true)
 		eq(ui.locked, false)
@@ -250,7 +252,7 @@ describe("damaged data (DAT-24)", function()
 	it("a variable that is not a table becomes a new one; only its type goes into `corrupt`", function()
 		boot(function(M) M.saved = { AzerothThreatwardenDB = "garbage", AzerothThreatwardenCharDB = 12 } end)
 		eq(type(AzerothThreatwardenDB), "table")
-		eq(AzerothThreatwardenCharDB.schema, 2)
+		eq(AzerothThreatwardenCharDB.schema, 3)
 		eq(AzerothThreatwardenDB.settings.language, "auto")
 		local corrupt = AzerothThreatwardenDB.corrupt
 		eq(#corrupt, 2)
@@ -319,9 +321,9 @@ describe("damaged data (DAT-24)", function()
 			M.saved = { AzerothThreatwardenDB = { settings = { theme = "aurora" } },
 				AzerothThreatwardenCharDB = { schema = "two", ui = { locked = true } } }
 		end)
-		eq(AzerothThreatwardenDB.schema, 6)
+		eq(AzerothThreatwardenDB.schema, 7)
 		eq(AzerothThreatwardenDB.settings.theme, "aurora")
-		eq(AzerothThreatwardenCharDB.schema, 2)
+		eq(AzerothThreatwardenCharDB.schema, 3)
 		eq(AzerothThreatwardenCharDB.ui.locked, true)
 		eq(C().found.account, "none")
 		eq(C().found.char, "damaged")
@@ -331,7 +333,7 @@ describe("damaged data (DAT-24)", function()
 		for _, bad in ipairs({ -3, 1.5 }) do
 			boot(function(M) M.saved = { AzerothThreatwardenDB = { schema = bad } } end)
 			eq(C().found.account, "damaged", tostring(bad))
-			eq(AzerothThreatwardenDB.schema, 6)
+			eq(AzerothThreatwardenDB.schema, 7)
 		end
 	end)
 end)
@@ -364,7 +366,7 @@ describe("migrations (DAT-20)", function()
 				AzerothThreatwardenCharDB = { ui = { shown = false, lastTab = "settings", scale = 0.8 } },
 			}
 		end)
-		eq(AzerothThreatwardenDB.schema, 6)
+		eq(AzerothThreatwardenDB.schema, 7)
 		eq(C():Get("account.settings.language"), "itIT")
 		eq(C():Get("account.settings.theme"), "warden")
 		eq(C():Get("account.settings.effects"), false)
@@ -379,7 +381,7 @@ describe("migrations (DAT-20)", function()
 	local function laterSchema(M, steps)
 		M.OnFilesLoaded(function()
 			local Config = M.ns.Config
-			Config.SCHEMAS.account = 7
+			Config.SCHEMAS.account = 8
 			for n, fn in pairs(steps) do Config.migrations.account[n] = fn end
 		end)
 	end
@@ -387,59 +389,59 @@ describe("migrations (DAT-20)", function()
 	it("run in order from the stored version; the saved table keeps its identity", function()
 		calls = {}
 		boot(function(M)
-			M.saved = { AzerothThreatwardenDB = { schema = 5, settings = { oldTheme = "aurora" } } }
+			M.saved = { AzerothThreatwardenDB = { schema = 6, settings = { oldTheme = "aurora" } } }
 			laterSchema(M, {
-				[6] = function(db)
-					calls[#calls + 1] = 6
+				[7] = function(db)
+					calls[#calls + 1] = 7
 					if db.settings.oldTheme ~= nil then db.settings.theme, db.settings.oldTheme = db.settings.oldTheme, nil end
 				end,
-				[7] = function(db) calls[#calls + 1] = 7 end,
+				[8] = function(db) calls[#calls + 1] = 8 end,
 			})
 		end)
-		deepEq(calls, { 6, 7 })
-		eq(AzerothThreatwardenDB.schema, 7)
+		deepEq(calls, { 7, 8 })
+		eq(AzerothThreatwardenDB.schema, 8)
 		eq(AzerothThreatwardenDB.settings.theme, "aurora")
 		isNil(AzerothThreatwardenDB.settings.oldTheme)
 		eq(C().db.account, AzerothThreatwardenDB)
 		falsy(C():IsReadOnly("account"))
 		C():Load()
-		deepEq(calls, { 6, 7 }, "a second load runs no step")
+		deepEq(calls, { 7, 8 }, "a second load runs no step")
 	end)
 
 	it("a step that fails leaves the saved data untouched and the variable read-only", function()
 		boot(function(M)
-			M.saved = { AzerothThreatwardenDB = { schema = 5, settings = { effects = false } } }
+			M.saved = { AzerothThreatwardenDB = { schema = 6, settings = { effects = false } } }
 			laterSchema(M, {
-				[6] = function(db) db.settings.effects = true end,
-				[7] = function(db) db.settings.theme = "aurora"; error("boom") end,
+				[7] = function(db) db.settings.effects = true end,
+				[8] = function(db) db.settings.theme = "aurora"; error("boom") end,
 			})
 		end)
-		eq(AzerothThreatwardenDB.schema, 5)
+		eq(AzerothThreatwardenDB.schema, 6)
 		eq(AzerothThreatwardenDB.settings.effects, false)
 		isNil(AzerothThreatwardenDB.settings.theme)
 		truthy(C():IsReadOnly("account"))
 		falsy(C():IsReadOnly("char"))
-		contains(issues(), "AzerothThreatwardenDB: migration step 7 failed, read-only")
+		contains(issues(), "AzerothThreatwardenDB: migration step 8 failed, read-only")
 		eq(select(2, C():Set("account.settings.theme", "warden")), "read-only")
 		eq(#Mock.errors, 0)
 		Mock.Reload()
 		matches(Mock.savedText.AzerothThreatwardenDB, '%["effects"%]=false')
-		matches(Mock.savedText.AzerothThreatwardenDB, '%["schema"%]=5')
+		matches(Mock.savedText.AzerothThreatwardenDB, '%["schema"%]=6')
 	end)
 
 	it("a step that is missing fails the same way", function()
 		boot(function(M)
-			M.saved = { AzerothThreatwardenDB = { schema = 5, settings = { theme = "aurora" } } }
-			laterSchema(M, { [6] = function() end })
+			M.saved = { AzerothThreatwardenDB = { schema = 6, settings = { theme = "aurora" } } }
+			laterSchema(M, { [7] = function() end })
 		end)
 		truthy(C():IsReadOnly("account"))
-		contains(issues(), "migration step 7 missing")
-		eq(AzerothThreatwardenDB.schema, 5)
+		contains(issues(), "migration step 8 missing")
+		eq(AzerothThreatwardenDB.schema, 6)
 	end)
 end)
 
 describe("a newer schema (DAT-21, DAT-25)", function()
-	local ACCOUNT = { schema = 7, settings = { language = "itIT", theme = "future", minimap = "x" }, future = { keep = true } }
+	local ACCOUNT = { schema = 8, settings = { language = "itIT", theme = "future", minimap = "x" }, future = { keep = true } }
 	local CHAR = { schema = 6, ui = { lastTab = "timeline", newKey = 1 } }
 	before_boot(function(M) M.saved = { AzerothThreatwardenDB = ACCOUNT, AzerothThreatwardenCharDB = CHAR } end)
 
@@ -448,8 +450,8 @@ describe("a newer schema (DAT-21, DAT-25)", function()
 		truthy(C():IsReadOnly("char"))
 		deepEq(AzerothThreatwardenDB, ACCOUNT)
 		deepEq(AzerothThreatwardenCharDB, CHAR)
-		contains(issues(), "AzerothThreatwardenDB: schema 7 is newer than 6, read-only")
-		contains(issues(), "AzerothThreatwardenCharDB: schema 6 is newer than 2, read-only")
+		contains(issues(), "AzerothThreatwardenDB: schema 8 is newer than 7, read-only")
+		contains(issues(), "AzerothThreatwardenCharDB: schema 6 is newer than 3, read-only")
 	end)
 
 	it("the addon works on a clean copy, with its corrections and `corrupt` only in memory", function()
@@ -477,7 +479,7 @@ describe("a newer schema (DAT-21, DAT-25)", function()
 		Mock.Relog(3600)
 		deepEq(AzerothThreatwardenCharDB, CHAR)
 		local text = report()
-		contains(text, "AzerothThreatwardenDB: schema found 7, current 6, about ")
+		contains(text, "AzerothThreatwardenDB: schema found 8, current 7, about ")
 		contains(text, "READ-ONLY: saved by a newer version, never rewritten")
 	end)
 end)
@@ -554,7 +556,7 @@ describe("the saved data in /atw debug (SPEC-01 §9)", function()
 		local loop = {}
 		loop.self = loop
 		truthy(C().EstimateSize(loop) > 0, "a circular table ends")
-		matches(report(), "AzerothThreatwardenDB: schema found none, current 6, about 0%.%d KB\n")
+		matches(report(), "AzerothThreatwardenDB: schema found none, current 7, about %d+%.%d KB\n")
 	end)
 
 	it("lists the `corrupt` entries by path and type, never their content or a name", function()
@@ -588,7 +590,7 @@ describe("schema 2: the monitor settings (SPEC-02 §3.5)", function()
 			M.saved = { AzerothThreatwardenDB = { schema = 1, future = 7,
 				settings = { theme = "aurora", language = "itIT", minimap = { hide = true } } } }
 		end)
-		eq(AzerothThreatwardenDB.schema, 6)
+		eq(AzerothThreatwardenDB.schema, 7)
 		eq(C().found.account, 1)
 		eq(AzerothThreatwardenDB.settings.theme, "aurora")
 		eq(AzerothThreatwardenDB.settings.language, "itIT")
@@ -598,7 +600,7 @@ describe("schema 2: the monitor settings (SPEC-02 §3.5)", function()
 		falsy(C():IsReadOnly())
 		eq(#C().issues, 0)
 		Mock.Reload()
-		eq(C().found.account, 6)
+		eq(C().found.account, 7)
 		deepEq(AzerothThreatwardenDB.settings.monitor, DEFAULTS)
 	end)
 
@@ -687,7 +689,7 @@ describe("schema 2: the monitor settings (SPEC-02 §3.5)", function()
 	end)
 
 	it("are refused on read-only data", function()
-		boot(function(M) M.saved = { AzerothThreatwardenDB = { schema = 7 } } end)
+		boot(function(M) M.saved = { AzerothThreatwardenDB = { schema = 8 } } end)
 		eq(select(2, C():SetThresholds(60, 70)), "read-only")
 		eq(select(2, C():Set(P .. "rate", 3)), "read-only")
 	end)
@@ -725,7 +727,7 @@ describe("schema 3: the alert settings (SPEC-02 §3.6, SPEC-04 §4.1)", function
 			M.saved = { AzerothThreatwardenDB = { schema = 2, future = 7,
 				settings = { theme = "aurora", monitor = { warning = 70, show = "manual" } } } }
 		end)
-		eq(AzerothThreatwardenDB.schema, 6)
+		eq(AzerothThreatwardenDB.schema, 7)
 		eq(C().found.account, 2)
 		eq(AzerothThreatwardenDB.settings.theme, "aurora")
 		eq(AzerothThreatwardenDB.settings.monitor.warning, 70)
@@ -735,7 +737,7 @@ describe("schema 3: the alert settings (SPEC-02 §3.6, SPEC-04 §4.1)", function
 		falsy(C():IsReadOnly())
 		eq(#C().issues, 0)
 		Mock.Reload()
-		eq(C().found.account, 6)
+		eq(C().found.account, 7)
 		deepEq(AzerothThreatwardenDB.settings.alerts, DEFAULTS)
 	end)
 
@@ -809,7 +811,7 @@ describe("schema 3: the Coach settings (SPEC-02 §3.6, SPEC-04 §4.1)", function
 			M.features = { monitor = true, coach = true }
 			M.saved = { AzerothThreatwardenDB = { schema = 2, settings = { theme = "aurora" } } }
 		end)
-		eq(AzerothThreatwardenDB.schema, 6)
+		eq(AzerothThreatwardenDB.schema, 7)
 		deepEq(AzerothThreatwardenDB.settings.coach, { enabled = true })
 		eq(#C().issues, 0)
 		truthy(C():Set(PATH, false))
@@ -843,7 +845,7 @@ describe("schema 5: the thresholds decided by the owner (SPEC-09 Q7, 2026-11-26)
 		eq(C():Get(P .. "warning"), 82)
 		eq(C():Get(P .. "danger"), 91)
 		deepEq(C().OLD_THRESHOLDS, { warning = 80, danger = 95 })
-		eq(C().SCHEMAS.account, 6)
+		eq(C().SCHEMAS.account, 7)
 		eq(#C().issues, 0)
 	end)
 
@@ -852,7 +854,7 @@ describe("schema 5: the thresholds decided by the owner (SPEC-09 Q7, 2026-11-26)
 			M.saved = { AzerothThreatwardenDB = { schema = 4, future = 7, settings = { theme = "aurora",
 				monitor = { warning = 80, danger = 95, rate = 8, sort = "risk" } } } }
 		end)
-		eq(AzerothThreatwardenDB.schema, 6)
+		eq(AzerothThreatwardenDB.schema, 7)
 		eq(C().found.account, 4)
 		eq(C():Get(P .. "warning"), 82)
 		eq(C():Get(P .. "danger"), 91)
@@ -863,7 +865,7 @@ describe("schema 5: the thresholds decided by the owner (SPEC-09 Q7, 2026-11-26)
 		eq(#C().issues, 0)
 		eq(Mock.ns.ThreatState.Thresholds(), 82)
 		Mock.Reload()
-		eq(C().found.account, 6)
+		eq(C().found.account, 7)
 		eq(C():Get(P .. "warning"), 82)
 	end)
 
@@ -912,7 +914,7 @@ describe("schema 5: the thresholds decided by the owner (SPEC-09 Q7, 2026-11-26)
 
 	it("never rewrite data of a newer schema", function()
 		boot(function(M)
-			M.saved = { AzerothThreatwardenDB = { schema = 7, settings = { monitor = { warning = 80, danger = 95 } } } }
+			M.saved = { AzerothThreatwardenDB = { schema = 8, settings = { monitor = { warning = 80, danger = 95 } } } }
 		end)
 		truthy(C():IsReadOnly("account"))
 		eq(AzerothThreatwardenDB.settings.monitor.warning, 80)
@@ -929,8 +931,8 @@ describe("schema 4: recording and sessions (SPEC-02 §3.7, SPEC-05 §2.3)", func
 		deepEq(C().RECORDING_DEFAULTS, DEFAULTS)
 		deepEq(AzerothThreatwardenDB.sessions, {})
 		deepEq(C().RECORD_WHEN, { "group", "instance", "always" })
-		eq(C().SCHEMAS.account, 6)
-		eq(C().SCHEMAS.char, 2)
+		eq(C().SCHEMAS.account, 7)
+		eq(C().SCHEMAS.char, 3)
 	end)
 
 	it("migrate data of schema 3 (3 -> 4) without sessions, keeping every value, once", function()
@@ -938,7 +940,7 @@ describe("schema 4: recording and sessions (SPEC-02 §3.7, SPEC-05 §2.3)", func
 			M.saved = { AzerothThreatwardenDB = { schema = 3, future = 7,
 				settings = { theme = "aurora", alerts = { cooldown = 12 }, coach = { enabled = false } } } }
 		end)
-		eq(AzerothThreatwardenDB.schema, 6)
+		eq(AzerothThreatwardenDB.schema, 7)
 		eq(C().found.account, 3)
 		eq(AzerothThreatwardenDB.settings.theme, "aurora")
 		eq(AzerothThreatwardenDB.settings.alerts.cooldown, 12)
@@ -948,7 +950,7 @@ describe("schema 4: recording and sessions (SPEC-02 §3.7, SPEC-05 §2.3)", func
 		deepEq(AzerothThreatwardenDB.sessions, {})
 		eq(#C().issues, 0)
 		Mock.Reload()
-		eq(C().found.account, 6)
+		eq(C().found.account, 7)
 		deepEq(AzerothThreatwardenDB.sessions, {})
 	end)
 
@@ -958,7 +960,7 @@ describe("schema 4: recording and sessions (SPEC-02 §3.7, SPEC-05 §2.3)", func
 			M.features = { recording = false }   -- the migration alone, without the checks of Storage
 			M.saved = { AzerothThreatwardenDB = { schema = 3, sessions = old } }
 		end)
-		eq(AzerothThreatwardenDB.schema, 6)
+		eq(AzerothThreatwardenDB.schema, 7)
 		deepEq(AzerothThreatwardenDB.sessions, old)
 		eq(#C().issues, 0)
 	end)
@@ -1029,8 +1031,8 @@ end)
 
 describe("character schema 2: the replay window (SPEC-02 §3.9)", function()
 	it("adds ui.replay with its speed, no place and no size", function()
-		eq(C().SCHEMAS.char, 2)
-		eq(AzerothThreatwardenCharDB.schema, 2)
+		eq(C().SCHEMAS.char, 3)
+		eq(AzerothThreatwardenCharDB.schema, 3)
 		deepEq(C():Get("char.ui.replay"), { speed = 1 })
 		isNil(C():Get("char.ui.replay.pos"))
 		isNil(C():Get("char.ui.replay.size"))
@@ -1042,7 +1044,7 @@ describe("character schema 2: the replay window (SPEC-02 §3.9)", function()
 		boot(function(M) M.saved = { AzerothThreatwardenCharDB = CHAR } end)
 		eq(C().found.char, 1)
 		falsy(C():IsReadOnly("char"))
-		eq(AzerothThreatwardenCharDB.schema, 2)
+		eq(AzerothThreatwardenCharDB.schema, 3)
 		eq(AzerothThreatwardenCharDB.future, 7)
 		eq(AzerothThreatwardenCharDB.ui.newKey, "x")
 		eq(AzerothThreatwardenCharDB.ui.shown, false)
@@ -1052,8 +1054,8 @@ describe("character schema 2: the replay window (SPEC-02 §3.9)", function()
 		deepEq(AzerothThreatwardenCharDB.ui.replay, { speed = 1 })
 		eq(#C().issues, 0)
 		Mock.Reload()
-		eq(AzerothThreatwardenCharDB.schema, 2)
-		eq(C().found.char, 2)
+		eq(AzerothThreatwardenCharDB.schema, 3)
+		eq(C().found.char, 3)
 	end)
 
 	it("migrates data that already has a ui.replay key, keeping what is valid in it", function()
@@ -1095,7 +1097,7 @@ describe("character schema 2: the replay window (SPEC-02 §3.9)", function()
 	end)
 
 	it("works read-only on data of a newer schema", function()
-		boot(function(M) M.saved = { AzerothThreatwardenCharDB = { schema = 3, ui = { replay = { speed = 8 } } } } end)
+		boot(function(M) M.saved = { AzerothThreatwardenCharDB = { schema = 4, ui = { replay = { speed = 8 } } } } end)
 		truthy(C():IsReadOnly("char"))
 		eq(C():Get("char.ui.replay.speed"), 8)
 		eq(select(2, C():Set("char.ui.replay.speed", 2)), "read-only")
@@ -1108,8 +1110,8 @@ describe("schema 6: the other mobs and the alerts about them (SPEC-02 §3.10, SP
 	local DEFAULTS = { enabled = true, max = 8, nameplates = true }
 
 	it("adds settings.mobs and alerts.onlyTarget with their defaults, the one place of Q26", function()
-		eq(C().SCHEMAS.account, 6)
-		eq(C().SCHEMAS.char, 2, "the character schema stays 2")
+		eq(C().SCHEMAS.account, 7)
+		eq(C().SCHEMAS.char, 3, "the character schema is 3 since M8.2")
 		deepEq(C():Get("account.settings.mobs"), DEFAULTS)
 		deepEq(C().MOBS_DEFAULTS, DEFAULTS)
 		deepEq(C().MOBS, { max = { min = 2, max = 12 } })
@@ -1120,7 +1122,7 @@ describe("schema 6: the other mobs and the alerts about them (SPEC-02 §3.10, SP
 
 	it("is written with the multitarget switch off too (as schema 3 with the alerts off)", function()
 		boot(function(M) M.features = { multitarget = false } end)
-		eq(AzerothThreatwardenDB.schema, 6)
+		eq(AzerothThreatwardenDB.schema, 7)
 		deepEq(AzerothThreatwardenDB.settings.mobs, DEFAULTS)
 	end)
 
@@ -1131,7 +1133,7 @@ describe("schema 6: the other mobs and the alerts about them (SPEC-02 §3.10, SP
 				settings = { theme = "warden", monitor = { warning = 70, danger = 85 }, alerts = { cooldown = 12, sound = true },
 					recording = { maxKB = 4096 } } } }
 		end)
-		eq(AzerothThreatwardenDB.schema, 6)
+		eq(AzerothThreatwardenDB.schema, 7)
 		eq(C().found.account, 5)
 		eq(AzerothThreatwardenDB.future, 7)
 		eq(AzerothThreatwardenDB.sessions[1].id, "keep")
@@ -1146,7 +1148,7 @@ describe("schema 6: the other mobs and the alerts about them (SPEC-02 §3.10, SP
 		falsy(C():IsReadOnly())
 		eq(#C().issues, 0)
 		Mock.Reload()
-		eq(C().found.account, 6)
+		eq(C().found.account, 7)
 		deepEq(AzerothThreatwardenDB.settings.mobs, DEFAULTS)
 	end)
 
@@ -1226,10 +1228,125 @@ describe("schema 6: the other mobs and the alerts about them (SPEC-02 §3.10, SP
 	end)
 
 	it("are read-only in data of a newer schema", function()
-		boot(function(M) M.saved = { AzerothThreatwardenDB = { schema = 7, settings = { mobs = { max = 3 } } } } end)
+		boot(function(M) M.saved = { AzerothThreatwardenDB = { schema = 8, settings = { mobs = { max = 3 } } } } end)
 		truthy(C():IsReadOnly("account"))
 		eq(C():Get(P .. "max"), 3)
 		eq(select(2, C():Set(P .. "max", 4)), "read-only")
 		eq(AzerothThreatwardenDB.settings.mobs.max, 3)
+	end)
+end)
+
+describe("account schema 7 and character schema 3: profiles, heatmap, palette, marks (SPEC-02 §3.11)", function()
+	it("add every key of M8.2-M8.4 with its default, the one place of Q28-Q30", function()
+		eq(C().SCHEMAS.account, 7)
+		eq(C().SCHEMAS.char, 3)
+		deepEq(C():Get("account.settings.heatmap"), { rows = true, raidFrames = false })
+		deepEq(C().HEATMAP_DEFAULTS, { rows = true, raidFrames = false })
+		eq(C():Get("account.settings.palette"), "standard")
+		eq(C():Get("account.settings.marks"), "both")
+		deepEq(C().PALETTES, { "standard", "redgreen", "blueyellow" })
+		deepEq(C().MARKS, { "both", "text", "icons" })
+		deepEq(C().PROFILE_IDS, { "tank", "healer", "damager" })
+		eq(#C().PROFILE_KEYS, 16)
+		for _, id in ipairs(C().PROFILE_IDS) do deepEq(AzerothThreatwardenDB.profiles[id], C().PRESETS[id], id) end
+		deepEq(AzerothThreatwardenCharDB.profile, { auto = true })
+		isNil(C():Get("char.profile.active"))
+		eq(#C().issues, 0)
+	end)
+
+	it("are written with the profiles, heatmap and accessibility switches off", function()
+		boot(function(M) M.features = { profiles = false, heatmap = false } end)
+		eq(AzerothThreatwardenDB.schema, 7)
+		eq(AzerothThreatwardenCharDB.schema, 3)
+		notNil(AzerothThreatwardenDB.profiles.tank)
+	end)
+
+	it("the profiles keep no key outside PROFILE_KEYS, and none of the person's or the computer's", function()
+		local P = C().PRESETS.tank
+		for _, key in ipairs({ "language", "theme", "effects", "animations", "font", "palette", "marks", "minimap",
+			"recording" }) do
+			isNil(P[key], key)
+		end
+		for _, key in ipairs({ "rate", "maxUnits", "show", "followTargetOfTarget" }) do isNil(P.monitor[key], key) end
+		isNil(P.mobs.max)
+		isNil(P.mobs.nameplates)
+	end)
+
+	it("the rules of a profile are those of the settings: good values pass, others are refused", function()
+		truthy(C():Set("account.settings.heatmap.rows", false))
+		truthy(C():Set("account.settings.heatmap.raidFrames", true))
+		truthy(C():Set("account.settings.palette", "redgreen"))
+		truthy(C():Set("account.settings.marks", "icons"))
+		falsy(C():Set("account.settings.palette", "rainbow"))
+		falsy(C():Set("account.settings.marks", "none"))
+		falsy(C():Set("account.settings.heatmap.rows", 1))
+		eq(select(2, C():Set("account.settings.heatmap", {})), "not a value")
+		eq(C().rules["account.profiles.tank.alerts.cooldown"], C().rules["account.settings.alerts.cooldown"])
+		truthy(C():Set("account.profiles.healer.alerts.cooldown", 12))
+		falsy(C():Set("account.profiles.healer.alerts.cooldown", 40))
+		falsy(C():Set("account.profiles.healer.monitor.warning", 90), "the gap holds in a profile too")
+		eq(select(2, C():Set("account.profiles.healer", {})), "not a value")
+		truthy(C():Set("char.profile.active", "tank"))
+		truthy(C():Set("char.profile.role", "HEALER"))
+		truthy(C():Set("char.profile.auto", false))
+		falsy(C():Set("char.profile.active", "dps"))
+		falsy(C():Set("char.profile.role", "NONE"))
+		truthy(C():Set("char.profile.active", nil))
+	end)
+
+	it("bring wrong values back at load: a profile's to its preset, a damaged profile set aside", function()
+		boot(function(M)
+			M.saved = {
+				AzerothThreatwardenDB = { schema = 7, settings = { palette = "x", marks = 3, heatmap = "y" },
+					profiles = { tank = 5, healer = { monitor = { pinSelf = "x", warning = 90, danger = 92 },
+						alerts = { cooldown = 99, extra = "kept" } } } },
+				AzerothThreatwardenCharDB = { schema = 3, profile = { active = "dps", auto = "yes", role = "NONE" } },
+			}
+		end)
+		eq(C():Get("account.settings.palette"), "standard")
+		eq(C():Get("account.settings.marks"), "both")
+		deepEq(C():Get("account.settings.heatmap"), { rows = true, raidFrames = false })
+		deepEq(AzerothThreatwardenDB.profiles.tank, C().PRESETS.tank)
+		local h = AzerothThreatwardenDB.profiles.healer
+		eq(h.monitor.pinSelf, true, "the healer's preset, not the default of the setting")
+		eq(h.monitor.warning, 82)
+		eq(h.monitor.danger, 91)
+		eq(h.alerts.cooldown, 8)
+		eq(h.alerts.extra, "kept", "an unknown key stays")
+		deepEq(AzerothThreatwardenDB.profiles.damager, C().PRESETS.damager, "a missing profile gets its preset")
+		deepEq(AzerothThreatwardenCharDB.profile, { auto = true })
+		local paths = {}
+		for _, entry in ipairs(AzerothThreatwardenDB.corrupt) do paths[entry.path] = entry.kind end
+		eq(paths["account.profiles.tank"], "number")
+		eq(paths["account.settings.heatmap"], "string")
+		contains(issues(), "account.profiles.healer.monitor: thresholds back to the preset")
+		contains(issues(), "account.profiles.healer.alerts.cooldown: reset (above 30)")
+		contains(issues(), "char.profile.active: reset (not an allowed value)")
+	end)
+
+	it("Reset settings leaves the profiles; the new settings go back to their defaults", function()
+		truthy(C():Set("account.settings.palette", "blueyellow"))
+		truthy(C():Set("account.settings.heatmap.rows", false))
+		truthy(C():Set("account.profiles.tank.alerts.cooldown", 20))
+		truthy(C():ResetSettings())
+		eq(C():Get("account.settings.palette"), "standard")
+		eq(C():Get("account.settings.heatmap.rows"), true)
+		eq(C():Get("account.profiles.tank.alerts.cooldown"), 20)
+		truthy(C():Set("account.settings.alerts.cooldown", 15))
+		truthy(C():ResetSettings({ ["account.settings.alerts.cooldown"] = true }))
+		eq(C():Get("account.settings.alerts.cooldown"), 15, "a path to keep stays")
+	end)
+
+	it("are read-only in data of a newer schema", function()
+		boot(function(M)
+			M.saved = { AzerothThreatwardenDB = { schema = 8, profiles = { tank = { monitor = { warning = 60 } } } },
+				AzerothThreatwardenCharDB = { schema = 4, profile = { active = "tank" } } }
+		end)
+		truthy(C():IsReadOnly("account"))
+		truthy(C():IsReadOnly("char"))
+		eq(select(2, C():Set("char.profile.active", "healer")), "read-only")
+		eq(select(2, C():SetProfileValues("tank", { ["alerts.cooldown"] = 10 })), "read-only")
+		eq(AzerothThreatwardenDB.profiles.tank.monitor.warning, 60)
+		isNil(AzerothThreatwardenDB.profiles.healer)
 	end)
 end)

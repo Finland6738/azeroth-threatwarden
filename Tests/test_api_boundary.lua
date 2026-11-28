@@ -220,3 +220,15 @@ AzerothThreatwarden.x = format("%s", tostring(wipe({})))
 		deepEq(check("local p = UIParent local t = GameTooltip", true), { "1:UIParent", "1:GameTooltip" })
 	end)
 end)
+
+describe("the role profiles (M8.2)", function()
+	it("Data/Profiles.lua is loaded and names no game API; the role is read only through Core/Compat.lua", function()
+		local files = {}
+		for _, file in ipairs(addonFiles()) do files[file] = true end
+		truthy(files[ADDON .. "Data/Profiles.lua"])
+		deepEq(violations("Data/Profiles.lua", Mock.ReadSource(ADDON .. "Data/Profiles.lua"), gameNames(), false), {})
+		local source = Mock.ReadSource(ADDON .. "Data/Profiles.lua")
+		falsy(codeOnly(source):find("UnitGroupRolesAssigned", 1, true), "only Compat.Unit.Role")
+		truthy(Mock.ReadSource(ADDON .. "Core/Compat.lua"):find("UnitGroupRolesAssigned", 1, true))
+	end)
+end)

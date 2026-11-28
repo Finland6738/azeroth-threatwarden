@@ -24,8 +24,12 @@ compaiono solo nella tua finestra di chat, nella lingua dell'addon; nulla viene 
 | `/atw replay` | apre il [Replay della threat](Threat-Replay-it) dell'ultimo scontro finito |
 | `/atw replay 2` | il replay del secondo scontro dell'elenco (1 è il più recente) |
 | `/atw focus` | dalla `v0.7.0`: apre l'elenco del [Dungeon Focus](Dungeon-Focus-it) (scritto di nuovo, lo chiude); lo dice quando non ci sono altri mob o la parte è spenta nelle Impostazioni |
+| `/atw profile` | dalla `v0.8.0`: dice quale [profilo per ruolo](Settings-it#profili-per-ruolo) è in uso e da dove viene |
+| `/atw profile tank` | sceglie un profilo a mano: `tank`, `healer` o `dps`; in combattimento vale dopo lo scontro |
+| `/atw profile auto` | il profilo torna a seguire il ruolo che ti dà il gruppo |
 
-Prima della loro versione, `/atw reports`, `/atw replay` e `/atw focus` rispondono con la versione che li porterà.
+Prima della loro versione, `/atw reports`, `/atw replay`, `/atw focus` e `/atw profile` rispondono con la versione che
+li porterà.
 
 ## Assegnazione di un tasto
 
