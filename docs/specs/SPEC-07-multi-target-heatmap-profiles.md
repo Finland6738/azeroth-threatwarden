@@ -1,10 +1,11 @@
 # SPEC-07: Multi-target, heatmap e profili
 
-> Fonte: [specifiche originali](source-specification.md) §5.6, §5.7, §4.2. §0–§2 completati in **M7.1** (2026-11-27)
+> Fonte: [specifiche originali](source-specification.md) §5.6, §5.7, §4.2, §6.1, §6.4. §0–§2 completati in **M7.1** (2026-11-27)
 > **prima** dell'esito del probe M0, per decisione del proprietario ([SPEC-00 §7](SPEC-00-vision-scope.md#7-registro-delle-decisioni)
 > D7, come M2–M6): il go / no-go di M7 è **condizionato** (§0) e il tracker legge ciò che il client permette, lettura
 > per lettura; ciò che il probe può cambiare è marcato **[probe Pn]**, ciò che solo il gioco può dire **[da provare in
-> gioco]**. §3–§4 da completare in **M8.1**. Moduli, eventi e test per step in §2.7–§2.8.
+> gioco]**. §3–§7 (heatmap, profili, accessibilità) completati in **M8.1** (2026-11-28), anch'essi prima del
+> probe; moduli, eventi e test per step di M7 in §2.7–§2.8, di M8 in §6.
 > §1 e §2.4 realizzati in **M7.2** (`Data/MobRisk.lua`, `Data/MobTracker.lua`, la regola 0 di `Data/TargetTracker.lua`,
 > lo schema 6) dietro l'interruttore `multitarget`, spento fino a M7.R (acceso dalla `v0.7.0`); le note *M7.2* dicono come il codice ha letto i punti
 > lasciati aperti.
@@ -466,12 +467,359 @@ confronto, nessuno dei due), con il client finto (che ha già targhe, focus, bos
   della lista in combattimento e in italiano; il costo (FPS) con 40 targhe in un raid; gli avvisi `mob` con
   `onlyTarget` spento.
 
-## 3. Heatmap (M8)
+## 3. Heatmap (M8.3)
 
-Colorazione delle righe del monitor; integrazione con i riquadri del raid di Blizzard **solo** se non causa taint
-**[verificare]**; nessuna dipendenza da addon esterni; colori configurabili e alternative non basate sul colore.
+Fonte §5.7: *funzionalità opzionale: colorazione delle righe del Threat Monitor; integrazione con raid frame solo se
+tecnicamente e legalmente compatibile; nessuna dipendenza obbligatoria da addon esterni; colori configurabili e
+alternative non basate soltanto sul colore*. Completato in **M8.1** (2026-11-28) prima del probe, come M2–M7 (D7);
+decisione D27 e [ADR 0021](../adr/0021-raid-frames-are-only-overlaid-never-touched.md), risposte proposte in
+[Q29](SPEC-09-risks-open-questions.md).
 
-## 4. Profili e preset (M8)
+### 3.1 Principi
 
-Profili per tank, DPS e healer (soglie, canali, colonne); scelta automatica dal ruolo assegnato, se rilevabile;
-copia e reset di un profilo.
+- **HM-01** MUST: la heatmap ripete ciò che la riga dice già, non lo sostituisce: ogni riga tiene distintivo, icona e
+  parola (ST-02) e il calore non è mai l'unico segno di uno stato. Uno stato UNKNOWN non ha calore (nessun colore che
+  sembri un numero).
+- **HM-02** MUST: i colori sono solo i token di stato della tavolozza scelta (§5.2), con le trasparenze di §3.2; nessun
+  colore libero (Q30), nessun colore fuori da `UI/Theme.lua`.
+- **HM-03** MUST: i riquadri del raid di Blizzard **non si toccano mai**: nessun `hooksecurefunc` sulle loro funzioni,
+  nessun `SetPoint`, `SetParent` o `SetFrameLevel` riferito a loro, nessun campo scritto nelle loro tabelle, nessuna
+  texture creata su di loro, nessun metodo chiamato su di loro tranne le letture di §3.3, e quelle solo fuori dal
+  combattimento ([ADR 0021](../adr/0021-raid-frames-are-only-overlaid-never-touched.md)). Il dump elenca
+  `hooksecurefunc` e le funzioni `CompactUnitFrame_*` (per esempio `CompactUnitFrame_UpdateAll`,
+  `CompactUnitFrame_UpdateAggroHighlight`): non si usano.
+- **HM-04** MUST: nessuna dipendenza da altri addon; con riquadri di un altro addon (che sostituisce quelli di Blizzard)
+  la sovrapposizione non trova nulla e non disegna nulla, e la card lo dice.
+- **HM-05** MUST: nulla si salva oltre alle due impostazioni di §3.4; con l'interruttore `heatmap` spento o con le due
+  impostazioni spente nessun evento del gioco è registrato per la heatmap e nessun frame è creato.
+- **HM-06** MUST: costo limitato (SPEC-08 §8): una riga si ridipinge solo quando cambia il suo passo di calore; la
+  sovrapposizione si aggiorna solo dopo `THREAT_UPDATED` e solo per i segni che cambiano; nessuna allocazione per tick
+  dopo il riscaldamento.
+
+### 3.2 Le righe del monitor (`UI/ThreatList.lua`)
+
+Ogni riga del monitor ha una texture di calore (`w.heat`) sotto il contenuto, larga quanto la riga, sopra il fondo
+`surface-1` e sotto l'evidenziazione del passaggio del mouse; l'anello `accent` della propria riga resta sopra. Il
+colore è il token di stato della riga (`state-safe`, `state-warning`, `state-danger` della tavolozza attiva), la
+trasparenza viene dal **passo**:
+
+| Passo | Quando (`values`) | Quando (`state`) | Trasparenza (`Heatmap.ALPHA`) |
+|---|---|---|---|
+| 0 | UNKNOWN; SAFE sotto il 50 % (la scalata; per il tank il secondo sotto il 50 % del tank) | UNKNOWN, SAFE | 0 (nessun calore) |
+| 1 | SAFE dal 50 % | — | 0,06 |
+| 2 | WARNING sotto la metà fra le soglie, `(W + D) / 2` | WARNING | 0,10 |
+| 3 | WARNING dalla metà fra le soglie | — | 0,14 |
+| 4 | DANGER, e la riga di chi tiene il mob senza essere un tank | DANGER | 0,18 |
+
+- Lo stato è quello mostrato dalla riga (dopo isteresi e permanenza, SPEC-03 §2.4): il calore non sale né scende per
+  conto suo. Dentro lo stesso stato i confini del 50 % e della metà fra le soglie hanno un'isteresi di **2 punti**
+  (`Heatmap.HYSTERESIS`), così il passo non oscilla; una riga cambia passo al più una volta al secondo, tranne
+  l'entrata in DANGER, che è subito (come MON-13).
+- Il passo cambia la trasparenza con una dissolvenza di 120 ms se le animazioni sono accese; **nessun lampeggio**.
+- **Contrasto**: `Tests/test_theme.lua` mescola il token di stato al passo 4 sopra `surface-1` e `surface-2` (il
+  passaggio del mouse) in ogni tema e in ogni tavolozza, e controlla `text-1` e `text-2` ≥ 4,5:1, `text-3` ≥ 3:1,
+  `accent-text` ≥ 4,5:1 e la barra della riga (il riempimento di stato sul fondo mescolato) ≥ 3:1. Se una combinazione
+  non regge, si abbassa `Heatmap.ALPHA[4]` (un solo punto) e ui-style §3.8 scrive il valore.
+- Le righe del **Dungeon Focus** (§2.3) **non** hanno calore in M8: il margine del tick dei mob sul tick del monitor è
+  di circa il 2 % (M7.4); M8.6 può aggiungerlo se la misura lo permette, con una nota qui.
+- La demo (`/atw demo`) mostra il calore sulle righe inventate.
+
+### 3.3 I riquadri del raid di Blizzard (`UI/RaidOverlay.lua`)
+
+**Che cosa.** Sopra ogni riquadro compatto del gruppo o del raid di Blizzard (quelli del gioco, *Compact Raid Frames*)
+di un membro che è nella lista del mob monitorato, un **segno** dell'addon: un bordo di 2 px nel token di stato e, in
+alto, un piccolo distintivo con icona e parola (`Badge`, come ST-02). Il segno compare **solo** per WARNING, DANGER e
+per chi tiene il mob senza essere un tank; SAFE e UNKNOWN non mostrano nulla (nessuna affermazione dove non c'è
+rischio o non c'è un dato). Il segno non copre il centro del riquadro (nome e vita) e non prende il mouse
+(`EnableMouse(false)`): clic, menu e clic con incantesimo restano del riquadro del gioco. Si spegne nella demo (stati
+inventati su riquadri veri sarebbero falsi).
+
+**Come, senza toccare i riquadri** (HM-03, ADR 0021). Una sovrapposizione **staccata**:
+
+1. Un frame dell'addon, `AzerothThreatwardenRaidOverlay`, figlio di `UIParent`, mai protetto, con un pool di 40 segni
+   creati la prima volta che servono. Nessun segno è ancorato a un riquadro del gioco: ogni segno è ancorato a
+   `UIParent` in coordinate assolute.
+2. **Fuori dal combattimento** (`InCombatLockdown()` falso, attraverso Compat) `Compat.RaidFrames.Collect(out)` cerca a
+   runtime, con `rawget` su `_G` come PRB-05 (il dump elenca le funzioni `CompactUnitFrame_*` ma nessun frame per
+   nome), i riquadri visibili `CompactPartyFrameMember1–5`, `CompactRaidFrame1–40` e `CompactRaidGroup1–8Member1–5`,
+   e di ognuno **legge** soltanto il campo `unit` (o `displayedUnit`), `IsVisible()`, `GetRect()` e
+   `GetEffectiveScale()`; restituisce `{ unit, left, bottom, width, height }` in coordinate di `UIParent` in una
+   tabella riusata. Nessun'altra chiamata, nessuna scrittura. Un valore segreto o un errore (`pcall`) vale come
+   riquadro assente.
+3. Le posizioni si copiano: a `COMBAT_ENDED`, a `GROUP_CHANGED` e al cambio del roster fuori dal combattimento, a
+   `DISPLAY_CHANGED`, quando l'impostazione si accende, e ogni **2 s** fuori dal combattimento finché l'impostazione è
+   accesa e il giocatore è in un gruppo (la disposizione dei riquadri può cambiare senza un evento che il dump
+   documenti; `COMPACT_UNIT_FRAME_PROFILES_LOADED` è l'unico evento dei riquadri nel dump e si ascolta anche quello).
+4. **In combattimento** le posizioni restano quelle copiate; cambiano soltanto colore, trasparenza e parola dei segni
+   (metodi delle texture e dei testi dell'addon, che non sono protetti). Se il roster cambia in combattimento
+   (`GROUP_ROSTER_UPDATE`), i riquadri si sono forse spostati: **tutti** i segni si nascondono fino alla fine del
+   combattimento e `/atw debug` lo conta.
+5. Il segno di un membro si sceglie dal suo token (`unit` del riquadro) e dalle righe del monitor (il token di ogni
+   riga, dallo Scanner); un riquadro con un token che non è nella lista non ha segno.
+
+**Il rischio di taint, detto com'è.** Il taint nasce quando codice di un addon **scrive** qualcosa che poi il codice
+protetto del gioco legge (un campo di un riquadro, una funzione agganciata, un ancoraggio), e da lì le azioni
+protette del gioco vengono bloccate (`ADDON_ACTION_BLOCKED`) o i riquadri si rompono in combattimento. La
+sovrapposizione staccata non scrive nulla nei riquadri e non aggancia nulla, quindi **non dovrebbe** causare taint. I
+rischi che restano, **[da provare in gioco]** e nella checklist di rilascio (SPEC-08 §10):
+
+- che su Forever leggere un campo o la geometria di un riquadro protetto non sia innocuo come nel client standard, o
+  che il client lo neghi (valori segreti o `nil`: la sovrapposizione non disegna e la card dice *The game's raid
+  frames cannot be read here.*);
+- che i riquadri abbiano altri nomi su Forever (nessun riquadro trovato: come sopra);
+- che i riquadri si spostino in combattimento senza un cambio del roster (segni fuori posto fino alla fine del
+  combattimento);
+- che le UI personalizzate nascondano i riquadri di Blizzard (nessun segno, HM-04).
+
+Se il controllo nel gioco (il registro del taint acceso dal proprietario, gli `ADDON_ACTION_BLOCKED` e
+`ADDON_ACTION_FORBIDDEN` contati da `Core/Diagnostics.lua`) attribuisce anche **un** blocco o un taint alla
+sovrapposizione, la risposta proposta di Q29 è toglierla: l'impostazione sparisce, la heatmap resta sulle righe del
+monitor, il manuale lo dice. **Alternativa scartata**: agganciare `CompactUnitFrame_UpdateAll` o
+`CompactUnitFrame_UpdateHealthColor` e cambiare il colore della barra della vita o creare texture sui riquadri del
+gioco: è il modo comune negli altri client, ma scrive nei riquadri (rischio di taint) e litiga con l'evidenziazione
+dell'aggro che i riquadri di Blizzard hanno già (`CompactUnitFrame_UpdateAggroHighlight`, che usa la threat del
+gioco).
+
+**Capacità** `raidFrames` di Compat ([SPEC-01 §8.4](SPEC-01-platform-architecture.md#84-capacità)): `available` dopo
+una raccolta con almeno un riquadro letto, `missing` quando nessun nome esiste, `restricted` quando le letture sono
+segrete o in errore, `unknown` prima della prima raccolta (ARC-12).
+
+### 3.4 Impostazioni (schema 7 dell'account)
+
+| Percorso | Tipo | Predefinito | Uso |
+|---|---|---|---|
+| `settings.heatmap.rows` | booleano | `true` | calore sulle righe del monitor (§3.2) |
+| `settings.heatmap.raidFrames` | booleano | `false` | segni sopra i riquadri del raid di Blizzard (§3.3); spento per il rischio detto sopra |
+
+Le due chiavi sono anche nei profili (§4.2). Dettaglio in [SPEC-02 §3.11](SPEC-02-data-model-storage.md#311-schema-7-dellaccount-e-schema-3-del-personaggio-m8);
+predefiniti in un solo posto, `Config.HEATMAP_DEFAULTS` (Q29).
+
+### 3.5 Card, diagnostica e demo
+
+- **Card *Heatmap*** (dopo *Dungeon Focus*, prima di *Alerts*; solo con l'interruttore): *Colour the monitor rows*
+  (`heatmap.rows`), *Mark the game's raid frames* (`heatmap.raidFrames`) con la nota *Draws on top of the game's own
+  party and raid frames, without changing them. Turn it off if the game reports a problem with an addon.* e, sotto, lo
+  stato: *Raid frames found: 25*, *The game's raid frames are not shown* (riquadri di Blizzard nascosti o di un altro
+  addon), *The game's raid frames cannot be read here.* (capacità `restricted`).
+- **`/atw debug`**, sezione *Heatmap*: interruttore e impostazioni, capacità `raidFrames`, riquadri trovati per nome
+  (`party`, `raid`, `group`), segni mostrati, età delle posizioni, segni nascosti per un cambio del roster in
+  combattimento (sì o no e quante volte), `ADDON_ACTION_BLOCKED` e `ADDON_ACTION_FORBIDDEN` visti da quando la
+  sovrapposizione è accesa. Mai nomi.
+- **Demo**: righe con il calore, nessun segno sui riquadri.
+
+## 4. Profili e preset (M8.2)
+
+Fonte §4.2 e §6.4: *configurazioni per tank, DPS e healer*, *profili per ruolo*. Completato in **M8.1**; decisioni
+D25–D26 e [ADR 0020](../adr/0020-role-profiles-are-copies-of-chosen-settings-applied-onto-the-live-settings.md),
+risposte proposte in [Q28](SPEC-09-risks-open-questions.md).
+
+### 4.1 Principi
+
+- **PR-01** MUST: un profilo è un insieme di valori per un elenco **fisso** di impostazioni (`Config.PROFILE_KEYS`,
+  §4.2). I moduli continuano a leggere `account.settings` con `Config:Get`: cambiare profilo **scrive** i valori del
+  profilo nelle impostazioni, e una modifica fatta in una card **si copia** nel profilo attivo
+  ([ADR 0020](../adr/0020-role-profiles-are-copies-of-chosen-settings-applied-onto-the-live-settings.md)). Nessun
+  modulo deve sapere che i profili esistono.
+- **PR-02** MUST: tre profili, uno per ruolo del gioco: `tank`, `healer`, `damager` (le parole di
+  `UnitGroupRolesAssigned`). Nessun profilo creato dal giocatore in M8 (Q28).
+- **PR-03** MUST: i profili sono per **account** (uno stesso tank su due personaggi usa le stesse soglie); il profilo
+  attivo e la scelta automatica sono per **personaggio**.
+- **PR-04** MUST: un profilo non cambia mai in combattimento: un cambio chiesto in combattimento (dal ruolo o dal
+  giocatore) aspetta `COMBAT_ENDED`, e la card lo dice (*Applies after combat*). Così le soglie di uno scontro restano
+  quelle registrate nella sua sessione (SPEC-05 §2, SPEC-06 §2).
+- **PR-05** MUST: il ruolo letto è un dato **rilevato** (ADR 0003): la card dice da dove viene il profilo attivo
+  (*from your group role*, *chosen by you*) e, quando il ruolo non si legge, perché.
+- **PR-06** MUST: nessun nome nei profili, nei loro eventi e in `/atw debug`.
+- **PR-07** MUST: sui dati in sola lettura (schema più nuovo, SPEC-02 §3.4) il profilo non cambia e la card dice
+  perché, come le altre card (*Not saved*).
+- **PR-08** MUST: il Coach e gli avvisi non cambiano: il loro ruolo resta quello di `UnitGroupRolesAssigned` riga per
+  riga (SPEC-04 §2.1); il profilo cambia solo le impostazioni.
+
+### 4.2 Che cosa sta in un profilo e i preset
+
+`Config.PROFILE_KEYS`, con il preset di ogni ruolo (`Config.PRESETS`, la risposta proposta di Q28). Le soglie restano
+quelle del proprietario per tutti i ruoli (D12): il tank le usa sul secondo, come oggi.
+
+| Chiave (`account.settings.`) | `tank` | `healer` | `damager` | Perché |
+|---|---|---|---|---|
+| `monitor.warning`, `monitor.danger` | 82, 91 | 82, 91 | 82, 91 | D12, Q7; si scrivono insieme con `Config:SetThresholds` |
+| `monitor.sort` | `relative` | `relative` | `relative` | |
+| `monitor.pinSelf` | `false` | `true` | `true` | chi non fa il tank cerca la propria riga |
+| `alerts.enabled`, `alerts.window`, `alerts.visual` | `true` | `true` | `true` | |
+| `alerts.sound` | `false` | `false` | `false` | Q12 |
+| `alerts.cooldown` | 8 | 8 | 8 | |
+| `alerts.others` | `tank` | `tank` | `tank` | gli avvisi sugli altri contano già solo per il tank |
+| `alerts.pet` | `true` | `true` | `true` | |
+| `alerts.onlyTarget` | `false` | `true` | `true` | il tank vuole sapere dei mob sciolti (l'alternativa di Q26) |
+| `coach.enabled` | `true` | `true` | `true` | |
+| `mobs.enabled` | `true` | `true` | `true` | |
+| `heatmap.rows`, `heatmap.raidFrames` | `true`, `false` | `true`, `false` | `true`, `false` | Q29 |
+
+- **Non** stanno nei profili (sono della persona o del computer, non del ruolo): lingua, tema, effetti, animazioni,
+  font, tavolozza e segni (§5), minimappa, finestra, `monitor.rate`, `monitor.maxUnits`, `monitor.show`,
+  `monitor.followTargetOfTarget`, `mobs.max`, `mobs.nameplates`, la registrazione.
+- *Colonne* (fonte §4.2): il monitor non ha colonne da scegliere (si nascondono da sole con la larghezza, SPEC-03
+  §2.6); il profilo ne tiene l'ordine e *pin me on top*. Un selettore di colonne non è in M8 (Q28).
+
+### 4.3 La scelta automatica dal ruolo
+
+Con `char.profile.auto` acceso (predefinito), il profilo segue il ruolo **assegnato al giocatore**,
+`Compat.Unit.Role("player")` (`UnitGroupRolesAssigned`, **[probe P9]**):
+
+| Risposta | Profilo |
+|---|---|
+| `TANK`, `HEALER`, `DAMAGER` | `tank`, `healer`, `damager` |
+| `nil` con il motivo `none` (`NONE`: da soli, o un gruppo fatto a mano senza ruoli) | **invariato**; la card dice *No group role: using Damage* (il profilo attivo) |
+| `nil` con il motivo `secret`, `missing`, `error` | **invariato**; la card dice *Your group role cannot be read here* |
+
+- Si legge a `ENTERING_WORLD`, a `GROUP_CHANGED`, a `PLAYER_ROLES_ASSIGNED` (nel dump, `PartyInfo`) e a
+  `COMBAT_ENDED` (per applicare un cambio in attesa); mai in un tick.
+- Il profilo cambia solo quando il ruolo letto è **diverso** dall'ultimo ruolo che ha scelto un profilo
+  (`char.profile.role`, salvato): così una scelta fatta a mano resta finché il gruppo non assegna un ruolo diverso,
+  anche dopo un `/reload` o un nuovo accesso; un ruolo uguale non annulla la scelta a mano. `NONE` e un ruolo segreto
+  non cambiano `char.profile.role`.
+- Con `auto` spento il profilo cambia solo a mano.
+- **Niente ruolo dalla specializzazione**: il dump ha `GetSpecializationRole` e `C_SpecializationInfo`, ma il probe non
+  li prova e un personaggio può fare un ruolo diverso da quello della specializzazione; restano fuori (alternativa di
+  Q28, una funzione di `Data/Profiles.lua`).
+- **Prima volta** (nessun `char.profile.active`): il ruolo letto, altrimenti `damager`.
+
+### 4.4 Scrittura, cambio, copia e reset (`Data/Profiles.lua`)
+
+- **Cambio** (`Profiles.Switch(id, why)`, `why` = `role` o `manual`): fuori dal combattimento e con dati scrivibili,
+  scrive in `account.settings` ogni chiave di `PROFILE_KEYS` con il valore del profilo (le soglie con
+  `Config:SetThresholds`), con un indicatore *applying* che impedisce la copia all'indietro, salva
+  `char.profile.active`, emette **una** volta `PROFILE_CHANGED(id, old, why)` dopo i `CONFIG_CHANGED` delle chiavi
+  cambiate. Un valore del profilo che non passa la regola della sua chiave torna al preset e va in `Config.issues`.
+- **Copia all'indietro**: a `CONFIG_CHANGED(path)` di una chiave di `PROFILE_KEYS`, fuori da *applying*, il valore si
+  scrive in `account.profiles.<attivo>.<chiave>`. Così ciò che il giocatore cambia nelle card resta nel profilo attivo.
+- **Copia** (*Copy from…*): i valori di un altro profilo diventano quelli dell'attivo (e si applicano); chiede conferma.
+- **Reset** (*Reset to preset*): il profilo attivo torna al suo preset (e si applica); chiede conferma. Il pulsante
+  *Reset settings* della card *Reset* (SPEC-03 §5) riporta ai predefiniti le impostazioni fuori dai profili e il profilo
+  attivo al suo preset; gli altri due profili non cambiano.
+- **Interruttore `profiles` spento**: `Data/Profiles.lua` non registra eventi né copia nulla; le impostazioni si usano
+  come oggi. Gli schemi 7 e 3 e le loro migrazioni ci sono comunque (come lo schema 6 con `multitarget` spento).
+
+### 4.5 Dati salvati
+
+Dettaglio in [SPEC-02 §3.11](SPEC-02-data-model-storage.md#311-schema-7-dellaccount-e-schema-3-del-personaggio-m8):
+`account.profiles.tank`, `.healer`, `.damager` (le chiavi di §4.2, con la stessa forma di `settings`);
+`char.profile = { active, auto, role }`. La migrazione dell'account **copia le impostazioni di oggi in tutti e tre i
+profili**, così chi aggiorna non vede cambiare nulla; un'installazione nuova parte dai preset.
+
+### 4.6 Card, comando e diagnostica
+
+- **Card *Profile*** (la prima dopo *Appearance* e *Language*, solo con l'interruttore): un selettore a pillole *Tank ·
+  Healer · Damage* (icone di ruolo e parole), *Follow my group role* (`char.profile.auto`), la riga del ruolo (*Group
+  role: Tank (detected)*, *No group role*, *Your group role cannot be read here*), *Copy from…* (un menu con gli altri
+  due), *Reset to preset*, e la nota *Changes in the cards below are kept in this profile.* In combattimento: *Applies
+  after combat.*
+- **`/atw profile [tank|healer|dps|auto]`**: senza argomento risponde con il profilo attivo e da dove viene; con un
+  ruolo lo sceglie a mano; `auto` riaccende la scelta dal ruolo. Con l'interruttore spento *This arrives in v0.8.0.*
+- **`/atw debug`**, sezione *Profiles*: interruttore, profilo attivo, `auto`, ultimo ruolo letto e motivo, cambio in
+  attesa sì o no, cambi per ruolo e a mano da quando l'addon è caricato, valori riportati al preset. Mai nomi.
+- **Demo**: il profilo non cambia durante la demo.
+
+## 5. Accessibilità (M8.4)
+
+Fonte §6.1: *supporto a modalità solo testo/solo icone, ove utile; contrasto sufficiente e opzioni per daltonismo*.
+Completato in **M8.1**; decisione D28, valori in [ui-style §4.4](ui-style.md#44-tavolozze-per-il-daltonismo-e-segni-m8),
+risposte proposte in [Q30](SPEC-09-risks-open-questions.md).
+
+### 5.1 Principi
+
+- **AC-01** MUST: in ogni tavolozza e in ogni modalità uno stato si mostra **sempre con icona e parola** insieme
+  (ST-02); il distintivo di stato non cambia con le modalità di §5.3.
+- **AC-02** MUST: una tavolozza cambia **solo** le quattro tinte di stato (`state-safe`, `state-warning`,
+  `state-danger`, `state-unknown`); temi, `on-state`, colori delle serie della timeline e colori di classe non
+  cambiano. I token di stato restano fuori dai temi (ST-01).
+- **AC-03** MUST: ogni tavolozza rispetta ST-02 e ST-03 con gli stessi minimi (`on-state` sul riempimento ≥ 4,5:1, il
+  riempimento ≥ 3:1 su ogni superficie di ogni tema) e la regola del calore di §3.2: `Tests/test_theme.lua` ricalcola
+  tutto per ogni tavolozza.
+- **AC-04** SHOULD: nella visione simulata a cui è destinata (Machado, Oliveira e Fernandes 2009, gravità piena) le tinte
+  di SAFE, WARNING e DANGER di una tavolozza distano almeno **ΔE 15** (CIE76, in CIELAB) l'una dall'altra (Q30); il
+  test misura e scrive le distanze di ogni tavolozza in ogni simulazione, e il valore raggiunto finisce in ui-style
+  §4.4. UNKNOWN si distingue per l'icona vuota e il tratteggio, non per il colore.
+- **AC-05** MUST: nessun colore libero scelto dal giocatore: un selettore di colori non garantirebbe AC-03 (Q30).
+- **AC-06** MUST: nessun lampeggio né movimento necessario per capire uno stato (già ui-style §3.2); con le animazioni
+  spente nulla si muove.
+
+### 5.2 Tavolozze (`settings.palette`)
+
+| Valore | Nome nella card (`enUS`) | Per | Tinte proposte (M8.4 le fissa con il test) |
+|---|---|---|---|
+| `standard` (predefinito) | *Standard* | tutti | quelle di oggi (ui-style §4.2) |
+| `redgreen` | *Red-green friendly* | deuteranopia e protanopia | SAFE blu, WARNING giallo-ambra, DANGER arancio-vermiglio, UNKNOWN grigio neutro |
+| `blueyellow` | *Blue-yellow friendly* | tritanopia | SAFE verde-acqua, WARNING rosa, DANGER rosso, UNKNOWN grigio neutro |
+
+- Il cambio vale subito (`Theme` ridipinge ed emette `THEME_CHANGED`), senza `/reload`.
+- **Limite detto com'è**: per reggere insieme i temi scuri e quello chiaro un riempimento di stato deve stare in una
+  fascia stretta di luminanza (circa 0,20–0,27, ui-style §4.3), quindi per chi vede un solo asse di colore le quattro
+  tinte non possono distinguersi molto; per questo la garanzia vera è AC-01 (forma dell'icona e parola), e la tavolozza
+  allarga la distanza fra SAFE e DANGER, la coppia che conta di più.
+
+### 5.3 Segni: icone e parole (`settings.marks`)
+
+Riguarda i **segni secondari** della disposizione compatta, non il distintivo di stato (AC-01):
+
+| Segno | `both` (predefinito) | `text` (solo testo) | `icons` (solo icone) |
+|---|---|---|---|
+| chi tiene il mob, ruolo (`tank`, `role-*`) | icona | parola breve (*Tank*, *Heal*, *DPS*) | icona |
+| trend e previsione (`trend-*`, `predict`) | icona e `~4 s` | `+`, `−`, `=` e `~4 s` | icona e `~4 s` |
+| dato vecchio (`stale`) | icona | *old* | icona |
+| barra del pull (`pull`) | icona e *Pull · 5* | *Pull · 5* | icona e `5` |
+| mob fissato (`pin`), Coach (`coach`), silenzio (`mute`) | icona | parola breve | icona |
+| piede (qualità dei dati) | parole | parole | icona `stale` o niente, e il testo nel tooltip |
+
+- Le parole brevi sono chiavi di lingua (`MARK_*`) nelle due lingue; `test_ui_texts.lua` controlla che stiano nella
+  loro cella alla larghezza minima (220 pt) in inglese e in italiano; dove non stanno, la cella si nasconde come le
+  colonne della finestra stretta (SPEC-03 §2.6) e il tooltip dice tutto.
+- `icons` non toglie mai un'informazione: ciò che non è più scritto resta nel tooltip.
+
+### 5.4 Impostazioni e card
+
+`settings.palette` (enum `Config.PALETTES`, predefinito `standard`) e `settings.marks` (enum `Config.MARKS`,
+predefinito `both`), per **account** come l'aspetto (ui-style §2), nello schema 7 (SPEC-02 §3.11); non stanno nei
+profili. Nella card *Appearance*, sotto il tema: *Colours* (le tre tavolozze, con un'anteprima dei quattro distintivi)
+e *Marks* (*Icons and words*, *Words only*, *Icons only*). L'interruttore `accessibility` (§6) li nasconde finché è
+spento, e allora valgono `standard` e `both`.
+
+## 6. Moduli, eventi, interruttori e test per step (M8.2–M8.4)
+
+| File | Responsabilità | Bus | Step |
+|---|---|---|---|
+| `Core/Config.lua` (cambio) | schema 7 dell'account e 3 del personaggio, `Config.PROFILE_KEYS`, `Config.PRESETS`, `Config.HEATMAP_DEFAULTS`, `Config.PALETTES`, `Config.MARKS`, le regole dei profili generate da quelle delle impostazioni, le migrazioni `account[7]` e `char[3]` | — | M8.2 (tutto lo schema, anche le chiavi di M8.3 e M8.4) |
+| `Data/Profiles.lua` | profilo attivo, scelta dal ruolo, cambio fuori dal combattimento, copia all'indietro, copia e reset (§4) | emette `PROFILE_CHANGED(id, old, why)`; ascolta `CONFIG_LOADED`, `CONFIG_CHANGED`, `ENTERING_WORLD`, `GROUP_CHANGED`, `COMBAT_STARTED`, `COMBAT_ENDED`, `DEMO_CHANGED`; dal gioco `PLAYER_ROLES_ASSIGNED` | M8.2 |
+| `UI/Settings.lua`, `Core/Commands.lua`, `Core/Diagnostics.lua` (cambi) | card *Profile*, `/atw profile`, sezione *Profiles* | ascolta `PROFILE_CHANGED` | M8.2 |
+| `Core/Compat.lua` (cambio) | `Compat.RaidFrames.Collect`, la lettura di `InCombatLockdown`, la voce `frames.Raid` della tabella delle API, la capacità `raidFrames` | emette `CAPABILITY_CHANGED` | M8.3 |
+| `UI/ThreatList.lua` (cambio), `UI/RaidOverlay.lua` | calore delle righe (§3.2), sovrapposizione staccata (§3.3) | ascolta `THREAT_UPDATED`, `STATE_CHANGED`, `COMBAT_*`, `GROUP_CHANGED`, `DISPLAY_CHANGED`, `CONFIG_CHANGED`, `THEME_CHANGED`, `DEMO_CHANGED`; dal gioco `GROUP_ROSTER_UPDATE`, `COMPACT_UNIT_FRAME_PROFILES_LOADED` | M8.3 |
+| `UI/Settings.lua`, `Core/Diagnostics.lua` (cambi) | card *Heatmap*, sezione *Heatmap*; i blocchi `ADDON_ACTION_BLOCKED` e `ADDON_ACTION_FORBIDDEN` contati | — | M8.3 |
+| `UI/Theme.lua`, `UI/Widgets/Threat.lua`, `UI/ThreatList.lua`, `UI/FocusList.lua`, `UI/CoachStrip.lua`, `UI/Settings.lua` (cambi) | `Theme.STATE_PALETTES` e `Theme.SetPalette`, `Theme.Mark(id)` per i segni di §5.3, i controlli della card *Appearance* | emette `THEME_CHANGED` | M8.4 |
+
+- Nel TOC `Data/Profiles.lua` dopo `Data/ThreatState.lua` e prima di `Data/Alerts.lua`; `UI/RaidOverlay.lua` dopo
+  `UI/ThreatList.lua`.
+- **Interruttori** ([ADR 0014](../adr/0014-one-version-per-milestone-and-feature-switches.md)), tutti spenti fino a
+  M8.R e accesi dalla `v0.8.0` (Q28–Q30): `profiles` (Profiles, card, comando, sezione), `heatmap` (calore delle righe,
+  sovrapposizione, card, sezione), **`accessibility`** (nuovo, M8.4: tavolozze e segni; spento valgono `standard` e
+  `both`; un interruttore anche qui perché una correzione `v0.7.x` fatta da `main` non porti tinte di stato non ancora
+  rilasciate). Spento vuol dire: nulla di visibile, nessun evento del gioco registrato, nessun dato scritto oltre agli
+  schemi. I test che li vogliono spenti li mettono a `false` in `M.features`; `SHIPPED_ON` di `test_features.lua` li
+  aggiunge in M8.R.
+
+| Step | Test e casi |
+|---|---|
+| **M8.2** | `test_profiles.lua`: preset di un'installazione nuova; migrazione dallo schema 6 (le impostazioni di oggi copiate nei tre profili, nulla che cambi a schermo) e dallo schema 6 con valori fuori regola (preset), dallo schema 2 del personaggio; idempotenza; la scelta di §4.3 per ogni risposta del ruolo (`TANK`, `HEALER`, `DAMAGER`, `NONE`, segreto, assente, errore) con `Fight` e `role(unit, role)`; la scelta a mano che resta fino a un ruolo diverso, anche dopo `/reload` (harness); `auto` spento; un cambio in combattimento che aspetta `COMBAT_ENDED`; la copia all'indietro e nessuna copia durante *applying*; soglie scritte in coppia; copia e reset; *Reset settings*; dati in sola lettura; `PROFILE_CHANGED` una volta per cambio; demo; interruttore spento (nessun evento registrato, impostazioni come oggi). In `test_config.lua` gli schemi 7 e 3 (DAT-20); in `test_settings.lua` la card; in `test_commands.lua` `/atw profile`; in `test_diagnostics.lua` la sezione; in `test_ui_texts.lua` le chiavi nuove |
+| **M8.3** | `test_heatmap.lua`: il passo di §3.2 per ogni stato e modalità, il tank, chi tiene il mob senza essere un tank, l'isteresi dei confini, al più un cambio al secondo tranne DANGER, nessun calore su UNKNOWN; la sovrapposizione con riquadri finti nel client finto (`Tests/mock/` aggiunge `CompactPartyFrameMember1–5`, `CompactRaidFrame1–40` con `unit`, `GetRect`, `GetEffectiveScale`, `IsVisible` e un registro di **ogni** scrittura o chiamata che non sia una lettura permessa: il test fallisce se l'addon ne fa una), posizioni copiate solo fuori dal combattimento, segni solo per WARNING, DANGER e l'aggro di un non tank, segni nascosti per un cambio del roster in combattimento, nessun riquadro, riquadri segreti o in errore (capacità `restricted`), mouse mai preso, demo, impostazioni e interruttore spenti; in `test_theme.lua` il contrasto del calore (§3.2) in ogni tema; in `test_compat.lua` `RaidFrames.Collect`; in `test_api_boundary.lua` il modulo nuovo; nel test del costo (`Tests/long/test_monitor_budget.lua`) il tick del monitor con il calore e la sovrapposizione accesi entro i budget di SPEC-08 §8 |
+| **M8.4** | in `test_theme.lua` le tre tavolozze: ST-01–ST-03 e il calore per ognuna, le distanze di AC-04 nelle tre simulazioni (scritte nel risultato del test), `SetPalette` senza `/reload`; `test_marks.lua`: ogni segno di §5.3 nelle tre modalità, il distintivo uguale in tutte, nessuna informazione persa (il tooltip), le larghezze alla dimensione minima nelle due lingue; in `test_settings.lua` i controlli della card *Appearance*; interruttore spento. Anteprime `settings-appearance` e `monitor` con le tavolozze (ADR 0013) |
+
+## 7. Cosa aspetta il probe e il gioco
+
+- **[probe P9]** se `UnitGroupRolesAssigned("player")` risponde in un gruppo dal cercatore, in un gruppo fatto a mano e
+  in un raid, o se è `NONE` o segreto (la scelta automatica di §4.3 funziona solo nel primo caso); **[probe P11]** se
+  leggere i riquadri del raid in un'istanza o in combattimento dà blocchi o errori.
+- **[da provare in gioco]** (checklist M8, SPEC-08 §10): il profilo che cambia entrando in un gruppo con un ruolo e che
+  resta con `NONE`; un cambio chiesto in combattimento che arriva dopo; il calore delle righe in combattimento
+  (leggibile? troppo?) nei tre temi; i segni sui riquadri del raid: posizione giusta alle scale comuni, dopo un cambio
+  del roster, con il registro del taint acceso dal proprietario (`/console taintLog 1`) e nessun `ADDON_ACTION_BLOCKED`;
+  le tavolozze guardate da chi è daltonico (o con un simulatore di schermo); le modalità dei segni alla dimensione
+  minima e in italiano.

@@ -1,6 +1,8 @@
 # SPEC-08: Qualità, probe e rilascio
 
 > Fonte: [specifiche originali](source-specification.md) §8, §12, §13, §18.
+> §5.1 e §6–§10 (Definition of Done voce per voce, `v0.8.0` e `v1.0.0`, traduzioni, prestazioni, CurseForge e
+> limiti, checklist di rilascio) completati in **M8.1** (2026-11-28).
 
 ## 1. Probe M0
 
@@ -446,6 +448,8 @@ a turno, la mediana di sette blocchi.
 Ogni milestone finisce con `docs/checklists/M<N>.md`, eseguita dal proprietario: interfaccia (risoluzioni, scale,
 movimento, combattimento, UI personalizzate), prestazioni in party e raid, scenari funzionali. I risultati si
 riportano con il modulo *In-game test report*.
+M8 ne ha due: `docs/checklists/M8.md` e `docs/checklists/release.md`, il controllo completo prima della `v1.0.0`
+(§10).
 
 ## 5. Definition of Done dell'MVP (fonte §18)
 
@@ -465,7 +469,157 @@ Stato voce per voce (fatta, aperta o in attesa del proprietario), aggiornato in 
 - [ ] Documentazione con limiti e compatibilità.
 - [ ] Pagina CurseForge che non promette funzioni non verificate.
 
+### 5.1 Come si chiude ogni voce (M8.1)
+
+Fissato in **M8.1** (2026-11-28) per la `v1.0.0` (§6.2). Una voce si spunta solo quando **tutte** le sue prove sono
+fatte; *offline* vuol dire i test con il client finto, *nel gioco* il probe o una checklist eseguiti dal proprietario.
+Stato al 2026-11-28: il probe M0 e le checklist M1–M7 **non sono stati eseguiti**, quindi nessuna voce che chiede il
+gioco è chiusa.
+
+| Voce | Offline (chi la chiude) | Nel gioco (chi la chiude) | Stato al 2026-11-28 |
+|---|---|---|---|
+| Client target identificato e documentato | ADR 0002, SPEC-01 §1 dal dump (build 70170, interfaccia 16001) | P1 del probe; `docs/spike/M0-results.md` (M0.7) | **aperta**: solo il dump |
+| Probe API completato | lo strumento esiste (`tools/probe/`, M0.2–M0.6) | P1–P12 eseguiti e M0.7 | **aperta** (in attesa del proprietario) |
+| API usate verificate sul client | ogni API controllata sul dump (`test_api_boundary.lua`, Compat) | P1–P12, `/atw debug` nella checklist di rilascio §10 | **aperta** |
+| Threat Monitor funzionante in condizioni reali | `test_threat_*`, test lunghi | checklist M2 e la sezione *Monitor* di `release.md` | **aperta** |
+| Stati UNKNOWN e dati insufficienti gestiti | i tre esiti in ogni test (`Fight.OUTCOMES`), report e analytics | P3 e le checklist M2, M4, M6 | **offline fatta**, nel gioco aperta |
+| Avvisi configurabili e non invasivi | `test_alerts.lua`, `test_settings.lua` | checklist M3 | **offline fatta**, nel gioco aperta |
+| Nessun errore Lua nei test previsti | ogni test (`run_tests.py`, anche `--long`) senza errori, CI | checklist di rilascio: errori del gioco visibili e l'anello di `/atw debug` vuoto dopo ogni sezione | **offline fatta**, nel gioco aperta |
+| Prestazioni accettabili in party e raid | budget offline (§8, SPEC-01 §5.1) | P10, checklist M2, M4, M7, M8 | **aperta**: solo stime offline |
+| SavedVariables versionate e gestite | schemi, migrazioni con test (DAT-20), dati danneggiati, sola lettura | checklist di rilascio: aggiornamento da un salvataggio vecchio | **offline fatta**, nel gioco aperta |
+| Configurazione che sopravvive a logout e reload | l'harness simula `/reload` e nuovo accesso | checklist M1, M4 (P12) | **offline fatta**, nel gioco aperta |
+| Documentazione con limiti e compatibilità | pagina del manuale *Limits and Compatibility* e README (M8.7, §9) | — (la scrive M8.7; il proprietario la rilegge dopo il probe) | aperta fino a M8.7 |
+| Pagina CurseForge che non promette funzioni non verificate | `docs/curseforge.md` (M8.7, §9) | il proprietario la pubblica dopo il probe e le checklist | aperta fino a M8.7; pubblicazione del proprietario |
+
 ## 6. Rilascio
 
 Una versione per milestone, preparazione prima di ogni tag, interruttori per le parti non finite
 ([ADR 0014](../adr/0014-one-version-per-milestone-and-feature-switches.md)); procedura in `docs/RELEASING.md` (da M1).
+
+### 6.1 `v0.8.0` (M8.R, prima parte)
+
+Branch `chore/release-v0.8.0`, come M2.R–M7.R: interruttori `profiles`, `heatmap` e `accessibility` accesi (Q28–Q30),
+`SHIPPED_ON` di `test_features.lua` aggiornato, changelog promosso a `0.8.0`, stato di README e manuale, bozza
+CurseForge (§9), prova a vuoto del workflow *Release* (anche `--long`), poi il tag annotato `v0.8.0` (approvazione
+permanente del proprietario per i tag di milestone) e la GitHub Release. CurseForge solo con il progetto e il segreto
+del proprietario (Q6). Le note della versione dicono che nulla è stato provato nel gioco.
+
+### 6.2 `v1.0.0` (M8.R, seconda parte)
+
+Che cosa chiede la `v1.0.0`:
+
+1. **ADR 0014 punto 3**: ogni milestone del piano fatta e il **controllo di rilascio completo** passato
+   (`docs/checklists/release.md`, §10). Il controllo completo è in gran parte nel gioco.
+2. **§5**: le dodici voci della Definition of Done chiuse; otto chiedono il gioco (§5.1).
+3. **RELEASING**: `v1.0.0` non è un tag di milestone `v0.<N>.0`, quindi non ha l'approvazione permanente: si chiede
+   prima al proprietario.
+4. Nulla nel piano oltre a M8; le idee del proprietario per dopo la `v1.0.0` restano fuori (non sono nel piano).
+
+**Se il probe e le checklist non sono stati eseguiti** quando M8.R arriva (com'è oggi), la `v1.0.0` direbbe *pronta*
+per un addon che nessuno ha provato nel client vero. È una scelta del proprietario: domanda
+[Q31](SPEC-09-risks-open-questions.md), con la risposta proposta che il piano applica finché non decide:
+
+- M8.R rilascia la `v0.8.0` e **prepara** la `v1.0.0` in `chore/release-v1.0.0` (changelog `1.0.0` pronto, stato,
+  manuale e bozza CurseForge con l'elenco esplicito di ciò che **non è verificato nel gioco**, la checklist di rilascio
+  con l'esito *not run*), ne fa la prova a vuoto, **non** crea il tag e lascia la pull request aperta con la domanda
+  (`tools/ship_step.py --no-merge`: `main` non dice `1.0.0` senza il tag);
+- il tag `v1.0.0` si crea quando il proprietario risponde: dopo aver eseguito almeno il probe (P1–P12) e la checklist
+  di rilascio, oppure dicendo di rilasciarla lo stesso con le note *not verified in the game*;
+- nel frattempo M8 è finita nel codice e la `v0.8.0` è l'ultima versione; eventuali correzioni sono `v0.8.1`…
+
+**Cosa resta esplicitamente *non verificato nel gioco*** se il proprietario sceglie di rilasciare senza prove (va nelle
+note della versione, nel README, nella pagina *Limits and Compatibility* e nella bozza CurseForge): tutte le voci di
+§5.1 con *nel gioco aperta*; le domande del probe P1–P12 e ciò che cambiano (SPEC-07 §0, SPEC-03 §1.1); le soglie
+82/91 tarate a occhio dal proprietario ma non misurate con il client (P4); i costi (P10); le ipotesi del client finto
+(il calcolo della threat, i valori segreti, i riquadri del raid); il taint della sovrapposizione (SPEC-07 §3.3).
+
+## 7. Traduzioni e controlli delle lingue (M8.5)
+
+Fissato in **M8.1**; vale [ADR 0009](../adr/0009-interface-and-documentation-languages.md) (inglese predefinito,
+italiano completo, una lingua per file).
+
+- **LOC-01** MUST: una lingua nuova è **un file** `Locales/<codice>.lua` (`ns.Locale.Register("<codice>", { … })`) più
+  **una riga** nel TOC; nient'altro da toccare. Per questo M8.5 fa derivare l'elenco delle lingue che si possono scegliere
+  (`Config.LANGUAGES`) dalle tabelle registrate (più `auto`), e ogni file porta il nome della sua lingua nella sua
+  lingua (chiave `LANGUAGE_NAME`, per esempio *Deutsch*) che la card *Language* mostra.
+- **LOC-02** MUST: `enUS` è la base e `itIT` è **completo** (gli stessi tasti, come oggi); una lingua aggiunta da un
+  traduttore può essere **parziale**: le chiavi che mancano cadono sull'inglese (come già fa `ns.L`), e
+  `tools/check_addon.py` le conta come avviso, non come errore.
+- **LOC-03** MUST (`tools/check_addon.py`): in ogni traduzione gli stessi segnaposto della stringa inglese, nello
+  stesso ordine (`%s`, `%d`, `%.1f`, `%%`…); nessuna chiave che l'inglese non ha; nessun codice di colore (`|c`, `|r`)
+  né di texture (`|T`) dentro le stringhe (i colori sono di `UI/Theme.lua`); nessuna stringa vuota.
+- **LOC-04** MUST (`Tests/test_ui_texts.lua`, `test_coach_wording.lua`): per ogni lingua presente, le parole dei
+  distintivi di stato, delle schede compatte e dei segni (SPEC-07 §5.3) entrano alla dimensione minima; le regole di
+  scrittura del Coach (COA-04: nessun nome di classe o di abilità, solo il generico *rank più bassi*) valgono in ogni
+  lingua per le chiavi `COACH_*` e `ALERT_*`.
+- **La guida** `docs/wiki/Translating.md` e `Translating-it.md` (bilingue come ogni pagina): dove sono le stringhe,
+  come si copia `enUS.lua`, i segnaposto, il tono (SPEC-00 §6) e le regole del Coach, le parole del gioco da tenere come
+  le scrive il client della lingua (*Threat*, *Aggro* possono restare), come si provano i controlli
+  (`python -I -X utf8 tools/check_addon.py`, `python -X utf8 Tests/run_tests.py test_ui_texts`), come si prova nel
+  gioco (*Language* nella card, `/reload`), come si propone (pull request con il DCO, nessun dato personale, licenza
+  GPL-3.0); che il manuale resta in inglese e italiano.
+
+## 8. Passata finale di prestazioni e memoria (M8.6)
+
+Fissato in **M8.1**. Le misure sono **offline** (istruzioni della VM, allocazioni, tempo relativo; §3) e dicono se una
+versione costa più dell'altra, non quanto costa nel gioco; il budget nel gioco resta quello proposto per P10 (≤ 1 ms
+per tick al p95, ≤ 5 ms al secondo in totale, Q14). M8.6 rimisura tutto con gli interruttori di M8 accesi e scrive i
+numeri in SPEC-01 §5.1.
+
+| Misura (offline) | Budget | Da |
+|---|---|---|
+| Tick del monitor, 40 unità, finestra aperta: lavoro | ≤ 220 000 istruzioni | SPEC-01 §5.1 |
+| — allocazioni: solo monitor / con avvisi e Coach / con la registrazione | ≤ 48 / 160 / 1 200 byte | SPEC-01 §5.1 |
+| — tempo | ≤ 30 cicli di riferimento | SPEC-01 §5.1 |
+| Lo stesso con il calore delle righe e la sovrapposizione accesi (M8.3) | gli stessi budget; il calore aggiunge al più **8 000** istruzioni per tick (circa il 5 %), la sovrapposizione al più **15 000** e **0** byte dopo il riscaldamento | nuovo (M8.1) |
+| Tick di registrazione (40 unità) | 36 000 in media, 90 000 nel peggiore, 1 024 byte con i valori, 48 altrimenti | SPEC-01 §5.1 |
+| Tick dei mob con la lista | non oltre il tick del monitor con 40 unità; M8.6 cerca di riportare il margine ad almeno il **5 %** (oggi circa il 2 %) senza cambiare le costanti di Q26 | ADR 0019, M7.4 |
+| Lavoro in un solo frame fuori dai tick (clic, apertura di un report o di un replay) | ≤ **1 000 000** istruzioni per frame: oltre si spezza su più frame (ARC-07). Oggi la decodifica di una registrazione al limite (30 000 righe, circa 6 milioni) non regge: M8.6 la spezza | nuovo (M8.1) |
+| Memoria | nei test lunghi (raid da 40 per due ore, replay aperto e chiuso, export, Dungeon Focus) la memoria Lua dopo il riscaldamento non cresce (pool, registro dei colori, cache); M8.6 scrive la memoria dell'addon dopo il caricamento e con 25 sessioni | §3 |
+| SavedVariables | la stima di `Config.EstimateSize` resta sotto `maxKB` (2 MB) con lo storico pieno, profili compresi | Q8 |
+
+- Un numero oltre il budget fa fallire il test; M8.6 non alza un budget senza scriverlo qui e in SPEC-01 §5.1 con il
+  perché.
+- **[da provare in gioco]** P10 e la checklist di rilascio (§10): FPS e `/atw debug` (tempo per tick misurato da
+  `Scheduler`) in party e in un raid da 40, con e senza la sovrapposizione dei riquadri.
+
+## 9. Pagina CurseForge e documentazione dei limiti (M8.7)
+
+Fissato in **M8.1**; vale la fonte §16 e §18 (*non dichiarare compatibilità con versioni diverse da quella
+effettivamente testata*; *la pagina non promette funzioni non verificate*).
+
+- **`docs/curseforge.md`** per la `v0.8.0` e la `v1.0.0`: titolo (Q17), sommario, l'elenco delle funzioni con i
+  profili, la heatmap e l'accessibilità, ognuna con ciò che dipende dal gioco; *Limits*; la tabella *What is verified*
+  onesta (oggi: offline sì, nel gioco **not yet** per ogni riga, il probe **not run**); *Privacy*; nessuno screenshot
+  che non venga dal gioco (le anteprime del repository non sono screenshot, ADR 0013); le caselle *Before publishing*
+  per il proprietario (progetto, `CF_API_KEY`, versione del gioco **WoW Forever** fra le scelte, probe e checklist).
+- **Pagina del manuale *Limits and Compatibility*** (`docs/wiki/Limits-and-Compatibility.md` e `-it.md`, nella barra
+  laterale): il client (WoW Forever, interfaccia 16001, la build del dump; nessun'altra versione dichiarata), che
+  cosa l'addon legge e che cosa no (valori segreti, *state only*, il target soltanto), che cosa dipende dal probe
+  (P1–P12 in parole semplici), che cosa non è verificato nel gioco (la tabella di §5.1), gli altri addon (autonomo;
+  la sovrapposizione disegna solo sui riquadri di Blizzard, SPEC-07 §3.3), le prestazioni (solo stime offline),
+  privacy e dati (rimando a *Privacy and Data*).
+- **README** (`README.md`, `README.it.md`): stato e limiti in breve con il rimando alla pagina.
+- Nessuna frase dice *tested*, *works in raids*, *compatible with* senza una checklist eseguita che lo provi;
+  `tools/check_docs.py` non può controllarlo: lo controlla chi rivede la pull request.
+
+## 10. Checklist M8 e checklist di rilascio completa (M8.8)
+
+Fissato in **M8.1**. Due file, scritti da M8.8 e eseguiti dal proprietario:
+
+- **`docs/checklists/M8.md`**, la checklist della milestone come M1–M7: interruttori accesi nella copia installata
+  mentre sono spenti, salvataggio di sicurezza; profili (ruolo dal cercatore, gruppo a mano con `NONE`, cambio in
+  combattimento che arriva dopo, scelta a mano che resta, copia e reset, aggiornamento da un salvataggio della
+  `v0.7.0`); heatmap delle righe nei tre temi e nelle tre tavolozze; la sovrapposizione dei riquadri del raid in party e
+  in un raid da 40, alle scale comuni, dopo un cambio del roster, con `/console taintLog 1` acceso dal proprietario e il
+  file `Logs/taint.log` letto dopo, e gli `ADDON_ACTION_BLOCKED` di `/atw debug`; le modalità dei segni alla
+  dimensione minima e in italiano; una lingua di prova (un file parziale) per la guida delle traduzioni; le note per
+  Q28–Q30.
+- **`docs/checklists/release.md`**, il controllo completo prima della `v1.0.0` (ADR 0014 punto 3): lo zip della
+  GitHub Release installato in una cartella pulita (solo `AzerothThreatwarden/`, `## Version`, nessuna riga di
+  sviluppo); dati nuovi e dati vecchi (un salvataggio di una versione precedente, con una copia di sicurezza) che
+  migrano allo schema 7 e 3; il probe P1–P12 eseguito (o scritto *not run*); le checklist M1–M8 eseguite, con i
+  risultati nel modulo *In-game test report*; le dodici voci di §5.1 una per una, con la prova che le chiude; le
+  prestazioni (P10) in party e raid; nessun errore Lua (gli errori del gioco visibili, l'anello di `/atw debug`);
+  il taint; le due lingue; la pagina CurseForge e *Limits and Compatibility* rilette contro ciò che le checklist hanno
+  mostrato; l'esito: **go** o **no-go** per la `v1.0.0`, che risponde a Q31.

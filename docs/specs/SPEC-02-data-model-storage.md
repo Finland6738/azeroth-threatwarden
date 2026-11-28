@@ -108,12 +108,13 @@ lo **schema 1** qui sotto è quello che M1.5 realizza; nessuna chiave dipende da
 
 | Chiave | Contenuto | Da |
 |---|---|---|
-| `db.schema` | numero di versione dello schema | M1 (schema 1), M2 (schema 2, §3.5), M3 (schema 3, §3.6), M4 (schema 4, §3.7), correzione Q7 (schema 5, §3.8), M7 (schema 6, §3.10) |
-| `db.settings` | lingua, aspetto, minimappa (M1); soglie, frequenza, quando mostrare la finestra, ordinamento (M2); avvisi e Coach (M3, §3.6); registrazione e suoi limiti (M4, §3.7); altri mob e avvisi sugli altri mob (M7, §3.10) | M1 → |
+| `db.schema` | numero di versione dello schema | M1 (schema 1), M2 (schema 2, §3.5), M3 (schema 3, §3.6), M4 (schema 4, §3.7), correzione Q7 (schema 5, §3.8), M7 (schema 6, §3.10), M8 (schema 7, §3.11) |
+| `db.settings` | lingua, aspetto, minimappa (M1); soglie, frequenza, quando mostrare la finestra, ordinamento (M2); avvisi e Coach (M3, §3.6); registrazione e suoi limiti (M4, §3.7); altri mob e avvisi sugli altri mob (M7, §3.10); heatmap, tavolozza e segni (M8, §3.11) | M1 → |
 | `db.sessions` | registrazioni (§4), la più vecchia prima; il contenuto lo controlla `Data/Storage.lua` | M4 (schema 4, §3.7) |
-| `db.profiles` | preset per ruolo | M8 |
+| `db.profiles` | i tre profili per ruolo (`tank`, `healer`, `damager`), §3.11 | M8 (schema 7) |
 | `db.corrupt` | tabelle danneggiate messe da parte (§3.4) | M1 |
 | `char.schema`, `char.ui` | finestra: aperta, blocco, scala, posizione, dimensioni, ultima scheda; finestra del replay (M5, §3.9) | M1 (schema 1), M5 (schema 2, §3.9) |
+| `char.profile` | profilo attivo, scelta dal ruolo, ultimo ruolo (§3.11) | M8 (schema 3) |
 
 Ogni milestone che cambia la forma dei dati alza lo schema di uno con una migrazione (DAT-20); il numero esatto lo
 fissa lo step di specifica di quella milestone (M2.1, M3.1, M4.1, M5.1, M7.1, M8.1). Le impostazioni dell'aspetto e la lingua sono
@@ -349,6 +350,54 @@ schema 3 con gli avvisi spenti; una versione precedente (`v0.6.0` o prima) che t
 
 Non si salvano: il mob fissato, la lista dei mob, la portata, le letture. Nessun nome né GUID nelle impostazioni (§3.3).
 Le sessioni (§4) non cambiano: registrano il mob monitorato, anche quando è fissato dalla lista.
+
+### 3.11 Schema 7 dell'account e schema 3 del personaggio (M8)
+
+Fissato in **M8.1**, realizzato **tutto** da **M8.2** (chiavi, regole, predefiniti e le due migrazioni, anche per le
+chiavi che M8.3 e M8.4 useranno), come lo schema 6 in M7.2
+([SPEC-07 §3.4, §4, §5.4](SPEC-07-multi-target-heatmap-profiles.md#4-profili-e-preset-m82)). Il piano di M8 scriveva
+"schema 3, migrazione 2 → 3" prima che M2–M7 usassero gli schemi 2–6 dell'account (come D11 per M4): lo schema
+dell'account passa da **6 a 7**, quello del personaggio da **2 a 3** (D25). Gli schemi si scrivono anche con gli
+interruttori `profiles`, `heatmap` e `accessibility` spenti; una versione precedente (`v0.7.0` o prima) che li trova
+lavora in sola lettura (§3.4, punto 4).
+
+**Account** (`AzerothThreatwardenDB`):
+
+| Percorso | Tipo | Predefinito | Regola | Uso |
+|---|---|---|---|---|
+| `settings.heatmap` | tabella | `{}` | — | |
+| `settings.heatmap.rows` | booleano | `true` | — | calore sulle righe del monitor ([SPEC-07 §3.2](SPEC-07-multi-target-heatmap-profiles.md#32-le-righe-del-monitor-uithreatlistlua)) |
+| `settings.heatmap.raidFrames` | booleano | `false` | — | segni sopra i riquadri del raid di Blizzard ([SPEC-07 §3.3](SPEC-07-multi-target-heatmap-profiles.md#33-i-riquadri-del-raid-di-blizzard-uiraidoverlaylua)) |
+| `settings.palette` | stringa | `"standard"` | enum `Config.PALETTES` = `standard`, `redgreen`, `blueyellow` | tavolozza di stato ([SPEC-07 §5.2](SPEC-07-multi-target-heatmap-profiles.md#52-tavolozze-settingspalette)) |
+| `settings.marks` | stringa | `"both"` | enum `Config.MARKS` = `both`, `text`, `icons` | segni secondari ([SPEC-07 §5.3](SPEC-07-multi-target-heatmap-profiles.md#53-segni-icone-e-parole-settingsmarks)) |
+| `profiles` | tabella | i tre preset | — | i profili per ruolo ([SPEC-07 §4](SPEC-07-multi-target-heatmap-profiles.md#4-profili-e-preset-m82)) |
+| `profiles.tank`, `profiles.healer`, `profiles.damager` | tabella | `Config.PRESETS[id]` | per ogni chiave di `Config.PROFILE_KEYS` la regola della stessa chiave sotto `settings` | un profilo: `{ monitor = { warning, danger, sort, pinSelf }, alerts = { enabled, window, visual, sound, cooldown, others, pet, onlyTarget }, coach = { enabled }, mobs = { enabled }, heatmap = { rows, raidFrames } }` |
+
+**Personaggio** (`AzerothThreatwardenCharDB`):
+
+| Percorso | Tipo | Predefinito | Regola | Uso |
+|---|---|---|---|---|
+| `profile` | tabella | `{ auto = true }` | — | il profilo di questo personaggio |
+| `profile.active` | stringa, facoltativa | `nil` (la prima scelta: il ruolo, altrimenti `damager`) | enum `tank`, `healer`, `damager` | il profilo attivo |
+| `profile.auto` | booleano | `true` | — | segue il ruolo assegnato ([SPEC-07 §4.3](SPEC-07-multi-target-heatmap-profiles.md#43-la-scelta-automatica-dal-ruolo)) |
+| `profile.role` | stringa, facoltativa | `nil` | enum `TANK`, `HEALER`, `DAMAGER` | l'ultimo ruolo che ha scelto un profilo (una scelta a mano resta finché il ruolo non cambia) |
+
+- **Migrazione `Config.migrations.account[7]`**: se `profiles` non c'è (o non è una tabella, che allora va prima in
+  `corrupt`), crea i tre profili **copiando** da `settings` il valore di ogni chiave di `PROFILE_KEYS`; un valore che
+  manca o non passa la sua regola prende quello del preset del profilo. Così chi aggiorna non vede cambiare nulla:
+  le sue impostazioni di oggi diventano tutti e tre i profili. Una tabella `profiles` già presente resta (i predefiniti
+  aggiungono le chiavi che mancano, le regole controllano le altre). Le chiavi `heatmap`, `palette`, `marks` le
+  aggiungono i predefiniti. Il test parte dai dati dello schema 6, con valori di serie, scelti dal giocatore e fuori
+  regola (DAT-20).
+- **Migrazione `Config.migrations.char[3]`**: non fa nulla (i predefiniti aggiungono `profile`); il test parte dai dati
+  dello schema 2 con e senza una chiave `profile` già presente.
+- **Installazione nuova**: nessuna migrazione gira (§3.4); i predefiniti mettono i tre preset in `profiles` e, alla
+  prima scelta, `Data/Profiles.lua` scrive in `settings` il preset del profilo scelto (con l'interruttore `profiles`
+  acceso).
+- Un profilo danneggiato (non una tabella) va in `corrupt` e torna al suo preset; un valore sbagliato dentro torna al
+  valore del preset (non al predefinito di `settings`), e la regola lo scrive in `Config.issues`.
+- Non si salvano: il ruolo letto ogni volta, il cambio in attesa, i riquadri del raid e le loro posizioni, il calore.
+  Nessun nome né GUID (§3.3). Le sessioni (§4) non cambiano: registrano già soglie e ruolo del giocatore.
 
 ## 4. Sessioni registrate (schema 4, M4)
 

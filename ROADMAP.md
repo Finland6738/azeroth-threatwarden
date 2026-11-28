@@ -20,7 +20,8 @@ each step; the checks behind the plan are in [SPEC-08](docs/specs/SPEC-08-qualit
 
 **Status (2026-11-27):** M1–M7 are complete in code and released as `v0.1.0`–`v0.7.0` (the MVP is `v0.4.0`). M0 waits
 for the owner's runs in the real client (M0.7), as do the in-game checklists M1–M7; their exit criteria and the
-[MVP check](docs/checklists/M4.md#12-mvp-check) are open. Next: M8.
+[MVP check](docs/checklists/M4.md#12-mvp-check) are open. M8 is specified (M8.1); `v1.0.0` waits for the owner's
+answer to [SPEC-09 Q31](docs/specs/SPEC-09-risks-open-questions.md) while nothing has been run in the game.
 
 **Versions** ([ADR 0014](docs/adr/0014-one-version-per-milestone-and-feature-switches.md)): every milestone N is
 released as `v0.N.0` after its release preparation `M<N>.R`; fixes raise only the last number; `v1.0.0` follows M8.

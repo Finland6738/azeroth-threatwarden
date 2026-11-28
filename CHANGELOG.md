@@ -7,6 +7,21 @@ All notable changes to this project are documented here. The format follows
 
 ### Documentation
 
+- M8.1: specification of **role profiles**, the **heatmap**, **accessibility** and the **release path to 1.0.0**
+  (SPEC-07 §3–§7 and SPEC-08 §5–§10, Italian), written before the in-game probe like M2–M7, with two decision
+  records ([ADR 0020](docs/adr/0020-role-profiles-are-copies-of-chosen-settings-applied-onto-the-live-settings.md),
+  [ADR 0021](docs/adr/0021-raid-frames-are-only-overlaid-never-touched.md)). Three profiles (tank, healer, damage)
+  hold your thresholds, alert choices, Coach and heatmap settings; the one in use follows the role your group assigns
+  you, stays as it is when there is no role or it cannot be read, keeps a choice you made by hand, and never changes in
+  combat; upgrading copies today's settings into all three. The heatmap tints the monitor rows by state; the game's own
+  raid frames get marks only through a separate overlay that never touches them (off by default, the taint risk
+  written, removed if the game blames it). Colour-blind palettes change only the four state colours, words-only and
+  icons-only modes change the small marks, and every state keeps its icon and word. Also: the translator guide and
+  locale checks, the final performance budgets, the CurseForge page and a *Limits and Compatibility* page, the M8 and
+  release checklists, the account schema 7 and character schema 3 (SPEC-02 §3.11; the plan's "schema 3" was out of
+  date), ui-style §3.8 and §4.4, SPEC-00 D25–D29, SPEC-09 Q28–Q31 (Q31: **`v1.0.0` is prepared but not tagged until
+  the owner decides**, since nothing has been run in the real client yet), R14, R15, and the M8 steps detailed.
+  Nothing changes in the addon yet.
 - M7.R: `v0.7.0` released on GitHub; the release step is ticked in the M7 milestone file. CurseForge was skipped (no
   project ID and no `CF_API_KEY`).
 

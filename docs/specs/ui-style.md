@@ -199,6 +199,19 @@ un mob UNKNOWN mostra il motivo breve nello spazio dei valori e `?` al bordo des
 
 Un mob non si riconosce dal solo colore (ST-02): lo stato ha sempre l'icona e la parola, il motivo la parola.
 
+### 3.8 Heatmap (M8)
+
+Fissato in M8.1; il comportamento è in [SPEC-07 §3](SPEC-07-multi-target-heatmap-profiles.md#3-heatmap-m83). Nessun
+token nuovo: il calore usa i token di stato (§4.2) della tavolozza attiva (§4.4).
+
+| Elemento | Aspetto |
+|---|---|
+| Calore di una riga del monitor | una texture piena larga quanto la riga, sotto testo, barra e distintivo, sopra `surface-1`: il token di stato della riga con la trasparenza del passo (0; 0,06; 0,10; 0,14; 0,18, `Heatmap.ALPHA`); l'anello `accent` della propria riga e il passaggio del mouse restano sopra. Il calore non sostituisce la striscia di 3 pt né il distintivo |
+| Segno su un riquadro del raid di Blizzard | un bordo di 2 px nel token di stato (trasparenza 0,9) intorno al rettangolo copiato del riquadro e, al centro del bordo superiore, il distintivo di stato piccolo (alto 12 pt, icona 8 pt, parola in `Badge`); nessun riempimento sul riquadro; nessun bagliore; nessun movimento oltre la dissolvenza di 120 ms |
+
+La regola del contrasto con il calore (testo sul fondo mescolato al passo 4) è in SPEC-07 §3.2; M8.3 scrive qui la
+tabella dei valori peggiori per tema e tavolozza, come §4.3.
+
 ## 4. Il tema Warden e i token di stato
 
 ### 4.1 Token del tema Warden
@@ -259,7 +272,8 @@ Regole (le controlla `Tests/test_theme.lua`, M1.6):
   striscia del bordo, icona fuori dal distintivo), con contrasto ≥ 3:1 su **ogni** superficie di **ogni** tema.
 - **ST-04**: per reggere insieme lo scuro e il chiaro i quattro riempimenti hanno la **stessa luminanza** (≈ 0,215):
   in scala di grigi sono uguali, per questo forma dell'icona e parola portano il significato. La tavolozza per il
-  daltonismo (M8) cambia le tinte, non queste regole.
+  daltonismo (M8) cambia le tinte, non queste regole (§4.4): ogni tavolozza resta nella stessa
+  fascia di luminanza, perciò per un daltonico le tinte si distinguono poco e la garanzia restano forma e parola.
 - **ST-05** MUST: `GetThreatStatusColor` del gioco non si usa mai per disegnare (solo confronto nei test del probe).
 - Le parole italiane sono una proposta: M2.5 le fissa nei file di lingua (*Sconosciuto* è già in
   [SPEC-00 §4](SPEC-00-vision-scope.md#4-affidabilità-dei-dati-vincolante)).
@@ -295,6 +309,30 @@ Tutte le regole sono rispettate. Il margine dei token di stato è stretto per co
 scuri e chiari), quindi un valore non si cambia senza ricalcolare la tabella; le righe del monitor stanno su
 `surface-1`, dove il peggiore è 4,88 (Nebula), 3,96 (Aurora) e 4,35 (Warden).
 
+### 4.4 Tavolozze per il daltonismo e segni (M8)
+
+Fissato in M8.1; il comportamento è in [SPEC-07 §5](SPEC-07-multi-target-heatmap-profiles.md#5-accessibilità-m84).
+Una **tavolozza** sostituisce soltanto i quattro riempimenti di §4.2 (`Theme.STATE_PALETTES[palette]`, con
+`Theme.STATE` che punta a quella attiva); `on-state` resta `#0A0F14`, i temi non cambiano (ST-01) e le regole ST-02,
+ST-03 e §4.3 valgono per ogni tavolozza.
+
+| Tavolozza | `state-safe` | `state-warning` | `state-danger` | `state-unknown` |
+|---|---|---|---|---|
+| `standard` | `#299159` | `#B07309` | `#E5473C` | `#6F819A` |
+| `redgreen` | blu (proposta) | giallo-ambra (proposta) | arancio-vermiglio (proposta) | grigio neutro (proposta) |
+| `blueyellow` | verde-acqua (proposta) | rosa (proposta) | rosso (proposta) | grigio neutro (proposta) |
+
+- I valori di `redgreen` e `blueyellow` li fissa **M8.4** con `Tests/test_theme.lua`: ogni riempimento nella fascia di
+  luminanza che regge `on-state` ≥ 4,5:1 e ≥ 3:1 su ogni superficie dei tre temi (in pratica circa 0,20–0,27), e la
+  distanza ΔE (CIE76) fra SAFE, WARNING e DANGER nella visione simulata a cui la tavolozza è destinata (Machado 2009)
+  di almeno 15, o il massimo che la fascia permette (Q30). M8.4 sostituisce le parole *proposta* con i valori e scrive
+  qui la tabella dei contrasti e delle distanze.
+- La tavolozza `standard` si misura con le stesse simulazioni e le sue distanze si scrivono (senza un minimo: sono i
+  colori dell'identità, §5).
+- **Segni** (`settings.marks`): `both`, `text`, `icons` cambiano solo i segni secondari (ruolo, tank, trend,
+  previsione, dato vecchio, pull, pin, Coach, silenzio, piede); il distintivo di stato è lo stesso in tutte e tre.
+  Le parole brevi di `text` stanno in `Row` o `Small`, `text-2`, nello spazio dell'icona che sostituiscono.
+
 ## 5. Logo e crediti
 
 | Elemento | Dove |
@@ -319,6 +357,8 @@ Il nome pubblico è solo "Finland": nessun nome reale, e-mail o percorso persona
 | **M6.4** pagina e card Analytics, anteprime | §3 (card, tabelle, righe da pool), §8 | §3.6; [SPEC-06 §3](SPEC-06-analytics-export.md#3-la-vista-analytics-nella-scheda-reports-uianalyticslua-m64) |
 | **M6.5** casella dell'esportazione | §3 (`CopyBox`, dialogo) | §3.6; [SPEC-06 §4.6](SPEC-06-analytics-export.md#46-la-casella-uiexportboxlua) |
 | **M7.3** barra del pull, lista del Dungeon Focus, anteprime | §3 (righe da pool) | §3.4, §3.7; [SPEC-07 §2.3](SPEC-07-multi-target-heatmap-profiles.md#23-la-barra-del-pull-e-la-lista-uifocuslistlua) |
+| **M8.3** calore delle righe, segni sui riquadri del raid | — | §3.8, §4.2; [SPEC-07 §3](SPEC-07-multi-target-heatmap-profiles.md#3-heatmap-m83) |
+| **M8.4** tavolozze, segni, card *Appearance*, anteprime | §2, §8 | §4.2–§4.4; [SPEC-07 §5](SPEC-07-multi-target-heatmap-profiles.md#5-accessibilità-m84) |
 
 ## 7. Cosa non è verificato nel client
 
@@ -338,3 +378,6 @@ elencano (TGA e font su Forever, 9-slice a scala frazionaria, fusione `ADD`, col
   tre temi; la finestra del replay a 640 × 420 pt.
 - da M6: la tabella del confronto alle larghezze piccole e in italiano; la casella dell'esportazione con 256 KB di
   testo.
+- da M8: il calore delle righe in combattimento (si legge ancora il testo? distrae?); i segni sui riquadri del raid alle
+  scale comuni e dopo un cambio del roster; le tavolozze `redgreen` e `blueyellow` guardate da chi è daltonico; le parole
+  brevi dei segni in italiano alla dimensione minima.

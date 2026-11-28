@@ -176,7 +176,7 @@ scritto; un comando di quella parte risponde che arriva in una versione successi
 | `timeline`, `replay` | timeline; replay | M5.R |
 | `analytics`, `export` | metriche e confronto; esportazione | M6.R |
 | `multitarget` | più mob e dungeon focus (go condizionato prima del probe, [SPEC-07 §0](SPEC-07-multi-target-heatmap-profiles.md#0-il-gate-di-m7-go-condizionato)) | M7.R |
-| `profiles`, `heatmap` | profili per ruolo; heatmap | M8.R |
+| `profiles`, `heatmap`, `accessibility` | profili per ruolo; heatmap delle righe e sovrapposizione dei riquadri del raid; tavolozze e segni ([SPEC-07 §6](SPEC-07-multi-target-heatmap-profiles.md#6-moduli-eventi-interruttori-e-test-per-step-m82m84)) | M8.R |
 
 ## 4. Librerie
 
@@ -458,6 +458,7 @@ che leggono a ogni scansione, Compat ha anche letture senza allocazione: `Compat
 | `threatEvents` | gli eventi `UNIT_THREAT_*` arrivano | `unknown` | Scanner (M2) | **P6** |
 | `groupThreat` | la threat dei membri del gruppo sul mob | `unknown` | Scanner in gruppo (M2) | **P5** |
 | `otherMobs` | la threat su mob diversi dal target | `unknown` | MobTracker (M7.2), dalla portata ([SPEC-07 §1.4](SPEC-07-multi-target-heatmap-profiles.md#14-la-portata-mobtrackerreach)) | **P5** |
+| `raidFrames` | i riquadri del raid di Blizzard si trovano e si leggono (solo letture, fuori dal combattimento) | `unknown` | `Compat.RaidFrames.Collect` (M8.3, [SPEC-07 §3.3](SPEC-07-multi-target-heatmap-profiles.md#33-i-riquadri-del-raid-di-blizzard-uiraidoverlaylua)) | P11, gioco |
 | `mobIdentity` | GUID dei mob leggibili e stabili | `unknown` | TargetTracker (M2) | **P9** |
 | `roles` | ruoli del gruppo leggibili | `unknown` | M2 | **P9** |
 | `combatLog` | il combat log è leggibile da un addon | `missing` se `CombatLogGetCurrentEventInfo` manca (atteso) | — | **P7** |
